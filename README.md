@@ -66,6 +66,19 @@ ANTHROPIC_API_KEY=your_anthropic_key_here
 uv run nanobrowser
 ```
 
+5. **Stop the extension**:
+```bash
+uv stop nanobrowser
+```
+
+6. **How to install the extension manually**:
+```bash
+ Open Chrome and go to chrome://extensions/
+ Enable "Developer mode" (top right)
+ Click "Load unpacked" (top left)
+ Select the `nanobrowser/extension/src` directory
+```
+
 ## Example Tasks
 
 Here are some tasks you can accomplish with NanoBrowser using natural language:
