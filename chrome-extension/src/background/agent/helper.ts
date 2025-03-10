@@ -43,6 +43,36 @@ export function createChatModel(
       }
       return new ChatOpenAI(args);
     }
+    case LLMProviderEnum.OpenRouter: {
+      if (agentName === AgentNameEnum.Planner) {
+        temperature = 0.02;
+      }
+      const args: any = {
+        model: modelName, // OpenRouter model ID (e.g., 'openai/gpt-4o')
+        apiKey: providerConfig.apiKey,
+        configuration: {
+          baseURL: providerConfig.baseUrl || 'https://openrouter.ai/api/v1',
+          defaultHeaders: {
+            'HTTP-Referer': 'https://nanobrowser.extension', // Required for OpenRouter
+            'X-Title': 'Nanobrowser Extension',
+          },
+        },
+      };
+
+      // Add parameters based on the model type
+      if (modelName.startsWith('openai/o')) {
+        // For OpenAI O-series models
+        args.modelKwargs = {
+          max_completion_tokens: maxCompletionTokens,
+        };
+      } else {
+        args.topP = topP;
+        args.temperature = temperature;
+        args.maxTokens = maxTokens;
+      }
+
+      return new ChatOpenAI(args);
+    }
     case LLMProviderEnum.Anthropic: {
       temperature = 0.1;
       topP = 0.1;

@@ -10,7 +10,14 @@ const logger = createLogger('ValidatorAgent');
 
 // Define Zod schema for validator output
 export const validatorOutputSchema = z.object({
-  is_valid: z.boolean(), // indicates if the output is correct
+  is_valid: z.union([
+    z.boolean(),
+    z.string().transform(val => {
+      if (val.toLowerCase() === 'true') return true;
+      if (val.toLowerCase() === 'false') return false;
+      throw new Error('Invalid boolean string');
+    }),
+  ]), // indicates if the output is correct
   reason: z.string(), // explains why it is valid or not
   answer: z.string(), // the final answer to the task if it is valid
 });

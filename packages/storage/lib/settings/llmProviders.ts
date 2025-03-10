@@ -1,7 +1,23 @@
 import { StorageEnum } from '../base/enums';
 import { createStorage } from '../base/base';
 import type { BaseStorage } from '../base/types';
-import type { LLMProviderEnum } from './types';
+import { LLMProviderEnum } from './types';
+
+// Interface for OpenRouter model information
+export interface OpenRouterModel {
+  id: string;
+  name: string;
+  description: string;
+  pricing: {
+    prompt: number;
+    completion: number;
+  };
+}
+
+// Interface for OpenRouter API response
+export interface OpenRouterModelsResponse {
+  data: OpenRouterModel[];
+}
 
 // Interface for a single provider configuration
 export interface ProviderConfig {
@@ -21,6 +37,7 @@ export type LLMProviderStorage = BaseStorage<LLMKeyRecord> & {
   hasProvider: (provider: LLMProviderEnum) => Promise<boolean>;
   getConfiguredProviders: () => Promise<LLMProviderEnum[]>;
   getAllProviders: () => Promise<Record<LLMProviderEnum, ProviderConfig>>;
+  fetchOpenRouterModels: () => Promise<OpenRouterModel[]>;
 };
 
 const storage = createStorage<LLMKeyRecord>(
@@ -79,5 +96,34 @@ export const llmProviderStore: LLMProviderStorage = {
   async getAllProviders() {
     const data = await storage.get();
     return data.providers;
+  },
+
+  async fetchOpenRouterModels() {
+    try {
+      const openRouterConfig = await this.getProvider(LLMProviderEnum.OpenRouter);
+      if (!openRouterConfig || !openRouterConfig.apiKey) {
+        throw new Error('OpenRouter API key not configured');
+      }
+
+      const baseUrl = openRouterConfig.baseUrl || 'https://openrouter.ai/api/v1';
+      const response = await fetch(`${baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${openRouterConfig.apiKey}`,
+          'HTTP-Referer': 'https://nanobrowser.extension',
+          'X-Title': 'Nanobrowser Extension',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch OpenRouter models: ${response.statusText}`);
+      }
+
+      const data: OpenRouterModelsResponse = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error('Error fetching OpenRouter models:', error);
+      return [];
+    }
   },
 };

@@ -12,10 +12,24 @@ const logger = createLogger('PlannerAgent');
 export const plannerOutputSchema = z.object({
   observation: z.string(),
   challenges: z.string(),
-  done: z.boolean(),
+  done: z.union([
+    z.boolean(),
+    z.string().transform(val => {
+      if (val.toLowerCase() === 'true') return true;
+      if (val.toLowerCase() === 'false') return false;
+      throw new Error('Invalid boolean string');
+    }),
+  ]),
   next_steps: z.string(),
   reasoning: z.string(),
-  web_task: z.boolean(),
+  web_task: z.union([
+    z.boolean(),
+    z.string().transform(val => {
+      if (val.toLowerCase() === 'true') return true;
+      if (val.toLowerCase() === 'false') return false;
+      throw new Error('Invalid boolean string');
+    }),
+  ]),
 });
 
 export type PlannerOutput = z.infer<typeof plannerOutputSchema>;

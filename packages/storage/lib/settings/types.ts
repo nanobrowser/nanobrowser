@@ -9,9 +9,10 @@ export enum LLMProviderEnum {
   OpenAI = 'openai',
   Anthropic = 'anthropic',
   Gemini = 'gemini',
+  OpenRouter = 'openrouter',
 }
 
-export const llmProviderModelNames = {
+export const llmProviderModelNames: Record<LLMProviderEnum, string[]> = {
   [LLMProviderEnum.OpenAI]: ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o3-mini'],
   [LLMProviderEnum.Anthropic]: ['claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest'],
   [LLMProviderEnum.Gemini]: [
@@ -20,6 +21,7 @@ export const llmProviderModelNames = {
     'gemini-2.0-pro-exp-02-05',
     // 'gemini-2.0-flash-thinking-exp-01-21', // TODO: not support function calling for now
   ],
+  [LLMProviderEnum.OpenRouter]: [], // Will be populated dynamically from the API
 };
 
 /**

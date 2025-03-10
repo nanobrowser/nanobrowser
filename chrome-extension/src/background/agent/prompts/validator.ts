@@ -60,9 +60,9 @@ SPECIAL CASES:
 
 RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
 {
-  "is_valid": boolean,  // true if task is completed correctly
-  "reason": string      // clear explanation of validation result
-  "answer": string      // empty string if is_valid is false; human-readable final answer and should not be empty if is_valid is true
+  "is_valid": true or false,  // Boolean value (not a string) indicating if task is completed correctly
+  "reason": string,           // clear explanation of validation result
+  "answer": string            // empty string if is_valid is false; human-readable final answer and should not be empty if is_valid is true
 }
 
 ANSWER FORMATTING GUIDELINES:

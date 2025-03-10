@@ -35,11 +35,11 @@ RESPONSIBILITIES:
 RESPONSE FORMAT: Your must always respond with a valid JSON object with the following fields:
 {
     "observation": "Brief analysis of the current state and what has been done so far",
-    "done": "true or false, whether further steps are needed to complete the ultimate task",
+    "done": true or false, // Boolean value indicating whether further steps are needed to complete the ultimate task
     "challenges": "List any potential challenges or roadblocks",
     "next_steps": "List 2-3 high-level next steps to take, each step should start with a new line",
     "reasoning": "Explain your reasoning for the suggested next steps",
-    "web_task": "true or false, whether the ultimate task is related to browsing the web"
+    "web_task": true or false // Boolean value indicating whether the ultimate task is related to browsing the web
 }
 
 NOTE:
