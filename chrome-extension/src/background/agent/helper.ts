@@ -2,6 +2,7 @@ import { type ProviderConfig, LLMProviderEnum, AgentNameEnum } from '@extension/
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatAzureOpenAI } from '@langchain/azure-openai';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 // create a chat model based on the agent name, the model name and provider
@@ -71,6 +72,18 @@ export function createChatModel(
         topP,
       };
       return new ChatGoogleGenerativeAI(args);
+    }
+    case LLMProviderEnum.AzureOpenAI: {
+      temperature = 0.2;
+      topP = 0.9;
+      const args = {
+        model: modelName,
+        apiKey: providerConfig.apiKey,
+        baseUrl: providerConfig.baseUrl,
+        temperature,
+        topP,
+      };
+      return new ChatAzureOpenAI(args);
     }
     default: {
       throw new Error(`Provider ${providerName} not supported yet`);

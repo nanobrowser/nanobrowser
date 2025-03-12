@@ -161,3 +161,10 @@ export interface AgentOutput<T = unknown> {
    */
   error?: string;
 }
+
+export enum LLMProviderEnum {
+  OpenAI = 'openai',
+  Anthropic = 'anthropic',
+  Gemini = 'gemini',
+  AzureOpenAI = 'azure-openai',
+}
