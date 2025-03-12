@@ -21,6 +21,7 @@ import { createLogger } from '@src/background/log';
 import { PromptTemplate } from '@langchain/core/prompts';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ExecutionState, Actors } from '../event/types';
+import { DeepSeekChatModel } from '@src/background/llm/deepseek';
 
 const logger = createLogger('Action');
 

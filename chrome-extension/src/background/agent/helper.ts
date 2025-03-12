@@ -72,6 +72,36 @@ export function createChatModel(
       };
       return new ChatGoogleGenerativeAI(args);
     }
+    case LLMProviderEnum.DeepSeek: {
+      // DeepSeek支持OpenAI兼容的API，所以我们可以使用ChatOpenAI
+      temperature = 0.3;
+      topP = 0.5;
+      const args: any = {
+        model: modelName,
+        apiKey: providerConfig.apiKey,
+        temperature,
+        topP,
+        maxTokens,
+        configuration: {},
+      };
+      
+      // 如果提供了自定义的baseUrl，则使用它
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      } else {
+        // 默认使用DeepSeek的API端点
+        args.configuration = {
+          baseURL: 'https://api.deepseek.com/v1',
+        };
+      }
+      
+      // 确保不使用json_schema响应格式
+      args.jsonMode = false;
+      
+      return new ChatOpenAI(args);
+    }
     default: {
       throw new Error(`Provider ${providerName} not supported yet`);
     }

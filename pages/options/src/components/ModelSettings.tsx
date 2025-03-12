@@ -305,6 +305,46 @@ export const ModelSettings = () => {
               />
             </div>
           </div>
+
+          <div className="border-t border-gray-200" />
+
+          {/* DeepSeek Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-700">DeepSeek</h3>
+              <Button
+                {...getButtonProps(LLMProviderEnum.DeepSeek)}
+                size="sm"
+                onClick={() =>
+                  apiKeys[LLMProviderEnum.DeepSeek]?.apiKey && !modifiedProviders.has(LLMProviderEnum.DeepSeek)
+                    ? handleDelete(LLMProviderEnum.DeepSeek)
+                    : handleSave(LLMProviderEnum.DeepSeek)
+                }
+              />
+            </div>
+            <div className="space-y-3">
+              <input
+                type="password"
+                placeholder="DeepSeek API key"
+                value={apiKeys[LLMProviderEnum.DeepSeek]?.apiKey || ''}
+                onChange={e => handleApiKeyChange(LLMProviderEnum.DeepSeek, e.target.value)}
+                className="w-full p-2 rounded-md bg-gray-50 border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none"
+              />
+              <input
+                type="text"
+                placeholder="Custom Base URL (Optional)"
+                value={apiKeys[LLMProviderEnum.DeepSeek]?.baseUrl || ''}
+                onChange={e =>
+                  handleApiKeyChange(
+                    LLMProviderEnum.DeepSeek,
+                    apiKeys[LLMProviderEnum.DeepSeek]?.apiKey || '',
+                    e.target.value,
+                  )
+                }
+                className="w-full p-2 rounded-md bg-gray-50 border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

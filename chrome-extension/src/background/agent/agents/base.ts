@@ -94,7 +94,8 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
 
   // Set whether to use structured output based on the model name
   private setWithStructuredOutput(): boolean {
-    if (this.modelName === 'deepseek-reasoner' || this.modelName === 'deepseek-r1') {
+    // 检查模型名称是否以deepseek开头，如果是则不使用结构化输出
+    if (this.modelName.toLowerCase().includes('deepseek')) {
       return false;
     }
     return true;
@@ -186,18 +187,55 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
    */
   protected extractJsonFromModelOutput(content: string): unknown {
     try {
-      let cleanedContent = content;
-      // If content is wrapped in code blocks, extract just the JSON part
+      // 首先尝试直接解析整个内容
+      try {
+        return JSON.parse(content);
+      } catch (directParseError) {
+        // 直接解析失败，继续尝试其他方法
+      }
+
+      // 处理代码块中的JSON
       if (content.includes('```')) {
-        // Find the JSON content between code blocks
-        cleanedContent = cleanedContent.split('```')[1];
-        // Remove language identifier if present (e.g., 'json\n')
-        if (cleanedContent.includes('\n')) {
-          cleanedContent = cleanedContent.split('\n', 2)[1];
+        const codeBlocks = content.split('```');
+        // 遍历所有可能的代码块
+        for (let i = 1; i < codeBlocks.length; i += 2) {
+          let block = codeBlocks[i].trim();
+          
+          // 移除语言标识符（如'json'）
+          if (block.includes('\n')) {
+            const lines = block.split('\n');
+            if (lines[0].match(/^(json|javascript|js)$/i)) {
+              block = lines.slice(1).join('\n');
+            }
+          }
+          
+          // 尝试解析这个代码块
+          try {
+            return JSON.parse(block);
+          } catch (blockParseError) {
+            // 这个代码块解析失败，继续尝试下一个
+            continue;
+          }
         }
       }
-      // Parse the cleaned content
-      return JSON.parse(cleanedContent);
+
+      // 尝试查找内容中的JSON对象（使用正则表达式）
+      const jsonRegex = /\{[\s\S]*\}/g;
+      const matches = content.match(jsonRegex);
+      if (matches) {
+        for (const match of matches) {
+          try {
+            return JSON.parse(match);
+          } catch (regexParseError) {
+            // 这个匹配解析失败，继续尝试下一个
+            continue;
+          }
+        }
+      }
+
+      // 如果所有尝试都失败，则抛出错误
+      logger.warning(`Failed to parse model output: ${content}`);
+      throw new Error('Could not parse response.');
     } catch (e) {
       logger.warning(`Failed to parse model output: ${content} ${e}`);
       throw new Error('Could not parse response.');

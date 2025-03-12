@@ -25,6 +25,31 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
     super(plannerOutputSchema, options, { ...extraOptions, id: 'planner' });
   }
 
+  // 添加一个辅助方法来处理DeepSeek模型的输出
+  private fixDeepSeekOutput(modelOutput: any): PlannerOutput | null {
+    if (!modelOutput) return null;
+
+    // 确保所有必需的字段都存在
+    const fixedOutput: PlannerOutput = {
+      observation: typeof modelOutput.observation === 'string' ? modelOutput.observation : '',
+      challenges: typeof modelOutput.challenges === 'string' ? modelOutput.challenges : '',
+      done: typeof modelOutput.done === 'boolean' ? modelOutput.done : false,
+      next_steps: typeof modelOutput.next_steps === 'string' ? modelOutput.next_steps : '',
+      reasoning: typeof modelOutput.reasoning === 'string' ? modelOutput.reasoning : '',
+      web_task: typeof modelOutput.web_task === 'boolean' ? modelOutput.web_task : true,
+    };
+
+    // 如果是字符串类型的布尔值，转换为实际的布尔值
+    if (typeof modelOutput.done === 'string') {
+      fixedOutput.done = modelOutput.done.toLowerCase() === 'true';
+    }
+    if (typeof modelOutput.web_task === 'string') {
+      fixedOutput.web_task = modelOutput.web_task.toLowerCase() === 'true';
+    }
+
+    return fixedOutput;
+  }
+
   async execute(): Promise<AgentOutput<PlannerOutput>> {
     try {
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_START, 'Planning...');
@@ -52,10 +77,39 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
         plannerMessages[plannerMessages.length - 1] = new HumanMessage(newMsg);
       }
 
-      const modelOutput = await this.invoke(plannerMessages);
+      let modelOutput;
+      try {
+        modelOutput = await this.invoke(plannerMessages);
+      } catch (error) {
+        // 如果是DeepSeek模型，尝试使用更简单的方法获取输出
+        if (this.modelName.toLowerCase().includes('deepseek')) {
+          logger.info('Using fallback method for DeepSeek model');
+          const response = await this.chatLLM.invoke(plannerMessages, {
+            ...this.callOptions,
+          });
+          
+          if (typeof response.content === 'string') {
+            try {
+              const extractedJson = this.extractJsonFromModelOutput(response.content);
+              modelOutput = this.fixDeepSeekOutput(extractedJson);
+            } catch (jsonError) {
+              throw new Error(`Failed to parse DeepSeek response: ${jsonError}`);
+            }
+          }
+        } else {
+          throw error;
+        }
+      }
+
       if (!modelOutput) {
         throw new Error('Failed to validate planner output');
       }
+
+      // 对于DeepSeek模型，确保输出格式正确
+      if (this.modelName.toLowerCase().includes('deepseek')) {
+        modelOutput = this.fixDeepSeekOutput(modelOutput);
+      }
+
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_OK, modelOutput.next_steps);
 
       return {
