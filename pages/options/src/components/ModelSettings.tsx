@@ -6,6 +6,7 @@ import {
   AgentNameEnum,
   LLMProviderEnum,
   llmProviderModelNames,
+  fetchOpenAIModels,
 } from '@extension/storage';
 
 export const ModelSettings = () => {
@@ -18,6 +19,7 @@ export const ModelSettings = () => {
     [AgentNameEnum.Planner]: '',
     [AgentNameEnum.Validator]: '',
   });
+  const [openAIModels, setOpenAIModels] = useState<string[]>([]);
 
   useEffect(() => {
     const loadApiKeys = async () => {
@@ -70,15 +72,48 @@ export const ModelSettings = () => {
     loadAgentModels();
   }, []);
 
-  const handleApiKeyChange = (provider: LLMProviderEnum, apiKey: string, baseUrl?: string) => {
+  // 添加获取OpenAI模型列表的效果
+  useEffect(() => {
+    const loadOpenAIModels = async () => {
+      const config = apiKeys[LLMProviderEnum.OpenAI];
+      if (config?.apiKey) {
+        try {
+          const models = await fetchOpenAIModels(config.apiKey, config.baseUrl);
+          // 更新模型列表
+          llmProviderModelNames[LLMProviderEnum.OpenAI] = models;
+          setOpenAIModels(models);
+        } catch (error) {
+          console.error('Failed to fetch OpenAI models:', error);
+        }
+      }
+    };
+
+    loadOpenAIModels();
+  }, [apiKeys[LLMProviderEnum.OpenAI]]);
+
+  const handleApiKeyChange = async (provider: LLMProviderEnum, apiKey: string, baseUrl?: string) => {
     setModifiedProviders(prev => new Set(prev).add(provider));
-    setApiKeys(prev => ({
-      ...prev,
-      [provider]: {
-        apiKey: apiKey.trim(),
-        baseUrl: baseUrl !== undefined ? baseUrl.trim() : prev[provider]?.baseUrl,
-      },
-    }));
+    setApiKeys(prev => {
+      const newConfig = {
+        ...prev,
+        [provider]: {
+          apiKey: apiKey.trim(),
+          baseUrl: baseUrl !== undefined ? baseUrl.trim() : prev[provider]?.baseUrl,
+        },
+      };
+
+      // 当OpenAI配置更改时，尝试获取模型列表
+      if (provider === LLMProviderEnum.OpenAI && apiKey.trim()) {
+        fetchOpenAIModels(apiKey.trim(), baseUrl?.trim())
+          .then(models => {
+            llmProviderModelNames[LLMProviderEnum.OpenAI] = models;
+            setOpenAIModels(models);
+          })
+          .catch(console.error);
+      }
+
+      return newConfig;
+    });
   };
 
   const handleSave = async (provider: LLMProviderEnum) => {
@@ -89,6 +124,13 @@ export const ModelSettings = () => {
         next.delete(provider);
         return next;
       });
+
+      // 如果是 OpenAI provider，保存后立即更新模型列表
+      if (provider === LLMProviderEnum.OpenAI && apiKeys[provider]?.apiKey) {
+        const models = await fetchOpenAIModels(apiKeys[provider].apiKey, apiKeys[provider].baseUrl);
+        llmProviderModelNames[LLMProviderEnum.OpenAI] = models;
+        setOpenAIModels(models);
+      }
     } catch (error) {
       console.error('Error saving API key:', error);
     }
@@ -131,7 +173,13 @@ export const ModelSettings = () => {
     const models: string[] = [];
     Object.entries(apiKeys).forEach(([provider, config]) => {
       if (config.apiKey) {
-        models.push(...(llmProviderModelNames[provider as LLMProviderEnum] || []));
+        if (provider === LLMProviderEnum.OpenAI) {
+          // 对于 OpenAI，使用动态获取的模型列表
+          models.push(...openAIModels);
+        } else {
+          // 其他提供商使用静态列表
+          models.push(...(llmProviderModelNames[provider as LLMProviderEnum] || []));
+        }
       }
     });
     return models.length ? models : [''];
