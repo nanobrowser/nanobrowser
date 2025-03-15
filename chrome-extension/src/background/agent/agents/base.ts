@@ -84,6 +84,8 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
           return null;
         case 'ChatOpenAI':
         case 'AzureChatOpenAI':
+        case 'ChatGroq':
+        case 'ChatXAI':
           return 'function_calling';
         default:
           return null;

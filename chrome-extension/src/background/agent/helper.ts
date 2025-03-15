@@ -2,6 +2,8 @@ import { type ProviderConfig, LLMProviderEnum, AgentNameEnum } from '@extension/
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatGroq } from '@langchain/groq';
+import { ChatXAI } from '@langchain/xai';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 // create a chat model based on the agent name, the model name and provider
@@ -71,6 +73,44 @@ export function createChatModel(
         topP,
       };
       return new ChatGoogleGenerativeAI(args);
+    }
+    case LLMProviderEnum.Groq: {
+      temperature = 0.7;
+      const args: any = {
+        model: modelName,
+        apiKey: providerConfig.apiKey,
+        temperature,
+        maxTokens,
+        configuration: {},
+        modelKwargs: {
+          stop: [],
+          stream: false,
+        },
+      };
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+      return new ChatGroq(args);
+    }
+    case LLMProviderEnum.Grok: {
+      temperature = 0.7;
+      topP = 0.9;
+      const args: any = {
+        model: modelName,
+        apiKey: providerConfig.apiKey,
+        temperature,
+        topP,
+        maxTokens,
+        configuration: {},
+      };
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+      return new ChatXAI(args);
     }
     default: {
       throw new Error(`Provider ${providerName} not supported yet`);

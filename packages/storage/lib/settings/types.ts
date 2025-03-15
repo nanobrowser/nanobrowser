@@ -9,6 +9,8 @@ export enum LLMProviderEnum {
   OpenAI = 'openai',
   Anthropic = 'anthropic',
   Gemini = 'gemini',
+  Groq = 'groq',
+  Grok = 'grok',
 }
 
 export const llmProviderModelNames = {
@@ -20,6 +22,14 @@ export const llmProviderModelNames = {
     'gemini-2.0-pro-exp-02-05',
     // 'gemini-2.0-flash-thinking-exp-01-21', // TODO: not support function calling for now
   ],
+  [LLMProviderEnum.Groq]: [
+    'llama-3.1-8b-instant',
+    'mixtral-8x7b-32768',
+    'llama2-70b-4096',
+    'llama-2-70b-4096',
+    'gemma-7b-it',
+  ],
+  [LLMProviderEnum.Grok]: ['grok-2', 'grok-2-vision'],
 };
 
 /**

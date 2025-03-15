@@ -180,12 +180,28 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
 
   const renderApiKeyInput = (provider: LLMProviderEnum) => {
     const buttonProps = getButtonProps(provider);
-    const needsBaseUrl = provider === LLMProviderEnum.OpenAI || provider === LLMProviderEnum.Anthropic;
+    const needsBaseUrl =
+      provider === LLMProviderEnum.OpenAI ||
+      provider === LLMProviderEnum.Anthropic ||
+      provider === LLMProviderEnum.Groq ||
+      provider === LLMProviderEnum.Grok;
 
     return (
       <div key={provider} className="mb-6">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{provider}</h3>
+          <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            {provider === LLMProviderEnum.OpenAI
+              ? 'OpenAI'
+              : provider === LLMProviderEnum.Anthropic
+                ? 'Anthropic'
+                : provider === LLMProviderEnum.Gemini
+                  ? 'Gemini'
+                  : provider === LLMProviderEnum.Groq
+                    ? 'Groq AI'
+                    : provider === LLMProviderEnum.Grok
+                      ? 'Grok AI'
+                      : provider}
+          </h3>
           <div>
             <Button
               onClick={() => handleSave(provider)}
@@ -232,7 +248,13 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                 value={apiKeys[provider]?.baseUrl || ''}
                 onChange={e => handleApiKeyChange(provider, apiKeys[provider]?.apiKey || '', e.target.value)}
                 className={`w-full rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
-                placeholder={`Enter custom base URL for ${provider} (optional)`}
+                placeholder={
+                  provider === LLMProviderEnum.Groq
+                    ? 'https://api.groq.com/v1'
+                    : provider === LLMProviderEnum.Grok
+                      ? 'https://api.grok.x.ai/v1'
+                      : `Enter custom base URL for ${provider} (optional)`
+                }
               />
             </div>
           )}

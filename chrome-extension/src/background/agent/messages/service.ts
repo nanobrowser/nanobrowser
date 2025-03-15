@@ -337,13 +337,29 @@ export default class MessageManager {
         return message;
       }
       if (message instanceof ToolMessage) {
-        return new HumanMessage({ content: message.content });
+        return new HumanMessage({
+          content: `Tool Response: ${message.content}`,
+        });
       }
       if (message instanceof AIMessage) {
         // if it's an AIMessage with tool_calls, convert it to a normal AIMessage
-        if ('tool_calls' in message) {
-          const toolCalls = JSON.stringify(message.tool_calls);
-          return new AIMessage({ content: toolCalls });
+        if ('tool_calls' in message && message.tool_calls) {
+          const toolCallsStr = message.tool_calls
+            .map(tc => {
+              if (
+                'function' in tc &&
+                typeof tc.function === 'object' &&
+                tc.function &&
+                'name' in tc.function &&
+                'arguments' in tc.function
+              ) {
+                // For Groq, we need to format function calls differently
+                return `Function: ${tc.function.name}\nArguments: ${JSON.stringify(tc.function.arguments)}`;
+              }
+              return `Tool Call: ${JSON.stringify(tc)}`;
+            })
+            .join('\n');
+          return new AIMessage({ content: toolCallsStr });
         }
         return message;
       }
