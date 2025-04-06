@@ -403,12 +403,46 @@ export default class Page {
   }
 
   async scrollDown(amount?: number): Promise<void> {
-    if (this._puppeteerPage) {
-      if (amount) {
-        await this._puppeteerPage?.evaluate(`window.scrollBy(0, ${amount});`);
-      } else {
-        await this._puppeteerPage?.evaluate('window.scrollBy(0, window.innerHeight);');
+    if (!this._puppeteerPage) return;
+
+    // Log the scroll amount to browser console
+    if (amount) {
+      // For very small scroll amounts, use keyboard navigation instead
+      if (amount && amount < 10) {
+        console.log(`amount: ${amount}, using full viewport height ${window.innerHeight} pixels`);
+        amount = window.innerHeight;
       }
+      await this._puppeteerPage.evaluate(scrollAmount => {
+        console.log(`Scrolling down by ${scrollAmount} pixels`);
+      }, amount);
+    } else {
+      await this._puppeteerPage.evaluate(() => {
+        console.log(`Scrolling down by full viewport height (${window.innerHeight} pixels)`);
+      });
+    }
+
+    // Get current scroll position before scrolling
+    const beforeScrollY = await this._puppeteerPage.evaluate(() => window.scrollY);
+
+    // Attempt to scroll
+    if (amount) {
+      await this._puppeteerPage.evaluate(scrollAmount => {
+        window.scrollBy(0, scrollAmount);
+      }, amount);
+    } else {
+      await this._puppeteerPage.evaluate(() => {
+        window.scrollBy(0, window.innerHeight);
+      });
+    }
+
+    // Check if scroll position changed
+    const afterScrollY = await this._puppeteerPage.evaluate(() => window.scrollY);
+    const scrollMoved = afterScrollY > beforeScrollY;
+
+    // If scroll didn't move, simulate pressing the Down arrow key
+    if (!scrollMoved) {
+      logger.info('Scroll did not move, simulating Down arrow key press');
+      await this._puppeteerPage.keyboard.press('ArrowDown');
     }
   }
 
