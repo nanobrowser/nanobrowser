@@ -123,6 +123,7 @@ export class Executor {
       let validatorFailed = false;
 
       for (step = 0; step < allowedMaxSteps; step++) {
+        console.log('executor.ts step', step, 'allowedMaxSteps', allowedMaxSteps);
         context.stepInfo = {
           stepNumber: context.nSteps,
           maxSteps: context.options.maxSteps,
@@ -140,8 +141,9 @@ export class Executor {
           if (this.tasks.length > 1 || step > 0) {
             await this.navigator.addStateMessageToMemory();
           }
-
+          console.log('executor.ts starting planner');
           const planOutput = await this.planner.execute();
+          console.log('executor.ts planner output', planOutput);
           if (planOutput.result) {
             logger.info(`🔄 Planner output: ${JSON.stringify(planOutput.result, null, 2)}`);
             this.context.messageManager.addPlan(
@@ -166,12 +168,16 @@ export class Executor {
 
         // execute the navigation step
         if (!done) {
+          console.log('executor.ts starting navigate');
           done = await this.navigate();
+          console.log('executor.ts navigate done', done);
         }
 
         // validate the output
         if (done && this.context.options.validateOutput && !this.context.stopped && !this.context.paused) {
+          console.log('executor.ts starting validator');
           const validatorOutput = await this.validator.execute();
+          console.log('executor.ts validator output', validatorOutput);
           if (validatorOutput.result?.is_valid) {
             logger.info('✅ Task completed successfully');
             break;

@@ -17,11 +17,11 @@ import {
   getScrollInfo as _getScrollInfo,
   getMarkdownContent as _getMarkdownContent,
   getReadabilityContent as _getReadabilityContent,
+  type ReadabilityResult,
 } from '../dom/service';
 import { DOMElementNode, type DOMState } from '../dom/views';
 import { type BrowserContextConfig, DEFAULT_BROWSER_CONTEXT_CONFIG, type PageState } from './types';
 import { createLogger } from '@src/background/log';
-import { use } from 'react/ts5.0';
 
 const logger = createLogger('Page');
 
@@ -197,7 +197,7 @@ export default class Page {
     return _getMarkdownContent(this._tabId, selector);
   }
 
-  async getReadabilityContent(): Promise<ReadabilityResult> {
+  async getReadabilityContent(): Promise<ReadabilityResult | string> {
     if (!this._validWebPage) {
       return '';
     }
@@ -217,8 +217,7 @@ export default class Page {
   async _updateState(useVision = true, focusElement = -1): Promise<PageState> {
     try {
       // Test if page is still accessible
-      // @ts-expect-error - puppeteerPage is not null, already checked before calling this function
-      await this._puppeteerPage.evaluate('1');
+      await this._puppeteerPage!.evaluate('1');
     } catch (error) {
       logger.warning('Current page is no longer accessible:', error);
       if (this._browser) {
@@ -407,14 +406,18 @@ export default class Page {
 
     // Log the scroll amount to browser console
     if (amount) {
-      // For very small scroll amounts, use keyboard navigation instead
+      // For very small scroll amounts, use a full viewport scroll instead
       if (amount && amount < 10) {
-        console.log(`amount: ${amount}, using full viewport height ${window.innerHeight} pixels`);
-        amount = window.innerHeight;
+        // Get innerHeight from the page context, not service worker
+        amount = await this._puppeteerPage.evaluate(() => {
+          console.log(`Using full viewport height (${window.innerHeight} pixels) instead of small scroll`);
+          return window.innerHeight;
+        });
+      } else {
+        await this._puppeteerPage.evaluate(scrollAmount => {
+          console.log(`Scrolling down by ${scrollAmount} pixels`);
+        }, amount);
       }
-      await this._puppeteerPage.evaluate(scrollAmount => {
-        console.log(`Scrolling down by ${scrollAmount} pixels`);
-      }, amount);
     } else {
       await this._puppeteerPage.evaluate(() => {
         console.log(`Scrolling down by full viewport height (${window.innerHeight} pixels)`);
