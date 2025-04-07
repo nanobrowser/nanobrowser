@@ -130,50 +130,72 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
   }
 
   async invoke(inputMessages: BaseMessage[]): Promise<this['ModelOutput']> {
-    // Use structured output
-    if (this.withStructuredOutput) {
-      const structuredLlm = this.chatLLM.withStructuredOutput(this.modelOutputSchema, {
-        includeRaw: true,
-        name: this.modelOutputToolName,
-      });
+    // Log the prompt messages being sent to the LLM - safe for service workers
+    console.log(`[LLM Call] Agent: ${this.constructor.name}, Time: ${new Date().toISOString()}`);
+    console.log(
+      `[LLM Prompt] Model: ${this.modelName}`,
+      inputMessages.map(msg => ({
+        role: msg._getType(),
+        content: msg.content,
+      })),
+    );
 
-      try {
-        const response = await structuredLlm.invoke(inputMessages, {
-          ...this.callOptions,
+    try {
+      // Use structured output
+      if (this.withStructuredOutput) {
+        const structuredLlm = this.chatLLM.withStructuredOutput(this.modelOutputSchema, {
+          includeRaw: true,
+          name: this.modelOutputToolName,
         });
 
-        if (response.parsed) {
-          return response.parsed;
-        }
-        logger.error('Failed to parse response', response);
-        throw new Error('Could not parse response with structured output');
-      } catch (error) {
-        const errorMessage = `Failed to invoke ${this.modelName} with structured output: ${error}`;
-        throw new Error(errorMessage);
-      }
-    }
+        try {
+          const response = await structuredLlm.invoke(inputMessages, {
+            ...this.callOptions,
+          });
 
-    // Without structured output support, need to extract JSON from model output manually
-    const convertedInputMessages = this.convertInputMessages(inputMessages, this.modelName);
-    const response = await this.chatLLM.invoke(convertedInputMessages, {
-      ...this.callOptions,
-    });
-    if (typeof response.content === 'string') {
-      response.content = this.removeThinkTags(response.content);
-      try {
-        const extractedJson = this.extractJsonFromModelOutput(response.content);
-        const parsed = this.validateModelOutput(extractedJson);
-        if (parsed) {
-          return parsed;
+          // Log the response safely
+          console.log(`[LLM Response] Agent: ${this.constructor.name}`);
+
+          if (response.parsed) {
+            return response.parsed;
+          }
+          logger.error('Failed to parse response', response);
+          throw new Error('Could not parse response with structured output');
+        } catch (error) {
+          const errorMessage = `Failed to invoke ${this.modelName} with structured output: ${error}`;
+          throw new Error(errorMessage);
         }
-      } catch (error) {
-        const errorMessage = `Failed to extract JSON from response: ${error}`;
-        throw new Error(errorMessage);
       }
+
+      // Without structured output support, need to extract JSON from model output manually
+      const convertedInputMessages = this.convertInputMessages(inputMessages, this.modelName);
+      const response = await this.chatLLM.invoke(convertedInputMessages, {
+        ...this.callOptions,
+      });
+
+      // Log the response safely
+      console.log(`[LLM Response] Agent: ${this.constructor.name}`);
+
+      if (typeof response.content === 'string') {
+        response.content = this.removeThinkTags(response.content);
+        try {
+          const extractedJson = this.extractJsonFromModelOutput(response.content);
+          const parsed = this.validateModelOutput(extractedJson);
+          if (parsed) {
+            return parsed;
+          }
+        } catch (error) {
+          const errorMessage = `Failed to extract JSON from response: ${error}`;
+          throw new Error(errorMessage);
+        }
+      }
+      const errorMessage = `Failed to parse response: ${response}`;
+      logger.error(errorMessage);
+      throw new Error('Could not parse response');
+    } catch (error) {
+      console.error(`[LLM Error] Agent: ${this.constructor.name}`, error);
+      throw error;
     }
-    const errorMessage = `Failed to parse response: ${response}`;
-    logger.error(errorMessage);
-    throw new Error('Could not parse response');
   }
 
   // Execute the agent and return the result
