@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { IoSendSharp } from 'react-icons/io5';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
@@ -30,7 +31,7 @@ export default function ChatInput({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 100)}px`;
+      textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 80), 200)}px`;
     }
   };
 
@@ -46,7 +47,7 @@ export default function ChatInput({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 100)}px`;
+      textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 80), 200)}px`;
     }
   }, []);
 
@@ -74,7 +75,9 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
+      className={`overflow-hidden rounded-lg border-2 transition-colors ${
+        disabled ? 'cursor-not-allowed' : 'focus-within:border-primary-500 hover:border-primary-400'
+      } ${isDarkMode ? 'border-slate-600' : 'border-primary-400'} relative z-10`}
       aria-label="Chat input form">
       <div className="flex flex-col">
         <textarea
@@ -84,23 +87,23 @@ export default function ChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           aria-disabled={disabled}
-          rows={5}
-          className={`w-full resize-none border-none p-2 focus:outline-none ${
+          rows={3}
+          className={`w-full resize-none border-none p-4 focus:outline-none ${
             disabled
               ? isDarkMode
                 ? 'cursor-not-allowed bg-slate-800 text-gray-400'
-                : 'cursor-not-allowed bg-gray-100 text-gray-500'
+                : 'cursor-not-allowed bg-gray-200 text-gray-500'
               : isDarkMode
-                ? 'bg-slate-800 text-gray-200'
-                : 'bg-white'
+                ? 'bg-slate-800 text-gray-100'
+                : 'bg-primary-100 text-gray-900'
           }`}
-          placeholder="What can I help with?"
+          placeholder="We will assist you with any automation needs on Twitter/X."
           aria-label="Message input"
         />
 
         <div
-          className={`flex items-center justify-between px-2 py-1.5 ${
-            disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-100') : isDarkMode ? 'bg-slate-800' : 'bg-white'
+          className={`flex items-center justify-between px-4 py-3 ${
+            disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-200') : isDarkMode ? 'bg-slate-800' : 'bg-primary-100'
           }`}>
           <div className="flex gap-2 text-gray-500">{/* Icons can go here */}</div>
 
@@ -108,7 +111,7 @@ export default function ChatInput({
             <button
               type="button"
               onClick={onStopTask}
-              className="rounded-md bg-red-500 px-3 py-1 text-white transition-colors hover:bg-red-600">
+              className="rounded-md bg-red-600 px-5 py-2.5 text-white transition-colors hover:bg-red-700 font-medium shadow-md z-20">
               Stop
             </button>
           ) : (
@@ -116,8 +119,14 @@ export default function ChatInput({
               type="submit"
               disabled={isSendButtonDisabled}
               aria-disabled={isSendButtonDisabled}
-              className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:enabled:bg-[#0073DC] ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-              Send
+              className={`rounded-md px-5 py-2.5 transition-colors font-medium shadow-md flex items-center gap-2 z-20
+                ${
+                  isSendButtonDisabled
+                    ? 'cursor-not-allowed bg-gray-400 text-gray-700'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white border-2 border-primary-500'
+                }`}>
+              <span className="font-bold">Send</span>
+              <IoSendSharp className="text-lg" />
             </button>
           )}
         </div>

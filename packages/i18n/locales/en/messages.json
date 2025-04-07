@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Automate web tasks with AI! NanoBrowser is an open-source Chrome extension that lets you extract data, fill forms, and more."
+    "message": "Social AI helps you find like-minded people and connect with them."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Nanobrowser: AI Web Agent & Automation"
+    "message": "Social AI: Social Network Assistant Agent."
   },
   "toggleTheme": {
     "message": "Toggle theme"

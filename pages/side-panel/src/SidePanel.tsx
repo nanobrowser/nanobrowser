@@ -31,15 +31,24 @@ const SidePanel = () => {
 
   // Check for dark mode preference
   useEffect(() => {
-    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDarkMode(darkModeMediaQuery.matches);
+    // Safely check if window is defined (prevents "window is not defined" errors)
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      try {
+        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        setIsDarkMode(darkModeMediaQuery.matches);
 
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
+        const handleChange = (e: MediaQueryListEvent) => {
+          setIsDarkMode(e.matches);
+        };
 
-    darkModeMediaQuery.addEventListener('change', handleChange);
-    return () => darkModeMediaQuery.removeEventListener('change', handleChange);
+        darkModeMediaQuery.addEventListener('change', handleChange);
+        return () => darkModeMediaQuery.removeEventListener('change', handleChange);
+      } catch (error) {
+        console.error('Error setting up dark mode preference:', error);
+        // Default to light mode on error
+        setIsDarkMode(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -222,56 +231,60 @@ const SidePanel = () => {
     }
 
     try {
-      portRef.current = chrome.runtime.connect({ name: 'side-panel-connection' });
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        portRef.current = chrome.runtime.connect({ name: 'side-panel-connection' });
 
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      portRef.current.onMessage.addListener((message: any) => {
-        // Add type checking for message
-        if (message && message.type === EventType.EXECUTION) {
-          handleTaskState(message);
-        } else if (message && message.type === 'error') {
-          // Handle error messages from service worker
-          appendMessage({
-            actor: Actors.SYSTEM,
-            content: message.error || 'Unknown error occurred',
-            timestamp: Date.now(),
-          });
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        portRef.current.onMessage.addListener((message: any) => {
+          // Add type checking for message
+          if (message && message.type === EventType.EXECUTION) {
+            handleTaskState(message);
+          } else if (message && message.type === 'error') {
+            // Handle error messages from service worker
+            appendMessage({
+              actor: Actors.SYSTEM,
+              content: message.error || 'Unknown error occurred',
+              timestamp: Date.now(),
+            });
+            setInputEnabled(true);
+            setShowStopButton(false);
+          } else if (message && message.type === 'heartbeat_ack') {
+            console.log('Heartbeat acknowledged');
+          }
+        });
+
+        portRef.current.onDisconnect.addListener(() => {
+          const error = chrome.runtime.lastError;
+          console.log('Connection disconnected', error ? `Error: ${error.message}` : '');
+          portRef.current = null;
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+            heartbeatIntervalRef.current = null;
+          }
           setInputEnabled(true);
           setShowStopButton(false);
-        } else if (message && message.type === 'heartbeat_ack') {
-          console.log('Heartbeat acknowledged');
-        }
-      });
+        });
 
-      portRef.current.onDisconnect.addListener(() => {
-        const error = chrome.runtime.lastError;
-        console.log('Connection disconnected', error ? `Error: ${error.message}` : '');
-        portRef.current = null;
+        // Setup heartbeat interval
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
-          heartbeatIntervalRef.current = null;
         }
-        setInputEnabled(true);
-        setShowStopButton(false);
-      });
 
-      // Setup heartbeat interval
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
+        if (typeof window !== 'undefined') {
+          heartbeatIntervalRef.current = window.setInterval(() => {
+            if (portRef.current?.name === 'side-panel-connection') {
+              try {
+                portRef.current.postMessage({ type: 'heartbeat' });
+              } catch (error) {
+                console.error('Heartbeat failed:', error);
+                stopConnection(); // Stop connection if heartbeat fails
+              }
+            } else {
+              stopConnection(); // Stop if port is invalid
+            }
+          }, 25000);
+        }
       }
-
-      heartbeatIntervalRef.current = window.setInterval(() => {
-        if (portRef.current?.name === 'side-panel-connection') {
-          try {
-            portRef.current.postMessage({ type: 'heartbeat' });
-          } catch (error) {
-            console.error('Heartbeat failed:', error);
-            stopConnection(); // Stop connection if heartbeat fails
-          }
-        } else {
-          stopConnection(); // Stop if port is invalid
-        }
-      }, 25000);
     } catch (error) {
       console.error('Failed to establish connection:', error);
       appendMessage({
@@ -314,61 +327,65 @@ const SidePanel = () => {
     }
 
     try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tabId = tabs[0]?.id;
-      if (!tabId) {
-        throw new Error('No active tab found');
-      }
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tabId = tabs[0]?.id;
+        if (!tabId) {
+          throw new Error('No active tab found');
+        }
 
-      setInputEnabled(false);
-      setShowStopButton(true);
+        setInputEnabled(false);
+        setShowStopButton(true);
 
-      // Create a new chat session for this task if not in follow-up mode
-      if (!isFollowUpMode) {
-        const newSession = await chatHistoryStore.createSession(
-          text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-        );
-        console.log('newSession', newSession);
+        // Create a new chat session for this task if not in follow-up mode
+        if (!isFollowUpMode) {
+          const newSession = await chatHistoryStore.createSession(
+            text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+          );
+          console.log('newSession', newSession);
 
-        // Store the session ID in both state and ref
-        const sessionId = newSession.id;
-        setCurrentSessionId(sessionId);
-        sessionIdRef.current = sessionId;
-      }
+          // Store the session ID in both state and ref
+          const sessionId = newSession.id;
+          setCurrentSessionId(sessionId);
+          sessionIdRef.current = sessionId;
+        }
 
-      const userMessage = {
-        actor: Actors.USER,
-        content: text,
-        timestamp: Date.now(),
-      };
+        const userMessage = {
+          actor: Actors.USER,
+          content: text,
+          timestamp: Date.now(),
+        };
 
-      // Pass the sessionId directly to appendMessage
-      appendMessage(userMessage, sessionIdRef.current);
+        // Pass the sessionId directly to appendMessage
+        appendMessage(userMessage, sessionIdRef.current);
 
-      // Setup connection if not exists
-      if (!portRef.current) {
-        setupConnection();
-      }
+        // Setup connection if not exists
+        if (!portRef.current) {
+          setupConnection();
+        }
 
-      // Send message using the utility function
-      if (isFollowUpMode) {
-        // Send as follow-up task
-        await sendMessage({
-          type: 'follow_up_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
+        // Send message using the utility function
+        if (isFollowUpMode) {
+          // Send as follow-up task
+          await sendMessage({
+            type: 'follow_up_task',
+            task: text,
+            taskId: sessionIdRef.current,
+            tabId,
+          });
+          console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
+        } else {
+          // Send as new task
+          await sendMessage({
+            type: 'new_task',
+            task: text,
+            taskId: sessionIdRef.current,
+            tabId,
+          });
+          console.log('new_task sent', text, tabId, sessionIdRef.current);
+        }
       } else {
-        // Send as new task
-        await sendMessage({
-          type: 'new_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('new_task sent', text, tabId, sessionIdRef.current);
+        throw new Error('Chrome API not available');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -483,9 +500,9 @@ const SidePanel = () => {
   }, [messages]);
 
   return (
-    <div>
+    <div className={`side-panel ${isDarkMode ? 'dark' : 'light'}`}>
       <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
+        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-gray-100'} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
         <header className="header relative">
           <div className="header-logo">
             {showHistory ? (
@@ -524,7 +541,7 @@ const SidePanel = () => {
               </>
             )}
             <a
-              href="https://discord.gg/NN3ABHggMK"
+              href="https://discord.gg/jfysr6Yg"
               target="_blank"
               rel="noopener noreferrer"
               className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
@@ -542,7 +559,7 @@ const SidePanel = () => {
           </div>
         </header>
         {showHistory ? (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-slate-900">
             <ChatHistoryList
               sessions={chatSessions}
               onSessionSelect={handleSessionSelect}
@@ -553,10 +570,39 @@ const SidePanel = () => {
           </div>
         ) : (
           <>
-            {messages.length === 0 && (
-              <>
+            <div className="message-container flex-1 flex flex-col">
+              {messages.length === 0 && (
+                <>
+                  <div
+                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm bg-gray-100 dark:bg-slate-900`}>
+                    <ChatInput
+                      onSendMessage={handleSendMessage}
+                      onStopTask={handleStopTask}
+                      disabled={!inputEnabled || isHistoricalSession}
+                      showStopButton={showStopButton}
+                      setContent={setter => {
+                        setInputTextRef.current = setter;
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                  <div className="bg-gray-100 dark:bg-slate-900">
+                    <TemplateList
+                      templates={defaultTemplates}
+                      onTemplateSelect={handleTemplateSelect}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                </>
+              )}
+              <div
+                className={`safe-scroll scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900' : 'bg-gray-100'}`}>
+                <MessageList messages={messages} isDarkMode={isDarkMode} />
+                <div ref={messagesEndRef} />
+              </div>
+              {messages.length > 0 && (
                 <div
-                  className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                  className={`message-input-fixed border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm bg-gray-100 dark:bg-slate-900`}>
                   <ChatInput
                     onSendMessage={handleSendMessage}
                     onStopTask={handleStopTask}
@@ -568,35 +614,8 @@ const SidePanel = () => {
                     isDarkMode={isDarkMode}
                   />
                 </div>
-                <div>
-                  <TemplateList
-                    templates={defaultTemplates}
-                    onTemplateSelect={handleTemplateSelect}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
-              </>
-            )}
-            <div
-              className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-              <MessageList messages={messages} isDarkMode={isDarkMode} />
-              <div ref={messagesEndRef} />
+              )}
             </div>
-            {messages.length > 0 && (
-              <div
-                className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
-                <ChatInput
-                  onSendMessage={handleSendMessage}
-                  onStopTask={handleStopTask}
-                  disabled={!inputEnabled || isHistoricalSession}
-                  showStopButton={showStopButton}
-                  setContent={setter => {
-                    setInputTextRef.current = setter;
-                  }}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
-            )}
           </>
         )}
       </div>

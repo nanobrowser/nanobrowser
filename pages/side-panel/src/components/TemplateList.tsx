@@ -13,18 +13,22 @@ interface TemplateListProps {
 
 const TemplateList: React.FC<TemplateListProps> = ({ templates, onTemplateSelect, isDarkMode = false }) => {
   return (
-    <div className="p-2">
-      <h3 className={`mb-3 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Quick Start</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="p-4">
+      <h3 className={`mb-4 text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Quick Start</h3>
+      <div className="grid grid-cols-1 gap-4">
         {templates.map(template => (
           <button
             type="button"
             key={template.id}
             onClick={() => onTemplateSelect(template.content)}
-            className={`rounded-lg p-3 text-left transition-colors ${
-              isDarkMode ? 'bg-slate-800 text-gray-200 hover:bg-slate-700' : 'bg-white text-gray-700 hover:bg-sky-50'
-            } border ${isDarkMode ? 'border-slate-700' : 'border-sky-100'}`}>
-            <div className="text-sm font-medium">{template.title}</div>
+            className={`rounded-lg p-4 text-left transition-colors ${
+              isDarkMode
+                ? 'bg-slate-800 text-gray-100 hover:bg-slate-700 border-primary-500 border-2'
+                : 'bg-primary-200 text-gray-900 hover:bg-primary-300 border-primary-400 border-2'
+            } shadow-sm hover:shadow-md`}>
+            <div className={`text-md font-medium ${isDarkMode ? 'text-primary-300' : 'text-primary-800'}`}>
+              {template.title}
+            </div>
           </button>
         ))}
       </div>

@@ -10,7 +10,6 @@ type TabTypes = 'general' | 'models' | 'help';
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: 'General' },
   { id: 'models', icon: '📊', label: 'Models' },
-  { id: 'help', icon: '📚', label: 'Help' },
 ];
 
 const Options = () => {

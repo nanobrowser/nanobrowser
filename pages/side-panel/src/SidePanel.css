@@ -1,22 +1,23 @@
 /* Add this at the top of the file */
 body {
-  border-color: rgb(159, 6, 11) !important; /* sky-200 color */
+  border-color: rgb(249, 216, 78) !important; /* primary yellow color */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Remove unused classes: .App, .App-logo, .App-header */
 
 code {
-  background: rgba(186, 230, 253, 0.4);
+  background: rgba(252, 240, 188, 0.4); /* primary-200 with opacity */
   border-radius: 0.25rem;
   padding: 0.2rem 0.5rem;
-  color: #0369a1;
+  color: #77600D; /* primary-900 */
 }
 
 /* Dark mode support for code */
 @media (prefers-color-scheme: dark) {
   code {
-    background: rgba(30, 58, 138, 0.4);
-    color: #7dd3fc;
+    background: rgba(193, 158, 21, 0.2); /* primary-700 with opacity */
+    color: #F9D84E; /* primary-500 */
   }
 }
 
@@ -26,30 +27,30 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #FFFDF5; /* primary-50 */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
+  background: #FADF73; /* primary-400 */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: #F9D84E; /* primary-500 */
 }
 
 /* Dark mode scrollbar */
 @media (prefers-color-scheme: dark) {
   ::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: #1e293b; /* slate-800 */
   }
   
   ::-webkit-scrollbar-thumb {
-    background: #0ea5e9;
+    background: #C19E15; /* primary-700 */
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
+    background: #E7C31E; /* primary-600 */
   }
 }
 
@@ -60,13 +61,18 @@ code {
   align-items: center;
   padding: 0.75rem;
   background-color: transparent;
-  border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+  border-bottom: 1px solid rgba(249, 216, 78, 0.3); /* primary-500 with opacity */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: inherit;
 }
 
 /* Dark mode header border */
 @media (prefers-color-scheme: dark) {
   .header {
-    border-bottom: 1px solid rgba(14, 165, 233, 0.3);
+    border-bottom: 1px solid rgba(193, 158, 21, 0.4); /* primary-700 with opacity */
+    background-color: #1e293b; /* slate-900 */
   }
 }
 
@@ -82,26 +88,28 @@ code {
 }
 
 .header-icon {
-  color: #19C2FF;
+  color: #F9D84E; /* primary-500 */
   cursor: pointer;
   transition: color 0.2s ease;
   opacity: 0.8;
 }
 
 .header-icon:hover {
-  color: #0073DC;
+  color: #E7C31E; /* primary-600 */
   opacity: 1;
 }
 
 .send-button {
-  color: #19C2FF;
+  color: #F9D84E; /* primary-500 */
   cursor: pointer;
   transition: color 0.2s ease;
   opacity: 0.8;
+  min-height: 36px;
+  min-width: 80px;
 }
 
 .send-button:hover {
-  color: #0073DC;
+  color: #E7C31E; /* primary-600 */
   opacity: 1;
 }
 
@@ -122,16 +130,16 @@ code {
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-track {
-  background: #f1f5f9;  /* sky-50 */
+  background: #FFFDF5;  /* primary-50 */
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-  background: #7dd3fc;  /* sky-300 - very light blue */
+  background: #FADF73;  /* primary-400 */
   border-radius: 4px;
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;  /* sky-400 - slightly darker on hover */
+  background: #F9D84E;  /* primary-500 */
 }
 
 /* Dark mode scrollbar for scrollbar-gutter-stable */
@@ -141,18 +149,18 @@ code {
   }
   
   .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-    background: #0ea5e9;  /* sky-500 */
+    background: #C19E15;  /* primary-700 */
   }
   
   .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;  /* sky-400 */
+    background: #E7C31E;  /* primary-600 */
   }
 }
 
 /* Dark mode text and background colors */
 @media (prefers-color-scheme: dark) {
   .dark-mode-text {
-    color: #e2e8f0 !important; /* slate-200 */
+    color: #FCF0BC !important; /* primary-200 */
   }
   
   .dark-mode-bg {
@@ -160,6 +168,36 @@ code {
   }
   
   .dark-mode-border {
-    border-color: #475569 !important; /* slate-600 */
+    border-color: #C19E15 !important; /* primary-700 */
   }
+}
+
+/* Fixed positioning for chat input when messages are present */
+.message-container {
+  position: relative;
+  height: 100%;
+}
+
+.message-input-fixed {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 8px;
+  background-color: inherit;
+}
+
+/* Make sure the message container has correct overflow properties */
+.message-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Fix for window is not defined errors */
+.safe-scroll {
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
 }
