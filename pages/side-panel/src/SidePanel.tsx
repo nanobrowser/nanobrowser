@@ -531,7 +531,12 @@ const SidePanel = () => {
                 ← Back
               </button>
             ) : (
-              <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
+              <div className="flex items-center">
+                <img src="/icon-128.png" alt="Extension Logo" className="size-6 mr-2" />
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  Social AI Agent
+                </span>
+              </div>
             )}
           </div>
           <div className="header-icons">

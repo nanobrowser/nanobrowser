@@ -94,7 +94,7 @@ export default function ChatInput({
                 ? 'bg-slate-800 text-gray-200'
                 : 'bg-white'
           }`}
-          placeholder="What can I help with?"
+          placeholder="Tell me what tasks you want me to perform? I can help you with tasks related to Twitter (Now X), Reddit. "
           aria-label="Message input"
         />
 

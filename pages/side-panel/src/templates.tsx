@@ -2,19 +2,17 @@
 export const defaultTemplates = [
   {
     id: '1',
-    title: '🌟 Star us on GitHub!',
-    content:
-      "Open the Nanobrowser repository at https://github.com/nanobrowser/nanobrowser and check if you've already starred it. If not, please support us by giving us a star!",
+    title: 'Tell people about HandsOff in Twitter',
+    content: 'Find posts that are anti-Trump and anti-Musk, comments on the post and share with people about HandsOff',
   },
   {
     id: '2',
-    title: '🐦 Follow us on X/Twitter!',
-    content: 'Follow us at https://x.com/nanobrowser_ai to stay updated on the latest news and features!',
+    title: 'Connect with like-minded people',
+    content: 'Find and connect with people who also disagree with Trump and Musk on social media platforms.',
   },
   {
     id: '3',
-    title: '📚 Explore AI Papers',
-    content:
-      '- Go to https://huggingface.co/papers and click through each of the top 3 upvoted papers.\n- For each paper:\n  - Record the title, URL and upvotes\n  - Summarise the abstract section\n- Finally, compile together a summary of all 3 papers, ranked by upvotes',
+    title: 'Find posts I like',
+    content: 'Search through my social media feeds and find posts that align with my interests and values.',
   },
 ];

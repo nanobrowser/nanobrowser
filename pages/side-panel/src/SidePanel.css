@@ -82,7 +82,7 @@ code {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background-color: transparent;
+  background-color: rgba(15, 23, 42, 0.7); /* slate-900 with transparency */
   border-bottom: 1px solid rgba(14, 165, 233, 0.2);
 }
 
@@ -105,15 +105,18 @@ code {
 }
 
 .header-icon {
-  color: #19C2FF;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  opacity: 0.8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  color: #0ea5e9; /* sky-500 */
 }
 
 .header-icon:hover {
-  color: #0073DC;
-  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #38bdf8; /* sky-400 */
 }
 
 .send-button {
