@@ -288,3 +288,19 @@ code {
 .confirm-button:hover {
   background-color: var(--primary-hover-color, #0056b3);
 }
+
+/* Message container styles */
+.message-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+.side-panel {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}

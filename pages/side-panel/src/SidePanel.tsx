@@ -89,28 +89,34 @@ const SidePanel = () => {
       let skip = true;
       let displayProgress = false;
 
+      console.log('handleTaskState', actor, state); // Debug log
+
       switch (actor) {
         case Actors.SYSTEM:
           switch (state) {
             case ExecutionState.TASK_START:
               // Reset historical session flag when a new task starts
               setIsHistoricalSession(false);
+              setShowStopButton(true); // Ensure stop button is visible when task starts
               break;
             case ExecutionState.TASK_OK:
               setIsFollowUpMode(true);
               setInputEnabled(true);
               setShowStopButton(false);
+              console.log('Task completed, hiding stop button'); // Debug log
               break;
             case ExecutionState.TASK_FAIL:
               setIsFollowUpMode(true);
               setInputEnabled(true);
               setShowStopButton(false);
+              console.log('Task failed, hiding stop button'); // Debug log
               skip = false;
               break;
             case ExecutionState.TASK_CANCEL:
               setIsFollowUpMode(false);
               setInputEnabled(true);
               setShowStopButton(false);
+              console.log('Task cancelled, hiding stop button'); // Debug log
               skip = false;
               break;
             case ExecutionState.TASK_PAUSE:
@@ -334,6 +340,7 @@ const SidePanel = () => {
 
       setInputEnabled(false);
       setShowStopButton(true);
+      console.log('Setting showStopButton to true'); // Debug log
 
       // Create a new chat session for this task if not in follow-up mode
       if (!isFollowUpMode) {
@@ -520,7 +527,7 @@ const SidePanel = () => {
     <div className={`side-panel ${isDarkMode ? 'dark' : 'light'}`}>
       <div
         className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
-        <header className="header relative">
+        <header className="header sticky top-0 z-10">
           <div className="header-logo">
             {showHistory ? (
               <button
@@ -562,13 +569,6 @@ const SidePanel = () => {
                 </button>
               </>
             )}
-            <a
-              href="https://discord.gg/NN3ABHggMK"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
-              <RxDiscordLogo size={20} />
-            </a>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
@@ -592,11 +592,9 @@ const SidePanel = () => {
           </div>
         ) : (
           <>
-            <div className="header">{/* ... existing header ... */}</div>
-
             <ReferenceContextInput onSave={handleSaveReferenceContext} initialContext={referenceContext} />
 
-            <div className="message-container">
+            <div className="flex flex-col flex-1 overflow-hidden message-container">
               {messages.length === 0 && (
                 <>
                   <div
@@ -622,7 +620,7 @@ const SidePanel = () => {
                 </>
               )}
               <div
-                className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
+                className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-auto scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
                 <MessageList messages={messages} isDarkMode={isDarkMode} />
                 <div ref={messagesEndRef} />
               </div>

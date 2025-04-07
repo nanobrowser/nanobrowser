@@ -5,12 +5,11 @@ import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 
-type TabTypes = 'general' | 'models' | 'help';
+type TabTypes = 'general' | 'models';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: 'General' },
   { id: 'models', icon: '📊', label: 'Models' },
-  { id: 'help', icon: '📚', label: 'Help' },
 ];
 
 const Options = () => {
@@ -31,11 +30,7 @@ const Options = () => {
   }, []);
 
   const handleTabClick = (tabId: TabTypes) => {
-    if (tabId === 'help') {
-      window.location.href = 'https://nanobrowser.ai/docs';
-    } else {
-      setActiveTab(tabId);
-    }
+    setActiveTab(tabId);
   };
 
   const renderTabContent = () => {
