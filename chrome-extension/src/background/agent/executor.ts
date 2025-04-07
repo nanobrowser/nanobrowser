@@ -104,6 +104,16 @@ export class Executor {
   }
 
   /**
+   * Set the reference context for all agents
+   * @param context - The reference context to set
+   */
+  setReferenceContext(context: string): void {
+    // Update the context's reference context
+    this.context.setReferenceContext(context);
+    logger.info('Updated reference context for all agents');
+  }
+
+  /**
    * Execute the task
    *
    * @returns {Promise<void>}
@@ -201,6 +211,23 @@ export class Executor {
     }
   }
 
+  /**
+   * Clean up resources when the execution is complete
+   */
+  async cleanup(): Promise<void> {
+    // Clear event listeners
+    this.clearExecutionEvents();
+
+    // Cleanup browser context
+    try {
+      await this.context.browserContext.cleanup();
+    } catch (error) {
+      logger.error(`Failed to cleanup browser context: ${error}`);
+    }
+
+    logger.info('Executor cleanup complete');
+  }
+
   private async navigate(): Promise<boolean> {
     const context = this.context;
     try {
@@ -266,14 +293,6 @@ export class Executor {
 
   async pause(): Promise<void> {
     this.context.pause();
-  }
-
-  async cleanup(): Promise<void> {
-    try {
-      await this.context.browserContext.cleanup();
-    } catch (error) {
-      logger.error(`Failed to cleanup browser context: ${error}`);
-    }
   }
 
   async getCurrentTaskId(): Promise<string> {

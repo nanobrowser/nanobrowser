@@ -59,6 +59,7 @@ export class AgentContext {
   stepInfo: AgentStepInfo | null;
   actionResults: ActionResult[];
   stateMessageAdded: boolean;
+  referenceContext: string;
   constructor(
     taskId: string,
     browserContext: BrowserContext,
@@ -80,6 +81,7 @@ export class AgentContext {
     this.stepInfo = null;
     this.actionResults = [];
     this.stateMessageAdded = false;
+    this.referenceContext = '';
   }
 
   async emitEvent(actor: Actors, state: ExecutionState, eventDetails: string) {
@@ -102,6 +104,10 @@ export class AgentContext {
 
   async stop() {
     this.stopped = true;
+  }
+
+  setReferenceContext(context: string) {
+    this.referenceContext = context;
   }
 }
 

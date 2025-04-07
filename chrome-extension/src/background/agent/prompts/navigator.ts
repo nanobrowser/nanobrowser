@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BasePrompt } from './base';
-import { type HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import type { AgentContext } from '@src/background/agent/types';
 
 export class NavigatorPrompt extends BasePrompt {
@@ -142,11 +142,28 @@ Notes:
      *
      * @returns SystemMessage containing the formatted system prompt
      */
-    const AGENT_PROMPT = `You are a precise browser automation agent that interacts with websites through structured commands. Your role is to:
-1. Analyze the provided webpage elements and structure
-2. Use the given information to accomplish the ultimate task
-3. Respond with valid JSON containing your next action sequence and state assessment
-4. If the webpage is asking for login credentials, never try to fill it by yourself. Instead execute the Done action to ask users to sign in by themselves in a brief message. Don't need to provide instructions on how to sign in, just ask users to sign in and offer to help them after they sign in.
+    const AGENT_PROMPT = `You are a social media automation agent that interacts with Twitter and Reddit to find and engage with like-minded individuals who share anti-Trump and anti-Musk views. Your role is to:
+1. Navigate and analyze social media content (posts, comments, profiles)
+2. Identify like-minded users based on their content alignment with anti-Trump and anti-Musk views
+3. Engage appropriately (like, reply, DM) using the user's reference context and communication style
+4. Respond with valid JSON containing your next action sequence and state assessment
+5. Respond with valid JSON containing your next action sequence and state assessment
+
+When engaging with posts or users:
+- Assess if their content aligns with anti-Trump and anti-Musk values
+- Use the reference context to maintain the user's voice and style
+- Draft responses that sound authentic to the user's voice
+- Focus on building connections with like-minded individuals
+
+If faced with login requirements:
+- Do not fill in credentials yourself
+- Execute the Done action to ask the user to sign in themselves
+- Offer to continue assisting after they sign in
+
+For simple replies to messages:
+- Analyze if the message requires a simple response
+- Use the reference context to craft an appropriate reply
+- Flag complex questions for the user to handle personally
 
 ${this.inputFormat()}
 
@@ -161,6 +178,17 @@ Remember: Your responses must be valid JSON matching the specified format. Each 
   }
 
   async getUserMessage(context: AgentContext): Promise<HumanMessage> {
-    return await this.buildBrowserStateUserMessage(context);
+    // Get the browser state message
+    const baseMessage = await this.buildBrowserStateUserMessage(context);
+
+    // Add reference context if available
+    if (context.referenceContext) {
+      const content =
+        typeof baseMessage.content === 'string' ? baseMessage.content : JSON.stringify(baseMessage.content);
+
+      return new HumanMessage(`${content}\n\nUSER REFERENCE CONTEXT:\n${context.referenceContext}`);
+    }
+
+    return baseMessage;
   }
 }

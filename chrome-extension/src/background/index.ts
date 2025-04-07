@@ -92,13 +92,22 @@ chrome.runtime.onConnect.addListener(port => {
             if (!message.tabId) return port.postMessage({ type: 'error', error: 'No tab ID provided' });
 
             logger.info('new_task', message.tabId, message.task);
-            currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
+
+            // Create executor with reference context if provided
+            currentExecutor = await setupExecutor(
+              message.taskId,
+              message.task,
+              browserContext,
+              message.referenceContext,
+            );
+
             subscribeToExecutorEvents(currentExecutor);
 
             const result = await currentExecutor.execute();
             logger.info('new_task execution result', message.tabId, result);
             break;
           }
+
           case 'follow_up_task': {
             if (!message.task) return port.postMessage({ type: 'error', error: 'No follow up task provided' });
             if (!message.tabId) return port.postMessage({ type: 'error', error: 'No tab ID provided' });
@@ -116,6 +125,16 @@ chrome.runtime.onConnect.addListener(port => {
               // executor was cleaned up, can not add follow-up task
               logger.info('follow_up_task: executor was cleaned up, can not add follow-up task');
               return port.postMessage({ type: 'error', error: 'Executor was cleaned up, can not add follow-up task' });
+            }
+            break;
+          }
+
+          case 'UPDATE_REFERENCE_CONTEXT': {
+            // Update reference context if the executor exists
+            if (currentExecutor && message.referenceContext !== undefined) {
+              currentExecutor.setReferenceContext(message.referenceContext);
+              logger.info('Updated reference context');
+              return port.postMessage({ type: 'success', message: 'Reference context updated' });
             }
             break;
           }
@@ -164,7 +183,7 @@ chrome.runtime.onConnect.addListener(port => {
   }
 });
 
-async function setupExecutor(taskId: string, task: string, browserContext: BrowserContext) {
+async function setupExecutor(taskId: string, task: string, browserContext: BrowserContext, referenceContext?: string) {
   const providers = await llmProviderStore.getAllProviders();
   // if no providers, need to display the options page
   if (Object.keys(providers).length === 0) {
@@ -209,6 +228,11 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
       planningInterval: generalSettings.planningInterval,
     },
   });
+
+  // Set reference context if provided
+  if (referenceContext) {
+    executor.setReferenceContext(referenceContext);
+  }
 
   return executor;
 }

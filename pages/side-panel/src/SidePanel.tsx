@@ -4,11 +4,12 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore } from '@extension/storage';
+import { type Message, Actors, chatHistoryStore, referenceContextStore } from '@extension/storage';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import TemplateList from './components/TemplateList';
+import ReferenceContextInput from './components/ReferenceContextInput';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import { defaultTemplates } from './templates';
 import './SidePanel.css';
@@ -23,6 +24,7 @@ const SidePanel = () => {
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [referenceContext, setReferenceContext] = useState('');
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -45,6 +47,16 @@ const SidePanel = () => {
   useEffect(() => {
     sessionIdRef.current = currentSessionId;
   }, [currentSessionId]);
+
+  // Load reference context on initial load
+  useEffect(() => {
+    const loadReferenceContext = async () => {
+      const context = await referenceContextStore.getContext();
+      setReferenceContext(context);
+    };
+
+    loadReferenceContext();
+  }, []);
 
   const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
     // Don't save progress messages
@@ -370,6 +382,14 @@ const SidePanel = () => {
         });
         console.log('new_task sent', text, tabId, sessionIdRef.current);
       }
+
+      // Send message to background with reference context
+      portRef.current?.postMessage({
+        type: 'SEND_MESSAGE',
+        text,
+        sessionId: sessionIdRef.current,
+        referenceContext: referenceContext,
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error('Task error', errorMessage);
@@ -469,6 +489,20 @@ const SidePanel = () => {
     }
   };
 
+  const handleSaveReferenceContext = async (context: string) => {
+    setReferenceContext(context);
+    await referenceContextStore.setContext(context);
+
+    // Send updated context to the background script if there's an active session
+    if (portRef.current && currentSessionId) {
+      portRef.current.postMessage({
+        type: 'UPDATE_REFERENCE_CONTEXT',
+        sessionId: currentSessionId,
+        referenceContext: context,
+      });
+    }
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -483,7 +517,7 @@ const SidePanel = () => {
   }, [messages]);
 
   return (
-    <div>
+    <div className={`side-panel ${isDarkMode ? 'dark' : 'light'}`}>
       <div
         className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
         <header className="header relative">
@@ -553,10 +587,43 @@ const SidePanel = () => {
           </div>
         ) : (
           <>
-            {messages.length === 0 && (
-              <>
+            <div className="header">{/* ... existing header ... */}</div>
+
+            <ReferenceContextInput onSave={handleSaveReferenceContext} initialContext={referenceContext} />
+
+            <div className="message-container">
+              {messages.length === 0 && (
+                <>
+                  <div
+                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                    <ChatInput
+                      onSendMessage={handleSendMessage}
+                      onStopTask={handleStopTask}
+                      disabled={!inputEnabled || isHistoricalSession}
+                      showStopButton={showStopButton}
+                      setContent={setter => {
+                        setInputTextRef.current = setter;
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                  <div>
+                    <TemplateList
+                      templates={defaultTemplates}
+                      onTemplateSelect={handleTemplateSelect}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                </>
+              )}
+              <div
+                className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
+                <MessageList messages={messages} isDarkMode={isDarkMode} />
+                <div ref={messagesEndRef} />
+              </div>
+              {messages.length > 0 && (
                 <div
-                  className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                  className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
                   <ChatInput
                     onSendMessage={handleSendMessage}
                     onStopTask={handleStopTask}
@@ -568,35 +635,8 @@ const SidePanel = () => {
                     isDarkMode={isDarkMode}
                   />
                 </div>
-                <div>
-                  <TemplateList
-                    templates={defaultTemplates}
-                    onTemplateSelect={handleTemplateSelect}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
-              </>
-            )}
-            <div
-              className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-              <MessageList messages={messages} isDarkMode={isDarkMode} />
-              <div ref={messagesEndRef} />
+              )}
             </div>
-            {messages.length > 0 && (
-              <div
-                className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
-                <ChatInput
-                  onSendMessage={handleSendMessage}
-                  onStopTask={handleStopTask}
-                  disabled={!inputEnabled || isHistoricalSession}
-                  showStopButton={showStopButton}
-                  setContent={setter => {
-                    setInputTextRef.current = setter;
-                  }}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
-            )}
           </>
         )}
       </div>

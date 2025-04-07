@@ -1,3 +1,26 @@
+:root {
+  --primary-color: #007bff;
+  --primary-hover-color: #0056b3;
+  --text-primary: #333;
+  --text-secondary: #555;
+  --text-tertiary: #6c757d;
+  --background-primary: #fff;
+  --background-secondary: #f8f9fa;
+  --border-color: #ddd;
+}
+
+/* Dark mode */
+.dark {
+  --primary-color: #0d6efd;
+  --primary-hover-color: #0b5ed7;
+  --text-primary: #e9ecef;
+  --text-secondary: #adb5bd;
+  --text-tertiary: #6c757d;
+  --background-primary: #212529;
+  --background-secondary: #343a40;
+  --border-color: #495057;
+}
+
 /* Add this at the top of the file */
 body {
   border-color: rgb(159, 6, 11) !important; /* sky-200 color */
@@ -162,4 +185,103 @@ code {
   .dark-mode-border {
     border-color: #475569 !important; /* slate-600 */
   }
+}
+
+/* Reference Context Styles */
+.reference-context-container {
+  margin: 12px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Button styles */
+.reference-context-button {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reference-context-button:hover {
+  background-color: var(--primary-hover-color, #0056b3);
+}
+
+.reference-context-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reference-context-editor {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 70vh;
+}
+
+.reference-context-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--primary-color);
+  border-radius: 6px;
+  background-color: var(--background-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: vertical;
+  line-height: 1.5;
+  min-height: 150px;
+  max-height: 60vh;
+  transition: border-color 0.2s ease;
+}
+
+.reference-context-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.reference-context-textarea::placeholder {
+  color: var(--text-tertiary, #6c757d);
+  opacity: 0.8;
+}
+
+.reference-context-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.confirm-button {
+  padding: 10px 30px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.confirm-button:hover {
+  background-color: var(--primary-hover-color, #0056b3);
 }

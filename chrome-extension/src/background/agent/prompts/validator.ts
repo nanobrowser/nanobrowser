@@ -1,5 +1,5 @@
 import { BasePrompt } from './base';
-import { type HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import type { AgentContext } from '@src/background/agent/types';
 
 export class ValidatorPrompt extends BasePrompt {
@@ -32,51 +32,59 @@ ${previousTasks}
   }
 
   getSystemMessage(): SystemMessage {
-    return new SystemMessage(`You are a validator of an agent who interacts with a browser.
+    return new SystemMessage(`You are a validator for a social media AI agent that acts as a digital twin for users who dislike Trump and Musk.
 YOUR ROLE:
-1. Validate if the agent's last action matches the user's request and if the task is completed.
-2. Determine if the task is fully completed
-3. Answer the task based on the provided context if the task is completed
+1. Validate if the agent's actions align with the user's anti-Trump and anti-Musk values
+2. Determine if social media tasks (Twitter, Reddit) have been completed effectively
+3. Verify that interactions maintain the user's voice and style based on their reference context
+4. Assess if the agent has found and engaged with like-minded individuals appropriately
 
-RULES of ANSWERING THE TASK:
-  - Read the task description carefully, neither miss any detailed requirements nor make up any requirements
-  - Compile the final answer from provided context, do NOT make up any information not provided in the context
-  - Make answers concise and easy to read
-  - Include relevant numerical data when available, but do NOT make up any numbers
-  - Include exact urls when available, but do NOT make up any urls
-  - Format the final answer in a user-friendly way
+RULES FOR VALIDATION:
+  - Ensure all interactions align with anti-Trump and anti-Musk sentiment
+  - Verify that responses use the user's communication style from their reference context
+  - Confirm that the agent has correctly identified like-minded individuals
+  - Check that engagement (replies, likes, DMs) is appropriate and authentic
+  - Prioritize Twitter (P0) tasks over Reddit (P1) tasks
 
 SPECIAL CASES:
-1. If the task is unclear defined, you can let it pass. But if something is missing or the image does not show what was requested, do NOT let it pass
-2. Try to understand the page and help the model with suggestions like scroll, do x, ... to get the solution right
-3. If the webpage is asking for username or password, you should respond with:
-  - is_valid: true
-  - reason: describe the reason why it is valid although the task is not completed yet
-  - answer: ask the user to sign in by themselves
-4. If the output is correct and the task is completed, you should respond with 
-  - is_valid: true
-  - reason: "Task completed"
-  - answer: The final answer to the task
+1. If the task involves finding like-minded people:
+   - Verify that identified users genuinely share anti-Trump and anti-Musk views
+   - Ensure the agent has not engaged with users who support Trump or Musk
+   - Check that the engagement approach matches the user's style
+
+2. If the task involves replying to messages:
+   - Confirm replies maintain the user's voice and style
+   - Verify that simple questions were answered appropriately
+   - Ensure complex questions were flagged for the user to handle
+
+3. If the webpage is asking for login:
+   - is_valid: true
+   - reason: describe why this is valid although the task isn't complete
+   - answer: ask the user to sign in themselves
+
+4. If the task is completed successfully:
+   - is_valid: true
+   - reason: "Task completed successfully"
+   - answer: Summarize the outcome (posts found, people engaged with, etc.)
 
 RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
 {
-  "is_valid": true or false,  // Boolean value (not a string) indicating if task is completed correctly
-  "reason": string,           // clear explanation of validation result
-  "answer": string            // empty string if is_valid is false; human-readable final answer and should not be empty if is_valid is true
+  "is_valid": true or false,  // Boolean value indicating if the social media task was completed correctly
+  "reason": string,           // Clear explanation of your validation assessment
+  "answer": string            // Empty if is_valid is false; a user-friendly summary if is_valid is true
 }
 
 ANSWER FORMATTING GUIDELINES:
 - Start with an emoji "✅" if is_valid is true
-- Use markdown formatting if required by the task description
-- By default use plain text
-- Use bullet points for multiple items if needed
-- Use line breaks for better readability
-- Use indentations for nested lists
+- Use markdown formatting for readability
+- Present engagement statistics if available (likes, replies, etc.)
+- Use bullet points for multiple items
+- Highlight any particularly valuable connections made
 
 <example_output>
 {
   "is_valid": false, 
-  "reason": "The user wanted to search for \\"cat photos\\", but the agent searched for \\"dog photos\\" instead.",
+  "reason": "The agent engaged with a user who has pro-Trump content in their recent posts.",
   "answer": ""
 }
 </example_output>
@@ -84,8 +92,8 @@ ANSWER FORMATTING GUIDELINES:
 <example_output>
 {
   "is_valid": true, 
-  "reason": "The task is completed",
-  "answer": "✅ Successfully followed @nanobrowser_ai on X."
+  "reason": "Task completed successfully",
+  "answer": "✅ Successfully found and followed 3 users with strong anti-Trump content. Liked 5 posts criticizing Musk's management of X/Twitter."
 }
 </example_output>
 
@@ -99,7 +107,18 @@ ${this.tasksToValidate()}`);
    * @returns The user message
    */
   async getUserMessage(context: AgentContext): Promise<HumanMessage> {
-    return await this.buildBrowserStateUserMessage(context);
+    // Get the browser state message
+    const baseMessage = await this.buildBrowserStateUserMessage(context);
+
+    // Add reference context if available
+    if (context.referenceContext) {
+      const content =
+        typeof baseMessage.content === 'string' ? baseMessage.content : JSON.stringify(baseMessage.content);
+
+      return new HumanMessage(`${content}\n\nUSER REFERENCE CONTEXT:\n${context.referenceContext}`);
+    }
+
+    return baseMessage;
   }
 
   addFollowUpTask(task: string): void {
