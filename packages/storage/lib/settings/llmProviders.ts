@@ -8,9 +8,12 @@ export interface ProviderConfig {
   name?: string; // Display name in the options
   type?: ProviderTypeEnum; // Help to decide which LangChain ChatModel package to use
   apiKey: string; // Must be provided, but may be empty for local models
-  baseUrl?: string; // Optional base URL if provided
-  modelNames?: string[]; // Chosen model names, if not provided use hardcoded names from llmProviderModelNames
+  baseUrl?: string; // Optional base URL if provided // For Azure: Endpoint
+  modelNames?: string[]; // Chosen model names (NOT used for Azure OpenAI)
   createdAt?: number; // Timestamp in milliseconds when the provider was created
+  // Azure Specific Fields:
+  azureDeploymentNames?: string[]; // Azure deployment names array
+  azureApiVersion?: string;
 }
 
 // Interface for storing multiple LLM provider configurations
@@ -48,6 +51,8 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.Gemini:
     case ProviderTypeEnum.Grok:
     case ProviderTypeEnum.Ollama:
+    case ProviderTypeEnum.AzureOpenAI:
+    case ProviderTypeEnum.OpenRouter:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -70,13 +75,16 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Grok';
     case ProviderTypeEnum.Ollama:
       return 'Ollama';
+    case ProviderTypeEnum.AzureOpenAI:
+      return 'Azure OpenAI';
+    case ProviderTypeEnum.OpenRouter:
+      return 'OpenRouter';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
 }
 
 // Get default configuration for built-in providers
-// Make sure to update this function if you add a new provider type
 export function getDefaultProviderConfig(providerId: string): ProviderConfig {
   switch (providerId) {
     case ProviderTypeEnum.OpenAI:
@@ -84,10 +92,12 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
     case ProviderTypeEnum.DeepSeek:
     case ProviderTypeEnum.Gemini:
     case ProviderTypeEnum.Grok:
+    case ProviderTypeEnum.OpenRouter: // OpenRouter uses modelNames
       return {
         apiKey: '',
         name: getDefaultDisplayNameFromProviderId(providerId),
         type: providerId,
+        baseUrl: providerId === ProviderTypeEnum.OpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
         createdAt: Date.now(),
       };
@@ -97,17 +107,28 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
         apiKey: 'ollama', // Set default API key for Ollama
         name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.Ollama),
         type: ProviderTypeEnum.Ollama,
-        modelNames: [],
+        modelNames: [], // Ollama uses modelNames (user adds them)
         baseUrl: 'http://localhost:11434',
         createdAt: Date.now(),
       };
-    default:
+    case ProviderTypeEnum.AzureOpenAI:
+      return {
+        apiKey: '', // User needs to provide API Key
+        name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.AzureOpenAI),
+        type: ProviderTypeEnum.AzureOpenAI,
+        baseUrl: '', // User needs to provide Azure endpoint
+        // modelNames: [], // Not used for Azure configuration
+        azureDeploymentNames: [], // Azure deployment names
+        azureApiVersion: '2024-02-15-preview', // Provide a common default API version
+        createdAt: Date.now(),
+      };
+    default: // Handles CustomOpenAI
       return {
         apiKey: '',
         name: getDefaultDisplayNameFromProviderId(providerId),
         type: ProviderTypeEnum.CustomOpenAI,
         baseUrl: '',
-        modelNames: [],
+        modelNames: [], // Custom providers use modelNames
         createdAt: Date.now(),
       };
   }
@@ -123,20 +144,53 @@ export function getDefaultAgentModelParams(providerId: string, agentName: AgentN
 
 // Helper function to ensure backward compatibility for provider configs
 function ensureBackwardCompatibility(providerId: string, config: ProviderConfig): ProviderConfig {
+  // Log input config
+  // console.log(`[ensureBackwardCompatibility] Input for ${providerId}:`, JSON.stringify(config));
+
   const updatedConfig = { ...config };
+
+  // Ensure name exists
   if (!updatedConfig.name) {
     updatedConfig.name = getDefaultDisplayNameFromProviderId(providerId);
   }
+  // Ensure type exists
   if (!updatedConfig.type) {
     updatedConfig.type = getProviderTypeByProviderId(providerId);
   }
-  if (!updatedConfig.modelNames) {
-    updatedConfig.modelNames = llmProviderModelNames[providerId as keyof typeof llmProviderModelNames] || [];
+
+  // Handle Azure specifics
+  if (updatedConfig.type === ProviderTypeEnum.AzureOpenAI) {
+    // Ensure Azure fields exist, provide defaults if missing
+    if (updatedConfig.azureApiVersion === undefined) {
+      // console.log(`[ensureBackwardCompatibility] Adding default azureApiVersion for ${providerId}`);
+      updatedConfig.azureApiVersion = '2024-02-15-preview';
+    }
+
+    // Initialize azureDeploymentNames array if it doesn't exist yet
+    if (!updatedConfig.azureDeploymentNames) {
+      updatedConfig.azureDeploymentNames = [];
+    }
+
+    // CRITICAL: Delete modelNames if it exists for Azure type to clean up old configs
+    if (Object.prototype.hasOwnProperty.call(updatedConfig, 'modelNames')) {
+      // console.log(`[ensureBackwardCompatibility] Deleting modelNames for Azure config ${providerId}`);
+      delete updatedConfig.modelNames;
+    }
+  } else {
+    // Ensure modelNames exists ONLY for non-Azure types
+    if (!updatedConfig.modelNames) {
+      // console.log(`[ensureBackwardCompatibility] Adding default modelNames for non-Azure ${providerId}`);
+      updatedConfig.modelNames = llmProviderModelNames[providerId as keyof typeof llmProviderModelNames] || [];
+    }
   }
+
+  // Ensure createdAt exists
   if (!updatedConfig.createdAt) {
-    // if createdAt is not set, set it to "03/04/2025" for backward compatibility
     updatedConfig.createdAt = new Date('03/04/2025').getTime();
   }
+
+  // Log output config
+  // console.log(`[ensureBackwardCompatibility] Output for ${providerId}:`, JSON.stringify(updatedConfig));
   return updatedConfig;
 }
 
@@ -151,18 +205,50 @@ export const llmProviderStore: LLMProviderStorage = {
       throw new Error('API key must be provided (can be empty for local models)');
     }
 
-    if (!config.modelNames) {
-      throw new Error('Model names must be provided');
+    const providerType = config.type || getProviderTypeByProviderId(providerId);
+
+    if (providerType === ProviderTypeEnum.AzureOpenAI) {
+      if (!config.baseUrl?.trim()) {
+        throw new Error('Azure Endpoint (baseUrl) is required');
+      }
+      if (!config.azureDeploymentNames || config.azureDeploymentNames.length === 0) {
+        throw new Error('At least one Azure Deployment Name is required');
+      }
+      if (!config.azureApiVersion?.trim()) {
+        throw new Error('Azure API Version is required');
+      }
+      if (!config.apiKey?.trim()) {
+        throw new Error('API Key is required for Azure OpenAI');
+      }
+    } else if (providerType !== ProviderTypeEnum.CustomOpenAI && providerType !== ProviderTypeEnum.Ollama) {
+      if (!config.apiKey?.trim()) {
+        throw new Error(`API Key is required for ${getDefaultDisplayNameFromProviderId(providerId)}`);
+      }
     }
 
-    // Ensure backward compatibility by filling in missing fields
+    if (providerType !== ProviderTypeEnum.AzureOpenAI) {
+      if (!config.modelNames || config.modelNames.length === 0) {
+        console.warn(`Provider ${providerId} of type ${providerType} is being saved without model names.`);
+      }
+    }
+
     const completeConfig: ProviderConfig = {
-      ...config,
+      apiKey: config.apiKey || '',
+      baseUrl: config.baseUrl,
       name: config.name || getDefaultDisplayNameFromProviderId(providerId),
-      type: config.type || getProviderTypeByProviderId(providerId),
-      modelNames: config.modelNames,
+      type: providerType,
       createdAt: config.createdAt || Date.now(),
+      ...(providerType === ProviderTypeEnum.AzureOpenAI
+        ? {
+            azureDeploymentNames: config.azureDeploymentNames || [],
+            azureApiVersion: config.azureApiVersion,
+          }
+        : {
+            modelNames: config.modelNames || [],
+          }),
     };
+
+    console.log(`[llmProviderStore.setProvider] Saving config for ${providerId}:`, JSON.stringify(completeConfig));
 
     const current = (await storage.get()) || { providers: {} };
     await storage.set({

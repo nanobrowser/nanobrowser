@@ -118,25 +118,25 @@ importers:
         version: link:../packages/storage
       '@langchain/anthropic':
         specifier: ^0.3.12
-        version: 0.3.12(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))
+        version: 0.3.12(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))
       '@langchain/core':
         specifier: ^0.3.37
-        version: 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+        version: 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
       '@langchain/deepseek':
         specifier: ^0.0.1
-        version: 0.0.1(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
+        version: 0.0.1(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
       '@langchain/google-genai':
         specifier: 0.1.11
-        version: 0.1.11(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(zod@3.24.1)
+        version: 0.1.11(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(zod@3.24.1)
       '@langchain/ollama':
         specifier: ^0.2.0
-        version: 0.2.0(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))
+        version: 0.2.0(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))
       '@langchain/openai':
         specifier: ^0.4.2
-        version: 0.4.2(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
+        version: 0.4.2(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
       '@langchain/xai':
         specifier: ^0.0.2
-        version: 0.0.2(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
+        version: 0.0.2(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
       puppeteer-core:
         specifier: 24.1.1
         version: 24.1.1
@@ -619,8 +619,8 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.2.21 <0.4.0'
 
-  '@langchain/core@0.3.37':
-    resolution: {integrity: sha512-LFk9GqHxcyCFx0oXvCBP7vDZIOUHYzzNU7JR+2ofIMnfkBLzcCKzBLySQDfPtd13PrpGHkaeOeLq8H1Tqi9lSw==}
+  '@langchain/core@0.3.44':
+    resolution: {integrity: sha512-3BsSFf7STvPPZyl2kMANgtVnCUvDdyP4k+koP+nY2Tczd5V+RFkuazIn/JOj/xxy/neZjr4PxFU4BFyF1aKXOA==}
     engines: {node: '>=18'}
 
   '@langchain/deepseek@0.0.1':
@@ -3465,17 +3465,17 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@langchain/anthropic@0.3.12(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))':
+  '@langchain/anthropic@0.3.12(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))':
     dependencies:
       '@anthropic-ai/sdk': 0.32.1
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
       fast-xml-parser: 4.5.0
       zod: 3.24.1
       zod-to-json-schema: 3.24.4(zod@3.24.1)
     transitivePeerDependencies:
       - encoding
 
-  '@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))':
+  '@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
@@ -3487,39 +3487,39 @@ snapshots:
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 10.0.0
-      zod: 3.24.1
-      zod-to-json-schema: 3.24.4(zod@3.24.1)
+      zod: 3.24.2
+      zod-to-json-schema: 3.24.4(zod@3.24.2)
     transitivePeerDependencies:
       - openai
 
-  '@langchain/deepseek@0.0.1(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
+  '@langchain/deepseek@0.0.1(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
     dependencies:
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
-      '@langchain/openai': 0.4.4(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/openai': 0.4.4(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
       zod: 3.24.2
     transitivePeerDependencies:
       - encoding
       - ws
 
-  '@langchain/google-genai@0.1.11(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(zod@3.24.1)':
+  '@langchain/google-genai@0.1.11(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(zod@3.24.1)':
     dependencies:
       '@google/generative-ai': 0.21.0
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
       zod-to-json-schema: 3.24.4(zod@3.24.1)
     transitivePeerDependencies:
       - zod
 
-  '@langchain/ollama@0.2.0(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))':
+  '@langchain/ollama@0.2.0(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))':
     dependencies:
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
       ollama: 0.5.14
       uuid: 10.0.0
       zod: 3.24.1
       zod-to-json-schema: 3.24.4(zod@3.24.1)
 
-  '@langchain/openai@0.4.2(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
+  '@langchain/openai@0.4.2(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
     dependencies:
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
       js-tiktoken: 1.0.17
       openai: 4.82.0(ws@8.18.0)(zod@3.24.1)
       zod: 3.24.1
@@ -3528,9 +3528,9 @@ snapshots:
       - encoding
       - ws
 
-  '@langchain/openai@0.4.4(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
+  '@langchain/openai@0.4.4(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
     dependencies:
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
       js-tiktoken: 1.0.17
       openai: 4.82.0(ws@8.18.0)(zod@3.24.2)
       zod: 3.24.2
@@ -3539,10 +3539,10 @@ snapshots:
       - encoding
       - ws
 
-  '@langchain/xai@0.0.2(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
+  '@langchain/xai@0.0.2(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)':
     dependencies:
-      '@langchain/core': 0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
-      '@langchain/openai': 0.4.4(@langchain/core@0.3.37(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
+      '@langchain/core': 0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1))
+      '@langchain/openai': 0.4.4(@langchain/core@0.3.44(openai@4.82.0(ws@8.18.0)(zod@3.24.1)))(ws@8.18.0)
       zod: 3.24.2
     transitivePeerDependencies:
       - encoding
@@ -4086,7 +4086,7 @@ snapshots:
 
   ast-types@0.13.4:
     dependencies:
-      tslib: 2.7.0
+      tslib: 2.8.1
 
   asynckit@0.4.0: {}
 

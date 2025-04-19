@@ -5,7 +5,7 @@ import { Executor } from './agent/executor';
 import { createLogger } from './log';
 import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const logger = createLogger('background');
 
@@ -74,7 +74,14 @@ chrome.tabs.onRemoved.addListener(tabId => {
 
 logger.info('background loaded');
 
-// Setup connection listener
+// Listen for simple messages (e.g., from options page)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Handle other message types if needed in the future
+  // Return false if response is not sent asynchronously
+  // return false;
+});
+
+// Setup connection listener for long-lived connections (e.g., side panel)
 chrome.runtime.onConnect.addListener(port => {
   if (port.name === 'side-panel-connection') {
     currentPort = port;
@@ -145,6 +152,7 @@ chrome.runtime.onConnect.addListener(port => {
             await currentExecutor.pause();
             return port.postMessage({ type: 'success' });
           }
+
           default:
             return port.postMessage({ type: 'error', error: 'Unknown message type' });
         }
@@ -182,18 +190,24 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   if (!navigatorModel) {
     throw new Error('Please choose a model for the navigator in the settings first');
   }
-  const navigatorLLM = createChatModel(providers[navigatorModel.provider], navigatorModel);
+  // Log the provider config being used for the navigator
+  const navigatorProviderConfig = providers[navigatorModel.provider];
+  const navigatorLLM = createChatModel(navigatorProviderConfig, navigatorModel);
 
   let plannerLLM: BaseChatModel | null = null;
   const plannerModel = agentModels[AgentNameEnum.Planner];
   if (plannerModel) {
-    plannerLLM = createChatModel(providers[plannerModel.provider], plannerModel);
+    // Log the provider config being used for the planner
+    const plannerProviderConfig = providers[plannerModel.provider];
+    plannerLLM = createChatModel(plannerProviderConfig, plannerModel);
   }
 
   let validatorLLM: BaseChatModel | null = null;
   const validatorModel = agentModels[AgentNameEnum.Validator];
   if (validatorModel) {
-    validatorLLM = createChatModel(providers[validatorModel.provider], validatorModel);
+    // Log the provider config being used for the validator
+    const validatorProviderConfig = providers[validatorModel.provider];
+    validatorLLM = createChatModel(validatorProviderConfig, validatorModel);
   }
 
   const generalSettings = await generalSettingsStore.getSettings();

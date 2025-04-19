@@ -1,5 +1,4 @@
-import type { ViewportInfo, CoordinateSet } from './history/view';
-import type { HashedDomElement } from './history/view';
+import type { ViewportInfo, CoordinateSet, HashedDomElement } from './history/view';
 import { HistoryTreeProcessor } from './history/service';
 
 export abstract class DOMBaseNode {
