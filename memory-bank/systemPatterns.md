@@ -126,38 +126,205 @@ graph TD
 
 ```mermaid
 graph TD
-    TaskInput[Task Input] --> TaskAnalysis[Task Analysis]
-    TaskAnalysis --> |Planner| PlanGeneration[Plan Generation]
-    PlanGeneration --> |Navigator| ActionExecution[Action Execution]
-    ActionExecution --> |Navigator| ResultCollection[Result Collection]
-    ResultCollection --> |Validator| ResultVerification[Result Verification]
-    ResultVerification --> |If incomplete| TaskAnalysis
-    ResultVerification --> |If complete| FinalOutput[Final Output]
+    subgraph "Task Initialization"
+        TaskInput[User Task Input] --> TaskIdGen[Generate Task ID]
+        TaskIdGen --> ExecutorInit[Initialize Executor]
+        ExecutorInit --> AgentInit[Initialize Agents]
+        AgentInit --> ContextInit[Create Shared Context]
+        ContextInit --> MessageInit[Initialize Message History]
+    end
+    
+    subgraph "Execution Loop"
+        ExecutionStart[Begin Execution Loop] --> CheckStop{Should Stop?}
+        CheckStop -->|No| PlanCheck{Planning Needed?}
+        PlanCheck -->|Yes| PlanGeneration[Planner Analyzes & Creates Plan]
+        PlanCheck -->|No| SkipPlan[Skip Planning]
+        
+        PlanGeneration --> PlanDone{Task Done?}
+        SkipPlan --> Navigate[Navigator Executes Actions]
+        
+        PlanDone -->|No| Navigate
+        Navigate --> NavDone{Navigation Done?}
+        NavDone -->|No| CheckStop
+        NavDone -->|Yes| Validate[Validator Verifies Result]
+        
+        Validate --> IsValid{Is Valid?}
+        IsValid -->|Yes| TaskComplete[Task Complete]
+        IsValid -->|No| ValidatorFail[Mark Validation Failed]
+        ValidatorFail --> CheckStop
+        
+        CheckStop -->|Yes| CheckReason{Reason for Stop}
+    end
+    
+    subgraph "Event System"
+        Navigate -.->|Emits Events| EventSystem[Event Manager]
+        PlanGeneration -.->|Emits Events| EventSystem
+        Validate -.->|Emits Events| EventSystem
+        EventSystem -.->|Updates UI| SidePanel[Side Panel]
+    end
+    
+    subgraph "Completion States"
+        CheckReason -->|Max Steps| MaxSteps[Max Steps Reached]
+        CheckReason -->|User Cancel| Cancelled[Task Cancelled]
+        CheckReason -->|Max Failures| TooManyFailures[Too Many Failures]
+        CheckReason -->|Valid Result| Success[Task Successful]
+        
+        MaxSteps --> FinalEvent[Final Event Emission]
+        Cancelled --> FinalEvent
+        TooManyFailures --> FinalEvent
+        Success --> FinalEvent
+        TaskComplete --> Success
+    end
+    
+    FinalEvent --> Cleanup[Resource Cleanup]
+    Cleanup --> End[End Task Execution]
 ```
 
 ## Critical Implementation Paths
 
 ### 1. Task Execution Flow
-1. User inputs task in side panel
-2. Planner agent analyzes and decomposes task
-3. Navigator agent executes actions in sequence
-4. DOM is manipulated and content extracted
-5. Validator agent verifies task completion
-6. Results presented to user with follow-up capability
+1. **Task Reception**:
+   - User inputs task in side panel
+   - Task ID is generated and stored
+   - Executor is initialized with appropriate LLM models
+
+2. **Executor Setup**:
+   - MessageManager is initialized for agent communication
+   - EventManager is created for event handling
+   - AgentContext is established as shared environment
+   - Agent prompts are configured for each role
+   - Navigator action registry is populated with browser operations
+
+3. **Execution Loop**:
+   - System checks if execution should stop (paused, cancelled, etc.)
+   - On each Nth step (based on planningInterval) or after validation failure:
+     - Planner agent analyzes context and generates plan
+     - Plan may indicate task completion or next steps
+   - If task is not complete:
+     - Navigator executes appropriate browser actions
+     - Browser state is updated and recorded
+   - If Navigator indicates task completion:
+     - Validator agent verifies the result
+     - If invalid, planning restarts with validation insight
+     - If valid, task is marked complete
+
+4. **Completion Handling**:
+   - Success event emitted if task is validated as complete
+   - Failure event emitted if maximum steps or failures are reached
+   - Cancel event emitted if user manually stops execution
+   - All browser resources are cleaned up
+   - Results presented to user with follow-up capability
 
 ### 2. LLM Integration Path
-1. Agent requires LLM processing
-2. Provider configuration retrieved from storage
-3. Request formatted according to provider requirements
-4. API call made to appropriate endpoint
-5. Response processed and returned to agent
-6. Agent continues execution based on response
+1. **Model Configuration**:
+   - Provider and model configuration retrieved from storage
+   - Different models can be assigned to different agents:
+     - Navigator model for interactive browser operations
+     - Planner model for strategic planning
+     - Validator model for result verification
+     - Extractor model for content extraction
+
+2. **Agent Request Preparation**:
+   - Current context gathered including:
+     - Task description
+     - Current browser state (DOM, visual elements)
+     - Action history
+     - Previous agent outputs
+   - Context combined with agent-specific prompt template
+
+3. **LLM Request Processing**:
+   - Request formatted according to provider API requirements
+   - API call made with appropriate authentication
+   - Response received and parsed
+   - Error handling for authentication failures, rate limits, etc.
+
+4. **Result Interpretation**:
+   - Structured output parsed according to expected schema
+   - For Navigator: Action commands extracted and validated
+   - For Planner: Task decomposition and next steps identified
+   - For Validator: Completion validation results processed
 
 ### 3. Browser Automation Path
-1. Navigator agent determines required actions
-2. Commands formatted for content script execution
-3. Content script executes DOM manipulation
-4. Results and page state returned to navigator
-5. Navigator determines next action based on state
+1. **Action Selection**:
+   - Navigator agent determines required action (from 17 available operations)
+   - Action input is validated against expected schema
+   - Action intent is recorded for transparency
 
-This system architecture and these patterns provide the foundation for Nanobrowser's implementation, guiding development decisions and ensuring consistent design across the project.
+2. **Action Execution**:
+   - Appropriate browserContext method is called
+   - For element interaction:
+     - Elements are identified by numeric index
+     - Element properties are extracted from DOM state
+     - Appropriate Puppeteer calls are made to interact with elements
+   - For navigation:
+     - URLs are processed and validated
+     - Navigation is performed with timeout handling
+   - For content extraction:
+     - Page state is captured
+     - Content is processed according to extraction goals
+
+3. **Result Processing**:
+   - Action result is captured in standardized format
+   - Success/failure is determined and recorded
+   - Extracted content is preserved for context
+   - Event is emitted for user visibility
+
+4. **State Management**:
+   - Updated page state is captured after action
+   - New element indices are calculated for changed DOM
+   - Tab state is tracked for multi-tab operations
+   - Visual state is captured for vision-based operations
+
+5. **Error Handling**:
+   - Action-specific errors are caught and processed
+   - Retry mechanisms engaged for transient failures
+   - Consecutive failure count tracked against threshold
+   - Graceful degradation for unavailable elements
+
+### 4. Navigator Action System
+
+The Navigator agent can execute 17 distinct browser operations:
+
+```mermaid
+graph TD
+    subgraph "Navigation Actions"
+        go_to_url["go_to_url: Navigate to URL"]
+        search_google["search_google: Google search"]
+        go_back["go_back: Return to previous page"]
+        wait["wait: Pause execution"]
+    end
+    
+    subgraph "Element Interaction"
+        click_element["click_element: Click by index"]
+        input_text["input_text: Enter text in field"]
+        get_dropdown_options["get_dropdown_options: List options"]
+        select_dropdown_option["select_dropdown_option: Select from dropdown"]
+    end
+    
+    subgraph "Tab Management"
+        open_tab["open_tab: Open URL in new tab"]
+        switch_tab["switch_tab: Change active tab"]
+        close_tab["close_tab: Close tab by ID"]
+    end
+    
+    subgraph "Page Navigation"
+        scroll_down["scroll_down: Scroll page down"]
+        scroll_up["scroll_up: Scroll page up"] 
+        scroll_to_text["scroll_to_text: Find and scroll to text"]
+    end
+    
+    subgraph "Special Actions"
+        cache_content["cache_content: Store findings"]
+        send_keys["send_keys: Send keyboard input"]
+        done["done: Mark task complete"]
+    end
+    
+    Navigator["Navigator Agent"] --> Navigation["Select Action Based on Context"]
+    Navigation --> go_to_url & search_google & go_back & wait
+    Navigation --> click_element & input_text & get_dropdown_options & select_dropdown_option
+    Navigation --> open_tab & switch_tab & close_tab
+    Navigation --> scroll_down & scroll_up & scroll_to_text
+    Navigation --> cache_content & send_keys & done
+```
+
+This system architecture and these patterns provide the foundation for Nanobrowser's implementation, guiding development decisions and ensuring consistent design across the project. The detailed understanding of execution flow, agent communication, and browser automation capabilities enables effective development and troubleshooting.
