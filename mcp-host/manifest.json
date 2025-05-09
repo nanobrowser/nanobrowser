@@ -1,0 +1,7 @@
+{
+  "name": "nanobrowser.mcp.host",
+  "description": "Nanobrowser MCP Native Messaging Host",
+  "path": "HOST_PATH_PLACEHOLDER",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://EXTENSION_ID_PLACEHOLDER/"]
+}
