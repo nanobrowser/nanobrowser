@@ -25,32 +25,43 @@ Nanobrowser is an open-source AI web automation tool that runs directly in the b
    - Custom configuration for each agent
    - Option for local model deployment
 
+5. **MCP Integration**
+   - Expose browser capabilities to external AI systems via Model Context Protocol
+   - Implement browser state as MCP resources
+   - Implement browser operations as MCP tools
+   - Secure communication through Chrome Native Messaging
+
 ### Non-Functional Requirements
 1. **Privacy & Security**
    - Local browser execution (no cloud services)
    - Secure handling of user credentials
    - Protection of sensitive browsing data
+   - Secure Native Messaging communication
 
 2. **Performance**
    - Efficient browser automation
    - Responsive user interface
    - Effective resource management
+   - Optimized message passing for Native Messaging
 
 3. **Extensibility**
    - Open-source codebase
    - Plugin architecture for future extensions
    - Community contribution support
+   - MCP-based interoperability with external AI systems
 
 ## Project Goals
 1. Provide a free, open-source alternative to paid web automation tools
 2. Maintain user privacy by keeping all operations local
 3. Offer flexibility in LLM selection to balance performance and cost
-4. Build a community-driven project with active contribution
-5. Create an intuitive, accessible interface for AI web automation
+4. Enable integration with external AI systems through standardized protocols
+5. Build a community-driven project with active contribution
+6. Create an intuitive, accessible interface for AI web automation
 
 ## Target Audience
 - AI enthusiasts looking for powerful web automation
 - Developers seeking an open-source alternative to OpenAI Operator
+- AI developers looking to integrate browser capabilities into their systems
 - Users concerned about privacy in AI tools
 - Researchers exploring multi-agent systems
 - Productivity-focused users looking to automate repetitive web tasks
@@ -69,6 +80,8 @@ Nanobrowser is an open-source AI web automation tool that runs directly in the b
 - Support for major LLM providers
 - Web automation capabilities
 - User interface for agent interaction
+- MCP SEE service implementation via Native Messaging
+- Integration with external AI systems
 
 ### Out of Scope
 - Web scraping at massive scale

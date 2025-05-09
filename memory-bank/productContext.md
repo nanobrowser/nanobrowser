@@ -28,6 +28,7 @@ Nanobrowser was created to address several key needs in the AI web automation sp
 - **Demonstrates Multi-Agent Architecture**: Shows practical implementation of agent collaboration systems.
 - **Promotes Transparency**: Open-source nature allows for code inspection and security validation.
 - **Enables Community Collaboration**: Creates opportunity for shared development and improvement.
+- **Provides Standardized Browser Access**: Exposes browser capabilities through MCP for integration with external AI systems.
 
 ## How Nanobrowser Should Work
 
@@ -40,17 +41,26 @@ Nanobrowser functions through a collaborative multi-agent system:
    - Agents collaborate to complete the task while providing status updates
    - Results are presented in the side panel with option for follow-up questions
 
-2. **Agent System Architecture**:
+2. **External AI Integration Flow**:
+   - External AI system connects to Nanobrowser via MCP protocol
+   - Browser state is exposed as MCP resources (DOM, tabs, etc.)
+   - Browser operations are exposed as MCP tools
+   - External AI can browse and automate tasks while maintaining local privacy
+   - All communication happens via secure Chrome Native Messaging
+
+3. **Agent System Architecture**:
    - **Planner Agent**: Breaks down complex tasks into manageable steps
    - **Navigator Agent**: Executes browser actions and interprets web content
    - **Validator Agent**: Verifies task completion and results accuracy
+   - **MCP Server**: Provides standardized access to browser capabilities
 
-3. **Key Operational Principles**:
+4. **Key Operational Principles**:
    - All processing occurs locally in the browser
    - API keys are stored locally and never shared
    - LLM interactions are minimal and purposeful to reduce costs
    - Clear feedback on current status and progress
    - Transparency in agent actions and decision-making
+   - Secure communication with external systems via MCP
 
 ## User Experience Goals
 
@@ -86,5 +96,11 @@ Nanobrowser is designed to excel at:
    - Helping users understand complex websites
    - Answering questions about web content in context
    - Guiding users through unfamiliar web interfaces
+
+5. **AI System Integration**:
+   - Providing browser capabilities to external AI assistants
+   - Enabling specialized AI tools with web browsing abilities
+   - Supporting research on autonomous web agents
+   - Allowing agent coordination across different systems
 
 This document describes the fundamental why, what, and how of Nanobrowser, providing context for all product decisions and developments.

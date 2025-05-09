@@ -28,6 +28,7 @@ Nanobrowser is a functioning Chrome extension that provides AI web automation th
   - ✅ **Special Actions**: Keyboard input, content caching
 - ✅ **Task History**: Conversation history management
 - ✅ **Follow-up Questions**: Contextual follow-ups after task completion
+- ✅ **MCP Integration Plan**: Detailed implementation plan for MCP SEE service via Chrome Native Messaging
 
 ### Agent System Features
 - ✅ **Execution Loop**: Robust planning-execution-validation cycle
@@ -43,9 +44,23 @@ Nanobrowser is a functioning Chrome extension that provides AI web automation th
 - ✅ **Firefox Support**: Basic compatibility with Firefox browser
 - ✅ **Task Status Visibility**: Clear indication of execution state and outcomes
 
+### Integration Features
+- ✅ **MCP Documentation**: Detailed technical documentation for MCP SEE service implementation
+- ✅ **Native Messaging Architecture**: Defined communication architecture between extension and MCP host
+- ✅ **Resource Definition**: Mapped browser states to MCP resources
+- ✅ **Tool Definition**: Mapped browser operations to MCP tools
+
 ## What's Left to Build
 
 Based on our code analysis and project documentation, the following areas are identified for future development:
+
+### MCP Integration Development
+- 🔄 **Native Messaging Host Implementation**: Complete implementation of the planned Native Messaging Host
+- 🔄 **MCP Server Implementation**: Develop the MCP server using the MCP SDK
+- 🔄 **Browser Resource Handlers**: Implement handlers for exposing browser state as resources
+- 🔄 **Browser Tool Handlers**: Implement handlers for executing browser operations as tools
+- 🔄 **Extension Integration**: Connect extension to Native Messaging Host
+- 🔄 **Security Controls**: Implement security measures for Native Messaging communication
 
 ### Agent System Enhancements
 - 🔄 **Advanced Planning Strategies**: More sophisticated task decomposition algorithms
@@ -67,6 +82,7 @@ Based on our code analysis and project documentation, the following areas are id
 - 🔄 **Response Parsing**: Enhanced parsing of structured outputs from LLMs
 - 🔄 **Model-Specific Tuning**: Adjusting prompts based on model capabilities
 - 🔄 **Context Window Management**: Better handling of context limitations
+- 🔄 **MCP Client Support**: Integration with external AI systems via MCP
 
 ### System Improvements
 - 🔄 **Performance Optimizations**: Reduce latency and improve responsiveness
@@ -74,6 +90,7 @@ Based on our code analysis and project documentation, the following areas are id
 - 🔄 **Resource Utilization**: More efficient use of browser resources
 - 🔄 **Error Resilience**: Enhanced error detection and recovery mechanisms
 - 🔄 **Security Enhancements**: Improved handling of sensitive data and operations
+- 🔄 **Native Messaging Optimization**: Efficient buffer management and protocol handling
 
 ### User Experience Enhancements
 - 🔄 **Task Progress Visualization**: Better visualization of execution progress
@@ -81,6 +98,7 @@ Based on our code analysis and project documentation, the following areas are id
 - 🔄 **Configuration Wizards**: Simplified setup for new users
 - 🔄 **Workflow Templates**: Pre-configured scenarios for common use cases
 - 🔄 **Customizable Workflows**: User-defined sequences of actions
+- 🔄 **MCP Integration UI**: User interface for configuring and monitoring MCP connections
 
 ### Technical Infrastructure
 - 🔄 **Test Coverage**: Comprehensive automated testing suite
@@ -88,6 +106,7 @@ Based on our code analysis and project documentation, the following areas are id
 - 🔄 **Accessibility**: Enhanced support for assistive technologies
 - 🔄 **Internationalization**: Support for additional languages
 - 🔄 **Plugin System**: Extensibility for community-developed capabilities
+- 🔄 **Native Host Installation**: Automated installation and registration of Native Messaging Host
 
 ## Known Issues
 
@@ -115,11 +134,17 @@ Based on code analysis and architecture review, we've identified several current
 
 ### Current Architecture Decisions
 
+#### MCP Integration Strategy
+- **Decision**: Implement MCP SEE service using Chrome Native Messaging
+- **Rationale**: Provides secure local communication without network exposure while enabling standardized browser access for external AI systems
+- **Evolution**: Detailed architecture with message protocol, resource mapping, and tool definitions
+- **Future Consideration**: Potential for direct integration with high-performance browser automation libraries
+
 #### Multi-Agent System Design
 - **Decision**: Three specialized agents (Planner, Navigator, Validator) with clear responsibilities
 - **Rationale**: This approach provides clear separation of concerns and enables specialized prompting
 - **Evolution**: The system has evolved to include configurable planning intervals for token efficiency
-- **Future Consideration**: Potential for agent specialization based on specific task types
+- **Future Consideration**: Potential for agent specialization based on specific task types and integration with external specialized models via MCP
 
 #### Execution Flow Pattern
 - **Decision**: Iterative execution loop with periodic planning and validation checkpoints
@@ -131,7 +156,7 @@ Based on code analysis and architecture review, we've identified several current
 - **Decision**: Index-based element selection with action intent documentation
 - **Rationale**: Provides clear identification of interactive elements
 - **Evolution**: Enhanced with vision-based capabilities for complex scenarios
-- **Future Consideration**: Hybrid approaches combining indices with semantic understanding
+- **Future Consideration**: Hybrid approaches combining indices with semantic understanding and standardization through MCP tools
 
 #### Error Handling Strategy
 - **Decision**: Progressive failure thresholds with configurable limits

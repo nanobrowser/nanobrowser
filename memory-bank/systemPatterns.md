@@ -2,13 +2,14 @@
 
 ## System Architecture
 
-Nanobrowser follows a Chrome extension architecture with a multi-agent system design. The core architecture includes:
+Nanobrowser follows a Chrome extension architecture with a multi-agent system design and MCP integration. The core architecture includes:
 
 ### 1. Extension Structure
 - **Background Script**: Manages the core extension functionality and agent system
 - **Content Scripts**: Interact with web pages for DOM manipulation and extraction
 - **Side Panel**: Provides the user interface for interacting with the agent system
 - **Options Page**: Allows configuration of LLM providers and agent models
+- **Native Messaging Host**: Provides MCP services to external AI systems
 
 ### 2. Multi-Agent System
 The extension employs a collaborative multi-agent architecture:
@@ -29,11 +30,44 @@ graph TD
 - **Navigator Agent**: Executes browser interactions and interprets web content
 - **Validator Agent**: Verifies task completion and result accuracy
 
-### 3. Communication Flow
+### 3. MCP Integration System
+The MCP SEE (Surface Extension Environments) service architecture:
+
+```mermaid
+graph TD
+    A[Chrome Extension] ---> B[Native Messaging Interface]
+    B <---> C[Native Host Application]
+    C ---> D[MCP Server Implementation]
+    D ---> E1[Browser Resources]
+    D ---> E2[Browser Operation Tools]
+    
+    F[External AI Systems] ---> C
+    
+    subgraph "Chrome Browser"
+        A
+        B
+    end
+    
+    subgraph "Local Machine"
+        C
+        D
+        E1
+        E2
+    end
+```
+
+- **Chrome Extension**: Captures browser state and executes operations
+- **Native Messaging Host**: Provides communication channel and MCP server implementation
+- **MCP Server**: Exposes browser capabilities through standardized protocol
+- **External AI Systems**: Can access browser state and operations via MCP
+
+### 4. Communication Flow
 - **User → Extension**: Via the side panel interface
 - **Between Agents**: Through structured message passing
 - **Extension → Web Page**: Via content scripts and browser APIs
 - **Agent → LLM**: Through configured provider APIs
+- **Extension → Native Host**: Via Chrome Native Messaging protocol
+- **External AI → Browser**: Via MCP resources and tools
 
 ## Key Technical Decisions
 
@@ -108,9 +142,31 @@ graph TD
     SidePanel[Side Panel] --> |User Interface| Background
     OptionsPage[Options Page] --> |Configures| Storage[Storage]
     Background --> |Reads| Storage
+    Background --> |Connects to| NativeMessaging[Native Messaging Host]
+    NativeMessaging --> |Implements| McpServer[MCP Server]
 ```
 
-### 2. Package Dependencies
+### 2. MCP Components
+
+```mermaid
+graph TD
+    NativeHost[Native Messaging Host] --> |Contains| McpServer[MCP Server]
+    McpServer --> |Exposes| Resources[Browser Resources]
+    McpServer --> |Exposes| Tools[Browser Operation Tools]
+    
+    Resources --> CurrentState[Current Browser State]
+    Resources --> DomStructure[DOM Structure]
+    Resources --> TabsList[Tabs List]
+    
+    Tools --> Navigation[Navigation Tools]
+    Tools --> ElementInteraction[Element Interaction Tools]
+    Tools --> TabManagement[Tab Management Tools]
+    
+    NativeHost <--> |Communicates with| Extension[Chrome Extension]
+    NativeHost <--> |Serves| ExternalAI[External AI Systems]
+```
+
+### 3. Package Dependencies
 
 ```mermaid
 graph TD
@@ -120,6 +176,7 @@ graph TD
     UI --> TailwindConfig[Tailwind Config]
     Storage --> SchemaUtils[Schema Utils]
     ChromeExtension --> DevUtils[Dev Utils]
+    NativeHost[MCP Native Host] --> McpSdk[MCP SDK]
 ```
 
 ### 3. Agent Interaction Model
@@ -181,6 +238,42 @@ graph TD
 ```
 
 ## Critical Implementation Paths
+
+### 0. MCP Integration Path
+
+1. **Native Messaging Setup**:
+   - Native Host manifest registered with Chrome
+   - Chrome extension connects to Native Host
+   - Message protocol established for bidirectional communication
+
+2. **Browser State Capture**:
+   - Current browser state is monitored and captured
+   - DOM structure is serialized
+   - Tab information is tracked
+   - State is transmitted to Native Host
+
+3. **MCP Server Implementation**:
+   - Server instance created with MCP SDK
+   - Browser resources defined and registered
+   - Browser tools defined with schemas
+   - Resource and tool handlers implemented
+
+4. **Resource Exposure**:
+   - Browser state exposed as MCP resources
+   - DOM structure provided as structured resource
+   - Tab information exposed through standardized endpoints
+
+5. **Tool Implementation**:
+   - Browser operations mapped to MCP tools
+   - Tool requests validated against schemas
+   - Tool actions executed in browser context
+   - Results returned in standardized format
+
+6. **Error Handling**:
+   - Message protocol errors handled
+   - MCP request errors processed
+   - Browser action errors managed
+   - Results communicated back with appropriate status
 
 ### 1. Task Execution Flow
 1. **Task Reception**:
