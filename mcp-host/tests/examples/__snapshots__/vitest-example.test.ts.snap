@@ -1,0 +1,40 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`McpServer > should match snapshot for tool list 1`] = `
+{
+  "tools": [
+    {
+      "description": "Navigate to a specified URL",
+      "inputSchema": {
+        "properties": {
+          "url": {
+            "description": "The URL to navigate to",
+            "type": "string",
+          },
+        },
+        "required": [
+          "url",
+        ],
+        "type": "object",
+      },
+      "name": "navigate_to",
+    },
+    {
+      "description": "Click on a specified element",
+      "inputSchema": {
+        "properties": {
+          "selector": {
+            "description": "CSS selector of the element to click",
+            "type": "string",
+          },
+        },
+        "required": [
+          "selector",
+        ],
+        "type": "object",
+      },
+      "name": "click_element",
+    },
+  ],
+}
+`;

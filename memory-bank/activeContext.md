@@ -21,12 +21,28 @@ The Nanobrowser project is currently focused on extending its capabilities throu
 
 Recent exploration and development has resulted in significant advancements:
 
-1. **Chrome Native Messaging MCP Implementation**: Completed the implementation of MCP integration using Chrome Native Messaging, including:
+1. **MCP Host Vite Integration**: Implemented Vite build system for the MCP Host component, including:
+   - Configuration for Vite and Vitest
+   - Express app integration for development server
+   - Multiple entry points for different build targets
+   - Compatibility with existing TypeScript building
+   - Migration path from Jest to Vitest for testing
+   - Improved development workflow with hot module replacement
+
+2. **Chrome Native Messaging MCP Implementation**: Completed the implementation of MCP integration using Chrome Native Messaging, including:
    - Native Messaging Host with messaging protocol and MCP server
    - Browser resource handlers for exposing browser state
    - Browser tool handlers for executing browser operations
    - Chrome extension client with MCP client and service module
    - Background script integration to initialize MCP service
+   - Streamable HTTP protocol implementation for standard MCP communication
+
+2. **MCP Streamable HTTP Protocol Support**: Implemented standards-compliant MCP server using the Streamable HTTP protocol:
+   - Server-side implementation with session management
+   - Resource and tool exposure via HTTP endpoints
+   - Server-Sent Events (SSE) for notifications
+   - Full JSON-RPC compliance for requests and responses
+   - Support for both traditional native messaging and HTTP-based communication
 
 2. **Task Execution Flow**: Mapped the complete flow from user input to task completion, including the initialization, planning, navigation, and validation phases.
 
