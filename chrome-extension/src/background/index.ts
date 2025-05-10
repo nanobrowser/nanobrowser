@@ -7,6 +7,8 @@ import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
+import { memoryService } from './memory/service';
+import { sessionMemoryService } from './memory/session-service';
 
 const logger = createLogger('background');
 
@@ -152,6 +154,19 @@ chrome.runtime.onConnect.addListener(port => {
             const screenshot = await page.takeScreenshot();
             logger.info('screenshot', message.tabId, screenshot);
             return port.postMessage({ type: 'success', screenshot });
+          }
+
+          case 'memory': {
+            const currentMemory = memoryService.toString();
+            const sessionMemory = sessionMemoryService.toString();
+
+            // Combine both for a complete view
+            let memoryData = currentMemory;
+            if (sessionMemory !== 'No data in memory.' && sessionMemory !== currentMemory) {
+              memoryData += '\n\nPersistent Memory (survives task completion):\n' + sessionMemory;
+            }
+
+            return port.postMessage({ type: 'success', memory: memoryData });
           }
 
           case 'state': {

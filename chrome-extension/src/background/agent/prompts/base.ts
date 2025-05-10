@@ -1,4 +1,5 @@
 import { HumanMessage, type SystemMessage } from '@langchain/core/messages';
+import { memoryService } from '../../memory/service';
 import type { AgentContext } from '@src/background/agent/types';
 import { createLogger } from '@src/background/log';
 
@@ -75,6 +76,9 @@ abstract class BasePrompt {
       }
     }
 
+    // Get memory data to include in the prompt
+    const memoryData = memoryService.toString();
+
     const currentTab = `{id: ${browserState.tabId}, url: ${browserState.url}, title: ${browserState.title}}`;
     const otherTabs = browserState.tabs
       .filter(tab => tab.id !== browserState.tabId)
@@ -83,6 +87,8 @@ abstract class BasePrompt {
 [Task history memory ends]
 [Current state starts here]
 The following is one-time information - if you need to remember it write it to memory:
+${memoryData}
+
 Current tab: ${currentTab}
 Other available tabs:
   ${otherTabs.join('\n')}

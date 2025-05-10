@@ -13,6 +13,8 @@ import { ActionBuilder } from './actions/builder';
 import { EventManager } from './event/manager';
 import { Actors, type EventCallback, EventType, ExecutionState } from './event/types';
 import { ChatModelAuthError, ChatModelForbiddenError } from './agents/errors';
+import { memoryService } from '../memory/service';
+import { sessionMemoryService } from '../memory/session-service';
 const logger = createLogger('Executor');
 
 export interface ExecutorExtraArgs {
@@ -82,6 +84,11 @@ export class Executor {
     this.context = context;
     // Initialize message history
     this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), task);
+
+    // Initialize memory service with the task ID
+    memoryService.initialize(taskId);
+    // Also initialize session memory
+    sessionMemoryService.setTaskContext(taskId);
   }
 
   subscribeExecutionEvents(callback: EventCallback): void {
@@ -189,6 +196,7 @@ export class Executor {
 
       if (done) {
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, this.context.taskId);
+        logger.info(`Task memory: ${memoryService.toString()}`);
       } else if (step >= allowedMaxSteps) {
         logger.info('❌ Task failed: Max steps reached');
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, 'Task failed: Max steps reached');
@@ -273,6 +281,8 @@ export class Executor {
   async cleanup(): Promise<void> {
     try {
       await this.context.browserContext.cleanup();
+      memoryService.clear();
+      logger.info(`Session memory after task: ${sessionMemoryService.toString(this.context.taskId)}`);
     } catch (error) {
       logger.error(`Failed to cleanup browser context: ${error}`);
     }

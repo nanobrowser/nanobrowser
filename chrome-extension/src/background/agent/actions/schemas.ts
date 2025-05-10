@@ -175,3 +175,5 @@ export const waitActionSchema: ActionSchema = {
     seconds: z.number().nullable().optional(),
   }),
 };
+
+// Memory schemas will be dynamically added from memory/actions.ts
