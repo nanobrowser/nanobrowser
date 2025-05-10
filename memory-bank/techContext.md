@@ -17,6 +17,8 @@
 - **ESBuild**: JavaScript bundler used by Vite for high-performance builds
 
 ### Testing & Quality
+- **Vitest**: Modern, Vite-native testing framework for unit and integration tests
+- **Jest**: Traditional testing framework (being migrated to Vitest)
 - **ESLint**: JavaScript and TypeScript linting
 - **Prettier**: Code formatting
 - **Husky**: Git hooks for pre-commit validation

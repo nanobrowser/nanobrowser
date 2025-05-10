@@ -130,6 +130,12 @@ Implemented for LLM provider integration:
 - Unified interface for different LLM APIs
 - Translation between provider-specific responses and internal formats
 
+### 6. Test Compatibility Pattern
+Applied to testing framework migration:
+- Compatibility layer between Jest and Vitest APIs
+- Single process execution for specific integration tests
+- Strategic test skipping with documentation for challenging tests
+
 ## Component Relationships
 
 ### 1. Extension Components

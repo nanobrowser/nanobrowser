@@ -7,6 +7,17 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup.ts'],
+    // Run integration tests in a single process to avoid serialization issues
+    // with complex objects like axios instances
+    pool: process.env.TEST_POOL || 'forks',
+    poolOptions: {
+      threads: {
+        singleThread: process.env.TEST_TYPE === 'integration',
+      },
+      forks: {
+        singleFork: process.env.TEST_TYPE === 'integration',
+      },
+    },
     deps: {
       // Disable module dependency tracking so Jest imports can work
       interopDefault: true,
