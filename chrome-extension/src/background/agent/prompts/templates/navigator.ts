@@ -73,9 +73,17 @@ Common action sequences:
 
 - If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
 
-8. Long tasks:
+8. Long tasks and Memory Management:
 
 - Keep track of the status and subresults in the memory.
+- Use memory actions to store and retrieve information across steps:
+  * set_memory: Store a value in persistent memory (e.g., set_memory with key="posts_seen" and value=5)
+  * get_memory: Retrieve a value from memory (e.g., get_memory with key="posts_seen")
+  * increment_counter: Increment a numeric counter in memory (e.g., increment_counter with key="posts_seen")
+  * get_all_memory: Get all data stored in memory
+
+- Memory is preserved even after task completion. You can access previous task memory by using get_memory with the appropriate key.
+- For counting tasks (like "browse 50 posts"), always use the memory system to accurately track progress.
 - You are provided with procedural memory summaries that condense previous task history (every N steps). Use these summaries to maintain context about completed actions, current progress, and next steps. The summaries appear in chronological order and contain key information about navigation history, findings, errors encountered, and current state. Refer to these summaries to avoid repeating actions and to ensure consistent progress toward the task goal.
 
 9. Extraction:

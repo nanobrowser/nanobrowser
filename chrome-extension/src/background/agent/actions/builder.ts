@@ -1,4 +1,5 @@
 import { ActionResult, type AgentContext } from '@src/background/agent/types';
+import { createMemoryActions } from '@src/background/memory/simple-actions';
 import {
   clickElementActionSchema,
   doneActionSchema,
@@ -538,6 +539,13 @@ export class ActionBuilder {
       true,
     );
     actions.push(selectDropdownOption);
+
+    // Memory actions
+    const { setMemoryAction, getMemoryAction, incrementCounterAction, getAllMemoryAction } = createMemoryActions();
+    actions.push(setMemoryAction);
+    actions.push(getMemoryAction);
+    actions.push(incrementCounterAction);
+    actions.push(getAllMemoryAction);
 
     return actions;
   }
