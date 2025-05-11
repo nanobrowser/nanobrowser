@@ -21,7 +21,17 @@ The Nanobrowser project is currently focused on extending its capabilities throu
 
 Recent exploration and development has resulted in significant advancements:
 
-1. **MCP Host Vite Integration**: Implemented Vite build system for the MCP Host component, including:
+1. **Improved MCP SEE Service Documentation**: Completely restructured and enhanced the MCP SEE service documentation in `docs/chrome-mcp-host.md`:
+   - Added comprehensive introductory sections with clear explanations of key concepts
+   - Standardized terminology throughout the document (consistently using "MCP 服务器" instead of mixed terminology)
+   - Improved section organization with logical flow and consistent formatting
+   - Enhanced code examples with explanatory comments for easier understanding
+   - Refined diagrams and visual representations of the architecture
+   - Added detailed API reference for MCP resources and tools
+   - Improved deployment instructions with platform-specific steps
+   - Enhanced security considerations section with clear mitigation strategies
+
+2. **MCP Host Vite Integration**: Implemented Vite build system for the MCP Host component, including:
    - Configuration for Vite and Vitest
    - Express app integration for development server
    - Multiple entry points for different build targets
@@ -37,7 +47,7 @@ The Jest to Vitest migration is now complete, with proper handling of test-speci
    - Maintained backward compatibility with Jest for comparison testing
    - Documented issues and potential solutions for HTTP MCP server tests
 
-2. **Chrome Native Messaging MCP Implementation**: Completed the implementation of MCP integration using Chrome Native Messaging, including:
+3. **Chrome Native Messaging MCP Implementation**: Completed the implementation of MCP integration using Chrome Native Messaging, including:
    - Native Messaging Host with messaging protocol and MCP server
    - Browser resource handlers for exposing browser state
    - Browser tool handlers for executing browser operations
@@ -45,18 +55,18 @@ The Jest to Vitest migration is now complete, with proper handling of test-speci
    - Background script integration to initialize MCP service
    - Streamable HTTP protocol implementation for standard MCP communication
 
-2. **MCP Streamable HTTP Protocol Support**: Implemented standards-compliant MCP server using the Streamable HTTP protocol:
+4. **MCP Streamable HTTP Protocol Support**: Implemented standards-compliant MCP server using the Streamable HTTP protocol:
    - Server-side implementation with session management
    - Resource and tool exposure via HTTP endpoints
    - Server-Sent Events (SSE) for notifications
    - Full JSON-RPC compliance for requests and responses
    - Support for both traditional native messaging and HTTP-based communication
 
-2. **Task Execution Flow**: Mapped the complete flow from user input to task completion, including the initialization, planning, navigation, and validation phases.
+5. **Task Execution Flow**: Mapped the complete flow from user input to task completion, including the initialization, planning, navigation, and validation phases.
 
-3. **Agent Interactions**: Identified the precise communication patterns and responsibility handoffs between Planner, Navigator, and Validator agents.
+6. **Agent Interactions**: Identified the precise communication patterns and responsibility handoffs between Planner, Navigator, and Validator agents.
 
-4. **Browser Automation**: Cataloged the 17 distinct operations the Navigator agent can perform to interact with web pages, including element manipulation, navigation, scrolling, and form interaction.
+7. **Browser Automation**: Cataloged the 17 distinct operations the Navigator agent can perform to interact with web pages, including element manipulation, navigation, scrolling, and form interaction.
 
 ## Next Steps
 
