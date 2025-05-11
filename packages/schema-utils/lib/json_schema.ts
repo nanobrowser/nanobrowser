@@ -202,6 +202,50 @@ export const jsonNavigatorOutputSchema = {
           description:
             'Select dropdown option for interactive element index by the text of the option you want to select',
         },
+        set_memory: {
+          anyOf: [
+            {
+              $ref: '#/$defs/set_memory_parameters',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: 'Store a value in memory that persists across agent steps',
+        },
+        get_memory: {
+          anyOf: [
+            {
+              $ref: '#/$defs/get_memory_parameters',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: 'Retrieve a value from memory',
+        },
+        increment_counter: {
+          anyOf: [
+            {
+              $ref: '#/$defs/increment_counter_parameters',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: 'Increment a numeric counter in memory, perfect for tracking counts of items processed',
+        },
+        get_all_memory: {
+          anyOf: [
+            {
+              $ref: '#/$defs/get_all_memory_parameters',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: 'Get all data stored in memory',
+        },
       },
       title: 'ActionModel',
       type: 'object',
@@ -513,6 +557,78 @@ export const jsonNavigatorOutputSchema = {
       },
       required: ['intent', 'seconds'],
       title: 'WaitAction',
+      type: 'object',
+    },
+    set_memory_parameters: {
+      properties: {
+        intent: {
+          title: 'Intent',
+          type: 'string',
+          description: 'Optional description of why this memory is being set',
+        },
+        key: {
+          title: 'Key',
+          type: 'string',
+          description: 'The key under which to store the value',
+        },
+        value: {
+          title: 'Value',
+          description: 'The value to store in memory',
+        },
+      },
+      required: ['key', 'value'],
+      title: 'set_memory_parameters',
+      type: 'object',
+    },
+    get_memory_parameters: {
+      properties: {
+        intent: {
+          title: 'Intent',
+          type: 'string',
+          description: 'Optional description of why this memory is being accessed',
+        },
+        key: {
+          title: 'Key',
+          type: 'string',
+          description: 'The key to retrieve from memory',
+        },
+      },
+      required: ['key'],
+      title: 'get_memory_parameters',
+      type: 'object',
+    },
+    increment_counter_parameters: {
+      properties: {
+        intent: {
+          title: 'Intent',
+          type: 'string',
+          description: 'Optional description of why this counter is being incremented',
+        },
+        key: {
+          title: 'Key',
+          type: 'string',
+          description: 'The counter key to increment',
+        },
+        increment: {
+          title: 'Increment',
+          type: 'integer',
+          description: 'Amount to increment by (default: 1)',
+          nullable: true,
+        },
+      },
+      required: ['key'],
+      title: 'increment_counter_parameters',
+      type: 'object',
+    },
+    get_all_memory_parameters: {
+      properties: {
+        intent: {
+          title: 'Intent',
+          type: 'string',
+          description: 'Optional description of why all memory is being retrieved',
+        },
+      },
+      title: 'get_all_memory_parameters',
       type: 'object',
     },
   },

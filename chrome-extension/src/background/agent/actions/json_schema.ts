@@ -350,6 +350,86 @@ export const jsonNavigatorOutputSchema = {
             type: 'object',
             nullable: true,
           },
+          set_memory: {
+            description: 'Store a value in memory that persists across agent steps',
+            properties: {
+              intent: {
+                title: 'Intent',
+                type: 'string',
+                description: 'Optional description of why this memory is being set',
+              },
+              key: {
+                title: 'Key',
+                type: 'string',
+                description: 'The key under which to store the value',
+              },
+              value: {
+                title: 'Value',
+                description: 'The value to store in memory',
+              },
+            },
+            required: ['key', 'value'],
+            title: 'set_memory_parameters',
+            type: 'object',
+            nullable: true,
+          },
+          get_memory: {
+            description: 'Retrieve a value from memory',
+            properties: {
+              intent: {
+                title: 'Intent',
+                type: 'string',
+                description: 'Optional description of why this memory is being accessed',
+              },
+              key: {
+                title: 'Key',
+                type: 'string',
+                description: 'The key to retrieve from memory',
+              },
+            },
+            required: ['key'],
+            title: 'get_memory_parameters',
+            type: 'object',
+            nullable: true,
+          },
+          increment_counter: {
+            description: 'Increment a numeric counter in memory, perfect for tracking counts of items processed',
+            properties: {
+              intent: {
+                title: 'Intent',
+                type: 'string',
+                description: 'Optional description of why this counter is being incremented',
+              },
+              key: {
+                title: 'Key',
+                type: 'string',
+                description: 'The counter key to increment',
+              },
+              increment: {
+                title: 'Increment',
+                type: 'integer',
+                description: 'Amount to increment by (default: 1)',
+                nullable: true,
+              },
+            },
+            required: ['key'],
+            title: 'increment_counter_parameters',
+            type: 'object',
+            nullable: true,
+          },
+          get_all_memory: {
+            description: 'Get all data stored in memory',
+            properties: {
+              intent: {
+                title: 'Intent',
+                type: 'string',
+                description: 'Optional description of why all memory is being retrieved',
+              },
+            },
+            title: 'get_all_memory_parameters',
+            type: 'object',
+            nullable: true,
+          },
         },
         title: 'ActionModel',
         type: 'object',

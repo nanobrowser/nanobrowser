@@ -293,6 +293,73 @@ export const geminiNavigatorOutputSchema = {
             },
             required: ['intent', 'index', 'text'],
           },
+          set_memory: {
+            type: 'object',
+            description: 'Store a value in memory that persists across agent steps',
+            nullable: true,
+            properties: {
+              intent: {
+                type: 'string',
+                description: 'Optional description of why this memory is being set',
+              },
+              key: {
+                type: 'string',
+                description: 'The key under which to store the value',
+              },
+              value: {
+                description: 'The value to store in memory',
+              },
+            },
+            required: ['key', 'value'],
+          },
+          get_memory: {
+            type: 'object',
+            description: 'Retrieve a value from memory',
+            nullable: true,
+            properties: {
+              intent: {
+                type: 'string',
+                description: 'Optional description of why this memory is being accessed',
+              },
+              key: {
+                type: 'string',
+                description: 'The key to retrieve from memory',
+              },
+            },
+            required: ['key'],
+          },
+          increment_counter: {
+            type: 'object',
+            description: 'Increment a numeric counter in memory, perfect for tracking counts of items processed',
+            nullable: true,
+            properties: {
+              intent: {
+                type: 'string',
+                description: 'Optional description of why this counter is being incremented',
+              },
+              key: {
+                type: 'string',
+                description: 'The counter key to increment',
+              },
+              increment: {
+                type: 'integer',
+                description: 'Amount to increment by (default: 1)',
+                nullable: true,
+              },
+            },
+            required: ['key'],
+          },
+          get_all_memory: {
+            type: 'object',
+            description: 'Get all data stored in memory',
+            nullable: true,
+            properties: {
+              intent: {
+                type: 'string',
+                description: 'Optional description of why all memory is being retrieved',
+              },
+            },
+          },
         },
       },
     },

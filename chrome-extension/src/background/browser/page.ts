@@ -606,7 +606,14 @@ export default class Page {
             // Check if element is visible
             const isVisible = await element.evaluate(el => {
               const style = window.getComputedStyle(el);
-              return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+
+              // Check if element has visible styling
+              const hasVisibleStyle =
+                style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+
+              const rect = el.getBoundingClientRect();
+
+              return hasVisibleStyle && rect.width > 0 && rect.height > 0;
             });
 
             if (isVisible) {
