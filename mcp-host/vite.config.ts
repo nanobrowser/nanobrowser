@@ -27,7 +27,6 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(srcDir, 'index.ts'),
-        server: resolve(srcDir, 'server.ts'),
       },
       formats: ['cjs'],
       fileName: (format, entryName) => `${entryName}.js`,
