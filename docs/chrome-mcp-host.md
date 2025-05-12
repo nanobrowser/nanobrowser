@@ -254,79 +254,172 @@ nanobrowser-mcp-host/
 
 #### 4.1.2 核心模块实现 (Core Modules)
 
-##### HTTP 服务器 (`http-mcp-server.ts`)
+##### HTTP MCP 服务器 (`http-mcp-server.ts`)
 
-实现外部 MCP SEE API 接口：
+实现标准的 MCP Streamable HTTP 传输协议：
 
 ```typescript
 // 简化示例代码
 import express from 'express';
-import { McpServiceLogic } from './mcp-service';
+import { randomUUID } from 'node:crypto';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
-export function createHttpMcpServer(mcpLogic: McpServiceLogic, messageBridge: any) {
+export function createHttpMcpServer() {
   const app = express();
+  app.use(express.json());
   
-  // 资源访问端点
-  app.get('/mcp/resource/:uri(*)', async (req, res) => {
-    try {
-      const resourceUri = req.params.uri;
-      const result = await mcpLogic.getResource(resourceUri);
-      res.json({ result });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+  // 存储会话 ID 到传输实例的映射
+  const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
+  
+  // 处理 POST 请求 (客户端到服务器通信)
+  app.post('/mcp', async (req, res) => {
+    // 检查现有会话 ID
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    let transport: StreamableHTTPServerTransport;
+    
+    if (sessionId && transports[sessionId]) {
+      // 重用现有传输
+      transport = transports[sessionId];
+    } else if (!sessionId && isInitializeRequest(req.body)) {
+      // 新的初始化请求
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (sessionId) => {
+          // 存储传输实例和会话 ID 的映射
+          transports[sessionId] = transport;
+        }
+      });
+      
+      // 当传输关闭时清理资源
+      transport.onclose = () => {
+        if (transport.sessionId) {
+          delete transports[transport.sessionId];
+        }
+      };
+      
+      // 创建 MCP 服务器实例
+      const server = new McpServer({
+        name: "nanobrowser-mcp",
+        version: "1.0.0"
+      });
+      
+      // 注册浏览器资源和工具
+      registerBrowserResources(server);
+      registerBrowserTools(server);
+      
+      // 连接到传输层
+      await server.connect(transport);
+    } else {
+      // 无效请求
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: '错误请求: 未提供有效的会话 ID',
+        },
+        id: null,
+      });
+      return;
     }
+    
+    // 处理请求
+    await transport.handleRequest(req, res, req.body);
   });
-
-  // 工具调用端点
-  app.post('/mcp/call', express.json(), async (req, res) => {
-    try {
-      const { toolName, arguments: args } = req.body;
-      const result = await mcpLogic.callTool(toolName, args);
-      res.json({ result });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+  
+  // 通用处理程序 (GET 和 DELETE)
+  const handleSessionRequest = async (req: express.Request, res: express.Response) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    if (!sessionId || !transports[sessionId]) {
+      res.status(400).send('无效或缺失的会话 ID');
+      return;
     }
-  });
-
+    
+    const transport = transports[sessionId];
+    await transport.handleRequest(req, res);
+  };
+  
+  // 处理 GET 请求 (服务器到客户端通知, 使用 SSE)
+  app.get('/mcp', handleSessionRequest);
+  
+  // 处理 DELETE 请求 (会话终止)
+  app.delete('/mcp', handleSessionRequest);
+  
   return app;
+}
+
+// 注册浏览器资源函数
+function registerBrowserResources(server: McpServer) {
+  // 资源注册代码...
+}
+
+// 注册浏览器工具函数
+function registerBrowserTools(server: McpServer) {
+  // 工具注册代码...
 }
 ```
 
 ##### 消息处理 (`messaging.ts`)
 
-负责与浏览器扩展的底层通信：
+负责与浏览器扩展的底层通信，使用 MCP SDK 的 StdioServerTransport：
 
 ```typescript
 // 简化示例代码
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { registerBrowserResources } from './browser-resources';
+import { registerBrowserTools } from './browser-tools';
+
 export class NativeMessagingBridge {
-  constructor(private mcpLogic: any) {}
-
-  startListening() {
-    process.stdin.on('readable', () => {
-      const chunk = process.stdin.read();
-      if (chunk) {
-        this.handleMessage(this.parseMessage(chunk));
-      }
+  private stdioTransport: StdioServerTransport;
+  private mcpServer: McpServer;
+  
+  constructor() {
+    // 创建 MCP 服务器实例
+    this.mcpServer = new McpServer({
+      name: "nanobrowser-mcp",
+      version: "1.0.0"
     });
+    
+    // 创建 stdio 传输层
+    this.stdioTransport = new StdioServerTransport();
+    
+    // 注册浏览器资源和工具
+    registerBrowserResources(this.mcpServer, this);
+    registerBrowserTools(this.mcpServer, this);
   }
-
-  private parseMessage(buffer: Buffer) {
-    // 解析长度前缀的 JSON 消息
-    const length = buffer.readUInt32LE(0);
-    const messageBuffer = buffer.slice(4, 4 + length);
-    return JSON.parse(messageBuffer.toString());
+  
+  // 与扩展通信的方法
+  async requestBrowserState() {
+    // 向扩展请求浏览器状态
+    // 实际实现...
+    return {};
   }
-
-  sendMessage(message: any) {
-    // 添加长度前缀并发送消息
-    const messageJson = JSON.stringify(message);
-    const messageBuffer = Buffer.from(messageJson);
-    const length = Buffer.alloc(4);
-    length.writeUInt32LE(messageBuffer.length, 0);
-    process.stdout.write(Buffer.concat([length, messageBuffer]));
+  
+  async requestTabDom(tabId: number) {
+    // 向扩展请求标签页 DOM
+    // 实际实现...
+    return "";
   }
-
-  // 其他方法...
+  
+  async requestAllTabs() {
+    // 向扩展请求所有标签页信息
+    // 实际实现...
+    return [];
+  }
+  
+  async executeCommand(command: string, params: any) {
+    // 向扩展发送命令
+    // 实际实现...
+    return { success: true };
+  }
+  
+  async start() {
+    // 连接 MCP 服务器到 stdio 传输层
+    await this.mcpServer.connect(this.stdioTransport);
+    console.error('Native Messaging bridge started using StdioServerTransport');
+  }
 }
 ```
 
@@ -370,38 +463,88 @@ export class McpServiceLogic {
 
 #### 4.1.3 启动流程 (Startup Process)
 
-主入口 (`index.ts`) 实现系统的启动和生命周期管理：
+主入口 (`index.ts`) 实现系统的启动和生命周期管理，支持两种运行模式：
+
+1. **仅 Native Messaging 模式** - 使用标准输入/输出通信，适用于 Chrome 扩展连接
+2. **HTTP + Native Messaging 模式** - 同时提供 HTTP 服务器和标准输入/输出通信
 
 ```typescript
 // 简化示例代码
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createHttpMcpServer } from './http-mcp-server';
 import { NativeMessagingBridge } from './messaging';
-import { McpServiceLogic } from './mcp-service';
 
-// 1. 初始化核心服务逻辑
-const mcpLogic = new McpServiceLogic();
+async function main() {
+  try {
+    // 检查启动模式
+    const runMode = process.env.RUN_MODE || 'stdio';
+    
+    if (runMode === 'stdio') {
+      // 仅 Native Messaging 模式 - 使用 MCP SDK 的 StdioServerTransport
+      console.error('Starting in Native Messaging only mode...');
+      
+      // 创建 MCP 服务器
+      const server = new McpServer({
+        name: "nanobrowser-mcp",
+        version: "1.0.0"
+      });
+      
+      // 创建 stdio 传输层
+      const stdioTransport = new StdioServerTransport();
+      
+      // 注册资源和工具处理程序
+      registerBrowserResources(server);
+      registerBrowserTools(server);
+      
+      // 连接服务器到 stdio 传输层
+      await server.connect(stdioTransport);
+      console.error('MCP server connected to StdioServerTransport');
+      
+    } else if (runMode === 'http+stdio') {
+      // HTTP + Native Messaging 模式
+      console.error('Starting in HTTP + Native Messaging mode...');
+      
+      // 初始化通信桥接器
+      const nativeBridge = new NativeMessagingBridge();
+      await nativeBridge.start();
+      
+      // 创建 HTTP 服务器
+      const httpServer = createHttpMcpServer();
+      
+      // 启动 HTTP 服务器
+      const PORT = process.env.PORT || 3000;
+      httpServer.listen(PORT, '127.0.0.1', () => {
+        console.error(`MCP SEE Server listening on http://localhost:${PORT}`);
+      });
+    } else {
+      console.error(`Unknown run mode: ${runMode}`);
+      process.exit(1);
+    }
+    
+    // 优雅退出处理
+    process.on('SIGINT', () => {
+      console.error('Shutting down...');
+      process.exit(0);
+    });
+    
+  } catch (error) {
+    console.error('Error during startup:', error);
+    process.exit(1);
+  }
+}
 
-// 2. 初始化通信桥接器
-const nativeBridge = new NativeMessagingBridge(mcpLogic);
-
-// 3. 创建 HTTP 服务器
-const httpServer = createHttpMcpServer(mcpLogic, nativeBridge);
-
-// 4. 启动服务
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, '127.0.0.1', () => {
-  console.log(`MCP SEE Server listening on http://localhost:${PORT}`);
-  // 5. 启动 Native Messaging 通信
-  nativeBridge.startListening();
-  console.error('Native Messaging bridge started');
-});
-
-// 6. 优雅退出处理
-process.on('SIGINT', () => {
-  console.log('Shutting down...');
-  process.exit(0);
+// 启动应用
+main().catch(error => {
+  console.error('Fatal error:', error);
+  process.exit(1);
 });
 ```
+
+这种设计提供了更大的灵活性，可以根据不同的需求场景选择运行模式：
+
+- **仅 Native Messaging 模式** - 适合作为 Chrome 扩展的 Native Messaging Host，与浏览器直接通信
+- **HTTP + Native Messaging 模式** - 适合同时需要支持浏览器扩展和外部 AI 系统的场景，提供双重接口
 
 ### 4.2 Chrome 扩展实现 (Chrome Extension Implementation)
 
@@ -440,44 +583,153 @@ process.on('SIGINT', () => {
 
 ```javascript
 // 简化示例代码
-// 1. 连接到 Native Messaging Host
-const port = chrome.runtime.connectNative('nanobrowser.mcp.host');
+// 全局状态
+let mcpHostStatus = {
+  isConnected: false,
+  startTime: null,
+  lastHeartbeat: null,
+  version: null,
+  runMode: null
+};
 
-// 2. 处理来自 MCP 服务器的消息
-port.onMessage.addListener(async (message) => {
-  console.log('Received message from MCP server:', message);
-  
+// 1. 连接到 Native Messaging Host
+let port;
+
+function connectToMcpHost() {
   try {
-    const { command, params } = message;
-    let result;
+    port = chrome.runtime.connectNative('nanobrowser.mcp.host');
     
-    // 3. 根据命令类型执行相应操作
-    switch (command) {
-      case 'navigate':
-        result = await handleNavigate(params.url, params.tabId);
-        break;
-      case 'click':
-        result = await handleClick(params.selector, params.tabId);
-        break;
-      case 'getDom':
-        result = await handleGetDom(params.tabId);
-        break;
-      // 更多命令处理...
-      default:
-        throw new Error(`Unknown command: ${command}`);
-    }
-    
-    // 4. 发送结果回 MCP 服务器
-    port.postMessage({
-      id: message.id,
-      result
+    // 2. 处理来自 MCP 服务器的消息
+    port.onMessage.addListener(async (message) => {
+      console.log('Received message from MCP server:', message);
+      
+      // 更新 MCP Host 状态
+      if (message.type === 'status') {
+        mcpHostStatus = {
+          ...mcpHostStatus,
+          ...message.data,
+          lastHeartbeat: Date.now()
+        };
+        // 广播状态更新事件
+        chrome.runtime.sendMessage({ 
+          type: 'mcpHostStatusUpdate', 
+          status: mcpHostStatus 
+        });
+        return;
+      }
+      
+      try {
+        const { command, params } = message;
+        let result;
+        
+        // 3. 根据命令类型执行相应操作
+        switch (command) {
+          case 'navigate':
+            result = await handleNavigate(params.url, params.tabId);
+            break;
+          case 'click':
+            result = await handleClick(params.selector, params.tabId);
+            break;
+          case 'getDom':
+            result = await handleGetDom(params.tabId);
+            break;
+          // 更多命令处理...
+          default:
+            throw new Error(`Unknown command: ${command}`);
+        }
+        
+        // 4. 发送结果回 MCP 服务器
+        port.postMessage({
+          id: message.id,
+          result
+        });
+      } catch (error) {
+        // 5. 错误处理
+        port.postMessage({
+          id: message.id,
+          error: error.message
+        });
+      }
     });
+    
+    // 处理连接断开
+    port.onDisconnect.addListener((p) => {
+      const error = chrome.runtime.lastError;
+      console.log('MCP host disconnected:', error ? error.message : 'No error');
+      
+      mcpHostStatus.isConnected = false;
+      mcpHostStatus.lastHeartbeat = null;
+      
+      // 广播断开连接事件
+      chrome.runtime.sendMessage({ 
+        type: 'mcpHostStatusUpdate', 
+        status: mcpHostStatus 
+      });
+      
+      port = null;
+    });
+    
+    // 连接成功，更新状态
+    mcpHostStatus.isConnected = true;
+    mcpHostStatus.startTime = Date.now();
+    
+    // 发送初始化请求，获取 MCP Host 详细状态
+    port.postMessage({
+      type: 'getStatus'
+    });
+    
+    return true;
   } catch (error) {
-    // 5. 错误处理
-    port.postMessage({
-      id: message.id,
-      error: error.message
+    console.error('Failed to connect to MCP host:', error);
+    return false;
+  }
+}
+
+// 初始化连接
+connectToMcpHost();
+
+// 提供启动/停止 MCP Host 的接口
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'getMcpHostStatus') {
+    sendResponse(mcpHostStatus);
+  } else if (message.type === 'startMcpHost') {
+    // 启动 MCP Host 进程
+    chrome.runtime.sendNativeMessage('nanobrowser.mcp.host.launcher', {
+      action: 'start',
+      options: message.options || {}
+    }, (response) => {
+      if (response && response.success) {
+        // 延迟后尝试连接
+        setTimeout(() => {
+          const connected = connectToMcpHost();
+          sendResponse({ success: connected });
+        }, 1000);
+      } else {
+        sendResponse({ success: false, error: response ? response.error : 'Unknown error' });
+      }
     });
+    return true; // 异步响应
+  } else if (message.type === 'stopMcpHost') {
+    // 停止 MCP Host 进程
+    if (port) {
+      // 优雅关闭: 先通知 MCP Host 准备关闭
+      port.postMessage({ type: 'shutdown' });
+      
+      // 然后通过启动器停止进程
+      chrome.runtime.sendNativeMessage('nanobrowser.mcp.host.launcher', {
+        action: 'stop'
+      }, (response) => {
+        sendResponse({ success: response && response.success });
+      });
+    } else {
+      // 直接通过启动器停止
+      chrome.runtime.sendNativeMessage('nanobrowser.mcp.host.launcher', {
+        action: 'stop'
+      }, (response) => {
+        sendResponse({ success: response && response.success });
+      });
+    }
+    return true; // 异步响应
   }
 });
 
@@ -507,75 +759,347 @@ async function handleClick(selector, tabId) {
 }
 
 // 更多操作处理函数...
+
+// 定期发送心跳检测 MCP Host 状态
+setInterval(() => {
+  if (port) {
+    try {
+      port.postMessage({ type: 'ping' });
+    } catch (e) {
+      console.log('Failed to send ping:', e);
+      // 连接可能已断开，尝试重连
+      if (mcpHostStatus.isConnected) {
+        mcpHostStatus.isConnected = false;
+        chrome.runtime.sendMessage({ 
+          type: 'mcpHostStatusUpdate', 
+          status: mcpHostStatus 
+        });
+      }
+    }
+  }
+}, 5000); // 每 5 秒检测一次
+```
+
+##### MCP 主机状态监控与控制界面 (`popup.js` 和 `popup.html`)
+
+为扩展提供一个弹出窗口，用于监控 MCP 主机状态并提供启动/停止控制：
+
+```javascript
+// popup.js
+document.addEventListener('DOMContentLoaded', async () => {
+  // 获取 UI 元素
+  const statusIndicator = document.getElementById('status-indicator');
+  const versionInfo = document.getElementById('version-info');
+  const uptime = document.getElementById('uptime');
+  const runMode = document.getElementById('run-mode');
+  const startButton = document.getElementById('start-button');
+  const stopButton = document.getElementById('stop-button');
+  const statusSection = document.getElementById('status-section');
+  const configSection = document.getElementById('config-section');
+  
+  // 获取 MCP Host 状态
+  const updateStatus = async () => {
+    const status = await new Promise(resolve => {
+      chrome.runtime.sendMessage({ type: 'getMcpHostStatus' }, resolve);
+    });
+    
+    // 更新 UI
+    if (status.isConnected) {
+      statusIndicator.className = 'connected';
+      statusIndicator.textContent = '运行中';
+      startButton.disabled = true;
+      stopButton.disabled = false;
+      statusSection.style.display = 'block';
+      
+      // 显示详细信息
+      versionInfo.textContent = status.version || '未知';
+      runMode.textContent = status.runMode || '未知';
+      
+      // 计算运行时间
+      if (status.startTime) {
+        const uptimeMs = Date.now() - status.startTime;
+        const hours = Math.floor(uptimeMs / 3600000);
+        const minutes = Math.floor((uptimeMs % 3600000) / 60000);
+        const seconds = Math.floor((uptimeMs % 60000) / 1000);
+        uptime.textContent = `${hours}小时 ${minutes}分钟 ${seconds}秒`;
+      } else {
+        uptime.textContent = '未知';
+      }
+    } else {
+      statusIndicator.className = 'disconnected';
+      statusIndicator.textContent = '未运行';
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      statusSection.style.display = 'none';
+    }
+  };
+  
+  // 初始更新状态
+  updateStatus();
+  
+  // 监听状态更新事件
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'mcpHostStatusUpdate') {
+      updateStatus();
+    }
+  });
+  
+  // 启动 MCP Host
+  startButton.addEventListener('click', async () => {
+    startButton.disabled = true;
+    startButton.textContent = '正在启动...';
+    
+    // 获取配置选项
+    const runMode = document.getElementById('run-mode-select').value;
+    const port = document.getElementById('port-input').value;
+    
+    const result = await new Promise(resolve => {
+      chrome.runtime.sendMessage({
+        type: 'startMcpHost',
+        options: {
+          runMode,
+          port: port ? parseInt(port, 10) : undefined
+        }
+      }, resolve);
+    });
+    
+    if (result && result.success) {
+      console.log('MCP Host 启动成功');
+    } else {
+      console.error('MCP Host 启动失败:', result ? result.error : '未知错误');
+      alert(`启动失败: ${result ? result.error : '未知错误'}`);
+      startButton.disabled = false;
+      startButton.textContent = '启动';
+    }
+    
+    updateStatus();
+  });
+  
+  // 停止 MCP Host
+  stopButton.addEventListener('click', async () => {
+    stopButton.disabled = true;
+    stopButton.textContent = '正在停止...';
+    
+    const result = await new Promise(resolve => {
+      chrome.runtime.sendMessage({ type: 'stopMcpHost' }, resolve);
+    });
+    
+    if (result && result.success) {
+      console.log('MCP Host 停止成功');
+    } else {
+      console.error('MCP Host 停止失败');
+      alert('停止失败');
+    }
+    
+    stopButton.textContent = '停止';
+    updateStatus();
+  });
+  
+  // 显示/隐藏配置部分
+  document.getElementById('show-config').addEventListener('click', () => {
+    configSection.style.display = configSection.style.display === 'none' ? 'block' : 'none';
+  });
+});
+```
+
+```html
+<!-- popup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MCP Host 控制面板</title>
+  <style>
+    body { width: 300px; font-family: Arial, sans-serif; padding: 10px; }
+    .connected { color: green; font-weight: bold; }
+    .disconnected { color: red; font-weight: bold; }
+    button { margin: 5px; padding: 5px 10px; }
+    .status-row { display: flex; justify-content: space-between; margin: 5px 0; }
+    .label { font-weight: bold; }
+    .divider { border-top: 1px solid #ccc; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h2>MCP Host 控制面板</h2>
+  
+  <div class="status-row">
+    <span class="label">状态:</span>
+    <span id="status-indicator" class="disconnected">未运行</span>
+  </div>
+  
+  <div id="status-section" style="display: none;">
+    <div class="status-row">
+      <span class="label">版本:</span>
+      <span id="version-info">未知</span>
+    </div>
+    <div class="status-row">
+      <span class="label">运行模式:</span>
+      <span id="run-mode">未知</span>
+    </div>
+    <div class="status-row">
+      <span class="label">已运行时间:</span>
+      <span id="uptime">未知</span>
+    </div>
+  </div>
+  
+  <div class="divider"></div>
+  
+  <div>
+    <button id="start-button">启动</button>
+    <button id="stop-button" disabled>停止</button>
+    <button id="show-config">配置</button>
+  </div>
+  
+  <div id="config-section" style="display: none;">
+    <div class="divider"></div>
+    <h3>启动配置</h3>
+    
+    <div class="status-row">
+      <span class="label">运行模式:</span>
+      <select id="run-mode-select">
+        <option value="stdio">仅 Native Messaging</option>
+        <option value="http+stdio">HTTP + Native Messaging</option>
+      </select>
+    </div>
+    
+    <div class="status-row">
+      <span class="label">HTTP 端口:</span>
+      <input type="number" id="port-input" placeholder="3000" min="1024" max="65535">
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
 ```
 
 ### 4.3 API 组件实现 (API Components)
 
 #### 4.3.1 浏览器资源定义 (`browser-resources.ts`)
 
+使用 MCP TypeScript SDK 的 ResourceTemplate 定义资源:
+
 ```typescript
 // 简化示例代码
-export function registerResources(registry: Map<string, any>) {
-  // 当前浏览器状态
-  registry.set('browser://current/state', {
-    fetch: async () => {
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { NativeMessagingBridge } from "./messaging";
+
+export function registerBrowserResources(server: McpServer, bridge: NativeMessagingBridge) {
+  // 定义静态资源 - 当前浏览器状态
+  server.resource(
+    "browser-state",  // 资源名称
+    "browser://current/state",  // 资源 URI
+    async (uri) => {
       // 通过 Native Messaging 获取浏览器当前状态
-      // ...
+      const result = await bridge.requestBrowserState();
+      return {
+        contents: [{
+          uri: uri.href,
+          text: JSON.stringify(result)
+        }]
+      };
     }
-  });
+  );
   
-  // 当前页面 DOM
-  registry.set('browser://current/dom', {
-    fetch: async () => {
-      // 通过 Native Messaging 获取当前页面 DOM
-      // ...
+  // 定义动态资源 - 指定标签页 DOM
+  server.resource(
+    "tab-dom",
+    new ResourceTemplate("browser://tabs/{tabId}/dom", { list: undefined }),
+    async (uri, { tabId }) => {
+      // 通过 Native Messaging 获取指定标签页的 DOM
+      const result = await bridge.requestTabDom(tabId);
+      return {
+        contents: [{
+          uri: uri.href,
+          text: result
+        }]
+      };
     }
-  });
+  );
   
-  // 所有标签页
-  registry.set('browser://tabs', {
-    fetch: async () => {
+  // 定义资源 - 所有标签页
+  server.resource(
+    "all-tabs",
+    "browser://tabs",
+    async (uri) => {
       // 通过 Native Messaging 获取所有标签页信息
-      // ...
+      const result = await bridge.requestAllTabs();
+      return {
+        contents: [{
+          uri: uri.href,
+          text: JSON.stringify(result)
+        }]
+      };
     }
-  });
+  );
 }
 ```
 
 #### 4.3.2 浏览器工具定义 (`browser-tools.ts`)
 
+使用 MCP TypeScript SDK 的工具注册 API 和 Zod 验证:
+
 ```typescript
 // 简化示例代码
-export function registerTools(registry: Map<string, any>) {
-  // 导航工具
-  registry.set('navigate_to', {
-    schema: {
-      type: "object",
-      properties: {
-        url: { type: "string" }
-      },
-      required: ["url"]
-    },
-    execute: async (args: any) => {
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { NativeMessagingBridge } from "./messaging";
+import { z } from "zod";
+
+export function registerBrowserTools(server: McpServer, bridge: NativeMessagingBridge) {
+  // 定义导航工具
+  server.tool(
+    "navigate_to",
+    { url: z.string().url() },
+    async ({ url }) => {
       // 通过 Native Messaging 执行导航
-      // ...
+      const result = await bridge.executeCommand("navigate", { url });
+      return {
+        content: [{ 
+          type: "text", 
+          text: `成功导航到 ${url}` 
+        }]
+      };
     }
-  });
+  );
   
-  // 点击元素工具
-  registry.set('click_element', {
-    schema: {
-      type: "object",
-      properties: {
-        selector: { type: "string" }
-      },
-      required: ["selector"]
+  // 定义点击元素工具
+  server.tool(
+    "click_element",
+    {
+      selector: z.string(),
+      tabId: z.number().optional()
     },
-    execute: async (args: any) => {
+    async ({ selector, tabId }) => {
       // 通过 Native Messaging 执行点击
-      // ...
+      const result = await bridge.executeCommand("click", { selector, tabId });
+      return {
+        content: [{ 
+          type: "text", 
+          text: `成功点击元素 ${selector}` 
+        }]
+      };
     }
-  });
+  );
+  
+  // 定义输入文本工具
+  server.tool(
+    "input_text",
+    {
+      selector: z.string(),
+      text: z.string(),
+      tabId: z.number().optional()
+    },
+    async ({ selector, text, tabId }) => {
+      // 通过 Native Messaging 执行文本输入
+      const result = await bridge.executeCommand("inputText", { selector, text, tabId });
+      return {
+        content: [{ 
+          type: "text", 
+          text: `成功在 ${selector} 输入文本` 
+        }]
+      };
+    }
+  );
   
   // 更多工具定义...
 }
@@ -738,17 +1262,19 @@ AUTH_TOKEN=your-secure-token
 
 ### 7.2 暴露的 MCP 工具
 
-| 工具名称        | 描述                             | MCP 输入参数示例 (JSON Schema 格式)                                                                                                                               |
-| --------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `navigate_to`   | 导航到指定 URL                   | `{ "type": "object", "properties": { "url": { "type": "string" } }, "required": ["url"] }`                                                                       |
-| `click_element` | 点击指定的元素 (通过 CSS 选择器) | `{ "type": "object", "properties": { "selector": { "type": "string" } }, "required": ["selector"] }`                                                              |
-| `input_text`    | 在指定输入元素中输入文本         | `{ "type": "object", "properties": { "selector": { "type": "string" }, "text": { "type": "string" } }, "required": ["selector", "text"] }`                         |
-| `submit_form`   | 提交指定的表单 (通过 CSS 选择器) | `{ "type": "object", "properties": { "selector": { "type": "string" } }, "required": ["selector"] }`                                                              |
-| `open_tab`      | 打开新的标签页并导航到 URL       | `{ "type": "object", "properties": { "url": { "type": "string" } }, "required": ["url"] }`                                                                       |
-| `close_tab`     | 关闭指定的标签页 (通过 ID)       | `{ "type": "object", "properties": { "tabId": { "type": "number" } }, "required": ["tabId"] }`                                                                    |
-| `switch_tab`    | 切换到指定的标签页 (通过 ID)     | `{ "type": "object", "properties": { "tabId": { "type": "number" } }, "required": ["tabId"] }`                                                                    |
+| 工具名称        | 描述                             | Zod 参数验证                                                    | 输入参数示例                                          |
+| --------------- | -------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
+| `navigate_to`   | 导航到指定 URL                   | `{ url: z.string().url() }`                                     | `{ "url": "https://example.com" }`                    |
+| `click_element` | 点击指定的元素 (通过 CSS 选择器) | `{ selector: z.string(), tabId: z.number().optional() }`        | `{ "selector": "#submit-button", "tabId": 123 }`      |
+| `input_text`    | 在指定输入元素中输入文本         | `{ selector: z.string(), text: z.string(), tabId: z.number().optional() }` | `{ "selector": "#search", "text": "查询内容" }`       |
+| `submit_form`   | 提交指定的表单 (通过 CSS 选择器) | `{ selector: z.string(), tabId: z.number().optional() }`        | `{ "selector": "form#login" }`                        |
+| `open_tab`      | 打开新的标签页并导航到 URL       | `{ url: z.string().url() }`                                     | `{ "url": "https://example.com" }`                    |
+| `close_tab`     | 关闭指定的标签页 (通过 ID)       | `{ tabId: z.number() }`                                         | `{ "tabId": 123 }`                                    |
+| `switch_tab`    | 切换到指定的标签页 (通过 ID)     | `{ tabId: z.number() }`                                         | `{ "tabId": 123 }`                                    |
+| `get_screenshot`| 获取指定标签页的截图             | `{ tabId: z.number().optional(), fullPage: z.boolean().optional() }` | `{ "tabId": 123, "fullPage": true }`                 |
+| `scroll_page`   | 滚动页面                         | `{ direction: z.enum(["up", "down"]), amount: z.number().optional(), tabId: z.number().optional() }` | `{ "direction": "down", "amount": 500 }` |
 
-*(注意: 上述输入参数是 MCP 工具调用时 `arguments` 字段的结构)*
+*(注意: Zod 参数验证是在 MCP 服务器端实现的类型安全验证，输入参数示例是客户端调用时实际发送的 JSON 对象)*
 
 ## 8. 总结 (Summary)
 
