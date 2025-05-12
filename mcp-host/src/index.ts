@@ -1,5 +1,6 @@
 import { NativeMessaging } from './messaging';
 import { createLogger } from './logger';
+import { StatusHandler, PingHandler, ShutdownHandler } from './message-handlers';
 
 // Create a logger instance for the main module
 const logger = createLogger('main');
@@ -24,43 +25,31 @@ logger.info(`Starting MCP Host in ${hostStatus.runMode} mode`);
 // Initialize the native messaging handler
 const messaging = new NativeMessaging();
 
-// Basic message handlers
-
-// Register ping handler (heartbeat)
-messaging.registerHandler('ping', async () => {
-  const currentTime = Date.now();
-  hostStatus.lastPing = currentTime;
-
-  return {
-    success: true,
-    timestamp: currentTime,
-  };
+// Create handler instances
+const statusHandler = new StatusHandler({
+  startTime: hostStatus.startTime,
+  version: hostStatus.version,
+  runMode: hostStatus.runMode,
 });
 
-// Register status request handler
-messaging.registerHandler('getStatus', async () => {
-  return {
-    status: {
-      ...hostStatus,
-      uptime: Date.now() - hostStatus.startTime,
-    },
-  };
-});
+const pingHandler = new PingHandler();
 
-// Register shutdown handler
-messaging.registerHandler('shutdown', async () => {
-  logger.info('Shutdown requested by extension');
+// Update last ping time whenever we receive a ping
+pingHandler.onPing = timestamp => {
+  hostStatus.lastPing = timestamp;
+};
 
-  // Send confirmation before shutting down
-  setTimeout(() => {
-    process.exit(0);
-  }, 500);
+// Create a cleanup function for the shutdown handler
+const cleanup = async () => {
+  logger.info('Performing cleanup before shutdown');
+  // Add any cleanup tasks here
+};
+const shutdownHandler = new ShutdownHandler(cleanup);
 
-  return {
-    success: true,
-    message: 'Shutting down...',
-  };
-});
+// Register handlers
+messaging.registerHandler('ping', data => pingHandler.handle(data));
+messaging.registerHandler('getStatus', data => statusHandler.handle(data));
+messaging.registerHandler('shutdown', data => shutdownHandler.handle(data));
 
 // MCP-related message handlers
 
