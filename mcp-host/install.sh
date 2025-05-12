@@ -48,6 +48,34 @@ read -p "Enter your Chrome extension ID: " EXTENSION_ID
 sed -i.bak "s|EXTENSION_ID_PLACEHOLDER|$EXTENSION_ID|g" "$MANIFEST_PATH"
 rm "$MANIFEST_PATH.bak"
 
+# Set log level for the host
+LOG_LEVELS=("ERROR" "WARN" "INFO" "DEBUG")
+DEFAULT_LOG_LEVEL="INFO"
+
+echo "Available log levels: ${LOG_LEVELS[*]}"
+read -p "Enter log level for MCP Host [default: $DEFAULT_LOG_LEVEL]: " LOG_LEVEL
+
+# Validate and set log level
+LOG_LEVEL=${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}
+LOG_LEVEL=$(echo "$LOG_LEVEL" | tr '[:lower:]' '[:upper:]')
+VALID_LEVEL=false
+
+for level in "${LOG_LEVELS[@]}"; do
+  if [ "$LOG_LEVEL" = "$level" ]; then
+    VALID_LEVEL=true
+    break
+  fi
+done
+
+if [ "$VALID_LEVEL" = false ]; then
+  echo "Invalid log level: $LOG_LEVEL. Using default: $DEFAULT_LOG_LEVEL"
+  LOG_LEVEL=$DEFAULT_LOG_LEVEL
+fi
+
+# Update host script with log level
+sed -i.bak "s|export LOG_LEVEL=INFO|export LOG_LEVEL=$LOG_LEVEL|g" "$HOST_SCRIPT"
+rm "$HOST_SCRIPT.bak"
+
 # Create Native Messaging directories if they don't exist
 mkdir -p "$CHROME_NM_DIR"
 mkdir -p "$CHROME_CANARY_NM_DIR"

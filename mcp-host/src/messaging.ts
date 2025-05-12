@@ -1,4 +1,5 @@
 import { Readable, Writable } from 'stream';
+import { createLogger } from './logger';
 
 export interface Message {
   type: string;
@@ -10,6 +11,7 @@ export class NativeMessaging {
   private stdout: Writable;
   private buffer: Buffer = Buffer.alloc(0);
   private messageHandlers: Map<string, (data: any) => Promise<any>> = new Map();
+  private logger = createLogger('messaging');
 
   constructor(stdin: Readable = process.stdin, stdout: Writable = process.stdout) {
     this.stdin = stdin;
@@ -28,7 +30,7 @@ export class NativeMessaging {
     });
 
     this.stdin.on('end', () => {
-      console.error('Native messaging host: stdin ended');
+      this.logger.info('Native messaging host: stdin ended');
       process.exit(0);
     });
   }
@@ -45,11 +47,12 @@ export class NativeMessaging {
 
     try {
       const message = JSON.parse(messageJson);
+      this.logger.debug('Received message:', message);
       this.handleMessage(message).catch(error => {
-        console.error('Error handling message:', error);
+        this.logger.error('Error handling message:', error);
       });
     } catch (error) {
-      console.error('Error parsing message:', error);
+      this.logger.error('Error parsing message:', error);
     }
 
     // Process additional messages if any
@@ -63,16 +66,17 @@ export class NativeMessaging {
     const handler = this.messageHandlers.get(type);
 
     if (!handler) {
-      console.error(`No handler registered for message type: ${type}`);
+      this.logger.warn(`No handler registered for message type: ${type}`);
       this.sendMessage({ type: 'error', error: `Unknown message type: ${type}` });
       return;
     }
 
     try {
+      this.logger.debug(`Handling message type: ${type}`);
       const result = await handler(data);
       this.sendMessage({ type: `${type}_result`, ...result });
     } catch (error) {
-      console.error(`Error handling message type ${type}:`, error);
+      this.logger.error(`Error handling message type ${type}:`, error);
       this.sendMessage({
         type: 'error',
         originalType: type,
@@ -82,10 +86,12 @@ export class NativeMessaging {
   }
 
   public registerHandler(type: string, handler: (data: any) => Promise<any>) {
+    this.logger.debug(`Registering handler for message type: ${type}`);
     this.messageHandlers.set(type, handler);
   }
 
   public sendMessage(message: any) {
+    this.logger.debug(`Sending message:`, { type: message.type });
     const messageJson = JSON.stringify(message);
     const messageBuffer = Buffer.from(messageJson, 'utf8');
     const length = messageBuffer.length;
