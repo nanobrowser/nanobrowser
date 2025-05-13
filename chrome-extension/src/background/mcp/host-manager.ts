@@ -298,8 +298,16 @@ export class McpHostManager {
 
     this.pingTimeout = window.setTimeout(() => {
       // No ping response within timeout period, consider connection lost
+      console.log('Ping timeout: no response from MCP Host');
+
+      // Mark as disconnected
       this.updateStatus({ isConnected: false });
+
+      // Stop the heartbeat timers
       this.stopHeartbeat();
+
+      // Clean up port reference since we're no longer connected
+      this.port = null;
     }, this.PING_TIMEOUT_MS);
   }
 

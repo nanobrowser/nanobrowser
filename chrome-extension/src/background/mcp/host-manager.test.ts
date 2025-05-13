@@ -170,4 +170,240 @@ describe('McpHostManager', () => {
       expect(listener2).toHaveBeenCalled();
     });
   });
+
+  describe('handleMessage', () => {
+    it('should update status when receiving status message', () => {
+      // Setup
+      hostManager.connect();
+      hostManager.addStatusListener(mockStatusListener);
+      mockStatusListener.mockClear();
+
+      // Mock port onMessage callback
+      const messageCallback = mockPort.onMessage.addListener.mock.calls[0][0];
+
+      // Simulate a status message
+      const mockStatusData = {
+        isConnected: true,
+        startTime: 1000,
+        version: '1.0.0',
+        runMode: 'stdio',
+      };
+      messageCallback({ type: 'status', data: mockStatusData });
+
+      // Verify status is updated
+      expect(hostManager.getStatus()).toMatchObject(mockStatusData);
+      expect(mockStatusListener).toHaveBeenCalled();
+    });
+
+    it('should update lastHeartbeat when receiving ping_result', () => {
+      // Setup
+      hostManager.connect();
+      hostManager.addStatusListener(mockStatusListener);
+      mockStatusListener.mockClear();
+
+      // Mock port onMessage callback
+      const messageCallback = mockPort.onMessage.addListener.mock.calls[0][0];
+
+      // Simulate a ping response
+      const mockTimestamp = Date.now();
+      messageCallback({ type: 'ping_result', timestamp: mockTimestamp });
+
+      // Verify lastHeartbeat is updated
+      expect(hostManager.getStatus().lastHeartbeat).toBe(mockTimestamp);
+      expect(mockStatusListener).toHaveBeenCalled();
+    });
+
+    it('should log error when receiving error message', () => {
+      // Setup
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      hostManager.connect();
+
+      // Mock port onMessage callback
+      const messageCallback = mockPort.onMessage.addListener.mock.calls[0][0];
+
+      // Simulate an error message
+      messageCallback({ type: 'error', error: 'Test error' });
+
+      // Verify error is logged
+      expect(consoleSpy).toHaveBeenCalledWith('MCP Host error:', 'Test error');
+
+      // Cleanup
+      consoleSpy.mockRestore();
+    });
+
+    it('should log unknown message types', () => {
+      // Setup
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      hostManager.connect();
+
+      // Mock port onMessage callback
+      const messageCallback = mockPort.onMessage.addListener.mock.calls[0][0];
+
+      // Simulate an unknown message
+      const mockMessage = { type: 'unknown', data: 'test' };
+      messageCallback(mockMessage);
+
+      // Verify message is logged
+      expect(consoleSpy).toHaveBeenCalledWith('Unknown message from MCP Host:', mockMessage);
+
+      // Cleanup
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('handleDisconnect', () => {
+    it('should update status to disconnected when port disconnects', () => {
+      // Setup
+      hostManager.connect();
+      hostManager.addStatusListener(mockStatusListener);
+      mockStatusListener.mockClear();
+
+      // Mock port onDisconnect callback
+      const disconnectCallback = mockPort.onDisconnect.addListener.mock.calls[0][0];
+
+      // Simulate disconnect
+      disconnectCallback();
+
+      // Verify status is updated
+      expect(hostManager.getStatus().isConnected).toBe(false);
+      expect(mockStatusListener).toHaveBeenCalled();
+    });
+  });
+
+  describe('heartbeat', () => {
+    it('should send ping message on interval', () => {
+      // Setup
+      hostManager.connect();
+      mockPort.postMessage.mockClear();
+
+      // Fast-forward timer to trigger heartbeat
+      vi.advanceTimersByTime(10000);
+
+      // Verify ping is sent
+      expect(mockPort.postMessage).toHaveBeenCalledWith({ type: 'ping' });
+    });
+
+    it('should clear ping timeout when receiving ping response', () => {
+      // Setup
+      hostManager.connect();
+
+      // Fast-forward timer to trigger heartbeat
+      vi.advanceTimersByTime(10000);
+
+      // Mock port onMessage callback
+      const messageCallback = mockPort.onMessage.addListener.mock.calls[0][0];
+
+      // Simulate a ping response
+      messageCallback({ type: 'ping_result', timestamp: Date.now() });
+
+      // Fast-forward timer beyond what would be the ping timeout
+      vi.advanceTimersByTime(20000);
+
+      // Verify we're still connected (timeout was cleared)
+      expect(hostManager.getStatus().isConnected).toBe(true);
+    });
+  });
+
+  describe('startMcpHost', () => {
+    it('should send start request and connect on success', async () => {
+      // Setup - mock chrome.runtime.sendMessage
+      chrome.runtime.sendMessage = vi.fn().mockImplementation((message, callback) => {
+        setTimeout(() => callback({ success: true }), 10);
+      });
+
+      // Ensure we're not connected
+      hostManager.disconnect();
+
+      // Call startMcpHost
+      const options = { runMode: 'stdio' };
+      const startPromise = hostManager.startMcpHost(options);
+
+      // Fast-forward timers to resolve promise
+      vi.advanceTimersByTime(600);
+
+      // Verify
+      const result = await startPromise;
+      expect(result).toBe(true);
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: 'startMcpHost', options }, expect.any(Function));
+    });
+
+    it('should return false if already connected', async () => {
+      // Setup - ensure we're connected
+      hostManager.connect();
+
+      // Call startMcpHost
+      const result = await hostManager.startMcpHost({ runMode: 'stdio' });
+
+      // Verify
+      expect(result).toBe(false);
+      expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('should return false on startup failure', async () => {
+      // Setup - mock chrome.runtime.sendMessage to return failure
+      chrome.runtime.sendMessage = vi.fn().mockImplementation((message, callback) => {
+        setTimeout(() => callback({ success: false }), 10);
+      });
+
+      // Ensure we're not connected
+      hostManager.disconnect();
+
+      // Call startMcpHost
+      const startPromise = hostManager.startMcpHost({ runMode: 'stdio' });
+
+      // Fast-forward timers to resolve promise
+      vi.advanceTimersByTime(100);
+
+      // Verify
+      const result = await startPromise;
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('stopMcpHost', () => {
+    it('should send shutdown command and resolve on disconnect', async () => {
+      // Setup
+      hostManager.connect();
+
+      // Setup for promise resolution
+      const stopPromise = hostManager.stopMcpHost();
+
+      // Mock disconnection immediately
+      const disconnectCallback = mockPort.onDisconnect.addListener.mock.calls[1][0]; // Second call from stopMcpHost
+      disconnectCallback();
+
+      // Verify
+      const result = await stopPromise;
+      expect(result).toBe(true);
+      expect(mockPort.postMessage).toHaveBeenCalledWith({ type: 'shutdown' });
+    });
+
+    it('should resolve after timeout if no disconnect event', async () => {
+      // Setup
+      hostManager.connect();
+
+      // Call stopMcpHost
+      const stopPromise = hostManager.stopMcpHost();
+
+      // Fast-forward past the graceful shutdown timeout
+      vi.advanceTimersByTime(1100);
+
+      // Verify
+      const result = await stopPromise;
+      expect(result).toBe(true);
+      expect(mockPort.disconnect).toHaveBeenCalled();
+    });
+
+    it('should return false if not connected', async () => {
+      // Setup - ensure we're not connected
+      hostManager.disconnect();
+
+      // Call stopMcpHost
+      const result = await hostManager.stopMcpHost();
+
+      // Verify
+      expect(result).toBe(false);
+      expect(mockPort.postMessage).not.toHaveBeenCalled();
+    });
+  });
 });

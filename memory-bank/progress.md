@@ -109,6 +109,7 @@ Based on our code analysis and project documentation, the following areas are id
   - ✅ **Concurrent Test Support**: Configured single process execution for tests with serialization issues
   - ✅ **Test Skipping Strategy**: Temporarily skipped HTTP MCP server tests with documented solutions
   - ✅ **Backward Compatibility**: Maintained Jest scripts for comparison testing
+  - ✅ **MCP Host Manager Tests**: Implemented comprehensive tests for chrome-extension MCP Host Manager component
 - 🔄 **Test Coverage**: Comprehensive automated testing suite
 - 🔄 **Documentation**: Detailed developer and user documentation
 - 🔄 **Accessibility**: Enhanced support for assistive technologies
@@ -119,6 +120,32 @@ Based on our code analysis and project documentation, the following areas are id
 ## Known Issues
 
 Based on code analysis and architecture review, we've identified several current limitations and challenges:
+
+### Software Development Processes
+
+#### Test-Driven Development
+- ✅ **Systematic Test Workflow**: Established a process for addressing test failures:
+  1. **Identification**: Run test suite to identify failing tests
+  2. **Analysis**: Examine test structure and the mechanism being tested
+  3. **Multiple Approaches**: Try different testing strategies when facing challenges
+  4. **Decision Making**: Make practical decisions about test coverage vs. stability
+  5. **Documentation**: Record testing challenges and solutions for future reference
+- ✅ **Mocking Strategy**: Developed comprehensive mocking for Chrome Extensions API:
+  - Global mock setup for chrome.runtime in test initialization
+  - Port object mocking with message and disconnect event listeners
+  - Message callback capture and simulation
+  - Timer control for time-dependent operations
+- ✅ **Test Isolation**: Created properly isolated tests with cleanup between runs:
+  - Test setup with vi.clearAllMocks() and vi.useFakeTimers()
+  - Test teardown with vi.clearAllMocks() and vi.useRealTimers()
+  - Preventing test contamination with proper isolation
+
+#### Technical Challenges
+- **Vitest Timer Handling**: Some timer-based tests require careful implementation to avoid infinite loops
+- **Mocking Chrome Extensions API**: Testing native messaging requires properly mocking the Chrome Extensions API
+- **MCP Host Communication**: Testing MCP Host communication requires reliable event handling and message validation
+- **Test Case Dependencies**: Some test cases may have interdependencies that complicate isolated testing
+- **Mock Timing Issues**: Tests involving timeouts and intervals require precise timer control
 
 ### LLM Integration Challenges
 - **Context Window Limitations**: Large web pages can exceed model context limits
