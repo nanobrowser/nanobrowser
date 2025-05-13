@@ -23,12 +23,12 @@ export default defineConfig({
     minify: false,
     target: 'node16',
 
-    // Build for CommonJS
+    // Build for ESM
     lib: {
       entry: {
         index: resolve(srcDir, 'index.ts'),
       },
-      formats: ['cjs'],
+      formats: ['es'],
       fileName: (format, entryName) => `${entryName}.js`,
     },
 

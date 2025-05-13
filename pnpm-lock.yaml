@@ -251,11 +251,11 @@ importers:
         specifier: ^5.4.19
         version: 5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1)
       vite-plugin-node:
-        specifier: ^3.1.0
-        version: 3.1.0(@swc/core@1.9.3)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1))
+        specifier: ^5.0.1
+        version: 5.0.1(@swc/core@1.9.3)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1))
       vite-tsconfig-paths:
-        specifier: ^4.3.2
-        version: 4.3.2(typescript@5.5.4)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1))
+        specifier: ^5.1.4
+        version: 5.1.4(typescript@5.5.4)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1))
       vitest:
         specifier: ^1.6.1
         version: 1.6.1(@types/node@20.16.10)(jsdom@26.1.0)(sass@1.79.4)(terser@5.34.1)
@@ -4792,17 +4792,17 @@ packages:
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
 
-  vite-plugin-node@3.1.0:
-    resolution: {integrity: sha512-LN9byKedZaokEWcH+DTdeV7YLN34dWH7Em2ldHZ77oVGvC/uxHnK43AGPrV9+9CoOh1x9X3Yc55vW/OQYssFDQ==}
+  vite-plugin-node@5.0.1:
+    resolution: {integrity: sha512-xdR4UW1h2ZM1wBf4pjwzuty/mX6F/GViB8h1iqOpxr81pa5OuWb3IJghl66v4e7Srsi2p5o22n9G7G46FeZK9Q==}
     peerDependencies:
-      '@swc/core': ^1.2.153
-      vite: ^4.0.0
+      '@swc/core': ^1.7.26
+      vite: ^6.2.2
     peerDependenciesMeta:
       '@swc/core':
         optional: true
 
-  vite-tsconfig-paths@4.3.2:
-    resolution: {integrity: sha512-0Vd/a6po6Q+86rPlntHye7F31zA2URZMbH8M3saAZ/xR9QoGN/L21bxEGfXdWmFdNkqPpRdxFT7nmNe12e9/uA==}
+  vite-tsconfig-paths@5.1.4:
+    resolution: {integrity: sha512-cYj0LRuLV2c2sMqhqhGpaO3LretdtMn/BVX4cPLanIZuwwrkVl+lK84E/miEXkCHWXuq65rhNN4rXsBcOB3S4w==}
     peerDependencies:
       vite: '*'
     peerDependenciesMeta:
@@ -10131,7 +10131,7 @@ snapshots:
       - supports-color
       - terser
 
-  vite-plugin-node@3.1.0(@swc/core@1.9.3)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1)):
+  vite-plugin-node@5.0.1(@swc/core@1.9.3)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1)):
     dependencies:
       '@rollup/pluginutils': 4.2.1
       chalk: 4.1.2
@@ -10142,7 +10142,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-tsconfig-paths@4.3.2(typescript@5.5.4)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1)):
+  vite-tsconfig-paths@5.1.4(typescript@5.5.4)(vite@5.4.19(@types/node@20.16.10)(sass@1.79.4)(terser@5.34.1)):
     dependencies:
       debug: 4.4.0
       globrex: 0.1.2

@@ -18,17 +18,7 @@ let currentPort: chrome.runtime.Port | null = null;
 // Initialize MCP Host Manager
 const mcpHostManager = new McpHostManager();
 
-// Try to connect to MCP Host on initialization
-try {
-  mcpHostManager.connect();
-  logger.info('Connected to MCP Host');
-} catch (error) {
-  logger.error('Failed to connect to MCP Host:', error);
-}
-
-// Setup side panel behavior
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
-
+// No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
 async function isScriptInjected(tabId: number): Promise<boolean> {
   try {
@@ -94,11 +84,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Start MCP Host process with provided options
     logger.info('Received request to start MCP Host:', message.options);
 
-    // This would be implemented in a platform-specific way
-    // Here we simulate a successful start
-    setTimeout(() => {
-      sendResponse({ success: true });
-    }, 100);
+    try {
+      // Chrome will automatically launch the native messaging host
+      // when we connect to it based on the registered manifest
+      const success = mcpHostManager.connect();
+      logger.info('MCP Host connection attempt result:', success);
+      sendResponse({ success });
+    } catch (error) {
+      logger.error('Failed to connect to MCP Host:', error);
+      sendResponse({ success: false, error: String(error) });
+    }
 
     return true; // Indicate async response
   }

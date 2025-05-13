@@ -2,12 +2,13 @@
   "name": "mcp-host",
   "version": "0.1.0",
   "description": "Nanobrowser MCP Native Messaging Host",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:tsc": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
@@ -38,8 +39,8 @@
     "typescript": "^5.3.0",
     "uuid": "^9.0.1",
     "vite": "^5.4.19",
-    "vite-plugin-node": "^3.1.0",
-    "vite-tsconfig-paths": "^4.3.2",
+    "vite-plugin-node": "^5.0.1",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^1.6.1"
   },
   "jest": {

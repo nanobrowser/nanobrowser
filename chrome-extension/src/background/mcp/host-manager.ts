@@ -34,8 +34,8 @@ export class McpHostManager {
     runMode: null,
   };
   private listeners: StatusListener[] = [];
-  private heartbeatInterval: number | null = null;
-  private pingTimeout: number | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private pingTimeout: NodeJS.Timeout | null = null;
   private readonly HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
   private readonly PING_TIMEOUT_MS = 20000; // 20 seconds
   private readonly GRACEFUL_SHUTDOWN_TIMEOUT_MS = 1000; // 1 second
@@ -52,7 +52,7 @@ export class McpHostManager {
 
     try {
       // Connect to the native messaging host
-      this.port = chrome.runtime.connectNative('mcp_host');
+      this.port = chrome.runtime.connectNative('dev.nanobrowser.mcp.host');
 
       // Set up message and disconnect handlers
       this.port.onMessage.addListener(this.handleMessage.bind(this));
@@ -257,7 +257,8 @@ export class McpHostManager {
     this.stopHeartbeat();
 
     // Set up new heartbeat interval
-    this.heartbeatInterval = window.setInterval(() => {
+    // Use globalThis to be compatible with both browser and Node.js environments
+    this.heartbeatInterval = globalThis.setInterval(() => {
       this.sendPing();
     }, this.HEARTBEAT_INTERVAL_MS);
   }
@@ -296,7 +297,7 @@ export class McpHostManager {
       clearTimeout(this.pingTimeout);
     }
 
-    this.pingTimeout = window.setTimeout(() => {
+    this.pingTimeout = globalThis.setTimeout(() => {
       // No ping response within timeout period, consider connection lost
       console.log('Ping timeout: no response from MCP Host');
 
