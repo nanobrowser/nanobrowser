@@ -28,7 +28,15 @@ The Nanobrowser project is currently focused on completing the MCP Host Control 
 
 Recent exploration and development has resulted in significant advancements:
 
-1. **MCP Host Components Implementation**: Implemented key components of the MCP Host architecture:
+1. **MCP Host Native Messaging Integration Fix**: Resolved critical issue with the Native Messaging Host integration:
+   - **Manifest File Naming**: Fixed an issue where the Native Messaging Host manifest was incorrectly named `manifest.json` instead of the required `dev.nanobrowser.mcp.host.json`
+   - **Installation Script Update**: Modified the `install.sh` script to correctly name and copy the manifest file to Chrome's NativeMessagingHosts directory
+   - **Node.js ESM Support**: Added proper Node.js ESM module flags (`--experimental-specifier-resolution=node`) to the MCP Host execution script
+   - **File Organization**: Cleaned up old manifest files to ensure Chrome only recognizes the correct host definition
+   - **Installation Verification**: Added verification to ensure the manifest is installed in the correct location with the proper format
+   - **Testing**: Verified proper installation and connection with Chrome extension
+
+2. **MCP Host Components Implementation**: Implemented key components of the MCP Host architecture:
    - **Message Handlers**: Created specialized handler classes for different message types (StatusHandler, PingHandler, ShutdownHandler)
    - **Status Management**: Implemented mechanisms to track MCP Host status including connection state, heartbeat, and version information
    - **McpHostManager**: Expanded the Chrome extension's host manager with robust connection, status tracking, and control capabilities

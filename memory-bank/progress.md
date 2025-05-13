@@ -66,6 +66,9 @@ Based on our code analysis and project documentation, the following areas are id
   - ✅ **Core Components**: Implemented McpHostManager with connection handling, heartbeat mechanism, and status management
   - ✅ **Message Handlers**: Implemented StatusHandler, PingHandler, and ShutdownHandler for message processing
   - ✅ **Comprehensive Tests**: Added extensive test coverage for McpHostManager and message handlers
+  - ✅ **Native Messaging Integration**: Fixed critical manifest file naming issue to ensure Chrome properly recognizes the Native Messaging Host
+  - ✅ **Installation Script**: Updated `install.sh` to properly generate and install manifest file with correct naming convention
+  - ✅ **ESM Support**: Added proper Node.js ESM module support with experimental-specifier-resolution flag
   - 🔄 **UI Implementation**: Developing Popup UI for MCP Host control and status display
   - 🔄 **Background Integration**: Integrating MCP Host Manager with Background Script
 
