@@ -60,6 +60,32 @@ export function useMcpHost() {
     }
   };
 
+  // Stop MCP Host
+  const stopMcpHost = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'stopMcpHost',
+      });
+      if (response && response.success) {
+        // Wait a bit for the host to stop and refresh status
+        setTimeout(() => {
+          refreshStatus();
+        }, 1000);
+        return true;
+      } else {
+        setError('Failed to stop MCP Host');
+        setLoading(false);
+        return false;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setLoading(false);
+      return false;
+    }
+  };
+
   // Load initial status
   useEffect(() => {
     refreshStatus();
@@ -79,5 +105,6 @@ export function useMcpHost() {
     error,
     refreshStatus,
     startMcpHost,
+    stopMcpHost,
   };
 }

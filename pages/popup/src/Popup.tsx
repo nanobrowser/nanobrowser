@@ -4,7 +4,7 @@ import { ControlPanel } from '@src/ControlPanel';
 import { useMcpHost } from '@src/useMcpHost';
 
 export const Popup: React.FC = () => {
-  const { status, loading, error, refreshStatus, startMcpHost } = useMcpHost();
+  const { status, loading, error, refreshStatus, startMcpHost, stopMcpHost } = useMcpHost();
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -15,7 +15,12 @@ export const Popup: React.FC = () => {
 
       <StatusDisplay status={status} loading={loading} error={error} onRefresh={refreshStatus} />
 
-      <ControlPanel isConnected={status.isConnected} onStartHost={startMcpHost} loading={loading} />
+      <ControlPanel
+        isConnected={status.isConnected}
+        onStartHost={startMcpHost}
+        onStopHost={stopMcpHost}
+        loading={loading}
+      />
 
       <footer className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
         <p>

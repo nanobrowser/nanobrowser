@@ -106,6 +106,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false; // Synchronous response
   }
 
+  if (message.type === 'stopMcpHost') {
+    // Stop MCP Host process
+    logger.info('Received request to stop MCP Host');
+
+    try {
+      // First call stopMcpHost which attempts graceful shutdown
+      mcpHostManager
+        .stopMcpHost()
+        .then(success => {
+          logger.info('MCP Host stop attempt result:', success);
+          // Also disconnect the native connection to ensure the host is killed
+          mcpHostManager.disconnect();
+          logger.info('Native connection disconnected');
+          sendResponse({ success: true });
+        })
+        .catch(error => {
+          logger.error('Failed to stop MCP Host gracefully, forcing disconnect:', error);
+          // Even if graceful shutdown fails, force disconnect
+          mcpHostManager.disconnect();
+          logger.info('Native connection forcefully disconnected');
+          sendResponse({ success: true });
+        });
+    } catch (error) {
+      logger.error('Error initiating MCP Host stop:', error);
+      // Try to disconnect even if there was an error initiating the stop
+      try {
+        mcpHostManager.disconnect();
+        logger.info('Native connection forcefully disconnected after error');
+        sendResponse({ success: true });
+      } catch (disconnectError) {
+        logger.error('Failed to disconnect:', disconnectError);
+        sendResponse({ success: false, error: String(error) });
+      }
+    }
+
+    return true; // Indicate async response
+  }
+
   // Handle other message types if needed in the future
   return false; // Synchronous response for unhandled messages
 });
