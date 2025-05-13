@@ -48,6 +48,7 @@ const manifest = withSidePanel({
   },
   action: {
     default_icon: 'icon-32.png',
+    default_popup: 'popup/index.html',
   },
   icons: {
     128: 'icon-128.png',

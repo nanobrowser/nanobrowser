@@ -62,6 +62,12 @@ Based on our code analysis and project documentation, the following areas are id
 - ✅ **Extension Integration**: Implemented Chrome extension client for Native Messaging with MCP client, service module, and background integration
 - ✅ **Streamable HTTP Protocol Support**: Implemented standards-compliant MCP server using the Streamable HTTP protocol with session management, resource/tool exposure via HTTP endpoints, and Server-Sent Events for notifications
 - 🔄 **Security Controls**: Implement security measures for Native Messaging communication
+- 🔄 **MCP Host Control**: Implementing MCP Host status monitoring and control functionality
+  - ✅ **Core Components**: Implemented McpHostManager with connection handling, heartbeat mechanism, and status management
+  - ✅ **Message Handlers**: Implemented StatusHandler, PingHandler, and ShutdownHandler for message processing
+  - ✅ **Comprehensive Tests**: Added extensive test coverage for McpHostManager and message handlers
+  - 🔄 **UI Implementation**: Developing Popup UI for MCP Host control and status display
+  - 🔄 **Background Integration**: Integrating MCP Host Manager with Background Script
 
 ### Agent System Enhancements
 - 🔄 **Advanced Planning Strategies**: More sophisticated task decomposition algorithms

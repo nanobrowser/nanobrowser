@@ -7,12 +7,24 @@ import { createChatModel } from './agent/helper';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import BrowserContext from './browser/context';
 import { createLogger } from './log';
+import { McpHostManager, McpHostOptions } from './mcp/host-manager';
 
 const logger = createLogger('background');
 
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+
+// Initialize MCP Host Manager
+const mcpHostManager = new McpHostManager();
+
+// Try to connect to MCP Host on initialization
+try {
+  mcpHostManager.connect();
+  logger.info('Connected to MCP Host');
+} catch (error) {
+  logger.error('Failed to connect to MCP Host:', error);
+}
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -75,11 +87,32 @@ chrome.tabs.onRemoved.addListener(tabId => {
 
 logger.info('background loaded');
 
-// Listen for simple messages (e.g., from options page)
-chrome.runtime.onMessage.addListener(() => {
+// Listen for simple messages (e.g., from options page or popup)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Handle MCP Host related messages
+  if (message.type === 'startMcpHost') {
+    // Start MCP Host process with provided options
+    logger.info('Received request to start MCP Host:', message.options);
+
+    // This would be implemented in a platform-specific way
+    // Here we simulate a successful start
+    setTimeout(() => {
+      sendResponse({ success: true });
+    }, 100);
+
+    return true; // Indicate async response
+  }
+
+  if (message.type === 'getMcpHostStatus') {
+    // Return current MCP Host status
+    const status = mcpHostManager.getStatus();
+    logger.info('Returning MCP Host status:', status);
+    sendResponse({ status });
+    return false; // Synchronous response
+  }
+
   // Handle other message types if needed in the future
-  // Return false if response is not sent asynchronously
-  // return false;
+  return false; // Synchronous response for unhandled messages
 });
 
 // Setup connection listener for long-lived connections (e.g., side panel)

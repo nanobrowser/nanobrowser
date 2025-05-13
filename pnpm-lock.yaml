@@ -429,6 +429,58 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1(jiti@1.21.6)(postcss@8.4.49)(tsx@4.19.2)(yaml@2.5.1)
 
+  pages/popup:
+    dependencies:
+      '@extension/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@extension/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
+      '@extension/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@extension/tailwindcss-config':
+        specifier: workspace:*
+        version: link:../../packages/tailwind-config
+      '@extension/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@extension/vite-config':
+        specifier: workspace:*
+        version: link:../../packages/vite-config
+      '@types/react':
+        specifier: ^18.2.15
+        version: 18.3.5
+      '@types/react-dom':
+        specifier: ^18.2.7
+        version: 18.3.0
+      '@vitejs/plugin-react':
+        specifier: ^4.0.3
+        version: 4.4.1(vite@6.0.12(@types/node@22.7.4)(jiti@1.21.6)(sass@1.79.4)(terser@5.34.1)(tsx@4.19.2)(yaml@2.5.1))
+      autoprefixer:
+        specifier: ^10.4.16
+        version: 10.4.20(postcss@8.4.49)
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      postcss:
+        specifier: ^8.4.31
+        version: 8.4.49
+      postcss-load-config:
+        specifier: ^6.0.1
+        version: 6.0.1(jiti@1.21.6)(postcss@8.4.49)(tsx@4.19.2)(yaml@2.5.1)
+      tailwindcss:
+        specifier: ^3.3.3
+        version: 3.4.17(ts-node@10.9.2(@swc/core@1.9.3)(@types/node@22.7.4)(typescript@5.5.4))
+
   pages/side-panel:
     dependencies:
       '@extension/shared':
@@ -624,6 +676,18 @@ packages:
 
   '@babel/plugin-syntax-typescript@7.27.1':
     resolution: {integrity: sha512-xfYCBMxveHrRMnAWl1ZlPXOZjzkN82THFvLhQhFXFt81Z5HnN+EtUkZhv/zcKpmT3fzmWZB0ywiBrbC3vogbwQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+
+  '@babel/plugin-transform-react-jsx-self@7.27.1':
+    resolution: {integrity: sha512-6UzkCs+ejGdZ5mFFC/OCUrv028ab2fp1znZmCZjAOBKiBK2jXD1O+BPSfX8X2qjJ75fZBMSnQn3Rq2mrBJK2mw==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+
+  '@babel/plugin-transform-react-jsx-source@7.27.1':
+    resolution: {integrity: sha512-zbwoTsBruTeKB9hSq73ha66iFeJHuaFkUbwvqElnygoNbj/jHRsSeokowZFN3CZ64IvEqcmmkVe89OPXc7ldAw==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -1460,6 +1524,12 @@ packages:
     resolution: {integrity: sha512-y0byko2b2tSVVf5Gpng1eEhX1OvPC7x8yns1Fx8jDzlJp4LS6CMkCPfLw47cjyoMrshQDoQw4qcgjsU9VvlCew==}
     peerDependencies:
       vite: ^4 || ^5 || ^6
+
+  '@vitejs/plugin-react@4.4.1':
+    resolution: {integrity: sha512-IpEm5ZmeXAP/osiBXVVP5KjFMzbWOonMs0NaQQl+xYnUAcq4oHUBsF2+p4MgKWG4YMmFYJU8A6sxRPuowllm6w==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    peerDependencies:
+      vite: ^4.2.0 || ^5.0.0 || ^6.0.0
 
   '@vitest/expect@1.6.1':
     resolution: {integrity: sha512-jXL+9+ZNIJKruofqXuuTClf44eSpcHlgj3CiuNihUF3Ioujtmc0zIa3UJOW5RjDK1YLBJZnWBlPuqhYycLioog==}
@@ -3983,6 +4053,10 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
+  react-refresh@0.17.0:
+    resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
+    engines: {node: '>=0.10.0'}
+
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
     engines: {node: '>=0.10.0'}
@@ -5194,6 +5268,16 @@ snapshots:
       '@babel/core': 7.27.1
       '@babel/helper-plugin-utils': 7.27.1
 
+  '@babel/plugin-transform-react-jsx-self@7.27.1(@babel/core@7.27.1)':
+    dependencies:
+      '@babel/core': 7.27.1
+      '@babel/helper-plugin-utils': 7.27.1
+
+  '@babel/plugin-transform-react-jsx-source@7.27.1(@babel/core@7.27.1)':
+    dependencies:
+      '@babel/core': 7.27.1
+      '@babel/helper-plugin-utils': 7.27.1
+
   '@babel/template@7.27.2':
     dependencies:
       '@babel/code-frame': 7.27.1
@@ -6116,6 +6200,17 @@ snapshots:
     transitivePeerDependencies:
       - '@swc/helpers'
 
+  '@vitejs/plugin-react@4.4.1(vite@6.0.12(@types/node@22.7.4)(jiti@1.21.6)(sass@1.79.4)(terser@5.34.1)(tsx@4.19.2)(yaml@2.5.1))':
+    dependencies:
+      '@babel/core': 7.27.1
+      '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.27.1)
+      '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.27.1)
+      '@types/babel__core': 7.20.5
+      react-refresh: 0.17.0
+      vite: 6.0.12(@types/node@22.7.4)(jiti@1.21.6)(sass@1.79.4)(terser@5.34.1)(tsx@4.19.2)(yaml@2.5.1)
+    transitivePeerDependencies:
+      - supports-color
+
   '@vitest/expect@1.6.1':
     dependencies:
       '@vitest/spy': 1.6.1
@@ -6404,6 +6499,16 @@ snapshots:
       normalize-range: 0.1.2
       picocolors: 1.1.0
       postcss: 8.4.47
+      postcss-value-parser: 4.2.0
+
+  autoprefixer@10.4.20(postcss@8.4.49):
+    dependencies:
+      browserslist: 4.24.0
+      caniuse-lite: 1.0.30001667
+      fraction.js: 4.3.7
+      normalize-range: 0.1.2
+      picocolors: 1.1.0
+      postcss: 8.4.49
       postcss-value-parser: 4.2.0
 
   available-typed-arrays@1.0.7:
@@ -7247,7 +7352,7 @@ snapshots:
   eslint-plugin-tailwindcss@3.17.4(tailwindcss@3.4.17(ts-node@10.9.2(@swc/core@1.9.3)(@types/node@22.7.4)(typescript@5.5.4))):
     dependencies:
       fast-glob: 3.3.2
-      postcss: 8.4.47
+      postcss: 8.4.49
       tailwindcss: 3.4.17(ts-node@10.9.2(@swc/core@1.9.3)(@types/node@22.7.4)(typescript@5.5.4))
 
   eslint-scope@5.1.1:
@@ -9117,6 +9222,8 @@ snapshots:
   react-is@16.13.1: {}
 
   react-is@18.3.1: {}
+
+  react-refresh@0.17.0: {}
 
   react@18.3.1:
     dependencies:
