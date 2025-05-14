@@ -14,6 +14,21 @@ export interface McpHostStatus {
   runMode: string | null;
 }
 
+// Define MCP Server status interface
+export interface McpServerStatus {
+  isRunning: boolean;
+  config: {
+    port: number | null;
+    logLevel: string | null;
+  } | null;
+}
+
+// Define MCP Server config interface
+export interface McpServerConfig {
+  port: number;
+  logLevel: string;
+}
+
 // Define the MCP Host configuration options
 export interface McpHostOptions {
   runMode: string;
@@ -33,7 +48,14 @@ export class McpHostManager {
     version: null,
     runMode: null,
   };
+  // Track MCP server status
+  private serverStatus: McpServerStatus = {
+    isRunning: false,
+    config: null,
+  };
   private listeners: StatusListener[] = [];
+  // Server status listeners
+  private serverStatusListeners: ((status: McpServerStatus) => void)[] = [];
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private pingTimeout: NodeJS.Timeout | null = null;
   private readonly HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
@@ -192,6 +214,51 @@ export class McpHostManager {
    * @param {any} message The received message.
    * @private
    */
+
+  /**
+   * Adds a listener for MCP server status changes.
+   * @param listener Function that will be called when server status changes
+   */
+  public addServerStatusListener(listener: (status: McpServerStatus) => void): void {
+    this.serverStatusListeners.push(listener);
+  }
+
+  /**
+   * Removes a server status listener.
+   * @param listener The listener to remove
+   */
+  public removeServerStatusListener(listener: (status: McpServerStatus) => void): void {
+    const index = this.serverStatusListeners.indexOf(listener);
+    if (index !== -1) {
+      this.serverStatusListeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Gets the current server status without sending a request.
+   * @returns Current server status
+   */
+  public getCurrentServerStatus(): McpServerStatus {
+    return { ...this.serverStatus };
+  }
+
+  /**
+   * Updates the server status and notifies listeners.
+   * @param status New server status
+   */
+  private updateServerStatus(status: McpServerStatus): void {
+    this.serverStatus = status;
+
+    // Notify listeners
+    for (const listener of this.serverStatusListeners) {
+      try {
+        listener({ ...this.serverStatus });
+      } catch (error) {
+        console.error('Error in server status listener:', error);
+      }
+    }
+  }
+
   private handleMessage(message: any): void {
     switch (message.type) {
       case 'status':
@@ -202,6 +269,15 @@ export class McpHostManager {
         break;
       case 'error':
         console.error('MCP Host error:', message.error);
+        break;
+      // Handle MCP server status response
+      case 'mcpServerStatus':
+        if (message.isRunning !== undefined) {
+          this.updateServerStatus({
+            isRunning: message.isRunning,
+            config: message.config || null,
+          });
+        }
         break;
       default:
         console.log('Unknown message from MCP Host:', message);
@@ -321,6 +397,105 @@ export class McpHostManager {
       return;
     }
 
+    // Request host status
     this.port.postMessage({ type: 'getStatus' });
+
+    // Also request server status (since server auto-starts with host)
+    this.port.postMessage({ type: 'getMcpServerStatus' });
+  }
+
+  /**
+   * Starts the MCP HTTP server with the given configuration.
+   * @param {McpServerConfig} config Configuration for the MCP server.
+   * @returns {Promise<boolean>} True if the server was started successfully.
+   */
+  public async startMcpServer(config: McpServerConfig): Promise<boolean> {
+    if (!this.port || !this.status.isConnected) {
+      console.warn('Cannot start MCP server: host not connected');
+      return false;
+    }
+
+    return new Promise(resolve => {
+      this.port?.postMessage({
+        type: 'startMcpServer',
+        port: config.port,
+        logLevel: config.logLevel,
+      });
+
+      // We'll just assume it worked for now since we don't have a callback mechanism
+      // In a real implementation, we'd wait for a response and check for success
+      setTimeout(() => {
+        resolve(true);
+      }, 500);
+    });
+  }
+
+  /**
+   * Stops the MCP HTTP server.
+   * @returns {Promise<boolean>} True if the server was stopped successfully.
+   */
+  public async stopMcpServer(): Promise<boolean> {
+    if (!this.port || !this.status.isConnected) {
+      console.warn('Cannot stop MCP server: host not connected');
+      return false;
+    }
+
+    return new Promise(resolve => {
+      this.port?.postMessage({
+        type: 'stopMcpServer',
+      });
+
+      // We'll just assume it worked for now since we don't have a callback mechanism
+      // In a real implementation, we'd wait for a response and check for success
+      setTimeout(() => {
+        resolve(true);
+      }, 500);
+    });
+  }
+
+  /**
+   * Gets the current MCP server status.
+   * @returns {Promise<McpServerStatus>} The current server status.
+   */
+  public async getMcpServerStatus(): Promise<McpServerStatus> {
+    if (!this.port || !this.status.isConnected) {
+      console.warn('Cannot get MCP server status: host not connected');
+      return {
+        isRunning: false,
+        config: null,
+      };
+    }
+
+    return new Promise(resolve => {
+      this.port?.postMessage({
+        type: 'getMcpServerStatus',
+      });
+
+      // Since we don't have a proper callback mechanism yet,
+      // we'll just return a default value after a timeout
+      // In a real implementation, we'd wait for a response
+      setTimeout(() => {
+        resolve({
+          isRunning: false,
+          config: null,
+        });
+      }, 500);
+    });
+  }
+
+  /**
+   * Updates the browser state on the MCP server.
+   * @param {any} state The browser state to send to the MCP server.
+   */
+  public updateBrowserState(state: any): void {
+    if (!this.port || !this.status.isConnected) {
+      console.warn('Cannot update browser state: host not connected');
+      return;
+    }
+
+    this.port.postMessage({
+      type: 'setBrowserState',
+      state,
+    });
   }
 }

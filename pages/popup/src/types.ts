@@ -17,3 +17,22 @@ export interface McpHostOptions {
   port?: number;
   logLevel?: string;
 }
+
+/**
+ * MCP Server Status interface
+ */
+export interface McpServerStatus {
+  isRunning: boolean;
+  config: {
+    port: number | null;
+    logLevel: string | null;
+  } | null;
+}
+
+/**
+ * MCP Server Configuration options
+ */
+export interface McpServerConfig {
+  port: number;
+  logLevel: string;
+}

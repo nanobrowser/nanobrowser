@@ -47,6 +47,24 @@ export class BrowserTools {
           required: ['selector'],
         },
       },
+      {
+        name: 'add',
+        description: 'Add two numbers together for testing purposes',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            a: {
+              type: 'number',
+              description: 'First number to add',
+            },
+            b: {
+              type: 'number',
+              description: 'Second number to add',
+            },
+          },
+          required: ['a', 'b'],
+        },
+      },
     ];
   }
 

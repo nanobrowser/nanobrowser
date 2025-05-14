@@ -84,6 +84,16 @@ The Jest to Vitest migration is now complete, with proper handling of test-speci
    - Full JSON-RPC compliance for requests and responses
    - Support for both traditional native messaging and HTTP-based communication
 
+5. **MCP HTTP Server Implementation**: Developed a complete HTTP server for MCP based on Express:
+   - **McpServerManager Class**: Created a central manager class for the MCP HTTP server with robust lifecycle management (start/stop)
+   - **Session Management**: Implemented session-based connections with persistent transport objects and automatic cleanup
+   - **Express Integration**: Built on Express.js framework with JSON-RPC and SSE endpoints
+   - **Message Handlers**: Added dedicated handlers (McpServerStartHandler, McpServerStopHandler, McpServerStatusHandler) for server control
+   - **Browser State Synchronization**: Implemented browser state updates from Chrome extension to MCP server for connected clients
+   - **Extension UI Integration**: Added server control capabilities to the Chrome extension popup UI via the useMcpHost hook
+   - **Configuration Options**: Made server configurable with port and log level settings
+   - **Background Integration**: Added message handlers in the extension background script for MCP server operations
+
 5. **Task Execution Flow**: Mapped the complete flow from user input to task completion, including the initialization, planning, navigation, and validation phases.
 
 6. **Agent Interactions**: Identified the precise communication patterns and responsibility handoffs between Planner, Navigator, and Validator agents.

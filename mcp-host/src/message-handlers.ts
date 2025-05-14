@@ -5,7 +5,8 @@
  * that process incoming messages from the Chrome extension.
  */
 
-import { createLogger } from './logger';
+import { createLogger } from './logger.js';
+import { McpServerManager, McpServerConfig } from './mcp-server.js';
 
 /**
  * Common interface for all message handlers
@@ -138,5 +139,168 @@ export class ShutdownHandler implements MessageHandler {
         error: error instanceof Error ? error.message : String(error),
       };
     }
+  }
+}
+
+/**
+ * Handler for starting the MCP server
+ */
+export class McpServerStartHandler implements MessageHandler {
+  private logger = createLogger('mcp-server-start-handler');
+  private mcpServerManager: McpServerManager | null = null;
+
+  /**
+   * Creates an instance of the MCP server start handler
+   * @param browserActionCallback Optional callback for browser actions
+   */
+  constructor(private browserActionCallback?: any) {
+    this.logger.debug('Initialized MCP server start handler');
+  }
+
+  /**
+   * Handles a start MCP server message
+   * @param data Message payload containing server configuration
+   * @returns Promise resolving to success status
+   */
+  async handle(data: any): Promise<any> {
+    this.logger.info('Handling MCP server start request');
+
+    try {
+      // Extract configuration from the request
+      const config: McpServerConfig = {
+        port: data.port || 3000,
+        logLevel: data.logLevel || 'info',
+      };
+
+      this.logger.info(`Starting MCP server on port ${config.port} with log level ${config.logLevel}`);
+
+      // Create MCP server manager if it doesn't exist
+      if (!this.mcpServerManager) {
+        this.mcpServerManager = new McpServerManager(config);
+
+        // Set browser action callback if provided
+        if (this.browserActionCallback) {
+          this.mcpServerManager.setBrowserActionCallback(this.browserActionCallback);
+        }
+      }
+
+      // Start the server
+      const result = await this.mcpServerManager.start();
+
+      return {
+        success: result,
+        message: result ? 'MCP server started successfully' : 'MCP server already running',
+        config,
+      };
+    } catch (error) {
+      this.logger.error('Error starting MCP server:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
+   * Gets the MCP server manager instance
+   * @returns The MCP server manager
+   */
+  getMcpServerManager(): McpServerManager | null {
+    return this.mcpServerManager;
+  }
+}
+
+/**
+ * Handler for stopping the MCP server
+ */
+export class McpServerStopHandler implements MessageHandler {
+  private logger = createLogger('mcp-server-stop-handler');
+
+  /**
+   * Creates an instance of the MCP server stop handler
+   * @param getMcpServerManager Function to get the current MCP server manager instance
+   */
+  constructor(private getMcpServerManager: () => McpServerManager | null) {
+    this.logger.debug('Initialized MCP server stop handler');
+  }
+
+  /**
+   * Handles a stop MCP server message
+   * @param data Message payload (not used for stop requests)
+   * @returns Promise resolving to success status
+   */
+  async handle(data: any): Promise<any> {
+    this.logger.info('Handling MCP server stop request');
+
+    try {
+      const mcpServerManager = this.getMcpServerManager();
+
+      if (!mcpServerManager) {
+        this.logger.warn('MCP server manager not found');
+        return {
+          success: false,
+          message: 'MCP server not initialized',
+        };
+      }
+
+      if (!mcpServerManager.isServerRunning()) {
+        this.logger.warn('MCP server not running');
+        return {
+          success: false,
+          message: 'MCP server not running',
+        };
+      }
+
+      // Stop the server
+      const result = await mcpServerManager.shutdown();
+
+      return {
+        success: result,
+        message: result ? 'MCP server stopped successfully' : 'Failed to stop MCP server',
+      };
+    } catch (error) {
+      this.logger.error('Error stopping MCP server:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+}
+
+/**
+ * Handler for getting the MCP server status
+ */
+export class McpServerStatusHandler implements MessageHandler {
+  private logger = createLogger('mcp-server-status-handler');
+
+  /**
+   * Creates an instance of the MCP server status handler
+   * @param getMcpServerManager Function to get the current MCP server manager instance
+   */
+  constructor(private getMcpServerManager: () => McpServerManager | null) {
+    this.logger.debug('Initialized MCP server status handler');
+  }
+
+  /**
+   * Handles a get MCP server status message
+   * @param data Message payload (not used for status requests)
+   * @returns Promise resolving to status data
+   */
+  async handle(data: any): Promise<any> {
+    this.logger.debug('Handling MCP server status request');
+
+    const mcpServerManager = this.getMcpServerManager();
+    const isRunning = mcpServerManager?.isServerRunning() || false;
+
+    return {
+      isRunning,
+      config: mcpServerManager
+        ? {
+            port: mcpServerManager['config']?.port,
+            logLevel: mcpServerManager['config']?.logLevel,
+          }
+        : null,
+    };
   }
 }

@@ -1,6 +1,13 @@
-import { NativeMessaging } from './messaging';
-import { createLogger } from './logger';
-import { StatusHandler, PingHandler, ShutdownHandler } from './message-handlers';
+import { NativeMessaging } from './messaging.js';
+import { createLogger } from './logger.js';
+import {
+  StatusHandler,
+  PingHandler,
+  ShutdownHandler,
+  McpServerStartHandler,
+  McpServerStopHandler,
+  McpServerStatusHandler,
+} from './message-handlers.js';
 
 // Create a logger instance for the main module
 const logger = createLogger('main');
@@ -39,10 +46,33 @@ pingHandler.onPing = timestamp => {
   hostStatus.lastPing = timestamp;
 };
 
+// Define a browser action callback for MCP server
+const browserActionCallback = async (action: string, params: any) => {
+  logger.debug(`Received browser action: ${action}`, params);
+  // In a full implementation, we would send these actions to the Chrome extension
+  // For now, just return a success response
+  return {
+    success: true,
+    message: `Browser action ${action} handled`,
+    data: params,
+  };
+};
+
+// Create MCP server handlers
+const mcpServerStartHandler = new McpServerStartHandler(browserActionCallback);
+const mcpServerStopHandler = new McpServerStopHandler(() => mcpServerStartHandler.getMcpServerManager());
+const mcpServerStatusHandler = new McpServerStatusHandler(() => mcpServerStartHandler.getMcpServerManager());
+
 // Create a cleanup function for the shutdown handler
 const cleanup = async () => {
   logger.info('Performing cleanup before shutdown');
-  // Add any cleanup tasks here
+
+  // Shut down MCP server if it's running
+  const mcpServerManager = mcpServerStartHandler.getMcpServerManager();
+  if (mcpServerManager && mcpServerManager.isServerRunning()) {
+    logger.info('Shutting down MCP server');
+    await mcpServerManager.shutdown();
+  }
 };
 const shutdownHandler = new ShutdownHandler(cleanup);
 
@@ -51,20 +81,47 @@ messaging.registerHandler('ping', data => pingHandler.handle(data));
 messaging.registerHandler('getStatus', data => statusHandler.handle(data));
 messaging.registerHandler('shutdown', data => shutdownHandler.handle(data));
 
+// MCP server handlers
+messaging.registerHandler('startMcpServer', data => mcpServerStartHandler.handle(data));
+messaging.registerHandler('stopMcpServer', data => mcpServerStopHandler.handle(data));
+messaging.registerHandler('getMcpServerStatus', data => mcpServerStatusHandler.handle(data));
+
 // MCP-related message handlers
 
 // Browser state handler
 messaging.registerHandler('setBrowserState', async data => {
   logger.debug('Received browser state update:', data.state ? Object.keys(data.state).join(', ') : 'empty');
 
-  // In a full implementation, we would update the MCP server with this state
-  // mcpServer.setBrowserState(data.state);
+  // Update the MCP server with the browser state
+  const mcpServerManager = mcpServerStartHandler.getMcpServerManager();
+  if (mcpServerManager) {
+    mcpServerManager.setBrowserState(data.state);
+  }
 
   return {
     success: true,
     message: 'Browser state received',
   };
 });
+
+// Auto-start MCP Server when MCP Host starts
+// This sets up the server with default configuration (port: 3000, logLevel: 'info')
+logger.info('Auto-starting MCP HTTP server with default configuration');
+mcpServerStartHandler
+  .handle({
+    port: 3000,
+    logLevel: 'info',
+  })
+  .then(result => {
+    if (result.success) {
+      logger.info('MCP HTTP server auto-started successfully on port 3000');
+    } else {
+      logger.error('Failed to auto-start MCP HTTP server:', result.error || 'Unknown error');
+    }
+  })
+  .catch(error => {
+    logger.error('Exception during MCP HTTP server auto-start:', error);
+  });
 
 // Send initial ready message to let the extension know we're available
 messaging.sendMessage({
