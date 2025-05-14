@@ -86,6 +86,18 @@ export class BrowserTools {
         }
         return this.browserActionCallback('click', { selector: args.selector });
 
+      case 'add':
+        if (typeof args.a !== 'number' || typeof args.b !== 'number') {
+          throw new Error('Both "a" and "b" must be numbers');
+        }
+        // For the add tool, we'll handle it directly without using the browserActionCallback
+        const sum = args.a + args.b;
+        return Promise.resolve({
+          success: true,
+          message: `The sum of ${args.a} and ${args.b} is ${sum}`,
+          data: { result: sum },
+        });
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
