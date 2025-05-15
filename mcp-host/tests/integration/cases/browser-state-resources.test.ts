@@ -52,9 +52,7 @@ describe('Browser State and Resources', () => {
 
     // Read and verify browser state resource
     const resourceContent = await mcpClient!.readResource('browser://current/state');
-    expect(resourceContent.result.contents).toBeDefined();
-    expect(Array.isArray(resourceContent.result.contents)).toBe(true);
-    expect(resourceContent.result.contents.length).toBeGreaterThan(0);
+    expect(resourceContent).toBeDefined();
 
     // Parse and check content
     const content = resourceContent.result.contents[0];

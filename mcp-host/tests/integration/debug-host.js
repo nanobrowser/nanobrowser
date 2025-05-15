@@ -48,6 +48,9 @@ function checkServer() {
         const tools = await client.listTools();
         console.log('Tools:', tools);
 
+        const res = await client.listResources();
+        console.log('Resources:', res);
+
         resolve(true);
       } catch (err) {
         console.error('Connecte error:', err);

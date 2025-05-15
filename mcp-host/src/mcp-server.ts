@@ -3,9 +3,9 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import express from 'express';
 import { createLogger, LogLevel, Logger } from './logger.js';
-import { BrowserResources } from './browser-resources.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { ActionCallback, allTools } from './tools/index.js';
+import { ActionCallback } from './tools/index.js';
+import { Resource } from './resources/index.js';
 
 /**
  * Configuration for the MCP server
@@ -23,7 +23,7 @@ export class McpServerManager {
   private httpServer: any = null;
   private mcpServer: McpServer;
   private config: McpServerConfig;
-  private browserResources: BrowserResources;
+  private registeredResources: Resource[] = [];
   private browserActionCallback: ActionCallback | null = null;
   private isRunning: boolean = false;
 
@@ -38,8 +38,7 @@ export class McpServerManager {
     // Set the log level based on the config
     this.setLogLevel(config.logLevel);
 
-    // Initialize browser resources
-    this.browserResources = new BrowserResources();
+    // Resources will be registered separately
 
     // Create MCP server instance
     this.mcpServer = new McpServer(
@@ -67,34 +66,34 @@ export class McpServerManager {
    * @param state The current browser state
    */
   public setBrowserState(state: any) {
-    this.browserResources.updateState(state);
-    this.logger.debug('Browser state updated');
+    // Use the updateBrowserState function from resources module
+    import('./resources/index.js').then(module => {
+      module.updateBrowserState(state);
+      this.logger.debug('Browser state updated');
+    });
   }
 
   /**
-   * Starts the MCP server
-   * @returns A promise that resolves when the server is started
+   * Registers a resource with the MCP server
+   * @param resource The resource to register
    */
-  public async start(): Promise<boolean> {
-    if (this.isRunning) {
-      this.logger.warn('MCP server is already running');
-      return false;
-    }
+  public registerResource(resource: Resource) {
+    this.logger.info(`Registering resource: ${resource.uri}`);
 
-    try {
-      // Register browser resources and tools with the MCP server
-      this.registerResourcesAndTools();
+    // Store the resource for listing
+    this.registeredResources.push(resource);
 
-      // Start the HTTP server
-      await this.startHttpServer();
+    // Register the resource with the MCP server
+    this.mcpServer.resource(resource.name, resource.uri, async () => {
+      try {
+        return await resource.read();
+      } catch (error) {
+        this.logger.error(`Error reading resource ${resource.uri}:`, error);
+        throw error;
+      }
+    });
 
-      this.isRunning = true;
-      this.logger.info(`MCP server started on port ${this.config.port}`);
-      return true;
-    } catch (error) {
-      this.logger.error('Failed to start MCP server:', error);
-      return false;
-    }
+    this.logger.debug(`Resource registered: ${resource.uri}`);
   }
 
   /**
@@ -145,15 +144,26 @@ export class McpServerManager {
   }
 
   /**
-   * Registers browser resources with the MCP server
+   * Starts the MCP server
+   * @returns A promise that resolves when the server is started
    */
-  private registerResourcesAndTools() {
-    this.logger.info('Registering browser resources');
+  public async start(): Promise<boolean> {
+    if (this.isRunning) {
+      this.logger.warn('MCP server is already running');
+      return false;
+    }
 
-    // Log registered resources
-    const resources = this.browserResources.listResources();
-    this.logger.info(`Made ${resources.length} resources available through MCP server`);
-    this.logger.debug('Available resources: ' + resources.map(r => r.uri).join(', '));
+    try {
+      // Start the HTTP server
+      await this.startHttpServer();
+
+      this.isRunning = true;
+      this.logger.info(`MCP server started on port ${this.config.port}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to start MCP server:', error);
+      return false;
+    }
   }
 
   /**
