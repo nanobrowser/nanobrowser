@@ -30,20 +30,24 @@ hostProcess.on('error', err => {
 // Function to check if the HTTP server is up
 function checkServer() {
   return new Promise(resolve => {
-    setTimeout(() => {
+    setTimeout(async () => {
       console.log(`Checking if server is up on port ${port}...`);
 
-      const baseURL = 'http://localhost:' + port + '/mcp';
-      const client = new Client({
-        name: 'mcp-test-client',
-        version: '1.0.0',
-      });
+      try {
+        const baseURL = 'http://localhost:' + port + '/mcp';
+        const client = new Client({
+          name: 'mcp-test-client',
+          version: '1.0.0',
+        });
 
-      const transport = new StreamableHTTPClientTransport(new URL(baseURL));
+        const transport = new StreamableHTTPClientTransport(new URL(baseURL));
 
-      // Connect and initialize
-      client.connect(transport);
-      console.log('Connected using Streamable HTTP transport');
+        // Connect and initialize
+        await client.connect(transport);
+        console.log('Connected using Streamable HTTP transport');
+      } catch (err) {
+        console.error('Connecte error:', err);
+      }
     }, 1000); // Wait 1 second before making the request
   });
 }
