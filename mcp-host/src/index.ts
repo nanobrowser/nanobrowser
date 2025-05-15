@@ -1,6 +1,6 @@
 import { NativeMessaging } from './messaging.js';
 import { createLogger } from './logger.js';
-import { StatusHandler, PingHandler, ShutdownHandler, McpServerStatusHandler } from './message-handlers.js';
+import { StatusHandler, PingHandler, ShutdownHandler, McpServerStatusHandler } from './message-handlers/index.js';
 import { McpServerManager } from './mcp-server.js';
 import { browserState } from './resources/shared-state.js';
 

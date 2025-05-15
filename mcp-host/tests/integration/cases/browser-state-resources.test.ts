@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
-import { McpHostTestEnvironment } from '../McpHostTestEnvironment';
+import { McpHostTestEnvironment } from '../mcp-host-test-environment';
 
 /**
  * Tests for browser state and MCP resources
