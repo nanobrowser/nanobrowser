@@ -4,7 +4,7 @@
  * This tool allows navigating to a specified URL in the browser.
  */
 
-import { Tool, ActionCallback, ActionResult } from './types.js';
+import { Tool, ActionCallback, ActionResult } from '../types.js';
 
 /**
  * Implementation of the navigate_to tool

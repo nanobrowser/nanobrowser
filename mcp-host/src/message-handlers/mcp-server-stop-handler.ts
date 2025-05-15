@@ -4,7 +4,7 @@
 
 import { createLogger } from '../logger.js';
 import { McpServerManager } from '../mcp-server.js';
-import { MessageHandler } from './types.js';
+import { MessageHandler } from '../types.js';
 
 /**
  * Handler for stopping the MCP server

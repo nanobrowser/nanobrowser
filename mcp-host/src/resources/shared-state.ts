@@ -1,4 +1,4 @@
-import { BrowserState } from './types.js';
+import { BrowserState } from '../types.js';
 
 // Singleton to store and provide access to the browser state
 class BrowserStateManager {

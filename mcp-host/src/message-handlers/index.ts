@@ -4,7 +4,6 @@
  * This file exports all message handlers from their individual files
  */
 
-export * from './types.js';
 export * from './status-handler.js';
 export * from './ping-handler.js';
 export * from './shutdown-handler.js';

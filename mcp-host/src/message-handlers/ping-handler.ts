@@ -3,7 +3,7 @@
  */
 
 import { createLogger } from '../logger.js';
-import { MessageHandler, PingCallback } from './types.js';
+import { MessageHandler, PingCallback } from '../types.js';
 
 /**
  * Handler for ping (heartbeat) requests

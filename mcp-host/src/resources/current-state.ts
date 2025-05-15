@@ -1,4 +1,4 @@
-import { Resource } from './types.js';
+import { Resource } from '../types.js';
 import { browserState } from './shared-state.js';
 
 export const currentStateResource: Resource = {

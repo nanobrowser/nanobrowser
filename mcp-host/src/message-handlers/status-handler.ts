@@ -3,7 +3,7 @@
  */
 
 import { createLogger } from '../logger.js';
-import { MessageHandler, StatusHandlerConfig } from './types.js';
+import { MessageHandler, StatusHandlerConfig } from '../types.js';
 
 /**
  * Handler for status requests

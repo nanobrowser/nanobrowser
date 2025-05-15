@@ -3,7 +3,7 @@
  */
 
 import { createLogger } from '../logger.js';
-import { CleanupFunction, MessageHandler } from './types.js';
+import { CleanupFunction, MessageHandler } from '../types.js';
 
 /**
  * Handler for shutdown requests

@@ -4,13 +4,13 @@
  * This module exports all available tools for browser interaction.
  */
 
-import { Tool, ActionCallback, ActionResult } from './types.js';
+import { Tool, ActionCallback, ActionResult } from '../types.js';
 import { navigateToTool } from './navigate_to.js';
 import { clickElementTool } from './click_element.js';
 import { addTool } from './add.js';
 
 // Export all tool-related types
-export * from './types.js';
+export { Tool, ActionCallback, ActionResult } from '../types.js';
 
 // Export individual tools
 export { navigateToTool } from './navigate_to.js';

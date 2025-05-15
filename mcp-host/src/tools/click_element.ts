@@ -4,7 +4,7 @@
  * This tool allows clicking on an element in the browser.
  */
 
-import { Tool, ActionCallback, ActionResult } from './types.js';
+import { Tool, ActionCallback, ActionResult } from '../types.js';
 
 /**
  * Implementation of the click_element tool

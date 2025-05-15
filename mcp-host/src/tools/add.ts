@@ -4,7 +4,7 @@
  * This is a simple tool for testing purposes that adds two numbers together.
  */
 
-import { Tool, ActionCallback, ActionResult } from './types.js';
+import { Tool, ActionCallback, ActionResult } from '../types.js';
 
 /**
  * Implementation of the add tool
