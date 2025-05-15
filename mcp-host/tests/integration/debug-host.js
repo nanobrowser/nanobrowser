@@ -2,7 +2,6 @@ import { spawn } from 'child_process';
 import http from 'http';
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { URL } from 'url';
 
@@ -40,13 +39,19 @@ function checkServer() {
           version: '1.0.0',
         });
 
-        const transport = new StreamableHTTPClientTransport(new URL(baseURL));
+        const transport = new SSEClientTransport(new URL(baseURL));
 
         // Connect and initialize
         await client.connect(transport);
-        console.log('Connected using Streamable HTTP transport');
+        console.log('Connected using Streamable HTTP transport 2222');
+
+        const tools = await client.listTools();
+        console.log('Tools:', tools);
+
+        resolve(true);
       } catch (err) {
         console.error('Connecte error:', err);
+        resolve(null);
       }
     }, 1000); // Wait 1 second before making the request
   });

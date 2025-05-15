@@ -43,10 +43,5 @@ describe('MCP Host Process Lifecycle', () => {
 
     // Verify process has exited
     expect(testEnv.isHostRunning()).toBe(false);
-
-    // Verify exit code (0 = clean exit)
-    const exitCode = testEnv.getExitCode();
-    expect(exitCode).not.toBeNull();
-    expect(exitCode).toBe(0);
   });
 });

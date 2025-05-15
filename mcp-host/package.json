@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "TEST_TYPE=integration vitest run tests/integration",
-    "test:integration:single": "TEST_TYPE=integration vitest run tests/integration/cases/process-lifecycle.test.ts"
+    "test:integration:single": "TEST_TYPE=integration vitest run tests/integration/cases/error-handling.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.1",

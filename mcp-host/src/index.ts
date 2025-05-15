@@ -1,13 +1,7 @@
 import { NativeMessaging } from './messaging.js';
 import { createLogger } from './logger.js';
-import {
-  StatusHandler,
-  PingHandler,
-  ShutdownHandler,
-  McpServerStartHandler,
-  McpServerStopHandler,
-  McpServerStatusHandler,
-} from './message-handlers.js';
+import { StatusHandler, PingHandler, ShutdownHandler, McpServerStatusHandler } from './message-handlers.js';
+import { McpServerManager } from './mcp-server.js';
 
 // Create a logger instance for the main module
 const logger = createLogger('main');
@@ -58,18 +52,27 @@ const browserActionCallback = async (action: string, params: any) => {
   };
 };
 
-// Create MCP server handlers
-const mcpServerStartHandler = new McpServerStartHandler(browserActionCallback);
-const mcpServerStopHandler = new McpServerStopHandler(() => mcpServerStartHandler.getMcpServerManager());
-const mcpServerStatusHandler = new McpServerStatusHandler(() => mcpServerStartHandler.getMcpServerManager());
+// Auto-start port (use PORT env var or default to 3000)
+const mcpServerPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+// Create MCP server manager directly
+const mcpServerManager = new McpServerManager({
+  port: mcpServerPort,
+  logLevel: 'info',
+});
+
+// Set the browser action callback
+mcpServerManager.setBrowserActionCallback(browserActionCallback);
+
+// Create MCP server status handler
+const mcpServerStatusHandler = new McpServerStatusHandler(mcpServerManager);
 
 // Create a cleanup function for the shutdown handler
 const cleanup = async () => {
   logger.info('Performing cleanup before shutdown');
 
   // Shut down MCP server if it's running
-  const mcpServerManager = mcpServerStartHandler.getMcpServerManager();
-  if (mcpServerManager && mcpServerManager.isServerRunning()) {
+  if (mcpServerManager.isServerRunning()) {
     logger.info('Shutting down MCP server');
     await mcpServerManager.shutdown();
   }
@@ -81,9 +84,7 @@ messaging.registerHandler('ping', data => pingHandler.handle(data));
 messaging.registerHandler('getStatus', data => statusHandler.handle(data));
 messaging.registerHandler('shutdown', data => shutdownHandler.handle(data));
 
-// MCP server handlers
-messaging.registerHandler('startMcpServer', data => mcpServerStartHandler.handle(data));
-messaging.registerHandler('stopMcpServer', data => mcpServerStopHandler.handle(data));
+// Only keep the status handler for MCP server
 messaging.registerHandler('getMcpServerStatus', data => mcpServerStatusHandler.handle(data));
 
 // MCP-related message handlers
@@ -93,10 +94,7 @@ messaging.registerHandler('setBrowserState', async data => {
   logger.debug('Received browser state update:', data.state ? Object.keys(data.state).join(', ') : 'empty');
 
   // Update the MCP server with the browser state
-  const mcpServerManager = mcpServerStartHandler.getMcpServerManager();
-  if (mcpServerManager) {
-    mcpServerManager.setBrowserState(data.state);
-  }
+  mcpServerManager.setBrowserState(data.state);
 
   return {
     success: true,
@@ -104,24 +102,27 @@ messaging.registerHandler('setBrowserState', async data => {
   };
 });
 
+// Import all tools
+import { allTools } from './tools/index.js';
+
+// Register tools with the MCP server manager
+for (const tool of allTools) {
+  mcpServerManager.registerTool(tool);
+}
+logger.info(`Registered ${allTools.length} tools with MCP server`);
+
 // Auto-start MCP Server when MCP Host starts
-// This sets up the server with default configuration (port: 3000, logLevel: 'info')
-// Use the PORT environment variable or default to 3000
-const autoStartPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-logger.info(`Auto-starting MCP HTTP server on port ${autoStartPort}`);
-mcpServerStartHandler
-  .handle({
-    port: autoStartPort,
-    logLevel: 'info',
-  })
+logger.info(`Auto-starting MCP HTTP server on port ${mcpServerPort}`);
+mcpServerManager
+  .start()
   .then(result => {
-    if (result.success) {
-      logger.info(`MCP HTTP server auto-started successfully on port ${autoStartPort}`);
+    if (result) {
+      logger.info(`MCP HTTP server auto-started successfully on port ${mcpServerPort}`);
     } else {
-      logger.error('Failed to auto-start MCP HTTP server:', result.error || 'Unknown error');
+      logger.error('Failed to auto-start MCP HTTP server: Server already running');
     }
   })
-  .catch(error => {
+  .catch((error: Error) => {
     logger.error('Exception during MCP HTTP server auto-start:', error);
   });
 
@@ -136,14 +137,28 @@ messaging.sendMessage({
   },
 });
 
-// Handle exit signals gracefully
-process.on('SIGINT', () => {
+// Handle exit signals gracefully, ensuring MCP server shutdown
+process.on('SIGINT', async () => {
   logger.info('Received SIGINT signal, shutting down');
+
+  // First shut down the MCP server
+  if (mcpServerManager.isServerRunning()) {
+    logger.info('Shutting down MCP server before exit');
+    await mcpServerManager.shutdown();
+  }
+
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   logger.info('Received SIGTERM signal, shutting down');
+
+  // First shut down the MCP server
+  if (mcpServerManager.isServerRunning()) {
+    logger.info('Shutting down MCP server before exit');
+    await mcpServerManager.shutdown();
+  }
+
   process.exit(0);
 });
 

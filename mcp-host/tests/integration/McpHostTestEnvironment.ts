@@ -123,7 +123,7 @@ export class McpHostTestEnvironment {
 
     // Start the MCP host process with mock stdio and the selected port
     this.hostProcess = spawn('node', ['./dist/index.js'], {
-      stdio: ['inherit', 'inherit', 'inherit'],
+      stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
         LOG_LEVEL: 'debug',
@@ -135,6 +135,8 @@ export class McpHostTestEnvironment {
     this.exitPromise = new Promise<number>(resolve => {
       if (this.hostProcess) {
         this.hostProcess.on('exit', code => {
+          console.log(`hostProcess exit with code:`, code);
+
           this.exitCode = code ?? -1;
           resolve(this.exitCode);
         });
@@ -144,12 +146,10 @@ export class McpHostTestEnvironment {
     });
 
     // Connect mock stdio to the process
-    /*
     if (this.hostProcess) {
       this.mockStdio.stdin.pipe(this.hostProcess.stdin!);
       this.hostProcess.stdout!.pipe(this.mockStdio.stdout);
     }
-    */
 
     // Create MCP client connected to the host's HTTP server
     this.mcpClient = new McpHttpClient(`http://localhost:${this.port}/mcp`);

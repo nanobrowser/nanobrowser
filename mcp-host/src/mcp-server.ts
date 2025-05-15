@@ -1,119 +1,11 @@
-import { McpServer as SdkMcpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { z } from 'zod';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import express from 'express';
-import { randomUUID } from 'crypto';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { createLogger, LogLevel, Logger } from './logger.js';
 import { BrowserResources } from './browser-resources.js';
-import { BrowserTools, ActionCallback } from './browser-tools.js';
-
-// Implementation of McpServer class used in tests
-export class McpServer {
-  private browserResources: BrowserResources;
-  private browserTools: BrowserTools;
-  private actionCallback: ActionCallback | null = null;
-  private logger;
-  private transport: StreamableHTTPServerTransport | null = null;
-  private name: string;
-  private version: string;
-
-  constructor(options?: { name?: string; version?: string }) {
-    this.browserResources = new BrowserResources();
-    this.browserTools = new BrowserTools();
-    this.logger = createLogger('mcp-server');
-    this.name = options?.name || 'nanobrowser-mcp';
-    this.version = options?.version || '1.0.0';
-    this.logger.info(`McpServer instance created (${this.name} v${this.version})`);
-  }
-
-  /**
-   * Connects the MCP server to a transport
-   * @param transport The transport to connect to
-   */
-  public async connect(transport: StreamableHTTPServerTransport): Promise<void> {
-    this.transport = transport;
-    this.logger.info('Connected to transport');
-  }
-
-  /**
-   * Registers an action callback for handling browser operations
-   * @param callback The callback function for executing browser actions
-   */
-  public registerActionCallback(callback: ActionCallback): void {
-    this.actionCallback = callback;
-    this.browserTools.setBrowserActionCallback(callback);
-    this.logger.info('Action callback registered');
-  }
-
-  /**
-   * Sets the browser state
-   * @param state The browser state to set
-   */
-  public setBrowserState(state: any): void {
-    this.browserResources.updateState(state);
-    this.logger.debug('Browser state updated');
-  }
-
-  /**
-   * Lists all available resources
-   * @returns A promise that resolves to the list of resources
-   */
-  public async handleListResources(): Promise<{ resources: any[] }> {
-    return {
-      resources: this.browserResources.listResources(),
-    };
-  }
-
-  /**
-   * Reads a resource by URI
-   * @param uri The URI of the resource to read
-   * @returns A promise that resolves to the resource content
-   */
-  public async handleReadResource(uri: string): Promise<any> {
-    try {
-      return await this.browserResources.readResource(uri);
-    } catch (error) {
-      this.logger.error(`Error reading resource ${uri}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Lists all available tools
-   * @returns A promise that resolves to the list of tools
-   */
-  public async handleListTools(): Promise<{ tools: any[] }> {
-    return {
-      tools: this.browserTools.listTools(),
-    };
-  }
-
-  /**
-   * Calls a tool with arguments
-   * @param name The name of the tool to call
-   * @param args The arguments to pass to the tool
-   * @returns A promise that resolves to the tool result
-   */
-  public async handleCallTool(name: string, args: any): Promise<any> {
-    try {
-      this.logger.debug(`Executing tool: ${name} with args:`, args);
-      return await this.browserTools.callTool(name, args);
-    } catch (error) {
-      this.logger.error(`Error executing tool ${name}:`, error);
-      throw error;
-    }
-  }
-}
-
-// Extend the SDK's McpServer type for our custom handlers
-declare module '@modelcontextprotocol/sdk/server/mcp.js' {
-  interface McpServer {
-    handleListResources?: () => Promise<{ resources: any[] }>;
-    handleReadResource?: (uri: string) => Promise<any>;
-    handleListTools?: () => Promise<{ tools: any[] }>;
-    handleCallTool?: (name: string, args: any) => Promise<any>;
-  }
-}
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { ActionCallback, allTools } from './tools/index.js';
 
 /**
  * Configuration for the MCP server
@@ -132,7 +24,7 @@ export class McpServerManager {
   private mcpServer: McpServer;
   private config: McpServerConfig;
   private browserResources: BrowserResources;
-  private browserTools: BrowserTools;
+  private browserActionCallback: ActionCallback | null = null;
   private isRunning: boolean = false;
 
   /**
@@ -146,15 +38,17 @@ export class McpServerManager {
     // Set the log level based on the config
     this.setLogLevel(config.logLevel);
 
-    // Initialize browser resources and tools
+    // Initialize browser resources
     this.browserResources = new BrowserResources();
-    this.browserTools = new BrowserTools();
 
     // Create MCP server instance
-    this.mcpServer = new McpServer({
-      name: 'nanobrowser-mcp',
-      version: '1.0.0',
-    });
+    this.mcpServer = new McpServer(
+      {
+        name: 'nanobrowser-mcp',
+        version: '1.0.0',
+      },
+      { capabilities: { logging: {} } },
+    );
 
     this.logger.info('MCP server manager initialized');
   }
@@ -164,8 +58,7 @@ export class McpServerManager {
    * @param callback The callback function to execute browser actions
    */
   public setBrowserActionCallback(callback: ActionCallback) {
-    this.mcpServer.registerActionCallback(callback);
-    this.browserTools.setBrowserActionCallback(callback);
+    this.browserActionCallback = callback;
     this.logger.info('Browser action callback set');
   }
 
@@ -174,7 +67,6 @@ export class McpServerManager {
    * @param state The current browser state
    */
   public setBrowserState(state: any) {
-    this.mcpServer.setBrowserState(state);
     this.browserResources.updateState(state);
     this.logger.debug('Browser state updated');
   }
@@ -206,157 +98,139 @@ export class McpServerManager {
   }
 
   /**
-   * Registers browser resources and tools with the MCP server
+   * Registers a tool with the MCP server
+   * @param tool The tool to register
    */
-  private registerResourcesAndTools() {
-    this.logger.info('Registering browser resources and tools');
+  public registerTool(tool: import('./tools/index.js').Tool) {
+    this.logger.info(`Registering tool: ${tool.name}`);
 
-    // Register resource handlers with SdkMcpServer
-    this.mcpServer.handleListResources = async () => {
-      this.logger.debug('Handling listResources request');
-      return {
-        resources: this.browserResources.listResources(),
-      };
-    };
+    this.mcpServer.tool(
+      tool.name,
+      tool.description,
+      tool.inputSchema,
+      async (args: any, context): Promise<CallToolResult> => {
+        try {
+          const result = await tool.execute(args, this.browserActionCallback);
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: result.message || `Executed ${tool.name} successfully`,
+              },
+              ...(result.data
+                ? [
+                    {
+                      type: 'text' as const,
+                      text: JSON.stringify(result.data, null, 2),
+                    },
+                  ]
+                : []),
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Error executing ${tool.name}: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            status: 'error',
+          };
+        }
+      },
+    );
 
-    this.mcpServer.handleReadResource = async (uri: string) => {
-      this.logger.debug(`Handling readResource request for ${uri}`);
-      try {
-        return await this.browserResources.readResource(uri);
-      } catch (error) {
-        this.logger.error(`Error reading resource ${uri}:`, error);
-        throw error;
-      }
-    };
-
-    // Register tool handlers with SdkMcpServer
-    this.mcpServer.handleListTools = async () => {
-      this.logger.debug('Handling listTools request');
-      return {
-        tools: this.browserTools.listTools(),
-      };
-    };
-
-    this.mcpServer.handleCallTool = async (name: string, args: any) => {
-      this.logger.debug(`Handling callTool request for ${name}`);
-      try {
-        this.logger.debug(`Executing tool: ${name} with args:`, args);
-        return await this.browserTools.callTool(name, args);
-      } catch (error) {
-        this.logger.error(`Error executing tool ${name}:`, error);
-        throw error;
-      }
-    };
-
-    // Log registered resources and tools
-    const resources = this.browserResources.listResources();
-    this.logger.info(`Made ${resources.length} resources available through MCP server`);
-    this.logger.debug('Available resources: ' + resources.map(r => r.uri).join(', '));
-
-    const tools = this.browserTools.listTools();
-    this.logger.info(`Made ${tools.length} tools available through MCP server`);
-    this.logger.debug('Available tools: ' + tools.map(t => t.name).join(', '));
+    this.logger.debug(`Tool registered: ${tool.name}`);
   }
 
   /**
-   * Starts the HTTP server with StreamableHTTPServerTransport
+   * Registers browser resources with the MCP server
+   */
+  private registerResourcesAndTools() {
+    this.logger.info('Registering browser resources');
+
+    // Log registered resources
+    const resources = this.browserResources.listResources();
+    this.logger.info(`Made ${resources.length} resources available through MCP server`);
+    this.logger.debug('Available resources: ' + resources.map(r => r.uri).join(', '));
+  }
+
+  /**
+   * Starts the HTTP server with SSEServerTransport
    */
   private async startHttpServer() {
     // Create Express application
     const app = express();
 
     // Initialize transports map to store session connections
-    const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
+    const transports: { [sessionId: string]: SSEServerTransport } = {};
 
     // Set up HTTP routes for MCP communication
     app.use(express.json());
 
-    // Handle POST requests (client to server communication)
-    app.post('/mcp', async (req, res) => {
+    // SSE endpoint for establishing the stream
+    app.get('/mcp', async (req, res) => {
+      this.logger.info('Received GET request to /mcp (establishing SSE stream)');
+
       try {
-        // Check if there's an existing session ID
-        const sessionId = req.headers['mcp-session-id'] as string | undefined;
-        let transport: StreamableHTTPServerTransport;
+        // Create a new SSE transport for the client
+        // The endpoint for POST messages is '/messages'
+        const transport = new SSEServerTransport('/messages', res);
 
-        if (sessionId && transports[sessionId]) {
-          // Reuse existing transport
-          transport = transports[sessionId];
-        } else if (!sessionId && isInitializeRequest(req.body)) {
-          // New initialization request
-          this.logger.info('Creating new MCP session');
+        // Store the transport by session ID
+        const sessionId = transport.sessionId;
+        transports[sessionId] = transport;
 
-          // Create new transport with session ID generator
-          transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => randomUUID(),
-            onsessioninitialized: sessionId => {
-              // Store transport instance by session ID
-              transports[sessionId] = transport;
-              this.logger.debug(`Session initialized: ${sessionId}`);
-            },
-          });
+        // Set up onclose handler to clean up transport when closed
+        transport.onclose = () => {
+          this.logger.debug(`SSE transport closed for session ${sessionId}`);
+          delete transports[sessionId];
+        };
 
-          // Clean up transport when closed
-          transport.onclose = () => {
-            if (transport.sessionId) {
-              delete transports[transport.sessionId];
-              this.logger.debug(`Session closed: ${transport.sessionId}`);
-            }
-          };
+        // Connect the transport to the MCP server
+        await this.mcpServer.connect(transport);
 
-          // Connect MCP server to the transport
-          await this.mcpServer.connect(transport);
-        } else {
-          // Invalid request
-          this.logger.warn('Invalid request: No valid session ID');
-          res.status(400).json({
-            jsonrpc: '2.0',
-            error: {
-              code: -32000,
-              message: 'Invalid request: No valid session ID provided',
-            },
-            id: null,
-          });
-          return;
-        }
-
-        // Handle the request
-        await transport.handleRequest(req, res, req.body);
+        this.logger.info(`Established SSE stream with session ID: ${sessionId}`);
       } catch (error) {
-        this.logger.error('Error handling POST request:', error);
-        res.status(500).json({
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: error instanceof Error ? error.message : 'Unknown error',
-          },
-          id: null,
-        });
+        this.logger.error('Error establishing SSE stream:', error);
+        if (!res.headersSent) {
+          res.status(500).send('Error establishing SSE stream');
+        }
       }
     });
 
-    // Generic session request handler for GET and DELETE
-    const handleSessionRequest = async (req: express.Request, res: express.Response) => {
-      try {
-        const sessionId = req.headers['mcp-session-id'] as string | undefined;
-        if (!sessionId || !transports[sessionId]) {
-          this.logger.warn(`Invalid or missing session ID: ${sessionId}`);
-          res.status(400).send('Invalid or missing session ID');
-          return;
-        }
+    // Messages endpoint for receiving client JSON-RPC requests
+    app.post('/messages', async (req, res) => {
+      this.logger.debug('Received POST request to /messages');
 
-        const transport = transports[sessionId];
-        await transport.handleRequest(req, res);
-      } catch (error) {
-        this.logger.error('Error handling session request:', error);
-        res.status(500).send('Internal server error');
+      // Extract session ID from URL query parameter
+      // In the SSE protocol, this is added by the client based on the endpoint event
+      const sessionId = req.query.sessionId as string | undefined;
+
+      if (!sessionId) {
+        this.logger.warn('No session ID provided in request URL');
+        res.status(400).send('Missing sessionId parameter');
+        return;
       }
-    };
 
-    // Handle GET requests (server to client notifications, using SSE)
-    app.get('/mcp', handleSessionRequest);
+      const transport = transports[sessionId];
+      if (!transport) {
+        this.logger.warn(`No active transport found for session ID: ${sessionId}`);
+        res.status(404).send('Session not found');
+        return;
+      }
 
-    // Handle DELETE requests (session termination)
-    app.delete('/mcp', handleSessionRequest);
+      try {
+        // Handle the POST message with the transport
+        await transport.handlePostMessage(req, res, req.body);
+      } catch (error) {
+        this.logger.error('Error handling request:', error);
+        if (!res.headersSent) {
+          res.status(500).send('Error handling request');
+        }
+      }
+    });
 
     // Start the HTTP server
     return new Promise<void>((resolve, reject) => {
@@ -382,6 +256,26 @@ export class McpServerManager {
     }
 
     try {
+      // Get all active transports (we need to get this before closing the server)
+      const activeTransports = Object.values(
+        this.httpServer?.address()
+          ? // Using a type assertion because we can't directly access the transports map
+            (this.httpServer as any)._events?.request?.transports || {}
+          : {},
+      ) as SSEServerTransport[];
+
+      // Close all active transports to properly clean up resources
+      if (activeTransports.length > 0) {
+        this.logger.info(`Closing ${activeTransports.length} active transport(s)`);
+        for (const transport of activeTransports) {
+          try {
+            await transport.close();
+          } catch (error) {
+            this.logger.error(`Error closing transport:`, error);
+          }
+        }
+      }
+
       // Close the HTTP server
       if (this.httpServer) {
         await new Promise<void>(resolve => {

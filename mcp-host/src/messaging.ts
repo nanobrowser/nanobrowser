@@ -1,5 +1,5 @@
 import { Readable, Writable } from 'stream';
-import { createLogger } from './logger';
+import { createLogger } from './logger.js';
 
 export interface Message {
   type: string;

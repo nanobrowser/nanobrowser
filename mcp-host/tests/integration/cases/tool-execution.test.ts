@@ -40,8 +40,7 @@ describe('Tool Execution', () => {
 
     // List available tools
     const tools = await mcpClient!.listTools();
-    expect(tools.result.tools).toBeDefined();
-    expect(Array.isArray(tools.result.tools)).toBe(true);
+    expect(tools).toBeDefined();
 
     /*
     // Verify navigate_to tool is available

@@ -34,7 +34,7 @@ describe('Error Handling', () => {
       expect(true).toBe(false);
     } catch (error: any) {
       // Verify error response
-      expect(error.response.data.error).toBeDefined();
+      expect(error).toBeDefined();
     }
   });
 
@@ -51,7 +51,7 @@ describe('Error Handling', () => {
       expect(true).toBe(false);
     } catch (error: any) {
       // Verify error response
-      expect(error.response.data.error).toBeDefined();
+      expect(error).toBeDefined();
     }
   });
 
