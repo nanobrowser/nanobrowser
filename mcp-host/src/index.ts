@@ -106,15 +106,17 @@ messaging.registerHandler('setBrowserState', async data => {
 
 // Auto-start MCP Server when MCP Host starts
 // This sets up the server with default configuration (port: 3000, logLevel: 'info')
-logger.info('Auto-starting MCP HTTP server with default configuration');
+// Use the PORT environment variable or default to 3000
+const autoStartPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+logger.info(`Auto-starting MCP HTTP server on port ${autoStartPort}`);
 mcpServerStartHandler
   .handle({
-    port: 3000,
+    port: autoStartPort,
     logLevel: 'info',
   })
   .then(result => {
     if (result.success) {
-      logger.info('MCP HTTP server auto-started successfully on port 3000');
+      logger.info(`MCP HTTP server auto-started successfully on port ${autoStartPort}`);
     } else {
       logger.error('Failed to auto-start MCP HTTP server:', result.error || 'Unknown error');
     }

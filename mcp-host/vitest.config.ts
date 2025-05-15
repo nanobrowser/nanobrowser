@@ -18,6 +18,16 @@ export default defineConfig({
         singleFork: process.env.TEST_TYPE === 'integration',
       },
     },
+    // For integration tests, run sequentially with increased timeouts
+    sequence: process.env.TEST_TYPE === 'integration' ? { shuffle: false } : undefined,
+    // Prevent token limit issues with integration tests
+    testTimeout: process.env.TEST_TYPE === 'integration' ? 30000 : 5000,
+    // Run only files matching the pattern sequentially
+    fileParallelism: process.env.TEST_TYPE === 'integration' ? false : true,
+    // Give more time for file watching operations to avoid reload conflicts
+    chaiConfig: {
+      includeStack: true,
+    },
     deps: {
       // Disable module dependency tracking so Jest imports can work
       interopDefault: true,

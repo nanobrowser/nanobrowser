@@ -83,15 +83,8 @@ export class McpServer {
    * @returns A promise that resolves to the list of tools
    */
   public async handleListTools(): Promise<{ tools: any[] }> {
-    // Get all tools from the browser tools
-    const allTools = this.browserTools.listTools();
-
-    // Filter only the tools expected by the snapshot test
-    // This is to pass the tests while we implement the full functionality
-    const expectedTools = allTools.filter(tool => tool.name === 'navigate_to' || tool.name === 'click_element');
-
     return {
-      tools: expectedTools,
+      tools: this.browserTools.listTools(),
     };
   }
 
@@ -171,6 +164,7 @@ export class McpServerManager {
    * @param callback The callback function to execute browser actions
    */
   public setBrowserActionCallback(callback: ActionCallback) {
+    this.mcpServer.registerActionCallback(callback);
     this.browserTools.setBrowserActionCallback(callback);
     this.logger.info('Browser action callback set');
   }
@@ -180,6 +174,7 @@ export class McpServerManager {
    * @param state The current browser state
    */
   public setBrowserState(state: any) {
+    this.mcpServer.setBrowserState(state);
     this.browserResources.updateState(state);
     this.logger.debug('Browser state updated');
   }
@@ -216,61 +211,51 @@ export class McpServerManager {
   private registerResourcesAndTools() {
     this.logger.info('Registering browser resources and tools');
 
-    // Set up resource handling
-    try {
-      // Register resource handling with the MCP server by extending it with custom handlers
-      const resources = this.browserResources.listResources();
-
-      // Register a custom handler for listing resources
-      this.mcpServer.handleListResources = async () => {
-        return {
-          resources: this.browserResources.listResources(),
-        };
+    // Register resource handlers with SdkMcpServer
+    this.mcpServer.handleListResources = async () => {
+      this.logger.debug('Handling listResources request');
+      return {
+        resources: this.browserResources.listResources(),
       };
+    };
 
-      // Register a custom handler for reading resources
-      this.mcpServer.handleReadResource = async (uri: string) => {
-        try {
-          return await this.browserResources.readResource(uri);
-        } catch (error) {
-          this.logger.error(`Error reading resource ${uri}:`, error);
-          throw error;
-        }
+    this.mcpServer.handleReadResource = async (uri: string) => {
+      this.logger.debug(`Handling readResource request for ${uri}`);
+      try {
+        return await this.browserResources.readResource(uri);
+      } catch (error) {
+        this.logger.error(`Error reading resource ${uri}:`, error);
+        throw error;
+      }
+    };
+
+    // Register tool handlers with SdkMcpServer
+    this.mcpServer.handleListTools = async () => {
+      this.logger.debug('Handling listTools request');
+      return {
+        tools: this.browserTools.listTools(),
       };
+    };
 
-      this.logger.info(`Made ${resources.length} resources available through MCP server`);
-      this.logger.debug('Available resources: ' + resources.map(r => r.uri).join(', '));
-    } catch (error) {
-      this.logger.error('Error registering resources:', error);
-    }
+    this.mcpServer.handleCallTool = async (name: string, args: any) => {
+      this.logger.debug(`Handling callTool request for ${name}`);
+      try {
+        this.logger.debug(`Executing tool: ${name} with args:`, args);
+        return await this.browserTools.callTool(name, args);
+      } catch (error) {
+        this.logger.error(`Error executing tool ${name}:`, error);
+        throw error;
+      }
+    };
 
-    // Set up tool handling
-    try {
-      const tools = this.browserTools.listTools();
+    // Log registered resources and tools
+    const resources = this.browserResources.listResources();
+    this.logger.info(`Made ${resources.length} resources available through MCP server`);
+    this.logger.debug('Available resources: ' + resources.map(r => r.uri).join(', '));
 
-      // Register a custom handler for listing tools
-      this.mcpServer.handleListTools = async () => {
-        return {
-          tools: this.browserTools.listTools(),
-        };
-      };
-
-      // Register a custom handler for executing tools
-      this.mcpServer.handleCallTool = async (name: string, args: any) => {
-        try {
-          this.logger.debug(`Executing tool: ${name} with args:`, args);
-          return await this.browserTools.callTool(name, args);
-        } catch (error) {
-          this.logger.error(`Error executing tool ${name}:`, error);
-          throw error;
-        }
-      };
-
-      this.logger.info(`Made ${tools.length} tools available through MCP server`);
-      this.logger.debug('Available tools: ' + tools.map(t => t.name).join(', '));
-    } catch (error) {
-      this.logger.error('Error registering tools:', error);
-    }
+    const tools = this.browserTools.listTools();
+    this.logger.info(`Made ${tools.length} tools available through MCP server`);
+    this.logger.debug('Available tools: ' + tools.map(t => t.name).join(', '));
   }
 
   /**
