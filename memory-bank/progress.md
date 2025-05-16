@@ -49,6 +49,11 @@ Nanobrowser is a functioning Chrome extension that provides AI web automation th
 - ✅ **Native Messaging Architecture**: Clearly defined and documented communication architecture between extension and MCP host
 - ✅ **Resource Definition**: Thoroughly mapped browser states to MCP resources with detailed API reference
 - ✅ **Tool Definition**: Precisely mapped browser operations to MCP tools with standardized schemas
+- ✅ **Class-Based Resource Architecture**: Implemented class-based structure with dependency injection for resources
+  - ✅ **NativeMessaging Injection**: Resources receive messaging instance via constructor
+  - ✅ **Factory Function Pattern**: Central resource creation with proper dependency management
+  - ✅ **Enhanced Testability**: Improved structure for unit testing with mock dependencies
+  - ✅ **Notification System**: Built-in notification methods for resource state changes
 
 ## What's Left to Build
 

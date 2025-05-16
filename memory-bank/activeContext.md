@@ -28,6 +28,17 @@ The Nanobrowser project is currently focused on completing the MCP Host Control 
 
 Recent exploration and development has resulted in significant advancements:
 
+1. **MCP Resources Class-Based Refactoring**: Converted MCP resource implementations to use class-based structure with dependency injection:
+   - **Class-Based Architecture**: Transformed resource modules from object literals to proper TypeScript classes
+   - **NativeMessaging Injection**: Implemented dependency injection pattern for NativeMessaging through constructors
+   - **Factory Function Pattern**: Added factory functions to create resources with proper dependencies
+   - **Enhanced Logging**: Added detailed logging in resource implementations
+   - **Notification Support**: Added methods to notify subscribers of resource state changes
+   - **Backward Compatibility**: Maintained backward compatibility for existing code
+   - **Resource Initialization Flow**: Improved resource initialization with centralized resource creation
+   - **Test Compatibility**: Ensured compatibility with existing tests
+   - **Code Organization**: Better encapsulation of resource behavior and state
+
 1. **MCP Host Native Messaging Integration Fix**: Resolved critical issue with the Native Messaging Host integration:
    - **Manifest File Naming**: Fixed an issue where the Native Messaging Host manifest was incorrectly named `manifest.json` instead of the required `dev.nanobrowser.mcp.host.json`
    - **Installation Script Update**: Modified the `install.sh` script to correctly name and copy the manifest file to Chrome's NativeMessagingHosts directory

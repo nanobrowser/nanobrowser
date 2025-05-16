@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { McpHostTestEnvironment } from '../mcp-host-test-environment';
+import { RpcRequest, RpcResponse } from '../../../src/types';
 
 /**
  * Tests for error handling in the MCP Host
@@ -79,7 +80,12 @@ describe('Error Handling', () => {
       tabs: [{ id: 1, url: 'https://example.com', title: 'Test After Error', active: true }],
     };
 
-    await testEnv.setBrowserState(browserState);
+    testEnv.registerRpcMethod('get_browser_state', async (request: RpcRequest): Promise<RpcResponse> => {
+      return {
+        id: request.id,
+        result: browserState,
+      };
+    });
 
     // Read and verify browser state resource to confirm host is still functional
     const resourceContent = await mcpClient!.readResource('browser://current/state');

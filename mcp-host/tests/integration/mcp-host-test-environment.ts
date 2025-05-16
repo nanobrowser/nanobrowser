@@ -1,10 +1,10 @@
+import * as net from 'net';
 import { ChildProcess, spawn } from 'child_process';
 import { Readable, Writable } from 'stream';
 import { createMockStdio } from '../helpers/mock-stdio';
 import { McpHttpClient } from './mcp-http-client';
 import { MockExtension } from './mock-extension';
-import * as net from 'net';
-import { promisify } from 'util';
+import { type RpcHandler } from '../../src/types';
 
 /**
  * Test environment for MCP Host integration tests
@@ -118,9 +118,6 @@ export class McpHostTestEnvironment {
       this.port = await this.findAvailablePort();
     }
 
-    // Register message handlers
-    this.mockExtension.registerHandlers();
-
     // Start the MCP host process with mock stdio and the selected port
     this.hostProcess = spawn('node', ['./dist/index.js'], {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -195,26 +192,6 @@ export class McpHostTestEnvironment {
   }
 
   /**
-   * Set browser state via the mock extension
-   * @param state The browser state to set
-   * @returns A promise that resolves with the response
-   */
-  async setBrowserState(state: any): Promise<any> {
-    return this.mockExtension.setBrowserState(state);
-  }
-
-  /**
-   * Register an action handler for the mock extension
-   * @param handler The action handler function
-   */
-  registerActionHandler(handler: (action: string, params: any) => Promise<any>): void {
-    this.mockExtension.addHandler('executeAction', async data => {
-      const { action, params } = data;
-      return handler(action, params);
-    });
-  }
-
-  /**
    * Get the MCP client
    * @returns The MCP client or null if not initialized
    */
@@ -258,5 +235,9 @@ export class McpHostTestEnvironment {
 
     // Clean up
     await this.cleanup();
+  }
+
+  public registerRpcMethod(method: string, handler: RpcHandler): void {
+    this.mockExtension.registerRpcMethod(method, handler);
   }
 }

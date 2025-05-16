@@ -2,7 +2,8 @@ import { NativeMessaging } from './messaging.js';
 import { createLogger } from './logger.js';
 import { StatusHandler, PingHandler, ShutdownHandler, McpServerStatusHandler } from './message-handlers/index.js';
 import { McpServerManager } from './mcp-server.js';
-import { browserState } from './resources/shared-state.js';
+import { allTools } from './tools/index.js';
+import { CurrentDomResource, CurrentStateResource } from './resources/index.js';
 
 // Create a logger instance for the main module
 const logger = createLogger('main');
@@ -102,8 +103,6 @@ messaging.registerHandler('setBrowserState', async data => {
 });
 
 // Import all tools and resources
-import { allTools } from './tools/index.js';
-import { allResources } from './resources/index.js';
 
 // Register tools with the MCP server manager
 for (const tool of allTools) {
@@ -111,11 +110,9 @@ for (const tool of allTools) {
 }
 logger.info(`Registered ${allTools.length} tools with MCP server`);
 
-// Register resources with the MCP server manager
-for (const resource of allResources) {
-  mcpServerManager.registerResource(resource);
-}
-logger.info(`Registered ${allResources.length} resources with MCP server`);
+mcpServerManager.registerResource(new CurrentDomResource(messaging));
+mcpServerManager.registerResource(new CurrentStateResource(messaging));
+logger.info(`Registered resources with MCP server`);
 
 // Auto-start MCP Server when MCP Host starts
 logger.info(`Auto-starting MCP HTTP server on port ${mcpServerPort}`);

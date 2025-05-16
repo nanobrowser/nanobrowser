@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { McpHostTestEnvironment } from '../mcp-host-test-environment';
+import { RpcRequest, RpcResponse } from '../../../src/types';
 
 /**
  * Tests for MCP tool execution
@@ -15,12 +16,6 @@ describe('Tool Execution', () => {
 
     testEnv = new McpHostTestEnvironment();
     await testEnv.setup();
-
-    // Register action handler to capture actions
-    testEnv.registerActionHandler(async (action, params) => {
-      capturedAction = { action, params };
-      return { success: true, message: 'Action executed', data: { action, params } };
-    });
   });
 
   afterEach(() => {
@@ -41,6 +36,23 @@ describe('Tool Execution', () => {
     // List available tools
     const tools = await mcpClient!.listTools();
     expect(tools).toBeDefined();
+
+    const browserState = {
+      activeTab: {
+        id: 1,
+        url: 'https://example.com',
+        title: 'Test Page',
+        content: '<html><body><h1>Test</h1></body></html>',
+      },
+      tabs: [{ id: 1, url: 'https://example.com', title: 'Test Page', active: true }],
+    };
+
+    testEnv.registerRpcMethod('get_browser_state', async (request: RpcRequest): Promise<RpcResponse> => {
+      return {
+        id: request.id,
+        result: browserState,
+      };
+    });
 
     /*
     // Verify navigate_to tool is available

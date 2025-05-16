@@ -3,6 +3,69 @@
  */
 
 // ==============================
+// RPC Types
+// ==============================
+
+/**
+ * JSON-RPC like request structure
+ */
+export interface RpcRequest {
+  /**
+   * Unique identifier for the request
+   */
+  id?: string;
+
+  /**
+   * Method to be invoked
+   */
+  method: string;
+
+  /**
+   * Parameters for the method
+   */
+  params?: any;
+}
+
+/**
+ * JSON-RPC like response structure
+ */
+export interface RpcResponse {
+  /**
+   * Identifier matching the request
+   */
+  id?: string;
+
+  /**
+   * Result of the method call (if successful)
+   */
+  result?: any;
+
+  /**
+   * Error information (if the call failed)
+   */
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
+
+/**
+ * Options for RPC requests
+ */
+export interface RpcRequestOptions {
+  /**
+   * Timeout in milliseconds
+   */
+  timeout?: number;
+}
+
+/**
+ * A function that handles an RPC request and returns a promise of RpcResponse
+ */
+export type RpcHandler = (request: RpcRequest) => Promise<RpcResponse>;
+
+// ==============================
 // Message Handler Types
 // ==============================
 

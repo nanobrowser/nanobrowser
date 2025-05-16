@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { McpHostTestEnvironment } from '../mcp-host-test-environment';
+import { RpcRequest, RpcResponse } from '../../../src/types';
 
 /**
  * Tests for parallel execution of multiple MCP Host instances
@@ -53,23 +54,32 @@ describe('Multiple Instances (Parallel Testing)', () => {
       expect(resources1.result.resources).toBeDefined();
       expect(resources2.result.resources).toBeDefined();
 
-      // Set different browser states for each instance
-      await testEnv1.setBrowserState({
-        activeTab: {
-          id: 1,
-          url: 'https://example1.com',
-          title: 'Test Page 1',
-          content: '<html><body><h1>Test 1</h1></body></html>',
-        },
+      testEnv1.registerRpcMethod('get_browser_state', async (request: RpcRequest): Promise<RpcResponse> => {
+        return {
+          id: request.id,
+          result: {
+            activeTab: {
+              id: 1,
+              url: 'https://example1.com',
+              title: 'Test Page 1',
+              content: '<html><body><h1>Test 1</h1></body></html>',
+            },
+          },
+        };
       });
 
-      await testEnv2.setBrowserState({
-        activeTab: {
-          id: 1,
-          url: 'https://example2.com',
-          title: 'Test Page 2',
-          content: '<html><body><h1>Test 2</h1></body></html>',
-        },
+      testEnv2.registerRpcMethod('get_browser_state', async (request: RpcRequest): Promise<RpcResponse> => {
+        return {
+          id: request.id,
+          result: {
+            activeTab: {
+              id: 1,
+              url: 'https://example2.com',
+              title: 'Test Page 2',
+              content: '<html><body><h1>Test 2</h1></body></html>',
+            },
+          },
+        };
       });
 
       // Verify each instance has its own state

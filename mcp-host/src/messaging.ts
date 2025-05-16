@@ -1,5 +1,7 @@
 import { Readable, Writable } from 'stream';
 import { createLogger } from './logger.js';
+import { v4 as uuidv4 } from 'uuid';
+import { RpcRequest, RpcResponse, RpcRequestOptions, RpcHandler } from './types.js';
 
 export interface Message {
   type: string;
@@ -7,16 +9,23 @@ export interface Message {
 }
 
 export class NativeMessaging {
+  private logger = createLogger('messaging');
   private stdin: Readable;
   private stdout: Writable;
   private buffer: Buffer = Buffer.alloc(0);
   private messageHandlers: Map<string, (data: any) => Promise<any>> = new Map();
-  private logger = createLogger('messaging');
+  private rpcMethodHandlers: Map<string, RpcHandler> = new Map();
+  private pendingRequests = new Map<
+    string,
+    { resolve: (value: any) => void; reject: (reason?: any) => void; timeoutId: NodeJS.Timeout }
+  >();
 
   constructor(stdin: Readable = process.stdin, stdout: Writable = process.stdout) {
     this.stdin = stdin;
     this.stdout = stdout;
     this.setupMessageHandling();
+    this.registerRpcResponseHandler();
+    this.registerRpcRequestHandler();
   }
 
   private setupMessageHandling() {
@@ -101,5 +110,95 @@ export class NativeMessaging {
     messageBuffer.copy(buffer, 4);
 
     this.stdout.write(buffer);
+  }
+
+  public rpcRequest(rpc: RpcRequest, options: RpcRequestOptions = {}): Promise<RpcResponse> {
+    const id = rpc.id ?? uuidv4();
+    const method = rpc.method;
+    const params = rpc.params;
+
+    const { timeout = 5000 } = options;
+
+    this.logger.debug(`Sending RPC request: ${method} (id: ${id})`);
+
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`RPC request timeout: ${method} (id: ${id})`));
+      }, timeout);
+
+      this.pendingRequests.set(id, { resolve, reject, timeoutId });
+
+      this.sendMessage({
+        type: 'rpc_request',
+        id,
+        method,
+        params,
+      });
+    });
+  }
+
+  private registerRpcResponseHandler() {
+    this.registerHandler('rpc_response', async (data: any) => {
+      const id = data.id;
+
+      this.logger.debug(`Received RPC response for ID: ${id}`);
+
+      const handler = this.pendingRequests.get(id);
+
+      if (!handler) {
+        this.logger.warn(`No pending request found for RPC response ID: ${id}`);
+        return {};
+      }
+
+      clearTimeout(handler.timeoutId);
+      this.pendingRequests.delete(id);
+
+      if (data.error) {
+        handler.reject(data.error);
+      } else {
+        handler.resolve(data.result || {});
+      }
+
+      return {};
+    });
+  }
+
+  private registerRpcRequestHandler() {
+    this.registerHandler('rpc_request', async (data: RpcRequest) => {
+      const { method, id } = data;
+      this.logger.debug(`Handling incoming RPC request: ${method}`);
+
+      const handler = this.rpcMethodHandlers.get(method);
+
+      if (!handler) {
+        this.logger.warn(`No handler registered for RPC method: ${method}`);
+        return {
+          id,
+          error: {
+            code: -32601,
+            message: `Method not found: ${method}`,
+          },
+        };
+      }
+
+      try {
+        return await handler(data);
+      } catch (error) {
+        this.logger.error(`Error in handler for method ${method}:`, error);
+        return {
+          id,
+          error: {
+            code: -32000,
+            message: error instanceof Error ? error.message : String(error),
+          },
+        };
+      }
+    });
+  }
+
+  public registerRpcMethod(method: string, handler: RpcHandler): void {
+    this.logger.debug(`Registering RPC handler for method: ${method}`);
+    this.rpcMethodHandlers.set(method, handler);
   }
 }
