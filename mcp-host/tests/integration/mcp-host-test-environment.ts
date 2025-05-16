@@ -1,10 +1,9 @@
 import * as net from 'net';
 import { ChildProcess, spawn } from 'child_process';
 import { Readable, Writable } from 'stream';
-import { createMockStdio } from '../helpers/mock-stdio';
 import { McpHttpClient } from './mcp-http-client';
-import { MockExtension } from './mock-extension';
 import { type RpcHandler } from '../../src/types';
+import { NativeMessaging } from '../../src/messaging.js';
 
 /**
  * Test environment for MCP Host integration tests
@@ -14,13 +13,8 @@ import { type RpcHandler } from '../../src/types';
 export class McpHostTestEnvironment {
   private hostProcess: ChildProcess | null = null;
   private mcpClient: McpHttpClient | null = null;
-  private mockExtension: MockExtension;
-  private mockStdio: {
-    stdin: Readable;
-    stdout: Writable;
-    pushToStdin: (data: any) => void;
-    readFromStdout: () => any[];
-  };
+  private nativeMessaging: NativeMessaging | null = null;
+
   private port: number;
   private exitCode: number | null = null;
   private exitPromise: Promise<number> | null = null;
@@ -32,12 +26,6 @@ export class McpHostTestEnvironment {
   constructor(options?: { port?: number }) {
     // Use provided port or find an available one
     this.port = options?.port || 0; // 0 will be replaced with actual port during setup
-
-    // Create mock stdio for communicating with the host
-    this.mockStdio = createMockStdio();
-
-    // Create mock extension
-    this.mockExtension = new MockExtension();
   }
 
   /**
@@ -144,8 +132,7 @@ export class McpHostTestEnvironment {
 
     // Connect mock stdio to the process
     if (this.hostProcess) {
-      this.mockStdio.stdin.pipe(this.hostProcess.stdin!);
-      this.hostProcess.stdout!.pipe(this.mockStdio.stdout);
+      this.nativeMessaging = new NativeMessaging(this.hostProcess?.stdout, this.hostProcess?.stdin);
     }
 
     // Create MCP client connected to the host's HTTP server
@@ -188,7 +175,7 @@ export class McpHostTestEnvironment {
    * @returns A promise that resolves with the response
    */
   async sendMessage(message: any): Promise<any> {
-    return this.mockExtension.sendMessageAndWaitForResponse(message);
+    return this.nativeMessaging?.sendMessage(message);
   }
 
   /**
@@ -238,6 +225,6 @@ export class McpHostTestEnvironment {
   }
 
   public registerRpcMethod(method: string, handler: RpcHandler): void {
-    this.mockExtension.registerRpcMethod(method, handler);
+    this.nativeMessaging?.registerRpcMethod(method, handler);
   }
 }
