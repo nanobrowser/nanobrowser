@@ -4,7 +4,8 @@
  * This tool allows navigating to a specified URL in the browser.
  */
 
-import { Tool, ActionCallback, ActionResult } from '../types.js';
+import { Tool, ActionResult } from '../types.js';
+import { NativeMessaging } from '../messaging.js';
 
 /**
  * Implementation of the navigate_to tool
@@ -19,6 +20,19 @@ export class NavigateToTool implements Tool {
    * Tool description
    */
   public description = 'Navigate to a specified URL';
+
+  /**
+   * Private reference to the NativeMessaging instance
+   */
+  private messaging: NativeMessaging;
+
+  /**
+   * Constructor
+   * @param messaging NativeMessaging instance for communication
+   */
+  constructor(messaging: NativeMessaging) {
+    this.messaging = messaging;
+  }
 
   /**
    * Input schema for the tool
@@ -40,21 +54,21 @@ export class NavigateToTool implements Tool {
    * @param callback Browser action callback
    * @returns Promise resolving to the action result
    */
-  public async execute(args: { url: string }, callback: ActionCallback | null): Promise<ActionResult> {
-    if (!callback) {
-      throw new Error('Browser action callback not set');
-    }
-
+  public async execute(args: { url: string }): Promise<ActionResult> {
     if (!args.url) {
       throw new Error('URL is required for navigation');
     }
 
-    // Call the browser action callback to perform the navigation
-    return callback('navigate', { url: args.url });
+    const resp = await this.messaging.rpcRequest({
+      method: 'navigate_to',
+      params: {
+        url: args.url,
+      },
+    });
+
+    return {
+      success: true,
+      data: resp.result,
+    };
   }
 }
-
-/**
- * Export a singleton instance of the navigate_to tool
- */
-export const navigateToTool = new NavigateToTool();

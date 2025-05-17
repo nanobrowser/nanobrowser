@@ -1,8 +1,7 @@
 import { NativeMessaging } from './messaging.js';
 import { createLogger } from './logger.js';
-import { StatusHandler, PingHandler, ShutdownHandler, McpServerStatusHandler } from './message-handlers/index.js';
 import { McpServerManager } from './mcp-server.js';
-import { allTools } from './tools/index.js';
+import { NavigateToTool } from './tools/index.js';
 import { CurrentDomResource, CurrentStateResource } from './resources/index.js';
 import { RpcRequest, RpcResponse } from './types.js';
 
@@ -26,92 +25,53 @@ const hostStatus = {
 
 logger.info(`Starting MCP Host in ${hostStatus.runMode} mode`);
 
-// Initialize the native messaging handler
-const messaging = new NativeMessaging();
-
-// Create handler instances
-const statusHandler = new StatusHandler({
-  startTime: hostStatus.startTime,
-  version: hostStatus.version,
-  runMode: hostStatus.runMode,
-});
-
-const pingHandler = new PingHandler();
-
-// Update last ping time whenever we receive a ping
-pingHandler.onPing = timestamp => {
-  hostStatus.lastPing = timestamp;
-};
-
-// Define a browser action callback for MCP server
-const browserActionCallback = async (action: string, params: any) => {
-  logger.debug(`Received browser action: ${action}`, params);
-  // In a full implementation, we would send these actions to the Chrome extension
-  // For now, just return a success response
-  return {
-    success: true,
-    message: `Browser action ${action} handled`,
-    data: params,
-  };
-};
-
 // Auto-start port (use PORT env var or default to 3000)
 const mcpServerPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-
-// Create MCP server manager directly
 const mcpServerManager = new McpServerManager({
   port: mcpServerPort,
   logLevel: 'info',
 });
 
-// Set the browser action callback
-mcpServerManager.setBrowserActionCallback(browserActionCallback);
+// Initialize the native messaging handler
+const messaging = new NativeMessaging();
 
-// Create MCP server status handler
-const mcpServerStatusHandler = new McpServerStatusHandler(mcpServerManager);
+// Register handlers
+messaging.registerHandler('init', async () => {
+  logger.info('mcp_host received init');
+});
 
-// Create a cleanup function for the shutdown handler
-const cleanup = async () => {
-  logger.info('Performing cleanup before shutdown');
+messaging.registerHandler('shutdown', async () => {
+  logger.info('mcp_host received shutdown');
 
   // Shut down MCP server if it's running
   if (mcpServerManager.isServerRunning()) {
     logger.info('Shutting down MCP server');
     await mcpServerManager.shutdown();
   }
-};
-const shutdownHandler = new ShutdownHandler(cleanup);
-
-// Register handlers
-messaging.registerHandler('ping', data => pingHandler.handle(data));
-messaging.registerHandler('getStatus', data => statusHandler.handle(data));
-messaging.registerHandler('shutdown', data => shutdownHandler.handle(data));
-
-// Only keep the status handler for MCP server
-messaging.registerHandler('getMcpServerStatus', data => mcpServerStatusHandler.handle(data));
+});
 
 messaging.registerHandler('error', async (data: any): Promise<void> => {
   logger.error('mcp_host received error:', data);
 });
 
-messaging.registerRpcMethod('hello', async (req: RpcRequest): Promise<RpcResponse> => {
-  logger.debug('mcp_host received hello:', req);
+messaging.registerRpcMethod('ping', async (req: RpcRequest): Promise<RpcResponse> => {
+  logger.debug('received ping request:', req);
 
   return {
-    id: req.id,
-    result: 'world',
+    result: {
+      timestamp: Date.now(),
+    },
   };
 });
 
-// Register tools with the MCP server manager
-for (const tool of allTools) {
-  mcpServerManager.registerTool(tool);
-}
-logger.info(`Registered ${allTools.length} tools with MCP server`);
-
+// Register resources with the MCP server manager
 mcpServerManager.registerResource(new CurrentDomResource(messaging));
 mcpServerManager.registerResource(new CurrentStateResource(messaging));
 logger.info(`Registered resources with MCP server`);
+
+// Initialize tools with the messaging instance
+mcpServerManager.registerTool(new NavigateToTool(messaging));
+logger.info(`Registered tools with MCP server`);
 
 // Auto-start MCP Server when MCP Host starts
 logger.info(`Auto-starting MCP HTTP server on port ${mcpServerPort}`);
@@ -138,11 +98,6 @@ messaging.sendMessage({
     runMode: hostStatus.runMode,
   },
 });
-
-const resp = await messaging.rpcRequest({
-  method: 'hello',
-});
-logger.info('rpcRequestResp:', resp);
 
 // Handle exit signals gracefully, ensuring MCP server shutdown
 process.on('SIGINT', async () => {

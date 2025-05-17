@@ -142,22 +142,14 @@ export class McpHostTestEnvironment {
 
     // Connect mock stdio to the process
     if (this.hostProcess && this.hostProcess.stdout && this.hostProcess.stdin) {
-      // From parent process perspective:
-      // - Read FROM child's stdout (Readable)
-      // - Write TO child's stdin (Writable)
       this.nativeMessaging = new NativeMessaging(this.hostProcess.stdout, this.hostProcess.stdin);
 
       this.nativeMessaging.registerHandler('status', async (data: any): Promise<void> => {
         this.logger.info('received status:', data);
       });
 
-      this.nativeMessaging.registerRpcMethod('hello', async (req: RpcRequest): Promise<RpcResponse> => {
-        this.logger.info('received hello request:', req);
-
-        return {
-          id: req.id,
-          result: 'world',
-        };
+      this.nativeMessaging.sendMessage({
+        type: 'init',
       });
     }
 

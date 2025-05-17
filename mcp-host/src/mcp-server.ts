@@ -4,8 +4,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import express from 'express';
 import { createLogger, LogLevel, Logger } from './logger.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { ActionCallback } from './tools/index.js';
-import { type Resource } from './types.js';
+import { type Resource, type Tool } from './types.js';
 
 /**
  * Configuration for the MCP server
@@ -24,7 +23,6 @@ export class McpServerManager {
   private mcpServer: McpServer;
   private config: McpServerConfig;
   private registeredResources: Resource[] = [];
-  private browserActionCallback: ActionCallback | null = null;
   private isRunning: boolean = false;
 
   /**
@@ -45,15 +43,6 @@ export class McpServerManager {
     );
 
     this.logger.info('MCP server manager initialized');
-  }
-
-  /**
-   * Sets the browser action callback to handle browser operations
-   * @param callback The callback function to execute browser actions
-   */
-  public setBrowserActionCallback(callback: ActionCallback) {
-    this.browserActionCallback = callback;
-    this.logger.info('Browser action callback set');
   }
 
   /**
@@ -83,16 +72,19 @@ export class McpServerManager {
    * Registers a tool with the MCP server
    * @param tool The tool to register
    */
-  public registerTool(tool: import('./tools/index.js').Tool) {
+  public registerTool(tool: Tool) {
     this.logger.info(`Registering tool: ${tool.name}`);
 
     this.mcpServer.tool(
       tool.name,
       tool.description,
       tool.inputSchema,
-      async (args: any, context): Promise<CallToolResult> => {
+      async (args: any, extra: any): Promise<CallToolResult> => {
+        this.logger.debug(`tool ${tool.name} called, args and extra`, args, extra);
+
         try {
-          const result = await tool.execute(args, this.browserActionCallback);
+          const result = await tool.execute(args);
+
           return {
             content: [
               {

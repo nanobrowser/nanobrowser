@@ -98,7 +98,8 @@ export class NativeMessaging {
   }
 
   public sendMessage(message: any) {
-    this.logger.debug(`Sending message:`, { type: message.type });
+    this.logger.debug(`Sending message:`, message);
+
     const messageJson = JSON.stringify(message);
     const messageBuffer = Buffer.from(messageJson, 'utf8');
     const length = messageBuffer.length;
@@ -176,6 +177,8 @@ export class NativeMessaging {
 
       try {
         const resp = await handler(data);
+        resp.id = data.id;
+
         this.sendMessage({
           type: 'rpc_response',
           ...resp,

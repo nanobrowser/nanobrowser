@@ -84,11 +84,6 @@ export interface StatusHandlerConfig {
 }
 
 /**
- * Type definition for ping callback
- */
-export type PingCallback = (timestamp: number) => void;
-
-/**
  * Type definition for the cleanup function
  */
 export type CleanupFunction = () => Promise<void>;
@@ -180,5 +175,5 @@ export interface Tool {
    * @param args Tool arguments
    * @param callback Function to execute browser actions
    */
-  execute(args: any, callback: ActionCallback | null): Promise<ActionResult>;
+  execute(args: any): Promise<ActionResult>;
 }

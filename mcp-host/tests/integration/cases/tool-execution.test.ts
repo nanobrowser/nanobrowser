@@ -54,24 +54,23 @@ describe('Tool Execution', () => {
       };
     });
 
-    /*
+    testEnv.registerRpcMethod('navigate_to', async (req: RpcRequest): Promise<RpcResponse> => {
+      browserState.activeTab.url = req.params.url;
+
+      return {
+        result: 'success',
+      };
+    });
+
     // Verify navigate_to tool is available
-    const navigateTool = tools.result.tools.find(
-      (t: any) => t.name === 'navigate_to'
-    );
+    const navigateTool = tools.tools.find((t: any) => t.name === 'navigate_to');
     expect(navigateTool).toBeDefined();
-    
+
     // Execute the navigate_to tool
     const testUrl = 'https://test-example.com';
-    const result = await mcpClient!.callTool('navigate_to', { url: testUrl });
-    
-    // Verify result
-    expect(result.result.success).toBe(true);
-    
+    await mcpClient!.callTool('navigate_to', { url: testUrl });
+
     // Verify action was forwarded to the browser
-    expect(capturedAction).not.toBeNull();
-    expect(capturedAction.action).toBe('navigate');
-    expect(capturedAction.params.url).toBe(testUrl);
-    */
+    expect(browserState.activeTab.url).toBe('https://test-example.com');
   });
 });

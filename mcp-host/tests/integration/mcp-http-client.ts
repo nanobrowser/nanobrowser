@@ -91,6 +91,7 @@ export class McpHttpClient {
   public async callTool(name: string, params: any): Promise<any> {
     return await this.client.callTool({
       name,
+      params,
     });
   }
 
