@@ -9,11 +9,11 @@
     "build": "vite build",
     "build:tsc": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:unit": "vitest run tests/unit",
-    "test:integration": "TEST_TYPE=integration vitest run tests/integration",
-    "test:integration:single": "TEST_TYPE=integration vitest run tests/integration/cases/browser-state-resources.test.ts"
+    "test": "LOG_LEVEL=debug vitest run",
+    "test:watch": "LOG_LEVEL=debug vitest",
+    "test:unit": "LOG_LEVEL=debug vitest run tests/unit",
+    "test:integration": "LOG_LEVEL=debug TEST_TYPE=integration vitest run tests/integration",
+    "test:integration:single": "LOG_LEVEL=debug TEST_TYPE=integration vitest run tests/integration/cases/tool-execution.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.1",

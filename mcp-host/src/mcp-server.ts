@@ -5,7 +5,7 @@ import express from 'express';
 import { createLogger, LogLevel, Logger } from './logger.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { ActionCallback } from './tools/index.js';
-import { Resource } from './resources/index.js';
+import { type Resource } from './types.js';
 
 /**
  * Configuration for the MCP server
@@ -35,11 +35,6 @@ export class McpServerManager {
     this.config = config;
     this.logger = createLogger('mcp-server');
 
-    // Set the log level based on the config
-    this.setLogLevel(config.logLevel);
-
-    // Resources will be registered separately
-
     // Create MCP server instance
     this.mcpServer = new McpServer(
       {
@@ -59,18 +54,6 @@ export class McpServerManager {
   public setBrowserActionCallback(callback: ActionCallback) {
     this.browserActionCallback = callback;
     this.logger.info('Browser action callback set');
-  }
-
-  /**
-   * Updates the browser state
-   * @param state The current browser state
-   */
-  public setBrowserState(state: any) {
-    // Use the updateBrowserState function from resources module
-    import('./resources/index.js').then(module => {
-      module.updateBrowserState(state);
-      this.logger.debug('Browser state updated');
-    });
   }
 
   /**
@@ -312,30 +295,5 @@ export class McpServerManager {
    */
   public isServerRunning(): boolean {
     return this.isRunning;
-  }
-
-  /**
-   * Sets the log level for the MCP server
-   * @param level The log level to set
-   */
-  private setLogLevel(level: string): void {
-    switch (level.toUpperCase()) {
-      case 'ERROR':
-        Logger.setLogLevel(LogLevel.ERROR);
-        break;
-      case 'WARN':
-        Logger.setLogLevel(LogLevel.WARN);
-        break;
-      case 'INFO':
-        Logger.setLogLevel(LogLevel.INFO);
-        break;
-      case 'DEBUG':
-        Logger.setLogLevel(LogLevel.DEBUG);
-        break;
-      default:
-        Logger.setLogLevel(LogLevel.INFO);
-        break;
-    }
-    this.logger.info(`Log level set to ${level.toUpperCase()}`);
   }
 }

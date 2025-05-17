@@ -3,6 +3,7 @@ import { ChildProcess, spawn } from 'child_process';
 import { McpHttpClient } from './mcp-http-client';
 import { MessageHandler, type RpcHandler, RpcRequest, RpcRequestOptions, RpcResponse } from '../../src/types';
 import { NativeMessaging } from '../../src/messaging.js';
+import { createLogger } from '../../src/logger';
 
 /**
  * Test environment for MCP Host integration tests
@@ -10,6 +11,7 @@ import { NativeMessaging } from '../../src/messaging.js';
  * and provides utilities for testing via both stdio and HTTP interfaces
  */
 export class McpHostTestEnvironment {
+  private logger = createLogger('McpHostTestEnvironment');
   private hostProcess: ChildProcess | null = null;
   private mcpClient: McpHttpClient | null = null;
   private nativeMessaging: NativeMessaging | null = null;
@@ -61,7 +63,7 @@ export class McpHostTestEnvironment {
     const startTime = Date.now();
     let attemptCount = 0;
 
-    console.log(`Waiting for host to be ready at http://localhost:${this.port}...`);
+    this.logger.info(`Waiting for host to be ready at http://localhost:${this.port}...`);
 
     // Check repeatedly until host is ready or timeout
     while (Date.now() - startTime < timeout) {
@@ -69,27 +71,29 @@ export class McpHostTestEnvironment {
       try {
         // Try to connect to the HTTP server
         if (this.mcpClient) {
-          console.log(`Attempt ${attemptCount}: Testing connection to MCP server...`);
+          this.logger.debug(`Attempt ${attemptCount}: Testing connection to MCP server...`);
           // Attempt a basic request
           await this.mcpClient.initialize();
-          console.log(`Host is ready on port ${this.port}`);
+          this.logger.info(`Host is ready on port ${this.port}`);
           return; // Success
         } else {
-          console.log(`MCP client not initialized yet`);
+          this.logger.debug(`MCP client not initialized yet`);
         }
       } catch (error) {
-        console.log(`Attempt ${attemptCount} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.logger.debug(
+          `Attempt ${attemptCount} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
 
       // Wait a bit before retrying
       const waitTime = 500; // Longer wait between attempts
-      console.log(`Waiting ${waitTime}ms before retrying...`);
+      this.logger.debug(`Waiting ${waitTime}ms before retrying...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
 
     // If we get here, host is not ready within timeout
     if (this.hostProcess) {
-      console.error('Process output:', this.hostProcess.stdio);
+      this.logger.error('Process output:', this.hostProcess.stdio);
     }
 
     throw new Error(`Host not ready after ${timeout}ms (attempted ${attemptCount} times)`);
@@ -107,10 +111,10 @@ export class McpHostTestEnvironment {
 
     // Start the MCP host process with mock stdio and the selected port
     this.hostProcess = spawn('node', ['./dist/index.js'], {
-      stdio: ['pipe', 'pipe', 'inherit'],
+      stdio: ['pipe', 'pipe', 'inherit'], // Make stderr inherit to show logs in console
       env: {
         ...process.env,
-        LOG_LEVEL: 'debug',
+        LOG_LEVEL: 'DEBUG',
         PORT: this.port.toString(),
       },
     });
@@ -119,11 +123,18 @@ export class McpHostTestEnvironment {
     this.exitPromise = new Promise<number>(resolve => {
       if (this.hostProcess) {
         this.hostProcess.on('exit', code => {
-          console.log(`hostProcess exit with code:`, code);
+          this.logger.info(`hostProcess exit with code:`, code);
 
           this.exitCode = code ?? -1;
           resolve(this.exitCode);
         });
+
+        // Forward stderr output to parent process
+        if (this.hostProcess.stderr) {
+          this.hostProcess.stderr.on('data', data => {
+            process.stderr.write(data);
+          });
+        }
       } else {
         resolve(-1);
       }
@@ -135,6 +146,19 @@ export class McpHostTestEnvironment {
       // - Read FROM child's stdout (Readable)
       // - Write TO child's stdin (Writable)
       this.nativeMessaging = new NativeMessaging(this.hostProcess.stdout, this.hostProcess.stdin);
+
+      this.nativeMessaging.registerHandler('status', async (data: any): Promise<void> => {
+        this.logger.info('received status:', data);
+      });
+
+      this.nativeMessaging.registerRpcMethod('hello', async (req: RpcRequest): Promise<RpcResponse> => {
+        this.logger.info('received hello request:', req);
+
+        return {
+          id: req.id,
+          result: 'world',
+        };
+      });
     }
 
     // Create MCP client connected to the host's HTTP server

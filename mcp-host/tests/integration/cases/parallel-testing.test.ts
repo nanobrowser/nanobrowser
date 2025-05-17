@@ -51,8 +51,8 @@ describe('Multiple Instances (Parallel Testing)', () => {
       const resources1 = await mcpClient1!.listResources();
       const resources2 = await mcpClient2!.listResources();
 
-      expect(resources1.result.resources).toBeDefined();
-      expect(resources2.result.resources).toBeDefined();
+      expect(resources1.resources).toBeDefined();
+      expect(resources2.resources).toBeDefined();
 
       testEnv1.registerRpcMethod('get_browser_state', async (request: RpcRequest): Promise<RpcResponse> => {
         return {
@@ -86,8 +86,8 @@ describe('Multiple Instances (Parallel Testing)', () => {
       const state1 = await mcpClient1!.readResource('browser://current/state');
       const state2 = await mcpClient2!.readResource('browser://current/state');
 
-      const parsedState1 = JSON.parse(state1.result.contents[0].text);
-      const parsedState2 = JSON.parse(state2.result.contents[0].text);
+      const parsedState1 = JSON.parse(state1.contents[0].text);
+      const parsedState2 = JSON.parse(state2.contents[0].text);
 
       expect(parsedState1.activeTab.url).toBe('https://example1.com');
       expect(parsedState2.activeTab.url).toBe('https://example2.com');

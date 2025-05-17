@@ -32,7 +32,9 @@ export class CurrentStateResource implements Resource {
       method: 'get_browser_state',
     });
 
-    const state = resp.result as BrowserState;
+    this.logger.debug('RPC get_browser_state:', resp);
+
+    const state = resp as BrowserState;
     if (!state) {
       this.logger.error('Browser state not available');
       throw new Error('Browser state not available');

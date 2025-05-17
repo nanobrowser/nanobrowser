@@ -95,6 +95,8 @@ messaging.registerHandler('error', async (data: any): Promise<void> => {
 });
 
 messaging.registerRpcMethod('hello', async (req: RpcRequest): Promise<RpcResponse> => {
+  logger.debug('mcp_host received hello:', req);
+
   return {
     id: req.id,
     result: 'world',
@@ -136,6 +138,11 @@ messaging.sendMessage({
     runMode: hostStatus.runMode,
   },
 });
+
+const resp = await messaging.rpcRequest({
+  method: 'hello',
+});
+logger.info('rpcRequestResp:', resp);
 
 // Handle exit signals gracefully, ensuring MCP server shutdown
 process.on('SIGINT', async () => {

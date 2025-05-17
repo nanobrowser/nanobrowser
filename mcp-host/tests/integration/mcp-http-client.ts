@@ -2,6 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { URL } from 'url';
+import { createLogger } from '../../src/logger';
 
 /**
  * MCP HTTP client for testing the MCP HTTP server
@@ -9,6 +10,7 @@ import { URL } from 'url';
  * but maintains the same interface as the original MockMcpHttpClient
  */
 export class McpHttpClient {
+  private logger = createLogger('McpHttpClient');
   private baseUrl: string;
   private sessionId: string | null = null;
   private client: Client;
@@ -35,13 +37,13 @@ export class McpHttpClient {
    */
   public async initialize(): Promise<void> {
     try {
-      console.log('initialize with baseURL:', this.baseUrl);
+      this.logger.info('initialize with baseURL:', this.baseUrl);
 
       this.transport = new StreamableHTTPClientTransport(new URL(this.baseUrl));
 
       // Connect and initialize
       await this.client.connect(this.transport);
-      console.log('Connected using Streamable HTTP transport');
+      this.logger.info('Connected using Streamable HTTP transport');
 
       // Store session ID if available
       if (this.transport && 'sessionId' in this.transport) {
@@ -49,11 +51,11 @@ export class McpHttpClient {
       }
     } catch (error) {
       // If that fails with a 4xx error, try the older SSE transport
-      console.error('Streamable HTTP connection failed, falling back to SSE transport', error);
+      this.logger.error('Streamable HTTP connection failed, falling back to SSE transport', error);
 
       const sseTransport = new SSEClientTransport(new URL(this.baseUrl));
       await this.client.connect(sseTransport);
-      console.log('Connected using SSE transport');
+      this.logger.info('Connected using SSE transport');
     }
   }
 
@@ -99,7 +101,7 @@ export class McpHttpClient {
     try {
       await this.client.close();
     } catch (error) {
-      console.error('Error closing SDK client:', error);
+      this.logger.error('Error closing SDK client:', error);
     }
 
     this.transport = null;

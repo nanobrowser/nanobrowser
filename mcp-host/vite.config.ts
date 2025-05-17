@@ -33,7 +33,20 @@ export default defineConfig({
     },
 
     rollupOptions: {
-      external: ['express', 'zod', 'crypto', 'http', 'url', 'node:crypto', '@modelcontextprotocol/sdk'],
+      external: [
+        'express',
+        'zod',
+        'async_hooks',
+        'string_decoder',
+        'crypto',
+        'os',
+        'fs',
+        'path',
+        'http',
+        'url',
+        'node:crypto',
+        '@modelcontextprotocol/sdk',
+      ],
     },
   },
   optimizeDeps: {

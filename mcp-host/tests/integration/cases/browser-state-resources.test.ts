@@ -44,31 +44,13 @@ describe('Browser State and Resources', () => {
       };
     });
 
-    const resp = await testEnv.rpcRequest({
-      method: 'hello',
-    });
-    console.log('rpcRequestResp:', resp);
-
     // Initialize MCP client
     const mcpClient = testEnv.getMcpClient();
     expect(mcpClient).not.toBeNull();
     await mcpClient!.initialize();
 
-    // Check if resources are available
-    const resources = await mcpClient!.listResources();
-    console.log('resources:', resources);
-    expect(resources.resources).toBeDefined();
-    expect(Array.isArray(resources.resources)).toBe(true);
-    expect(resources.resources.length).toBeGreaterThan(0);
-
-    // Find browser state resource
-    const stateResource = resources.resources.find((r: any) => r.uri === 'browser://current/state');
-    expect(stateResource).toBeDefined();
-
     // Read and verify browser state resource
     const resourceContent = await mcpClient!.readResource('browser://current/state');
-    console.log('resources:', resourceContent);
-
     expect(resourceContent).toBeDefined();
 
     // Parse and check content

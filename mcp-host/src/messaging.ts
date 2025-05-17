@@ -40,7 +40,6 @@ export class NativeMessaging {
 
     this.stdin.on('end', () => {
       this.logger.info('Native messaging host: stdin ended');
-      process.exit(0);
     });
   }
 
@@ -56,7 +55,7 @@ export class NativeMessaging {
 
     try {
       const message = JSON.parse(messageJson);
-      this.logger.debug('Received message:', message);
+      this.logger.info('Received message:', message);
       this.handleMessage(message).catch(error => {
         this.logger.error('Error handling message:', error);
       });
@@ -176,7 +175,11 @@ export class NativeMessaging {
       }
 
       try {
-        await handler(data);
+        const resp = await handler(data);
+        this.sendMessage({
+          type: 'rpc_response',
+          ...resp,
+        });
       } catch (error) {
         this.logger.error(`Error in handler for method ${method}:`, error);
       }

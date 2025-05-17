@@ -89,11 +89,10 @@ describe('Error Handling', () => {
 
     // Read and verify browser state resource to confirm host is still functional
     const resourceContent = await mcpClient!.readResource('browser://current/state');
-    console.log('resourceContent:', resourceContent);
     expect(resourceContent).toBeDefined();
 
     const content = resourceContent.contents[0];
     const parsedState = JSON.parse(content.text);
-    expect(parsedState.activeTab.title).toBe('hello world');
+    expect(parsedState.activeTab.title).toBe('Test After Error');
   });
 });

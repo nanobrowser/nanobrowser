@@ -1,6 +1,23 @@
 // This file contains setup code that will be executed before running tests
 import { Readable, Writable } from 'stream';
 import { vi } from 'vitest';
+import { Logger, LogLevel } from '../src/logger';
+import * as path from 'path';
+import * as os from 'os';
+
+// Ensure logging is enabled for tests
+if (!process.env.LOG_LEVEL) {
+  process.env.LOG_LEVEL = 'debug';
+}
+
+// Configure test-specific log file
+const testLogDir = process.env.TEST_LOG_DIR || path.join(os.tmpdir(), 'mcp-host-tests');
+const testLogFile = process.env.TEST_LOG_FILE || `test-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+const testLogPath = path.join(testLogDir, testLogFile);
+
+// Configure logger for testing
+Logger.setLogLevel(LogLevel.DEBUG);
+Logger.setLogFilePath(testLogPath);
 
 // Increase timeout for integration tests
 vi.setConfig({ testTimeout: 10000 });

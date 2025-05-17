@@ -7,6 +7,9 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup.ts'],
+    logHeapUsage: true,
+    reporters: ['default', 'verbose'],
+    silent: false,
     // Run integration tests in a single process to avoid serialization issues
     // with complex objects like axios instances
     pool: process.env.TEST_POOL || 'forks',
