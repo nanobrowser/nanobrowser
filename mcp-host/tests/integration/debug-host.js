@@ -51,6 +51,20 @@ function checkServer() {
         const res = await client.listResources();
         console.log('Resources:', res);
 
+        const callToolResp = await client.callTool({
+          name: 'add',
+          arguments: {
+            a: 1,
+            b: 2,
+          },
+        });
+        console.log('callToolResp:', callToolResp);
+
+        const resourceResp = await client.readResource({
+          uri: 'browser://current/state',
+        });
+        console.log('resourceResp:', resourceResp);
+
         resolve(true);
       } catch (err) {
         console.error('Connecte error:', err);

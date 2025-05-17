@@ -30,7 +30,7 @@ export class CurrentDomResource implements Resource {
   public async read() {
     const resp = await this.messaging.rpcRequest({
       id: '',
-      method: 'get_brower_state',
+      method: 'get_dom_state',
       params: {},
     });
 

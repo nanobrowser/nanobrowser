@@ -72,9 +72,7 @@ export type RpcHandler = (request: RpcRequest) => Promise<RpcResponse>;
 /**
  * Common interface for all message handlers
  */
-export interface MessageHandler {
-  handle(data: any): Promise<any>;
-}
+export type MessageHandler = (data: any) => Promise<void>;
 
 /**
  * Configuration for the status handler

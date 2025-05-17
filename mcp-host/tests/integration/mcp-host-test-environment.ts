@@ -1,8 +1,7 @@
 import * as net from 'net';
 import { ChildProcess, spawn } from 'child_process';
-import { Readable, Writable } from 'stream';
 import { McpHttpClient } from './mcp-http-client';
-import { type RpcHandler } from '../../src/types';
+import { MessageHandler, type RpcHandler, RpcRequest, RpcRequestOptions, RpcResponse } from '../../src/types';
 import { NativeMessaging } from '../../src/messaging.js';
 
 /**
@@ -108,7 +107,7 @@ export class McpHostTestEnvironment {
 
     // Start the MCP host process with mock stdio and the selected port
     this.hostProcess = spawn('node', ['./dist/index.js'], {
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'inherit'],
       env: {
         ...process.env,
         LOG_LEVEL: 'debug',
@@ -131,8 +130,11 @@ export class McpHostTestEnvironment {
     });
 
     // Connect mock stdio to the process
-    if (this.hostProcess) {
-      this.nativeMessaging = new NativeMessaging(this.hostProcess?.stdout, this.hostProcess?.stdin);
+    if (this.hostProcess && this.hostProcess.stdout && this.hostProcess.stdin) {
+      // From parent process perspective:
+      // - Read FROM child's stdout (Readable)
+      // - Write TO child's stdin (Writable)
+      this.nativeMessaging = new NativeMessaging(this.hostProcess.stdout, this.hostProcess.stdin);
     }
 
     // Create MCP client connected to the host's HTTP server
@@ -224,7 +226,24 @@ export class McpHostTestEnvironment {
     await this.cleanup();
   }
 
+  public registerMessageHandler(type: string, handler: MessageHandler): void {
+    this.nativeMessaging?.registerHandler(type, handler);
+  }
+
   public registerRpcMethod(method: string, handler: RpcHandler): void {
     this.nativeMessaging?.registerRpcMethod(method, handler);
+  }
+
+  public async rpcRequest(rpc: RpcRequest, options: RpcRequestOptions = {}): Promise<RpcResponse> {
+    if (this.nativeMessaging) {
+      return this.nativeMessaging.rpcRequest(rpc, options);
+    }
+
+    return {
+      error: {
+        code: -32000,
+        message: 'nativeMessaging is null',
+      },
+    };
   }
 }

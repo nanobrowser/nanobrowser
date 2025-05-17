@@ -33,12 +33,21 @@ describe('Browser State and Resources', () => {
       tabs: [{ id: 1, url: 'https://example.com', title: 'Test Page', active: true }],
     };
 
+    testEnv.registerMessageHandler('error', async (data: any): Promise<void> => {
+      console.error('testEnv error:', data);
+    });
+
     testEnv.registerRpcMethod('get_browser_state', async (request: RpcRequest): Promise<RpcResponse> => {
       return {
         id: request.id,
         result: browserState,
       };
     });
+
+    const resp = await testEnv.rpcRequest({
+      method: 'hello',
+    });
+    console.log('rpcRequestResp:', resp);
 
     // Initialize MCP client
     const mcpClient = testEnv.getMcpClient();

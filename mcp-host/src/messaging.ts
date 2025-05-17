@@ -1,7 +1,7 @@
 import { Readable, Writable } from 'stream';
 import { createLogger } from './logger.js';
 import { v4 as uuidv4 } from 'uuid';
-import { RpcRequest, RpcResponse, RpcRequestOptions, RpcHandler } from './types.js';
+import { RpcRequest, RpcResponse, RpcRequestOptions, RpcHandler, MessageHandler } from './types.js';
 
 export interface Message {
   type: string;
@@ -13,7 +13,7 @@ export class NativeMessaging {
   private stdin: Readable;
   private stdout: Writable;
   private buffer: Buffer = Buffer.alloc(0);
-  private messageHandlers: Map<string, (data: any) => Promise<any>> = new Map();
+  private messageHandlers: Map<string, MessageHandler> = new Map();
   private rpcMethodHandlers: Map<string, RpcHandler> = new Map();
   private pendingRequests = new Map<
     string,
@@ -82,8 +82,7 @@ export class NativeMessaging {
 
     try {
       this.logger.debug(`Handling message type: ${type}`);
-      const result = await handler(data);
-      this.sendMessage({ type: `${type}_result`, ...result });
+      await handler(data);
     } catch (error) {
       this.logger.error(`Error handling message type ${type}:`, error);
       this.sendMessage({
@@ -94,7 +93,7 @@ export class NativeMessaging {
     }
   }
 
-  public registerHandler(type: string, handler: (data: any) => Promise<any>) {
+  public registerHandler(type: string, handler: MessageHandler) {
     this.logger.debug(`Registering handler for message type: ${type}`);
     this.messageHandlers.set(type, handler);
   }
@@ -148,7 +147,7 @@ export class NativeMessaging {
 
       if (!handler) {
         this.logger.warn(`No pending request found for RPC response ID: ${id}`);
-        return {};
+        return;
       }
 
       clearTimeout(handler.timeoutId);
@@ -160,12 +159,12 @@ export class NativeMessaging {
         handler.resolve(data.result || {});
       }
 
-      return {};
+      return;
     });
   }
 
   private registerRpcRequestHandler() {
-    this.registerHandler('rpc_request', async (data: RpcRequest) => {
+    this.registerHandler('rpc_request', async (data: any) => {
       const { method, id } = data;
       this.logger.debug(`Handling incoming RPC request: ${method}`);
 
@@ -173,26 +172,13 @@ export class NativeMessaging {
 
       if (!handler) {
         this.logger.warn(`No handler registered for RPC method: ${method}`);
-        return {
-          id,
-          error: {
-            code: -32601,
-            message: `Method not found: ${method}`,
-          },
-        };
+        return;
       }
 
       try {
-        return await handler(data);
+        await handler(data);
       } catch (error) {
         this.logger.error(`Error in handler for method ${method}:`, error);
-        return {
-          id,
-          error: {
-            code: -32000,
-            message: error instanceof Error ? error.message : String(error),
-          },
-        };
       }
     });
   }

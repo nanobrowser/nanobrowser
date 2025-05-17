@@ -18,7 +18,7 @@ function getLogLevel(): LogLevel {
   const envLevel = process.env.LOG_LEVEL?.toUpperCase();
 
   if (!envLevel) {
-    return LogLevel.INFO; // Default level
+    return LogLevel.DEBUG; // Default level
   }
 
   switch (envLevel) {

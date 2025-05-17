@@ -4,6 +4,7 @@ import { StatusHandler, PingHandler, ShutdownHandler, McpServerStatusHandler } f
 import { McpServerManager } from './mcp-server.js';
 import { allTools } from './tools/index.js';
 import { CurrentDomResource, CurrentStateResource } from './resources/index.js';
+import { RpcRequest, RpcResponse } from './types.js';
 
 // Create a logger instance for the main module
 const logger = createLogger('main');
@@ -89,20 +90,16 @@ messaging.registerHandler('shutdown', data => shutdownHandler.handle(data));
 // Only keep the status handler for MCP server
 messaging.registerHandler('getMcpServerStatus', data => mcpServerStatusHandler.handle(data));
 
-// Browser state handler
-messaging.registerHandler('setBrowserState', async data => {
-  logger.debug('Received browser state update:', data.state ? Object.keys(data.state).join(', ') : 'empty');
-
-  // Update the MCP server with the browser state
-  browserState.updateState(data.state);
-
-  return {
-    success: true,
-    message: 'Browser state received',
-  };
+messaging.registerHandler('error', async (data: any): Promise<void> => {
+  logger.error('mcp_host received error:', data);
 });
 
-// Import all tools and resources
+messaging.registerRpcMethod('hello', async (req: RpcRequest): Promise<RpcResponse> => {
+  return {
+    id: req.id,
+    result: 'world',
+  };
+});
 
 // Register tools with the MCP server manager
 for (const tool of allTools) {

@@ -29,7 +29,7 @@ export class CurrentStateResource implements Resource {
    */
   public async read() {
     const resp = await this.messaging.rpcRequest({
-      method: 'get_brower_state',
+      method: 'get_browser_state',
     });
 
     const state = resp.result as BrowserState;
