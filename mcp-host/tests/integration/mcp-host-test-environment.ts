@@ -11,7 +11,7 @@ import { createLogger } from '../../src/logger';
  * and provides utilities for testing via both stdio and HTTP interfaces
  */
 export class McpHostTestEnvironment {
-  private logger = createLogger('McpHostTestEnvironment');
+  private logger = createLogger('mcp-host-test-environment');
   private hostProcess: ChildProcess | null = null;
   private mcpClient: McpHttpClient | null = null;
   private nativeMessaging: NativeMessaging | null = null;

@@ -10,7 +10,7 @@ import { createLogger } from '../../src/logger';
  * but maintains the same interface as the original MockMcpHttpClient
  */
 export class McpHttpClient {
-  private logger = createLogger('McpHttpClient');
+  private logger = createLogger('mcp-http-client');
   private baseUrl: string;
   private sessionId: string | null = null;
   private client: Client;
