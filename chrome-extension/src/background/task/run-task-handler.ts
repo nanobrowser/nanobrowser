@@ -5,6 +5,9 @@
  * It receives task requests from the MCP Host and executes them in the browser context.
  */
 
+import { Executor } from '../agent/executor';
+import BrowserContext from '../browser/context';
+import { createLogger } from '../log';
 import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
 /**
@@ -23,20 +26,38 @@ interface RunTaskParams {
 }
 
 /**
+ * Type definition for the setupExecutor function
+ */
+export type SetupExecutorFn = (taskId: string, task: string, browserContext: BrowserContext) => Promise<Executor>;
+
+/**
  * Handler for the 'run_task' RPC method
  *
  * This handler processes task requests from the MCP Host and returns the results.
- * It can be registered with the McpHostManager to handle 'run_task' RPC calls.
+ * It uses dependency injection for better testability and flexibility.
  */
 export class RunTaskHandler {
+  private logger = createLogger('RunTaskHandler');
+
   /**
-   * Execute a task requested by the MCP Host
+   * Creates a new RunTaskHandler instance
+   *
+   * @param browserContext The browser context for tab and page interaction
+   * @param setupExecutorFn Function used to create task executors
+   */
+  constructor(
+    private readonly browserContext: BrowserContext,
+    private readonly setupExecutorFn: SetupExecutorFn,
+  ) {}
+
+  /**
+   * Handle a run_task RPC request
    *
    * @param request RPC request containing the task details
    * @returns Promise resolving to an RPC response with the task result
    */
-  public static handleRunTask: RpcHandler = async (request: RpcRequest): Promise<RpcResponse> => {
-    console.debug('[RunTaskHandler] Received run_task request:', request);
+  public handleRunTask: RpcHandler = async (request: RpcRequest): Promise<RpcResponse> => {
+    this.logger.debug('Received run_task request:', request);
 
     try {
       const params = request.params as RunTaskParams;
@@ -50,25 +71,37 @@ export class RunTaskHandler {
         };
       }
 
-      // Log the task being executed
-      console.info('[RunTaskHandler] Executing task:', params.task);
+      // Generate task ID for this RPC-initiated task
+      const taskId = `rpc-task-${Date.now()}`;
+      this.logger.info('Executing task:', params.task, 'with ID:', taskId);
 
-      // Here you would implement the actual task execution logic
-      // This could involve calling appropriate browser APIs, interacting with the DOM,
-      // or triggering other extension functionality
+      // Get current page and tab for task execution
+      const currentPage = await this.browserContext.getCurrentPage();
+      const tabId = currentPage.tabId;
 
-      // For demonstration, we'll just simulate task execution
-      const result = await RunTaskHandler.executeTask(params.task, params.context);
+      // Setup and execute the task
+      const executor = await this.setupExecutorFn(taskId, params.task, this.browserContext);
+
+      // Set up event handlers if needed
+      // For example, we might want to capture events for status updates
+
+      // Execute the task and wait for completion
+      const result = await executor.execute();
+      this.logger.info('Task execution result for tab', tabId, ':', result);
+
+      // Cleanup after execution
+      await executor.cleanup();
 
       return {
         result: {
           success: true,
           message: 'Task executed successfully',
+          taskId,
           data: result,
         },
       };
     } catch (error) {
-      console.error('[RunTaskHandler] Error executing task:', error);
+      this.logger.error('Error executing task:', error);
 
       return {
         error: {
@@ -79,36 +112,4 @@ export class RunTaskHandler {
       };
     }
   };
-
-  /**
-   * Execute the requested task
-   *
-   * This is where the actual task execution logic would be implemented.
-   * It could involve different actions depending on the task type.
-   *
-   * @param taskDescription The description of the task to execute
-   * @param context Additional context for the task
-   * @returns Promise resolving to the task execution result
-   */
-  private static async executeTask(taskDescription: string, context?: string): Promise<any> {
-    // Simulated task execution
-    console.debug(`[RunTaskHandler] Task description: ${taskDescription}`);
-    if (context) {
-      console.debug(`[RunTaskHandler] Context: ${context}`);
-    }
-
-    // Implementation could involve:
-    // - Parsing the task description to determine what to do
-    // - Interacting with other browser extension components
-    // - Accessing browser APIs
-    // - Manipulating the DOM
-    // - etc.
-
-    // For now, we'll just simulate task execution by returning a simple response
-    return {
-      taskCompleted: true,
-      taskDescription,
-      timestamp: new Date().toISOString(),
-    };
-  }
 }

@@ -19,15 +19,28 @@ let currentPort: chrome.runtime.Port | null = null;
 // Initialize MCP Host Manager
 const mcpHostManager = new McpHostManager();
 
+// Create RunTaskHandler instance with required dependencies
+const runTaskHandler = new RunTaskHandler(browserContext, setupExecutor);
+
 // Register RPC method handlers
-mcpHostManager.registerRpcMethod('run_task', RunTaskHandler.handleRunTask);
+mcpHostManager.registerRpcMethod('run_task', runTaskHandler.handleRunTask.bind(runTaskHandler));
 
 // Set up periodic browser state updates for the MCP host
 const BROWSER_STATE_UPDATE_INTERVAL_MS = 5000; // Update every 5 seconds
 setInterval(async () => {
   if (mcpHostManager.getStatus().isConnected) {
     try {
-      await browserContext.getState();
+      const state = await browserContext.getState();
+
+      // Send browser state to MCP host using RPC
+      mcpHostManager
+        .rpcRequest({
+          method: 'update_browser_state',
+          params: { state },
+        })
+        .catch(error => {
+          logger.debug('Browser state update RPC error (may be normal if host does not support this method):', error);
+        });
     } catch (error) {
       logger.error('Failed to update browser state:', error);
     }
