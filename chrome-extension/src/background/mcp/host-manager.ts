@@ -693,20 +693,4 @@ export class McpHostManager {
       }, 500);
     });
   }
-
-  /**
-   * Updates the browser state on the MCP server.
-   * @param {any} state The browser state to send to the MCP server.
-   */
-  public updateBrowserState(state: any): void {
-    if (!this.port || !this.status.isConnected) {
-      console.warn('Cannot update browser state: host not connected');
-      return;
-    }
-
-    this.port.postMessage({
-      type: 'setBrowserState',
-      state,
-    });
-  }
 }

@@ -8,6 +8,7 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import BrowserContext from './browser/context';
 import { createLogger } from './log';
 import { McpHostManager, McpHostOptions } from './mcp/host-manager';
+import { RunTaskHandler } from './task';
 
 const logger = createLogger('background');
 
@@ -17,6 +18,21 @@ let currentPort: chrome.runtime.Port | null = null;
 
 // Initialize MCP Host Manager
 const mcpHostManager = new McpHostManager();
+
+// Register RPC method handlers
+mcpHostManager.registerRpcMethod('run_task', RunTaskHandler.handleRunTask);
+
+// Set up periodic browser state updates for the MCP host
+const BROWSER_STATE_UPDATE_INTERVAL_MS = 5000; // Update every 5 seconds
+setInterval(async () => {
+  if (mcpHostManager.getStatus().isConnected) {
+    try {
+      await browserContext.getState();
+    } catch (error) {
+      logger.error('Failed to update browser state:', error);
+    }
+  }
+}, BROWSER_STATE_UPDATE_INTERVAL_MS);
 
 // No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
@@ -98,14 +114,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Indicate async response
   }
 
-  if (message.type === 'getMcpHostStatus') {
-    // Return current MCP Host status
-    const status = mcpHostManager.getStatus();
-    logger.info('Returning MCP Host status:', status);
-    sendResponse({ status });
-    return false; // Synchronous response
-  }
-
   if (message.type === 'stopMcpHost') {
     // Stop MCP Host process
     logger.info('Received request to stop MCP Host');
@@ -144,98 +152,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Indicate async response
   }
 
-  // MCP Server related message handlers
-  if (message.type === 'getMcpServerStatus') {
-    // Get MCP server status
-    logger.info('Received request to get MCP server status');
-
-    try {
-      mcpHostManager
-        .getMcpServerStatus()
-        .then(status => {
-          logger.info('MCP server status:', status);
-          sendResponse({ status });
-        })
-        .catch(error => {
-          logger.error('Failed to get MCP server status:', error);
-          sendResponse({
-            status: {
-              isRunning: false,
-              config: null,
-            },
-            error: String(error),
-          });
-        });
-    } catch (error) {
-      logger.error('Error getting MCP server status:', error);
-      sendResponse({
-        status: {
-          isRunning: false,
-          config: null,
-        },
-        error: String(error),
-      });
-    }
-
-    return true; // Indicate async response
-  }
-
-  if (message.type === 'startMcpServer') {
-    // Start MCP server
-    logger.info('Received request to start MCP server:', message.config);
-
-    if (!mcpHostManager.getStatus().isConnected) {
-      logger.warning('Cannot start MCP server: host not connected');
-      sendResponse({ success: false, error: 'MCP host not connected' });
-      return true;
-    }
-
-    try {
-      mcpHostManager
-        .startMcpServer(message.config)
-        .then(success => {
-          logger.info('MCP server start attempt result:', success);
-          sendResponse({ success });
-        })
-        .catch(error => {
-          logger.error('Failed to start MCP server:', error);
-          sendResponse({ success: false, error: String(error) });
-        });
-    } catch (error) {
-      logger.error('Error initiating MCP server start:', error);
-      sendResponse({ success: false, error: String(error) });
-    }
-
-    return true; // Indicate async response
-  }
-
-  if (message.type === 'stopMcpServer') {
-    // Stop MCP server
-    logger.info('Received request to stop MCP server');
-
-    if (!mcpHostManager.getStatus().isConnected) {
-      logger.warning('Cannot stop MCP server: host not connected');
-      sendResponse({ success: false, error: 'MCP host not connected' });
-      return true;
-    }
-
-    try {
-      mcpHostManager
-        .stopMcpServer()
-        .then(success => {
-          logger.info('MCP server stop attempt result:', success);
-          sendResponse({ success });
-        })
-        .catch(error => {
-          logger.error('Failed to stop MCP server:', error);
-          sendResponse({ success: false, error: String(error) });
-        });
-    } catch (error) {
-      logger.error('Error initiating MCP server stop:', error);
-      sendResponse({ success: false, error: String(error) });
-    }
-
-    return true; // Indicate async response
+  if (message.type === 'getMcpHostStatus') {
+    // Return current MCP Host status
+    const status = mcpHostManager.getStatus();
+    logger.info('Returning MCP Host status:', status);
+    sendResponse({ status });
+    return false; // Synchronous response
   }
 
   // Handle other message types if needed in the future
