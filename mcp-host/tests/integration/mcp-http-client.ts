@@ -86,12 +86,12 @@ export class McpHttpClient {
   /**
    * Call a tool
    * @param name The name of the tool to call
-   * @param params The parameters to pass to the tool
+   * @param arguments The parameters to pass to the tool
    */
-  public async callTool(name: string, params: any): Promise<any> {
+  public async callTool(name: string, args: any): Promise<any> {
     return await this.client.callTool({
       name,
-      params,
+      arguments: args,
     });
   }
 

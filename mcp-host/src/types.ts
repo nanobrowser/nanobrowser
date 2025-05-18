@@ -2,6 +2,9 @@
  * Consolidated type definitions for MCP Host
  */
 
+import { ZodRawShape } from 'zod';
+import { type ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js';
+
 // ==============================
 // RPC Types
 // ==============================
@@ -150,7 +153,7 @@ export interface ActionCallback {
 /**
  * Base interface for all tools
  */
-export interface Tool {
+export interface Tool<Args extends ZodRawShape> {
   /**
    * Name of the tool
    */
@@ -164,16 +167,12 @@ export interface Tool {
   /**
    * JSON Schema for tool input
    */
-  inputSchema: {
-    type: string;
-    properties: Record<string, any>;
-    required: string[];
-  };
+  inputSchema: Args;
 
   /**
    * Execute the tool with the provided arguments
    * @param args Tool arguments
    * @param callback Function to execute browser actions
    */
-  execute(args: any): Promise<ActionResult>;
+  execute: ToolCallback<Args>;
 }

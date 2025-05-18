@@ -1,9 +1,8 @@
-import { z } from 'zod';
+import { ZodRawShape } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import express from 'express';
-import { createLogger, LogLevel, Logger } from './logger.js';
-import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { createLogger } from './logger.js';
 import { type Resource, type Tool } from './types.js';
 
 /**
@@ -72,48 +71,8 @@ export class McpServerManager {
    * Registers a tool with the MCP server
    * @param tool The tool to register
    */
-  public registerTool(tool: Tool) {
-    this.logger.info(`Registering tool: ${tool.name}`);
-
-    this.mcpServer.tool(
-      tool.name,
-      tool.description,
-      tool.inputSchema,
-      async (args: any, extra: any): Promise<CallToolResult> => {
-        this.logger.debug(`tool ${tool.name} called, args and extra`, args, extra);
-
-        try {
-          const result = await tool.execute(args);
-
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: result.message || `Executed ${tool.name} successfully`,
-              },
-              ...(result.data
-                ? [
-                    {
-                      type: 'text' as const,
-                      text: JSON.stringify(result.data, null, 2),
-                    },
-                  ]
-                : []),
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: `Error executing ${tool.name}: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-            status: 'error',
-          };
-        }
-      },
-    );
+  public registerTool<Args extends ZodRawShape>(tool: Tool<Args>) {
+    this.mcpServer.tool(tool.name, tool.description, tool.inputSchema, tool.execute);
 
     this.logger.debug(`Tool registered: ${tool.name}`);
   }
@@ -187,7 +146,7 @@ export class McpServerManager {
 
     // Messages endpoint for receiving client JSON-RPC requests
     app.post('/messages', async (req, res) => {
-      this.logger.debug('Received POST request to /messages');
+      this.logger.debug('Received POST request to /messages, req body:', req.body);
 
       // Extract session ID from URL query parameter
       // In the SSE protocol, this is added by the client based on the endpoint event
@@ -287,5 +246,9 @@ export class McpServerManager {
    */
   public isServerRunning(): boolean {
     return this.isRunning;
+  }
+
+  public getMcpServer(): McpServer {
+    return this.mcpServer;
   }
 }

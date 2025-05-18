@@ -4,13 +4,17 @@
  * This tool allows navigating to a specified URL in the browser.
  */
 
-import { Tool, ActionResult } from '../types.js';
+import { z } from 'zod';
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { NativeMessaging } from '../messaging.js';
+import { createLogger } from '../logger.js';
 
 /**
  * Implementation of the navigate_to tool
  */
-export class NavigateToTool implements Tool {
+export class NavigateToTool {
+  private logger = createLogger('navigate_to_tool');
+
   /**
    * Tool name
    */
@@ -38,14 +42,7 @@ export class NavigateToTool implements Tool {
    * Input schema for the tool
    */
   public inputSchema = {
-    type: 'object',
-    properties: {
-      url: {
-        type: 'string',
-        description: 'The URL to navigate to',
-      },
-    },
-    required: ['url'],
+    url: z.string(),
   };
 
   /**
@@ -54,7 +51,9 @@ export class NavigateToTool implements Tool {
    * @param callback Browser action callback
    * @returns Promise resolving to the action result
    */
-  public async execute(args: { url: string }): Promise<ActionResult> {
+  public execute = async (args: { url: string }): Promise<CallToolResult> => {
+    this.logger.info('execute args:', args);
+
     if (!args.url) {
       throw new Error('URL is required for navigation');
     }
@@ -67,8 +66,12 @@ export class NavigateToTool implements Tool {
     });
 
     return {
-      success: true,
-      data: resp.result,
+      content: [
+        {
+          type: 'text',
+          text: `navigate_to ${args.url} ok`,
+        },
+      ],
     };
-  }
+  };
 }

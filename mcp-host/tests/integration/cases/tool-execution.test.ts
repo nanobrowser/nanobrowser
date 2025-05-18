@@ -68,7 +68,8 @@ describe('Tool Execution', () => {
 
     // Execute the navigate_to tool
     const testUrl = 'https://test-example.com';
-    await mcpClient!.callTool('navigate_to', { url: testUrl });
+    const toolResp = await mcpClient!.callTool('navigate_to', { url: testUrl });
+    expect(toolResp.content[0].text).toBe('navigate_to https://test-example.com ok');
 
     // Verify action was forwarded to the browser
     expect(browserState.activeTab.url).toBe('https://test-example.com');
