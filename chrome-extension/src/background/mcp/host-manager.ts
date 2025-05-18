@@ -3,7 +3,65 @@
  *
  * This class manages the connection to the MCP Host process, monitors its status,
  * and provides methods to control it (start, stop, etc.).
+ * It also supports bidirectional RPC communication with the MCP Host.
  */
+
+// Define RPC types
+export interface RpcRequest {
+  /**
+   * Unique identifier for the request
+   */
+  id?: string;
+
+  /**
+   * Method to be invoked
+   */
+  method: string;
+
+  /**
+   * Parameters for the method
+   */
+  params?: any;
+}
+
+/**
+ * JSON-RPC like response structure
+ */
+export interface RpcResponse {
+  /**
+   * Identifier matching the request
+   */
+  id?: string;
+
+  /**
+   * Result of the method call (if successful)
+   */
+  result?: any;
+
+  /**
+   * Error information (if the call failed)
+   */
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
+
+/**
+ * Options for RPC requests
+ */
+export interface RpcRequestOptions {
+  /**
+   * Timeout in milliseconds
+   */
+  timeout?: number;
+}
+
+/**
+ * A function that handles an RPC request and returns a promise of RpcResponse
+ */
+export type RpcHandler = (request: RpcRequest) => Promise<RpcResponse>;
 
 // Define the MCP Host status interface
 export interface McpHostStatus {
@@ -61,6 +119,17 @@ export class McpHostManager {
   private readonly HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
   private readonly PING_TIMEOUT_MS = 20000; // 20 seconds
   private readonly GRACEFUL_SHUTDOWN_TIMEOUT_MS = 1000; // 1 second
+  // RPC-related properties
+  private rpcMethodHandlers: Map<string, RpcHandler> = new Map();
+  private pendingRequests = new Map<
+    string,
+    {
+      resolve: (value: any) => void;
+      reject: (reason?: any) => void;
+      timeoutId: number;
+    }
+  >();
+  private readonly RPC_TIMEOUT_MS = 5000; // 5 seconds default timeout for RPC requests
 
   /**
    * Establishes a connection to the MCP Host Native Messaging host.
@@ -259,6 +328,141 @@ export class McpHostManager {
     }
   }
 
+  /**
+   * Registers an RPC method handler that can be called by the MCP Host.
+   * @param method The RPC method name to register
+   * @param handler The function to handle requests for this method
+   */
+  public registerRpcMethod(method: string, handler: RpcHandler): void {
+    console.debug(`[McpHostManager] Registering RPC handler for method: ${method}`);
+    this.rpcMethodHandlers.set(method, handler);
+  }
+
+  /**
+   * Sends an RPC request to the MCP Host and returns a promise for the response.
+   * @param rpc The RPC request to send
+   * @param options Optional configuration for the request
+   * @returns A Promise that resolves with the response or rejects on error/timeout
+   */
+  public rpcRequest(rpc: RpcRequest, options: RpcRequestOptions = {}): Promise<RpcResponse> {
+    if (!this.port || !this.status.isConnected) {
+      return Promise.reject(new Error('Cannot send RPC request: host not connected'));
+    }
+
+    // Generate a unique ID if not provided
+    const id = rpc.id ?? this.generateRequestId();
+    const method = rpc.method;
+    const params = rpc.params;
+
+    // Get timeout from options or use default
+    const { timeout = this.RPC_TIMEOUT_MS } = options;
+
+    console.debug(`[McpHostManager] Sending RPC request: ${method} (id: ${id})`);
+
+    return new Promise((resolve, reject) => {
+      // Set up timeout to reject the promise if no response is received
+      const timeoutId = window.setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`RPC request timeout: ${method} (id: ${id})`));
+      }, timeout);
+
+      // Store the promise resolvers with the request ID
+      this.pendingRequests.set(id, { resolve, reject, timeoutId });
+
+      // Send the RPC request message
+      this.port?.postMessage({
+        type: 'rpc_request',
+        id,
+        method,
+        params,
+      });
+    });
+  }
+
+  /**
+   * Generates a unique ID for RPC requests
+   * @returns A unique string ID
+   */
+  private generateRequestId(): string {
+    return 'req_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  /**
+   * Processes an incoming RPC request from the MCP Host.
+   * @param data The RPC request data
+   */
+  private async handleRpcRequest(data: any): Promise<void> {
+    const { method, id, params } = data;
+    console.debug(`[McpHostManager] Received RPC request: ${method} (id: ${id})`);
+
+    // Find the registered handler for this method
+    const handler = this.rpcMethodHandlers.get(method);
+
+    if (!handler) {
+      console.warn(`[McpHostManager] No handler registered for RPC method: ${method}`);
+      this.port?.postMessage({
+        type: 'rpc_response',
+        id,
+        error: {
+          code: -32601,
+          message: `Method not found: ${method}`,
+        },
+      });
+      return;
+    }
+
+    // Call the handler and send the response
+    try {
+      const request: RpcRequest = { id, method, params };
+      const response = await handler(request);
+
+      // Make sure the response includes the request ID
+      response.id = id;
+
+      this.port?.postMessage({
+        type: 'rpc_response',
+        ...response,
+      });
+    } catch (error) {
+      console.error(`[McpHostManager] Error handling RPC method ${method}:`, error);
+      this.port?.postMessage({
+        type: 'rpc_response',
+        id,
+        error: {
+          code: -32603,
+          message: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
+  }
+
+  /**
+   * Processes an incoming RPC response from the MCP Host.
+   * @param data The RPC response data
+   */
+  private handleRpcResponse(data: any): void {
+    const { id, result, error } = data;
+    console.debug(`[McpHostManager] Received RPC response for ID: ${id}`);
+
+    // Find the pending request for this ID
+    const pendingRequest = this.pendingRequests.get(id);
+    if (!pendingRequest) {
+      console.warn(`[McpHostManager] No pending request found for RPC response ID: ${id}`);
+      return;
+    }
+
+    // Clear the timeout and remove from pending requests
+    clearTimeout(pendingRequest.timeoutId);
+    this.pendingRequests.delete(id);
+
+    // Resolve or reject the promise based on the response
+    if (error) {
+      pendingRequest.reject(error);
+    } else {
+      pendingRequest.resolve(result || {});
+    }
+  }
+
   private handleMessage(message: any): void {
     switch (message.type) {
       case 'status':
@@ -278,6 +482,13 @@ export class McpHostManager {
             config: message.config || null,
           });
         }
+        break;
+      // Handle RPC messages
+      case 'rpc_request':
+        this.handleRpcRequest(message);
+        break;
+      case 'rpc_response':
+        this.handleRpcResponse(message);
         break;
       default:
         console.log('Unknown message from MCP Host:', message);
