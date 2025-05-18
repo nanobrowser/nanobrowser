@@ -58,12 +58,14 @@ export class NavigateToTool {
       throw new Error('URL is required for navigation');
     }
 
-    const resp = await this.messaging.rpcRequest({
+    const result = await this.messaging.rpcRequest({
       method: 'navigate_to',
       params: {
         url: args.url,
       },
     });
+
+    this.logger.info('call navigate_to result:', result);
 
     return {
       content: [

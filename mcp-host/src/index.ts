@@ -1,7 +1,7 @@
 import { NativeMessaging } from './messaging.js';
 import { createLogger } from './logger.js';
 import { McpServerManager } from './mcp-server.js';
-import { NavigateToTool } from './tools/index.js';
+import { NavigateToTool, RunTaskTool } from './tools/index.js';
 import { CurrentDomResource, CurrentStateResource } from './resources/index.js';
 import { RpcRequest, RpcResponse } from './types.js';
 
@@ -71,6 +71,7 @@ logger.info(`Registered resources with MCP server`);
 
 // Initialize tools with the messaging instance
 mcpServerManager.registerTool(new NavigateToTool(messaging));
+mcpServerManager.registerTool(new RunTaskTool(messaging));
 logger.info(`Registered tools with MCP server`);
 
 // Auto-start MCP Server when MCP Host starts
