@@ -26,7 +26,7 @@ const hostStatus = {
 logger.info(`Starting MCP Host in ${hostStatus.runMode} mode`);
 
 // Auto-start port (use PORT env var or default to 3000)
-const mcpServerPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const mcpServerPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 7890;
 const mcpServerManager = new McpServerManager({
   port: mcpServerPort,
   logLevel: 'info',

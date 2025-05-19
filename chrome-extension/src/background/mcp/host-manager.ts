@@ -72,21 +72,6 @@ export interface McpHostStatus {
   runMode: string | null;
 }
 
-// Define MCP Server status interface
-export interface McpServerStatus {
-  isRunning: boolean;
-  config: {
-    port: number | null;
-    logLevel: string | null;
-  } | null;
-}
-
-// Define MCP Server config interface
-export interface McpServerConfig {
-  port: number;
-  logLevel: string;
-}
-
 // Define the MCP Host configuration options
 export interface McpHostOptions {
   runMode: string;
@@ -106,14 +91,7 @@ export class McpHostManager {
     version: null,
     runMode: null,
   };
-  // Track MCP server status
-  private serverStatus: McpServerStatus = {
-    isRunning: false,
-    config: null,
-  };
   private listeners: StatusListener[] = [];
-  // Server status listeners
-  private serverStatusListeners: ((status: McpServerStatus) => void)[] = [];
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private pingTimeout: NodeJS.Timeout | null = null;
   private readonly HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
@@ -126,7 +104,7 @@ export class McpHostManager {
     {
       resolve: (value: any) => void;
       reject: (reason?: any) => void;
-      timeoutId: number;
+      timeoutId: any;
     }
   >();
   private readonly RPC_TIMEOUT_MS = 5000; // 5 seconds default timeout for RPC requests
@@ -154,9 +132,6 @@ export class McpHostManager {
 
       // Start heartbeat
       this.startHeartbeat();
-
-      // Request initial status
-      this.requestStatus();
 
       return true;
     } catch (error) {
@@ -229,7 +204,7 @@ export class McpHostManager {
     return new Promise(resolve => {
       chrome.runtime.sendMessage(
         {
-          type: 'startMcpHost',
+          type: 'init',
           options,
         },
         response => {
@@ -279,56 +254,6 @@ export class McpHostManager {
   }
 
   /**
-   * Handles incoming messages from the MCP Host.
-   * @param {any} message The received message.
-   * @private
-   */
-
-  /**
-   * Adds a listener for MCP server status changes.
-   * @param listener Function that will be called when server status changes
-   */
-  public addServerStatusListener(listener: (status: McpServerStatus) => void): void {
-    this.serverStatusListeners.push(listener);
-  }
-
-  /**
-   * Removes a server status listener.
-   * @param listener The listener to remove
-   */
-  public removeServerStatusListener(listener: (status: McpServerStatus) => void): void {
-    const index = this.serverStatusListeners.indexOf(listener);
-    if (index !== -1) {
-      this.serverStatusListeners.splice(index, 1);
-    }
-  }
-
-  /**
-   * Gets the current server status without sending a request.
-   * @returns Current server status
-   */
-  public getCurrentServerStatus(): McpServerStatus {
-    return { ...this.serverStatus };
-  }
-
-  /**
-   * Updates the server status and notifies listeners.
-   * @param status New server status
-   */
-  private updateServerStatus(status: McpServerStatus): void {
-    this.serverStatus = status;
-
-    // Notify listeners
-    for (const listener of this.serverStatusListeners) {
-      try {
-        listener({ ...this.serverStatus });
-      } catch (error) {
-        console.error('Error in server status listener:', error);
-      }
-    }
-  }
-
-  /**
    * Registers an RPC method handler that can be called by the MCP Host.
    * @param method The RPC method name to register
    * @param handler The function to handle requests for this method
@@ -361,7 +286,7 @@ export class McpHostManager {
 
     return new Promise((resolve, reject) => {
       // Set up timeout to reject the promise if no response is received
-      const timeoutId = window.setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(id);
         reject(new Error(`RPC request timeout: ${method} (id: ${id})`));
       }, timeout);
@@ -459,7 +384,7 @@ export class McpHostManager {
     if (error) {
       pendingRequest.reject(error);
     } else {
-      pendingRequest.resolve(result || {});
+      pendingRequest.resolve(data || {});
     }
   }
 
@@ -468,20 +393,8 @@ export class McpHostManager {
       case 'status':
         this.updateStatus(message.data);
         break;
-      case 'ping_result':
-        this.updateStatus({ lastHeartbeat: message.timestamp });
-        break;
       case 'error':
         console.error('MCP Host error:', message.error);
-        break;
-      // Handle MCP server status response
-      case 'mcpServerStatus':
-        if (message.isRunning !== undefined) {
-          this.updateServerStatus({
-            isRunning: message.isRunning,
-            config: message.config || null,
-          });
-        }
         break;
       // Handle RPC messages
       case 'rpc_request':
@@ -567,7 +480,7 @@ export class McpHostManager {
   }
 
   /**
-   * Sends a ping message to check if the MCP Host is alive.
+   * Sends a ping message to check if the MCP Host is alive using RPC.
    * @private
    */
   private sendPing(): void {
@@ -576,121 +489,40 @@ export class McpHostManager {
       return;
     }
 
-    // Send ping message
-    this.port.postMessage({ type: 'ping' });
-
-    // Set timeout for response
+    // Clear any previous ping timeout
     if (this.pingTimeout) {
       clearTimeout(this.pingTimeout);
+      this.pingTimeout = null;
     }
 
-    this.pingTimeout = globalThis.setTimeout(() => {
-      // No ping response within timeout period, consider connection lost
-      console.log('Ping timeout: no response from MCP Host');
+    // Use RPC to send ping request
+    this.rpcRequest(
+      {
+        method: 'ping',
+        params: {},
+      },
+      { timeout: this.PING_TIMEOUT_MS },
+    )
+      .then(response => {
+        console.log('Ping response:', response);
 
-      // Mark as disconnected
-      this.updateStatus({ isConnected: false });
+        // Process successful response, update the last heartbeat time
+        if (response && response.result) {
+          this.updateStatus({ lastHeartbeat: response.result.timestamp });
+        }
+      })
+      .catch(error => {
+        // Connection might be lost or request timed out
+        console.log('Ping failed:', error.message || 'No response from MCP Host');
 
-      // Stop the heartbeat timers
-      this.stopHeartbeat();
+        // Mark as disconnected
+        this.updateStatus({ isConnected: false });
 
-      // Clean up port reference since we're no longer connected
-      this.port = null;
-    }, this.PING_TIMEOUT_MS);
-  }
+        // Stop the heartbeat timers
+        this.stopHeartbeat();
 
-  /**
-   * Requests status information from the MCP Host.
-   * @private
-   */
-  private requestStatus(): void {
-    if (!this.port) {
-      return;
-    }
-
-    // Request host status
-    this.port.postMessage({ type: 'getStatus' });
-
-    // Also request server status (since server auto-starts with host)
-    this.port.postMessage({ type: 'getMcpServerStatus' });
-  }
-
-  /**
-   * Starts the MCP HTTP server with the given configuration.
-   * @param {McpServerConfig} config Configuration for the MCP server.
-   * @returns {Promise<boolean>} True if the server was started successfully.
-   */
-  public async startMcpServer(config: McpServerConfig): Promise<boolean> {
-    if (!this.port || !this.status.isConnected) {
-      console.warn('Cannot start MCP server: host not connected');
-      return false;
-    }
-
-    return new Promise(resolve => {
-      this.port?.postMessage({
-        type: 'startMcpServer',
-        port: config.port,
-        logLevel: config.logLevel,
+        // Clean up port reference since we're no longer connected
+        this.port = null;
       });
-
-      // We'll just assume it worked for now since we don't have a callback mechanism
-      // In a real implementation, we'd wait for a response and check for success
-      setTimeout(() => {
-        resolve(true);
-      }, 500);
-    });
-  }
-
-  /**
-   * Stops the MCP HTTP server.
-   * @returns {Promise<boolean>} True if the server was stopped successfully.
-   */
-  public async stopMcpServer(): Promise<boolean> {
-    if (!this.port || !this.status.isConnected) {
-      console.warn('Cannot stop MCP server: host not connected');
-      return false;
-    }
-
-    return new Promise(resolve => {
-      this.port?.postMessage({
-        type: 'stopMcpServer',
-      });
-
-      // We'll just assume it worked for now since we don't have a callback mechanism
-      // In a real implementation, we'd wait for a response and check for success
-      setTimeout(() => {
-        resolve(true);
-      }, 500);
-    });
-  }
-
-  /**
-   * Gets the current MCP server status.
-   * @returns {Promise<McpServerStatus>} The current server status.
-   */
-  public async getMcpServerStatus(): Promise<McpServerStatus> {
-    if (!this.port || !this.status.isConnected) {
-      console.warn('Cannot get MCP server status: host not connected');
-      return {
-        isRunning: false,
-        config: null,
-      };
-    }
-
-    return new Promise(resolve => {
-      this.port?.postMessage({
-        type: 'getMcpServerStatus',
-      });
-
-      // Since we don't have a proper callback mechanism yet,
-      // we'll just return a default value after a timeout
-      // In a real implementation, we'd wait for a response
-      setTimeout(() => {
-        resolve({
-          isRunning: false,
-          config: null,
-        });
-      }, 500);
-    });
   }
 }
