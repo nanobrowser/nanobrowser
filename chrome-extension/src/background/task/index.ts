@@ -5,3 +5,4 @@
  */
 
 export * from './run-task-handler';
+export * from './navigate-to-handler';

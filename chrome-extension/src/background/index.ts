@@ -8,7 +8,7 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import BrowserContext from './browser/context';
 import { createLogger } from './log';
 import { McpHostManager, McpHostOptions } from './mcp/host-manager';
-import { RunTaskHandler } from './task';
+import { NavigateToHandler, RunTaskHandler } from './task';
 
 const logger = createLogger('background');
 
@@ -19,11 +19,13 @@ let currentPort: chrome.runtime.Port | null = null;
 // Initialize MCP Host Manager
 const mcpHostManager = new McpHostManager();
 
-// Create RunTaskHandler instance with required dependencies
+// Create handler instances with required dependencies
 const runTaskHandler = new RunTaskHandler(browserContext, setupExecutor);
+const navigateToHandler = new NavigateToHandler(browserContext);
 
 // Register RPC method handlers
 mcpHostManager.registerRpcMethod('run_task', runTaskHandler.handleRunTask.bind(runTaskHandler));
+mcpHostManager.registerRpcMethod('navigate_to', navigateToHandler.handleNavigateTo.bind(navigateToHandler));
 
 // No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
