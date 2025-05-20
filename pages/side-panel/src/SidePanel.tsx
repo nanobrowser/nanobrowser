@@ -4,6 +4,8 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
+import { RiPlugLine, RiPlugFill } from 'react-icons/ri';
+import { useMcpHost } from '@extension/shared';
 import { type Message, Actors, chatHistoryStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import MessageList from './components/MessageList';
@@ -29,6 +31,9 @@ const SidePanel = () => {
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
+
+  // MCP Host status
+  const { status: mcpStatus } = useMcpHost();
 
   // Check for dark mode preference
   useEffect(() => {
@@ -660,6 +665,20 @@ const SidePanel = () => {
                   aria-label="Load History"
                   tabIndex={0}>
                   <GrHistory size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => chrome.runtime.openOptionsPage()}
+                  onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
+                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  aria-label="MCP Settings"
+                  title={`MCP Host: ${mcpStatus.isConnected ? 'Connected' : 'Disconnected'} (Click to configure)`}
+                  tabIndex={0}>
+                  {mcpStatus.isConnected ? (
+                    <RiPlugFill size={20} className="text-green-500" />
+                  ) : (
+                    <RiPlugLine size={20} className="text-gray-400" />
+                  )}
                 </button>
               </>
             )}

@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "chrome", "@testing-library/jest-dom"],
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["../src/**/*.test.ts", "../src/**/*.spec.ts", "../src/**/__tests__/**/*.ts", "../vitest.setup.ts"]
+}

@@ -39,10 +39,13 @@
     "@extension/tsconfig": "workspace:*",
     "@extension/vite-config": "workspace:*",
     "@laynezh/vite-plugin-lib-assets": "^0.6.1",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/ws": "^8.5.13",
     "cross-env": "^7.0.3",
     "deepmerge": "^4.3.1",
+    "jsdom": "^26.1.0",
     "magic-string": "^0.30.10",
-    "ts-loader": "^9.5.1"
+    "ts-loader": "^9.5.1",
+    "vitest": "^1.6.1"
   }
 }

@@ -4,14 +4,16 @@ import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
+import { McpSettings } from './components/McpSettings';
 import { FirewallSettings } from './components/FirewallSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'help';
+type TabTypes = 'general' | 'models' | 'mcp' | 'firewall' | 'help';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: 'General' },
   { id: 'models', icon: '📊', label: 'Models' },
   { id: 'firewall', icon: '🔒', label: 'Firewall' },
+  { id: 'mcp', icon: '🔌', label: 'MCP' },
   { id: 'help', icon: '📚', label: 'Help' },
 ];
 
@@ -48,6 +50,8 @@ const Options = () => {
         return <ModelSettings isDarkMode={isDarkMode} />;
       case 'firewall':
         return <FirewallSettings isDarkMode={isDarkMode} />;
+      case 'mcp':
+        return <McpSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }
