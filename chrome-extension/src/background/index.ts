@@ -1,4 +1,10 @@
-import { agentModelStore, AgentNameEnum, generalSettingsStore, llmProviderStore } from '@extension/storage';
+import {
+  agentModelStore,
+  firewallStore,
+  AgentNameEnum,
+  generalSettingsStore,
+  llmProviderStore,
+} from '@extension/storage';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import 'webextension-polyfill';
 import { ExecutionState } from './agent/event/types';
