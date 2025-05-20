@@ -4,10 +4,10 @@ import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
-import { McpSettings } from './components/McpSettings';
 import { FirewallSettings } from './components/FirewallSettings';
+import { McpSettings } from './components/McpSettings';
 
-type TabTypes = 'general' | 'models' | 'mcp' | 'firewall' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'mcp' | 'help';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: 'General' },
