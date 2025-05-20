@@ -1,19 +1,19 @@
+import 'webextension-polyfill';
 import {
   agentModelStore,
-  firewallStore,
   AgentNameEnum,
+  firewallStore,
   generalSettingsStore,
   llmProviderStore,
 } from '@extension/storage';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import 'webextension-polyfill';
-import { ExecutionState } from './agent/event/types';
-import { Executor } from './agent/executor';
-import { createChatModel } from './agent/helper';
-import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import BrowserContext from './browser/context';
+import { Executor } from './agent/executor';
 import { createLogger } from './log';
-import { McpHostManager, McpHostOptions } from './mcp/host-manager';
+import { ExecutionState } from './agent/event/types';
+import { createChatModel } from './agent/helper';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { DEFAULT_AGENT_OPTIONS } from './agent/types';
+import { McpHostManager } from './mcp/host-manager';
 import { NavigateToHandler, RunTaskHandler } from './task';
 
 const logger = createLogger('background');
@@ -22,7 +22,10 @@ const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
 
-// Initialize MCP Host Manager
+// Setup side panel behavior
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
+
+// Setup MCP Host Manager
 const mcpHostManager = new McpHostManager();
 
 // Create handler instances with required dependencies
@@ -195,7 +198,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // Handle other message types if needed in the future
-  return false; // Synchronous response for unhandled messages
+  // Return false if response is not sent asynchronously
+  // return false;
 });
 
 // Setup connection listener for long-lived connections (e.g., side panel)
