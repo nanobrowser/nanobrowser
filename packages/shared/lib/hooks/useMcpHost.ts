@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { McpError, McpErrorCode } from '../errors/mcp-errors';
 
 /**
  * MCP Host Status interface
@@ -32,7 +33,7 @@ export function useMcpHost() {
     runMode: null,
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<McpError | null>(null);
 
   // Fetch MCP Host status
   const refreshStatus = async () => {
@@ -43,10 +44,16 @@ export function useMcpHost() {
       if (response && response.status) {
         setStatus(response.status);
       } else {
-        setError('Failed to get MCP Host status');
+        setError({
+          code: McpErrorCode.UNKNOWN,
+          message: 'Failed to get MCP Host status',
+        });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError({
+        code: McpErrorCode.UNKNOWN,
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     } finally {
       setLoading(false);
     }
@@ -56,30 +63,72 @@ export function useMcpHost() {
   const startMcpHost = async (options: McpHostOptions) => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'startMcpHost',
-        options,
-      });
-      if (response && response.success) {
-        // Wait a bit for the host to start and refresh status
-        setTimeout(() => {
-          refreshStatus();
-        }, 1000);
-        return true;
-      } else {
-        // Extract detailed error from response if available
-        const errorMessage = response && response.error ? response.error : 'Failed to start MCP Host';
 
-        console.error('Start MCP Host failed:', errorMessage);
-        setError(errorMessage);
-        setLoading(false);
-        return false;
-      }
+    try {
+      // Send message to background script
+      return new Promise<boolean>(resolve => {
+        chrome.runtime.sendMessage({ type: 'startMcpHost', options }, response => {
+          // Check if the connection succeeded
+          if (response && response.success) {
+            // Wait a bit for the host to start and refresh status
+            setTimeout(() => {
+              refreshStatus();
+              setLoading(false);
+            }, 1000);
+            resolve(true);
+          } else {
+            // Check if the error is already a structured McpError
+            if (response && response.error && typeof response.error === 'object' && 'code' in response.error) {
+              // This is already a structured error from background
+              console.error('Start MCP Host failed:', response.error);
+              setError(response.error as McpError);
+            } else {
+              // Create a structured error from the string error
+              const errorMessage =
+                response && response.error
+                  ? typeof response.error === 'string'
+                    ? response.error
+                    : 'Failed to start MCP Host'
+                  : 'Failed to start MCP Host';
+
+              // Create the appropriate error type
+              let mcpError: McpError;
+
+              if (
+                typeof errorMessage === 'string' &&
+                (errorMessage.includes('native messaging host not found') ||
+                  errorMessage.includes('Specified native messaging host not found') ||
+                  errorMessage.includes('Could not connect to native messaging host'))
+              ) {
+                mcpError = {
+                  code: McpErrorCode.HOST_NOT_FOUND,
+                  message: 'Native messaging host not found. Please ensure the MCP Host is properly installed.',
+                  details: { originalError: errorMessage },
+                };
+                console.error('MCP Host installation error:', errorMessage);
+              } else {
+                mcpError = {
+                  code: McpErrorCode.START_FAILED,
+                  message: errorMessage,
+                };
+              }
+
+              console.error('Start MCP Host failed:', mcpError);
+              setError(mcpError);
+            }
+
+            setLoading(false);
+            resolve(false);
+          }
+        });
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error('Exception in startMcpHost:', errorMessage);
-      setError(errorMessage);
+      setError({
+        code: McpErrorCode.UNKNOWN,
+        message: errorMessage,
+      });
       setLoading(false);
       return false;
     }
@@ -100,12 +149,18 @@ export function useMcpHost() {
         }, 1000);
         return true;
       } else {
-        setError('Failed to stop MCP Host');
+        setError({
+          code: McpErrorCode.STOP_FAILED,
+          message: 'Failed to stop MCP Host',
+        });
         setLoading(false);
         return false;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError({
+        code: McpErrorCode.UNKNOWN,
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
       setLoading(false);
       return false;
     }
