@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { useMcpHost } from '@extension/shared';
+import React, { useCallback, useState, useEffect } from 'react';
+import { useMcpHost, McpErrorCode } from '@extension/shared';
 
 interface McpSettingsProps {
   isDarkMode: boolean;
@@ -28,8 +28,9 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
   // SEE protocol endpoint
   const seeEndpoint = 'http://localhost:7890/mcp';
 
-  // State to track copy operation
+  // State to track copy operation and installation guide dismiss
   const [copyStatus, setCopyStatus] = useState(false);
+  const [installGuideVisible, setInstallGuideVisible] = useState(false);
 
   // Copy SEE endpoint to clipboard with feedback
   const copyEndpoint = () => {
@@ -39,6 +40,38 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
       setCopyStatus(false);
     }, 2000); // Reset after 2 seconds
   };
+
+  // Initialize installation guide visibility from localStorage on component mount
+  // and only show the installation guide when explicitly triggered
+  useEffect(() => {
+    // On initial load, check if we previously detected an error
+    const errorWasDetected = localStorage.getItem('mcpHostErrorDetected') === 'true';
+    if (errorWasDetected) {
+      setInstallGuideVisible(true);
+    }
+  }, []);
+
+  // Only set visibility to true when HOST_NOT_FOUND error is detected
+  // Never auto-hide (only manual dismiss or connection success)
+  useEffect(() => {
+    // If we detect the specific error, show the installation guide and persist state
+    if (error?.code === McpErrorCode.HOST_NOT_FOUND) {
+      setInstallGuideVisible(true);
+      localStorage.setItem('mcpHostErrorDetected', 'true');
+    }
+
+    // Only auto-clear on successful connection
+    if (status.isConnected) {
+      setInstallGuideVisible(false);
+      localStorage.removeItem('mcpHostErrorDetected');
+    }
+  }, [error?.code, status.isConnected]);
+
+  // Only way to manually dismiss the guide
+  const dismissInstallGuide = useCallback(() => {
+    setInstallGuideVisible(false);
+    localStorage.removeItem('mcpHostErrorDetected');
+  }, []);
 
   return (
     <div className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -71,7 +104,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
           <div>{status.runMode || 'N/A'}</div>
         </div>
 
-        <div className="flex space-x-4">
+        <div className="flex justify-center space-x-4">
           {!status.isConnected ? (
             <button
               onClick={handleStartClick}
@@ -137,57 +170,82 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
           )}
         </div>
 
+        {/* Error display */}
         {error && (
           <div className="mt-4 rounded-md overflow-hidden">
             <div className={`p-4 ${isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-50 text-red-700'}`}>
-              <p className="font-medium">Error: {error}</p>
+              <p className="font-medium">Error: {error.message}</p>
+              {error.code && <p className="text-sm opacity-75">Error code: {error.code}</p>}
             </div>
+          </div>
+        )}
 
-            {(error.includes('native messaging host not found') ||
-              error.includes('Specified native messaging host not found')) && (
-              <div
-                className={`p-4 border-t ${isDarkMode ? 'bg-amber-900/30 border-amber-800 text-amber-200' : 'bg-amber-50 border-amber-100 text-amber-800'}`}>
-                <h3 className="font-semibold mb-2">MCP Host Installation Required</h3>
-                <p className="mb-3">
-                  This error indicates that you need to install the MCP Host. Please follow these steps:
-                </p>
-                <ol className="list-decimal list-inside space-y-2 mb-3">
-                  <li>Open your terminal</li>
-                  <li>
-                    Clone the MCP Host repository:
+        {/* Installation guide - shown regardless of current error state when installGuideVisible is true */}
+        {installGuideVisible && (
+          <div className="mt-4 rounded-md overflow-hidden">
+            <div
+              className={`p-4 border-t relative ${isDarkMode ? 'bg-amber-900/30 border-amber-800 text-amber-200' : 'bg-amber-50 border-amber-100 text-amber-800'}`}>
+              {/* Add close button */}
+              <button
+                onClick={dismissInstallGuide}
+                className={`absolute top-2 right-2 p-1 rounded-full ${isDarkMode ? 'bg-amber-800 hover:bg-amber-700 text-amber-200' : 'bg-amber-200 hover:bg-amber-300 text-amber-800'}`}
+                aria-label="Close installation guide">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+              <h3 className="font-semibold mb-2">MCP Host Installation Required</h3>
+              <p className="mb-3">
+                This error indicates that you need to install the MCP Host. Please follow these steps:
+              </p>
+              <ol className="list-decimal ml-5 space-y-2 mb-3">
+                <li className="pl-1">Open your terminal</li>
+                <li className="pl-1">
+                  Clone the MCP Host repository:
+                  <div className="mt-1">
                     <code
-                      className={`ml-2 px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                      className={`block px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
                       git clone https://github.com/nanobrowser/nanobrowser-mcp-host.git
                     </code>
-                  </li>
-                  <li>
-                    Navigate to the cloned directory:
+                  </div>
+                </li>
+                <li className="pl-1">
+                  Navigate to the cloned directory:
+                  <div className="mt-1">
                     <code
-                      className={`ml-2 px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                      className={`block px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
                       cd nanobrowser-mcp-host
                     </code>
-                  </li>
-                  <li>
-                    Run the installation script:
+                  </div>
+                </li>
+                <li className="pl-1">
+                  Run the installation script:
+                  <div className="mt-1">
                     <code
-                      className={`ml-2 px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                      className={`block px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
                       ./install.sh
                     </code>
-                  </li>
-                  <li>After installation is complete, return to this page and click "Start MCP Host" again</li>
-                </ol>
-                <p className="text-sm">
-                  For complete installation instructions, refer to the
-                  <a
-                    href="https://github.com/nanobrowser/nanobrowser-mcp-host"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`ml-1 underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                    MCP Host GitHub repository
-                  </a>
-                </p>
-              </div>
-            )}
+                  </div>
+                </li>
+                <li className="pl-1">
+                  After installation is complete, return to this page and click "Start MCP Host" again
+                </li>
+              </ol>
+              <p className="text-sm">
+                For complete installation instructions, refer to the
+                <a
+                  href="https://github.com/nanobrowser/nanobrowser-mcp-host"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`ml-1 underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  MCP Host GitHub repository
+                </a>
+              </p>
+            </div>
           </div>
         )}
       </div>

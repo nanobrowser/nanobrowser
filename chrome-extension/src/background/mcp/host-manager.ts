@@ -5,6 +5,7 @@
  * and provides methods to control it (start, stop, etc.).
  * It also supports bidirectional RPC communication with the MCP Host.
  */
+import { McpErrorCode, createMcpError } from '@extension/shared';
 
 // Define RPC types
 export interface RpcRequest {
@@ -111,42 +112,70 @@ export class McpHostManager {
 
   /**
    * Establishes a connection to the MCP Host Native Messaging host.
-   * @returns {boolean} True if connection was established, false otherwise.
-   * @throws Will throw an error if connection fails (e.g., host not installed)
+   * @returns {Promise<boolean>} Promise that resolves to true if connection was established successfully
+   * @throws Will reject with an error if connection fails (e.g., host not installed)
    */
-  public connect(): boolean {
+  public connect(): Promise<boolean> {
     // Don't reconnect if already connected
     if (this.port) {
-      return false;
+      return Promise.resolve(false);
     }
 
-    // Connect to the native messaging host
-    this.port = chrome.runtime.connectNative('dev.nanobrowser.mcp.host');
+    return new Promise((resolve, reject) => {
+      // Connect to the native messaging host
+      // Note: connectNative always returns a Port object even if the host doesn't exist
+      this.port = chrome.runtime.connectNative('dev.nanobrowser.mcp.host');
 
-    // Check for lastError immediately after connectNative
-    // Chrome sets runtime.lastError instead of throwing for native messaging errors
-    const lastError = chrome.runtime.lastError;
-    if (lastError) {
-      // Clear port since connection failed
-      this.port = null;
+      // Setup message handler
+      this.port.onMessage.addListener(this.handleMessage.bind(this));
 
-      // Throw the error with detailed message
-      throw new Error(`Native messaging connection failed: ${lastError.message}`);
-    }
+      // Critical: The onDisconnect event is where we need to check for connection errors
+      // We'll create a local handler first that includes the Promise resolution
+      const disconnectHandler = () => {
+        // Check for runtime error which indicates connection failure
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+          const errorMessage = lastError.message;
+          console.error(`Native messaging connection failed: ${errorMessage}`);
 
-    // If we get here, connection was successful
+          // Clean up port reference
+          this.port = null;
 
-    // Set up message and disconnect handlers
-    this.port.onMessage.addListener(this.handleMessage.bind(this));
-    this.port.onDisconnect.addListener(this.handleDisconnect.bind(this));
+          // Create a structured MCP error with appropriate error code
+          const mcpError = createMcpError(
+            McpErrorCode.HOST_NOT_FOUND,
+            `Native messaging connection failed: ${errorMessage}`,
+            { originalError: lastError.message },
+          );
 
-    // Update and broadcast status
-    this.updateStatus({ isConnected: true });
+          // Reject the promise with the structured error
+          reject(mcpError);
+        } else {
+          // This was a normal disconnect - should be handled by the main disconnect handler
+          this.handleDisconnect();
+        }
+      };
 
-    // Start heartbeat
-    this.startHeartbeat();
+      // Add our disconnect handler
+      this.port.onDisconnect.addListener(disconnectHandler);
 
-    return true;
+      // Set a short timeout to verify successful connection
+      // Most connection errors trigger onDisconnect almost immediately
+      setTimeout(() => {
+        if (this.port) {
+          // Connection appears successful - set up remaining handlers and state
+
+          // Update and broadcast status
+          this.updateStatus({ isConnected: true });
+
+          // Start heartbeat
+          this.startHeartbeat();
+
+          // Resolve the promise
+          resolve(true);
+        }
+      }, 100);
+    });
   }
 
   /**
@@ -202,6 +231,7 @@ export class McpHostManager {
    * Starts the MCP Host process.
    * @param {McpHostOptions} options Configuration options.
    * @returns {Promise<boolean>} True if the Host was started successfully.
+   * @throws Will reject with an error if connection fails (e.g., host not installed)
    */
   public async startMcpHost(options: McpHostOptions): Promise<boolean> {
     // Don't start if already connected
@@ -210,7 +240,7 @@ export class McpHostManager {
     }
 
     // Send start request to the main extension process
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(
         {
           type: 'init',
@@ -219,12 +249,23 @@ export class McpHostManager {
         response => {
           if (response && response.success) {
             // Try to connect to the newly started Host
-            setTimeout(() => {
-              this.connect();
-              resolve(true);
+            setTimeout(async () => {
+              try {
+                // Now using the Promise-based connect() method
+                const connected = await this.connect();
+                resolve(connected);
+              } catch (error) {
+                console.error('Failed to connect to MCP Host after init:', error);
+                reject(error); // Propagate the error up
+              }
             }, 500); // Give some time for the process to start
           } else {
-            resolve(false);
+            // Check if there's an error message in the response
+            if (response && response.error) {
+              reject(new Error(response.error));
+            } else {
+              resolve(false);
+            }
           }
         },
       );
