@@ -394,6 +394,8 @@ export class McpHostManager {
       // Make sure the response includes the request ID
       response.id = id;
 
+      console.debug(`[McpHostManager] Send RPC response:`, response);
+
       this.port?.postMessage({
         type: 'rpc_response',
         ...response,

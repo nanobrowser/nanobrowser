@@ -668,8 +668,13 @@ const SidePanel = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => chrome.runtime.openOptionsPage()}
-                  onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
+                  onClick={() =>
+                    chrome.tabs.create({ url: 'chrome-extension://' + chrome.runtime.id + '/options/index.html#mcp' })
+                  }
+                  onKeyDown={e =>
+                    e.key === 'Enter' &&
+                    chrome.tabs.create({ url: 'chrome-extension://' + chrome.runtime.id + '/options/index.html#mcp' })
+                  }
                   className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
                   aria-label="MCP Settings"
                   title={`MCP Host: ${mcpStatus.isConnected ? 'Connected' : 'Disconnected'} (Click to configure)`}
