@@ -7,6 +7,7 @@
 
 import { Executor } from '../agent/executor';
 import BrowserContext from '../browser/context';
+import { Actors, ExecutionState } from '../agent/event/types';
 import { createLogger } from '../log';
 import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
@@ -51,6 +52,42 @@ export class RunTaskHandler {
   ) {}
 
   /**
+   * Subscribe to executor events and output them to the console
+   *
+   * @param executor The task executor to subscribe to
+   * @param taskId The ID of the task being executed
+   */
+  private subscribeToExecutorEvents(executor: Executor, taskId: string, results: Array<string>): void {
+    // Clear any previous event listeners to prevent multiple subscriptions
+    executor.clearExecutionEvents();
+
+    // Subscribe to new events
+    executor.subscribeExecutionEvents(async event => {
+      if (event.actor === 'validator' && event.state === ExecutionState.STEP_OK) {
+        results.push(event.data?.details || '');
+      }
+
+      // Output event to console
+      this.logger.info(`MCP Task Event [${taskId}]:`, {
+        actor: event.actor,
+        state: event.state,
+        details: event.data?.details || '',
+        timestamp: new Date(event.timestamp).toISOString(),
+      });
+
+      // Cleanup resources only when the task is actually complete, failed, or cancelled
+      if (
+        event.state === ExecutionState.TASK_OK ||
+        event.state === ExecutionState.TASK_FAIL ||
+        event.state === ExecutionState.TASK_CANCEL
+      ) {
+        this.logger.info(`MCP Task ${taskId} finishing, cleaning up resources`);
+        await executor.cleanup();
+      }
+    });
+  }
+
+  /**
    * Handle a run_task RPC request
    *
    * @param request RPC request containing the task details
@@ -82,22 +119,24 @@ export class RunTaskHandler {
       // Setup and execute the task
       const executor = await this.setupExecutorFn(taskId, params.task, this.browserContext);
 
-      // Set up event handlers if needed
-      // For example, we might want to capture events for status updates
+      const results = new Array();
+      // Subscribe to executor events and output them to the console
+      this.subscribeToExecutorEvents(executor, taskId, results);
 
       // Execute the task and wait for completion
-      const result = await executor.execute();
-      this.logger.info('Task execution result for tab', tabId, ':', result);
+      await executor.execute();
 
-      // Cleanup after execution
-      await executor.cleanup();
+      this.logger.info('Task execution result for tab', tabId, ':', results);
+
+      // Cleanup is now handled by the event subscriber when task completes
+      // This ensures we don't clean up before the task is actually done
 
       return {
         result: {
           success: true,
           message: 'Task executed successfully',
           taskId,
-          data: result,
+          data: results,
         },
       };
     } catch (error) {

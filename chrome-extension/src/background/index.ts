@@ -14,7 +14,7 @@ import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { McpHostManager } from './mcp/host-manager';
-import { NavigateToHandler, RunTaskHandler } from './task';
+import { RunTaskHandler } from './task';
 
 const logger = createLogger('background');
 
@@ -30,11 +30,7 @@ const mcpHostManager = new McpHostManager();
 
 // Create handler instances with required dependencies
 const runTaskHandler = new RunTaskHandler(browserContext, setupExecutor);
-const navigateToHandler = new NavigateToHandler(browserContext);
-
-// Register RPC method handlers
 mcpHostManager.registerRpcMethod('run_task', runTaskHandler.handleRunTask.bind(runTaskHandler));
-mcpHostManager.registerRpcMethod('navigate_to', navigateToHandler.handleNavigateTo.bind(navigateToHandler));
 
 // No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
