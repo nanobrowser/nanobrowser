@@ -34,6 +34,17 @@ const Options = () => {
     return () => darkModeMediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  // Handle URL hash for direct tab navigation (e.g., #mcp)
+  useEffect(() => {
+    // Get the hash from URL (removing the # symbol)
+    const hash = window.location.hash.slice(1).toLowerCase();
+
+    // Check if hash matches any valid tab ID
+    if (hash && TABS.some(tab => tab.id === (hash as TabTypes))) {
+      setActiveTab(hash as TabTypes);
+    }
+  }, []);
+
   const handleTabClick = (tabId: TabTypes) => {
     if (tabId === 'help') {
       window.open('https://nanobrowser.ai/docs', '_blank');
