@@ -83,13 +83,13 @@ mcpServerManager
     } else {
       logger.error('Failed to auto-start MCP HTTP server: Server already running');
 
-      process.exit(0);
+      process.exit(1);
     }
   })
   .catch((error: Error) => {
     logger.error('Exception during MCP HTTP server auto-start:', error);
 
-    process.exit(0);
+    process.exit(1);
   });
 
 // Send initial ready message to let the extension know we're available

@@ -183,6 +183,17 @@ export class McpServerManager {
           this.logger.info(`HTTP server listening on http://localhost:${this.config.port}`);
           resolve();
         });
+
+        // Add error handler to detect port conflicts
+        this.httpServer.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+            this.logger.error(`EADDRINUSE: Port ${this.config.port} is already in use. Please use a different port.`);
+            reject(new Error(`EADDRINUSE: Port ${this.config.port} is already in use.`));
+          } else {
+            this.logger.error('HTTP server error:', err);
+            reject(err);
+          }
+        });
       } catch (error) {
         reject(error);
       }
