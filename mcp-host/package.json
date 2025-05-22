@@ -12,8 +12,8 @@
     "test": "LOG_LEVEL=debug vitest run",
     "test:watch": "LOG_LEVEL=debug vitest",
     "test:unit": "LOG_LEVEL=debug vitest run tests/unit",
-    "test:integration": "LOG_LEVEL=debug TEST_TYPE=integration vitest run tests/integration",
-    "test:integration:single": "LOG_LEVEL=debug TEST_TYPE=integration vitest run tests/integration/cases/run-task.test.ts"
+    "test:integration": "LOG_LEVEL=debug TEST_TYPE=integration vitest run --hideSkippedTests --reporter=json tests/integration",
+    "test:integration:single": "LOG_LEVEL=debug TEST_TYPE=integration vitest run --hideSkippedTests --reporter=json tests/integration/cases/port-conflict.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.1",

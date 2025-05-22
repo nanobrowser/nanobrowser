@@ -44,6 +44,7 @@ export default defineConfig({
         'path',
         'http',
         'url',
+        'buffer',
         'node:crypto',
         '@modelcontextprotocol/sdk',
       ],

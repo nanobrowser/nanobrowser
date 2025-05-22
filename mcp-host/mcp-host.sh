@@ -11,7 +11,7 @@ mkdir -p "$LOGS_DIR"
 LOG_FILE="$LOGS_DIR/mcp-host.log"
 echo "Starting MCP Host at $(date)" > "$LOG_FILE"
 
-cd "/home/yubing/Workspace/elliot245/nanobrowser/mcp-host"
+cd "/home/yubing/Workspace/algonius/algonius-browser/mcp-host"
 
 # Redirect stderr to log file but keep stdout for native messaging
 node dist/index.js 2>> "$LOG_FILE"
