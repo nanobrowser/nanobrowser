@@ -57,7 +57,13 @@ export interface BrowserContextConfig {
    * List of allowed domains that can be accessed. If None, all domains are allowed.
    * @default null
    */
-  allowedDomains: string[] | null;
+  allowedUrls: string[];
+
+  /**
+   * List of denied domains that can be accessed. If None, all domains are allowed.
+   * @default null
+   */
+  deniedUrls: string[];
 
   /**
    * Include dynamic attributes in the CSS selector. If you want to reuse the css_selectors, it might be better to set this to False.
@@ -80,9 +86,10 @@ export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
   browserWindowSize: { width: 1280, height: 1100 },
   highlightElements: true,
   viewportExpansion: 0,
-  allowedDomains: null,
+  allowedUrls: [],
+  deniedUrls: [],
   includeDynamicAttributes: true,
-  homePageUrl: 'https://www.google.com',
+  homePageUrl: 'about:blank',
 };
 
 export interface PageState extends DOMState {

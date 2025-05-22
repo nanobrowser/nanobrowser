@@ -1,6 +1,6 @@
 {
   "name": "@extension/sidepanel",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "chrome extension - side panel",
   "private": true,
   "sideEffects": true,
@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "react-icons": "^5.0.0",
-    "puppeteer-core": "24.1.1",
     "webextension-polyfill": "^0.12.0",
     "@extension/shared": "workspace:*",
     "@extension/storage": "workspace:*"

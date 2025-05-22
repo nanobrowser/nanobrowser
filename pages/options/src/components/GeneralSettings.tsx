@@ -30,7 +30,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Max Steps per Task
               </h3>
               <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -44,7 +44,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
               id="maxSteps"
               type="number"
               min={1}
-              max={100}
+              max={50}
               value={settings.maxSteps}
               onChange={e => updateSetting('maxSteps', Number.parseInt(e.target.value, 10))}
               className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
@@ -53,7 +53,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Max Actions per Step
               </h3>
               <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -67,7 +67,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
               id="maxActionsPerStep"
               type="number"
               min={1}
-              max={100}
+              max={50}
               value={settings.maxActionsPerStep}
               onChange={e => updateSetting('maxActionsPerStep', Number.parseInt(e.target.value, 10))}
               className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
@@ -76,7 +76,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Failure Tolerance
               </h3>
               <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -99,9 +99,11 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Enable Vision</h3>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Enable Vision with Highlighting
+              </h3>
               <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Use vision capabilities (uses more tokens)
+                Use vision capability of LLMs (consumes more tokens for better results)
               </p>
             </div>
             <div className="relative inline-flex cursor-pointer items-center">
@@ -122,32 +124,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Enable Vision for Planner
-              </h3>
-              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Use vision in planner (uses more tokens)
-              </p>
-            </div>
-            <div className="relative inline-flex cursor-pointer items-center">
-              <input
-                id="useVisionForPlanner"
-                type="checkbox"
-                checked={settings.useVisionForPlanner}
-                onChange={e => updateSetting('useVisionForPlanner', e.target.checked)}
-                className="peer sr-only"
-              />
-              <label
-                htmlFor="useVisionForPlanner"
-                className={`peer h-6 w-11 rounded-full ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300`}>
-                <span className="sr-only">Enable Vision for Planner</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Replanning Frequency
               </h3>
               <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>

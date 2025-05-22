@@ -169,7 +169,7 @@ export const selectDropdownOptionActionSchema: ActionSchema = {
 
 export const waitActionSchema: ActionSchema = {
   name: 'wait',
-  description: 'Wait for x seconds default 3',
+  description: 'Wait for x seconds default 3, do not use this action unless user asks for it',
   schema: z.object({
     intent: z.string().optional(),
     seconds: z.number().nullable().optional(),

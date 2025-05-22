@@ -94,7 +94,7 @@ export const jsonNavigatorOutputSchema = {
             nullable: true,
           },
           wait: {
-            description: 'Wait for x seconds default 3',
+            description: 'Wait for x seconds default 3, do not use this action unless user asks for it',
             properties: {
               intent: {
                 title: 'Intent',

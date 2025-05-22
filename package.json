@@ -1,6 +1,6 @@
 {
   "name": "nanobrowser",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "AI web automation tool",
   "license": "Apache-2.0",
   "repository": {
@@ -35,10 +35,10 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@types/chrome": "^0.0.270",
+    "@types/chrome": "0.0.323",
     "@types/node": "^22.5.5",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "18.3.21",
+    "@types/react-dom": "18.3.7",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "autoprefixer": "^10.4.20",
@@ -60,8 +60,8 @@
     "tailwindcss": "^3.4.17",
     "tslib": "^2.6.3",
     "typescript": "5.5.4",
-    "turbo": "^2.3.3",
-    "vite": "6.0.12",
+    "turbo": "^2.5.3",
+    "vite": "6.3.5",
     "run-script-os": "^1.1.6"
   },
   "lint-staged": {

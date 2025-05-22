@@ -1,6 +1,7 @@
 import { type BaseMessage, AIMessage, HumanMessage, type SystemMessage, ToolMessage } from '@langchain/core/messages';
-import { MessageHistory, MessageMetadata, ManagedMessage } from '@src/background/agent/messages/views';
+import { MessageHistory, MessageMetadata } from '@src/background/agent/messages/views';
 import { createLogger } from '@src/background/log';
+import { wrapUserRequest } from '@src/background/agent/messages/utils';
 
 const logger = createLogger('MessageManager');
 
@@ -139,7 +140,8 @@ export default class MessageManager {
    */
   private static taskInstructions(task: string): HumanMessage {
     const content = `Your ultimate task is: """${task}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.`;
-    return new HumanMessage({ content });
+    const wrappedContent = wrapUserRequest(content);
+    return new HumanMessage({ content: wrappedContent });
   }
 
   /**
@@ -155,8 +157,9 @@ export default class MessageManager {
    * @param newTask - The raw description of the new task
    */
   public addNewTask(newTask: string): void {
-    const content = `Your new ultimate task is: """${newTask}""". Take the previous context into account and finish your new ultimate task. `;
-    const msg = new HumanMessage({ content });
+    const content = `Your new ultimate task is: """${newTask}""". This is a follow-up of the previous tasks. Make sure to take all of the previous context into account and finish your new ultimate task.`;
+    const wrappedContent = wrapUserRequest(content);
+    const msg = new HumanMessage({ content: wrappedContent });
     this.addMessageWithTokens(msg);
   }
 
@@ -203,7 +206,7 @@ export default class MessageManager {
 
     // Need a placeholder for the tool response here to avoid errors sometimes
     // NOTE: in browser-use, it uses an empty string
-    this.addToolMessage('tool call response placeholder', toolCallId);
+    this.addToolMessage('tool call response', toolCallId);
   }
 
   /**

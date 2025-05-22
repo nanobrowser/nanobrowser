@@ -6,6 +6,7 @@ import type { BaseMessage } from '@langchain/core/messages';
 import { createLogger } from '@src/background/log';
 import type { Action } from '../actions/builder';
 import { convertInputMessages, extractJsonFromModelOutput, removeThinkTags } from '../messages/utils';
+import { isAbortedError, RequestCancelledError } from './errors';
 
 const logger = createLogger('agent');
 
@@ -111,6 +112,7 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
 
       try {
         const response = await structuredLlm.invoke(inputMessages, {
+          signal: this.context.controller.signal,
           ...this.callOptions,
         });
 
@@ -120,6 +122,9 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
         logger.error('Failed to parse response', response);
         throw new Error('Could not parse response with structured output');
       } catch (error) {
+        if (isAbortedError(error)) {
+          throw error;
+        }
         const errorMessage = `Failed to invoke ${this.modelName} with structured output: ${error}`;
         throw new Error(errorMessage);
       }
@@ -128,6 +133,7 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
     // Without structured output support, need to extract JSON from model output manually
     const convertedInputMessages = convertInputMessages(inputMessages, this.modelName);
     const response = await this.chatLLM.invoke(convertedInputMessages, {
+      signal: this.context.controller.signal,
       ...this.callOptions,
     });
     if (typeof response.content === 'string') {

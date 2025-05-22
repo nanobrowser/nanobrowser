@@ -1,4 +1,16 @@
-import { agentModelStore, AgentNameEnum, generalSettingsStore, llmProviderStore } from '@extension/storage';
+import 'webextension-polyfill';
+import {
+  agentModelStore,
+  AgentNameEnum,
+  firewallStore,
+  generalSettingsStore,
+  llmProviderStore,
+} from '@extension/storage';
+import BrowserContext from './browser/context';
+import { Executor } from './agent/executor';
+import { createLogger } from './log';
+import { ExecutionState } from './agent/event/types';
+import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import 'webextension-polyfill';
 import { ExecutionState } from './agent/event/types';
@@ -74,6 +86,7 @@ chrome.debugger.onDetach.addListener(async (source, reason) => {
   console.log('Debugger detached:', source, reason);
   if (reason === 'canceled_by_user') {
     if (source.tabId) {
+      currentExecutor?.cancel();
       await browserContext.cleanup();
     }
   }
@@ -231,7 +244,7 @@ chrome.runtime.onConnect.addListener(port => {
 
           case 'state': {
             try {
-              const browserState = await browserContext.getState();
+              const browserState = await browserContext.getState(true);
               const elementsText = browserState.elementTree.clickableElementsToString(
                 DEFAULT_AGENT_OPTIONS.includeAttributes,
               );
@@ -264,8 +277,10 @@ chrome.runtime.onConnect.addListener(port => {
     });
 
     port.onDisconnect.addListener(() => {
+      // this event is also triggered when the side panel is closed, so we need to cancel the task
       console.log('Side panel disconnected');
       currentPort = null;
+      currentExecutor?.cancel();
     });
   }
 });
@@ -308,6 +323,20 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
     validatorLLM = createChatModel(validatorProviderConfig, validatorModel);
   }
 
+  // Apply firewall settings to browser context
+  const firewall = await firewallStore.getFirewall();
+  if (firewall.enabled) {
+    browserContext.updateConfig({
+      allowedUrls: firewall.allowList,
+      deniedUrls: firewall.denyList,
+    });
+  } else {
+    browserContext.updateConfig({
+      allowedUrls: [],
+      deniedUrls: [],
+    });
+  }
+
   const generalSettings = await generalSettingsStore.getSettings();
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
     plannerLLM: plannerLLM ?? navigatorLLM,
@@ -317,7 +346,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
       maxFailures: generalSettings.maxFailures,
       maxActionsPerStep: generalSettings.maxActionsPerStep,
       useVision: generalSettings.useVision,
-      useVisionForPlanner: generalSettings.useVisionForPlanner,
+      useVisionForPlanner: true,
       planningInterval: generalSettings.planningInterval,
     },
   });

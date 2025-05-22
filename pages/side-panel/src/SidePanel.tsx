@@ -5,12 +5,12 @@ import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
 import { type Message, Actors, chatHistoryStore } from '@extension/storage';
+import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
-import TemplateList from './components/TemplateList';
+import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
-import { defaultTemplates } from './templates';
 import './SidePanel.css';
 
 const SidePanel = () => {
@@ -23,6 +23,7 @@ const SidePanel = () => {
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -484,8 +485,14 @@ const SidePanel = () => {
     setShowHistory(true);
   };
 
-  const handleBackToChat = () => {
+  const handleBackToChat = (reset = false) => {
     setShowHistory(false);
+    if (reset) {
+      setCurrentSessionId(null);
+      setMessages([]);
+      setIsFollowUpMode(false);
+      setIsHistoricalSession(false);
+    }
   };
 
   const handleSessionSelect = async (sessionId: string) => {
@@ -516,12 +523,91 @@ const SidePanel = () => {
     }
   };
 
-  const handleTemplateSelect = (content: string) => {
-    console.log('handleTemplateSelect', content);
+  const handleSessionBookmark = async (sessionId: string) => {
+    try {
+      const fullSession = await chatHistoryStore.getSession(sessionId);
+
+      if (fullSession && fullSession.messages.length > 0) {
+        // Get the session title
+        const sessionTitle = fullSession.title;
+        // Get the first 8 words of the title
+        const title = sessionTitle.split(' ').slice(0, 8).join(' ');
+
+        // Get the first message content (the task)
+        const taskContent = fullSession.messages[0]?.content || '';
+
+        // Add to favorites storage
+        await favoritesStorage.addPrompt(title, taskContent);
+
+        // Update favorites in the UI
+        const prompts = await favoritesStorage.getAllPrompts();
+        setFavoritePrompts(prompts);
+
+        // Return to chat view after pinning
+        handleBackToChat(true);
+      }
+    } catch (error) {
+      console.error('Failed to pin session to favorites:', error);
+    }
+  };
+
+  const handleBookmarkSelect = (content: string) => {
+    console.log('handleBookmarkSelect', content);
     if (setInputTextRef.current) {
       setInputTextRef.current(content);
     }
   };
+
+  const handleBookmarkUpdateTitle = async (id: number, title: string) => {
+    try {
+      await favoritesStorage.updatePromptTitle(id, title);
+
+      // Update favorites in the UI
+      const prompts = await favoritesStorage.getAllPrompts();
+      setFavoritePrompts(prompts);
+    } catch (error) {
+      console.error('Failed to update favorite prompt title:', error);
+    }
+  };
+
+  const handleBookmarkDelete = async (id: number) => {
+    try {
+      await favoritesStorage.removePrompt(id);
+
+      // Update favorites in the UI
+      const prompts = await favoritesStorage.getAllPrompts();
+      setFavoritePrompts(prompts);
+    } catch (error) {
+      console.error('Failed to delete favorite prompt:', error);
+    }
+  };
+
+  const handleBookmarkReorder = async (draggedId: number, targetId: number) => {
+    try {
+      // Directly pass IDs to storage function - it now handles the reordering logic
+      await favoritesStorage.reorderPrompts(draggedId, targetId);
+
+      // Fetch the updated list from storage to get the new IDs and reflect the authoritative order
+      const updatedPromptsFromStorage = await favoritesStorage.getAllPrompts();
+      setFavoritePrompts(updatedPromptsFromStorage);
+    } catch (error) {
+      console.error('Failed to reorder favorite prompts:', error);
+    }
+  };
+
+  // Load favorite prompts from storage
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const prompts = await favoritesStorage.getAllPrompts();
+        setFavoritePrompts(prompts);
+      } catch (error) {
+        console.error('Failed to load favorite prompts:', error);
+      }
+    };
+
+    loadFavorites();
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -545,7 +631,7 @@ const SidePanel = () => {
             {showHistory ? (
               <button
                 type="button"
-                onClick={handleBackToChat}
+                onClick={() => handleBackToChat(false)}
                 className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
                 aria-label="Back to chat">
                 ← Back
@@ -601,6 +687,7 @@ const SidePanel = () => {
               sessions={chatSessions}
               onSessionSelect={handleSessionSelect}
               onSessionDelete={handleSessionDelete}
+              onSessionBookmark={handleSessionBookmark}
               visible={true}
               isDarkMode={isDarkMode}
             />
@@ -622,20 +709,25 @@ const SidePanel = () => {
                     isDarkMode={isDarkMode}
                   />
                 </div>
-                <div>
-                  <TemplateList
-                    templates={defaultTemplates}
-                    onTemplateSelect={handleTemplateSelect}
+                <div className="flex-1 overflow-y-auto">
+                  <BookmarkList
+                    bookmarks={favoritePrompts}
+                    onBookmarkSelect={handleBookmarkSelect}
+                    onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
+                    onBookmarkDelete={handleBookmarkDelete}
+                    onBookmarkReorder={handleBookmarkReorder}
                     isDarkMode={isDarkMode}
                   />
                 </div>
               </>
             )}
-            <div
-              className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-              <MessageList messages={messages} isDarkMode={isDarkMode} />
-              <div ref={messagesEndRef} />
-            </div>
+            {messages.length > 0 && (
+              <div
+                className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
+                <MessageList messages={messages} isDarkMode={isDarkMode} />
+                <div ref={messagesEndRef} />
+              </div>
+            )}
             {messages.length > 0 && (
               <div
                 className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>

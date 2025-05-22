@@ -20,6 +20,7 @@ import { DOMElementNode, type DOMState } from '../dom/views';
 import { type BrowserContextConfig, DEFAULT_BROWSER_CONTEXT_CONFIG, type PageState, URLNotAllowedError } from './views';
 import { createLogger } from '@src/background/log';
 import { ClickableElementProcessor } from '../dom/clickable/service';
+import { isUrlAllowed } from './util';
 
 const logger = createLogger('Page');
 
@@ -170,14 +171,14 @@ export default class Page {
     }
   }
 
-  async getClickableElements(focusElement: number): Promise<DOMState | null> {
+  async getClickableElements(showHighlightElements: boolean, focusElement: number): Promise<DOMState | null> {
     if (!this._validWebPage) {
       return null;
     }
     return _getClickableElements(
       this._tabId,
       this.url(),
-      this._config.highlightElements,
+      showHighlightElements,
       focusElement,
       this._config.viewportExpansion,
     );
@@ -198,13 +199,13 @@ export default class Page {
     return await this._puppeteerPage.content();
   }
 
-  async getState(cacheClickableElementsHashes = false): Promise<PageState> {
+  async getState(useVision = false, cacheClickableElementsHashes = false): Promise<PageState> {
     if (!this._validWebPage) {
       // return the initial state
       return build_initial_state(this._tabId);
     }
     await this.waitForPageAndFramesLoad();
-    const updatedState = await this._updateState();
+    const updatedState = await this._updateState(useVision);
 
     // Find out which elements are new
     // Do this only if url has not changed
@@ -257,7 +258,8 @@ export default class Page {
 
       // Get DOM content (equivalent to dom_service.get_clickable_elements)
       // This part would need to be implemented based on your DomService logic
-      const content = await this.getClickableElements(focusElement);
+      // showHighlightElements is true if useVision is true, otherwise false
+      const content = await this.getClickableElements(useVision, focusElement);
       if (!content) {
         logger.warning('Failed to get clickable elements');
         // Return last known good state if available
@@ -361,10 +363,8 @@ export default class Page {
     logger.info('navigateTo', url);
 
     // Check if URL is allowed
-    if (!this._isUrlAllowed(url)) {
-      const errorMessage = `Navigation to URL: ${url} is not allowed. Only these domains are allowed: ${this._config.allowedDomains?.join(', ')}`;
-      logger.error(errorMessage);
-      throw new URLNotAllowedError(errorMessage);
+    if (!isUrlAllowed(url, this._config.allowedUrls, this._config.deniedUrls)) {
+      throw new URLNotAllowedError(`URL: ${url} is not allowed`);
     }
 
     try {
@@ -812,12 +812,12 @@ export default class Page {
       // Ensure element is ready for input
       try {
         // First wait for element stability
-        await this._waitForElementStability(element, 1000);
+        await this._waitForElementStability(element, 1500);
 
         // Then check visibility and scroll into view if needed
         const isHidden = await element.isHidden();
         if (!isHidden) {
-          await this._scrollIntoViewIfNeeded(element, 1000);
+          await this._scrollIntoViewIfNeeded(element, 1500);
         }
       } catch (e) {
         // Continue even if these operations fail
@@ -861,7 +861,7 @@ export default class Page {
         });
 
         // Type the text with a small delay between keypresses
-        await element.type(text, { delay: 5 });
+        await element.type(text, { delay: 50 });
       } else {
         // Use direct value setting for other types of elements
         await element.evaluate((el, value) => {
@@ -1296,8 +1296,8 @@ export default class Page {
     }
 
     const currentUrl = this._puppeteerPage.url();
-    if (!this._isUrlAllowed(currentUrl)) {
-      const errorMessage = `Navigation to URL: ${currentUrl} is not allowed. Only these domains are allowed: ${this._config.allowedDomains?.join(', ')}`;
+    if (!isUrlAllowed(currentUrl, this._config.allowedUrls, this._config.deniedUrls)) {
+      const errorMessage = `URL: ${currentUrl} is not allowed`;
       logger.error(errorMessage);
 
       // Navigate to home page or about:blank
@@ -1311,40 +1311,6 @@ export default class Page {
       }
 
       throw new URLNotAllowedError(errorMessage);
-    }
-  }
-
-  /**
-   * Check if a URL is allowed based on the allowlist configuration.
-   * @param url - The URL to check
-   * @returns True if the URL is allowed, false otherwise
-   */
-  _isUrlAllowed(url: string): boolean {
-    if (!this._config.allowedDomains || this._config.allowedDomains.length === 0) {
-      return true;
-    }
-
-    try {
-      // Special case: Allow 'about:blank' explicitly
-      if (url === 'about:blank') {
-        return true;
-      }
-
-      const parsedUrl = new URL(url);
-      let domain = parsedUrl.hostname.toLowerCase();
-
-      // Remove port number if present
-      if (domain.includes(':')) {
-        domain = domain.split(':')[0];
-      }
-
-      // Check if domain matches any allowed domain pattern
-      return this._config.allowedDomains.some(
-        allowedDomain => domain === allowedDomain.toLowerCase() || domain.endsWith(`.${allowedDomain.toLowerCase()}`),
-      );
-    } catch (error) {
-      logger.error(`⛔️ Error checking URL allowlist: ${error instanceof Error ? error.message : String(error)}`);
-      return false;
     }
   }
 }

@@ -7,9 +7,11 @@ import { Actors, ExecutionState } from '../event/types';
 import {
   ChatModelAuthError,
   ChatModelForbiddenError,
+  isAbortedError,
   isAuthenticationError,
   isForbiddenError,
   LLM_FORBIDDEN_ERROR_MESSAGE,
+  RequestCancelledError,
 } from './errors';
 const logger = createLogger('PlannerAgent');
 
@@ -76,6 +78,7 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
         throw new Error('Failed to validate planner output');
       }
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_OK, modelOutput.next_steps);
+      logger.info('Planner output', JSON.stringify(modelOutput, null, 2));
 
       return {
         id: this.id,
@@ -89,7 +92,12 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
       if (isForbiddenError(error)) {
         throw new ChatModelForbiddenError(LLM_FORBIDDEN_ERROR_MESSAGE, error);
       }
+      if (isAbortedError(error)) {
+        throw new RequestCancelledError((error as Error).message);
+      }
+
       const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`Planning failed: ${errorMessage}`);
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_FAIL, `Planning failed: ${errorMessage}`);
       return {
         id: this.id,

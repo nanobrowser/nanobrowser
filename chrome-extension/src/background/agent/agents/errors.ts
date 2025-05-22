@@ -98,3 +98,15 @@ export function isForbiddenError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   return error.message.includes(' 403') && error.message.includes('Forbidden');
 }
+
+export function isAbortedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return error.name === 'AbortError' || error.message.includes('Aborted');
+}
+
+export class RequestCancelledError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RequestCancelledError';
+  }
+}

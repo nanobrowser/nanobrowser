@@ -1,7 +1,7 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AgentContext, type AgentOptions } from './types';
 import { NavigatorAgent, NavigatorActionRegistry } from './agents/navigator';
-import { PlannerAgent } from './agents/planner';
+import { PlannerAgent, type PlannerOutput } from './agents/planner';
 import { ValidatorAgent } from './agents/validator';
 import { NavigatorPrompt } from './prompts/navigator';
 import { PlannerPrompt } from './prompts/planner';
@@ -12,7 +12,9 @@ import type BrowserContext from '../browser/context';
 import { ActionBuilder } from './actions/builder';
 import { EventManager } from './event/manager';
 import { Actors, type EventCallback, EventType, ExecutionState } from './event/types';
-import { ChatModelAuthError, ChatModelForbiddenError } from './agents/errors';
+import { ChatModelAuthError, ChatModelForbiddenError, RequestCancelledError } from './agents/errors';
+import { wrapUntrustedContent } from './messages/utils';
+import { URLNotAllowedError } from '../browser/views';
 const logger = createLogger('Executor');
 
 export interface ExecutorExtraArgs {
@@ -38,7 +40,7 @@ export class Executor {
     navigatorLLM: BaseChatModel,
     extraArgs?: Partial<ExecutorExtraArgs>,
   ) {
-    const messageManager = new MessageManager({});
+    const messageManager = new MessageManager();
 
     const plannerLLM = extraArgs?.plannerLLM ?? navigatorLLM;
     const validatorLLM = extraArgs?.validatorLLM ?? navigatorLLM;
@@ -121,7 +123,7 @@ export class Executor {
       let done = false;
       let step = 0;
       let validatorFailed = false;
-
+      let webTask = undefined;
       for (step = 0; step < allowedMaxSteps; step++) {
         context.stepInfo = {
           stepNumber: context.nSteps,
@@ -147,8 +149,19 @@ export class Executor {
 
           const planOutput = await this.planner.execute();
           if (planOutput.result) {
-            logger.info(`🔄 Planner output: ${JSON.stringify(planOutput.result, null, 2)}`);
-            this.context.messageManager.addPlan(JSON.stringify(planOutput.result), positionForPlan);
+            // logger.info(`🔄 Planner output: ${JSON.stringify(planOutput.result, null, 2)}`);
+            // observation in planner is untrusted content, they are not instructions
+            const observation = wrapUntrustedContent(planOutput.result.observation);
+            const plan: PlannerOutput = {
+              ...planOutput.result,
+              observation,
+            };
+            this.context.messageManager.addPlan(JSON.stringify(plan), positionForPlan);
+
+            if (webTask === undefined) {
+              // set the web task, and keep it not change from now on
+              webTask = planOutput.result.web_task;
+            }
 
             if (planOutput.result.done) {
               // task is complete, skip navigation
@@ -160,7 +173,7 @@ export class Executor {
               done = false;
             }
 
-            if (!planOutput.result.web_task && planOutput.result.done) {
+            if (!webTask && planOutput.result.done) {
               break;
             }
           }
@@ -198,8 +211,12 @@ export class Executor {
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, 'Task paused');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, `Task failed: ${errorMessage}`);
+      if (error instanceof RequestCancelledError) {
+        this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_CANCEL, 'Task cancelled');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, `Task failed: ${errorMessage}`);
+      }
     }
   }
 
@@ -225,7 +242,13 @@ export class Executor {
         return true;
       }
     } catch (error) {
-      if (error instanceof ChatModelAuthError || error instanceof ChatModelForbiddenError) {
+      logger.error(`Failed to execute step: ${error}`);
+      if (
+        error instanceof ChatModelAuthError ||
+        error instanceof ChatModelForbiddenError ||
+        error instanceof URLNotAllowedError ||
+        error instanceof RequestCancelledError
+      ) {
         throw error;
       }
       context.consecutiveFailures++;

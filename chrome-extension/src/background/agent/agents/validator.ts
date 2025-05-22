@@ -7,9 +7,11 @@ import { HumanMessage } from '@langchain/core/messages';
 import {
   ChatModelAuthError,
   ChatModelForbiddenError,
+  isAbortedError,
   isAuthenticationError,
   isForbiddenError,
   LLM_FORBIDDEN_ERROR_MESSAGE,
+  RequestCancelledError,
 } from './errors';
 const logger = createLogger('ValidatorAgent');
 
@@ -91,7 +93,9 @@ export class ValidatorAgent extends BaseAgent<typeof validatorOutputSchema, Vali
       if (isForbiddenError(error)) {
         throw new ChatModelForbiddenError(LLM_FORBIDDEN_ERROR_MESSAGE, error);
       }
-
+      if (isAbortedError(error)) {
+        throw new RequestCancelledError((error as Error).message);
+      }
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error(`Validation failed: ${errorMessage}`);
       this.context.emitEvent(Actors.VALIDATOR, ExecutionState.STEP_FAIL, `Validation failed: ${errorMessage}`);

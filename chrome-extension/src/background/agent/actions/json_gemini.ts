@@ -82,7 +82,7 @@ export const geminiNavigatorOutputSchema = {
           },
           wait: {
             type: 'object',
-            description: 'Wait for x seconds default 3',
+            description: 'Wait for x seconds default 3, do not use this action unless user asks for it',
             nullable: true,
             properties: {
               intent: {

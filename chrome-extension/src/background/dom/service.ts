@@ -71,7 +71,7 @@ export async function getReadabilityContent(tabId: number): Promise<ReadabilityR
  * Get the clickable elements for the current page.
  * @param tabId - The ID of the tab to get the clickable elements for.
  * @param url - The URL of the page.
- * @param highlightElements - Whether to highlight the clickable elements.
+ * @param showHighlightElements - Whether to show the highlight elements.
  * @param focusElement - The element to focus on.
  * @param viewportExpansion - The viewport expansion to use.
  * @returns A DOMState object containing the clickable elements for the current page.
@@ -79,7 +79,7 @@ export async function getReadabilityContent(tabId: number): Promise<ReadabilityR
 export async function getClickableElements(
   tabId: number,
   url: string,
-  highlightElements = true,
+  showHighlightElements = true,
   focusElement = -1,
   viewportExpansion = 0,
   debugMode = false,
@@ -87,7 +87,7 @@ export async function getClickableElements(
   const [elementTree, selectorMap] = await _buildDomTree(
     tabId,
     url,
-    highlightElements,
+    showHighlightElements,
     focusElement,
     viewportExpansion,
     debugMode,
@@ -98,7 +98,7 @@ export async function getClickableElements(
 async function _buildDomTree(
   tabId: number,
   url: string,
-  highlightElements = true,
+  showHighlightElements = true,
   focusElement = -1,
   viewportExpansion = 0,
   debugMode = false,
@@ -127,7 +127,7 @@ async function _buildDomTree(
     },
     args: [
       {
-        doHighlightElements: highlightElements,
+        showHighlightElements,
         focusHighlightIndex: focusElement,
         viewportExpansion,
         debugMode,

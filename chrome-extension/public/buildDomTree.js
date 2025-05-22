@@ -1,12 +1,15 @@
 window.buildDomTree = (
   args = {
-    doHighlightElements: true,
+    showHighlightElements: true,
     focusHighlightIndex: -1,
     viewportExpansion: 0,
     debugMode: false,
   },
 ) => {
-  const { doHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = args;
+  const { showHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = args;
+  // Make sure to do highlight elements always, but we can hide the highlights if needed
+  const doHighlightElements = true;
+
   let highlightIndex = 0; // Reset highlight index
 
   // Add timing stack to handle recursion
@@ -214,6 +217,8 @@ window.buildDomTree = (
         container.style.width = '100%';
         container.style.height = '100%';
         container.style.zIndex = '2147483647';
+        // Show or hide the container based on the showHighlightElements flag
+        container.style.display = showHighlightElements ? 'block' : 'none';
         document.body.appendChild(container);
       }
 

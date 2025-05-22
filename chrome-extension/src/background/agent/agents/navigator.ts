@@ -10,13 +10,16 @@ import { Actors, ExecutionState } from '../event/types';
 import {
   ChatModelAuthError,
   ChatModelForbiddenError,
+  isAbortedError,
   isAuthenticationError,
   isForbiddenError,
   LLM_FORBIDDEN_ERROR_MESSAGE,
+  RequestCancelledError,
 } from './errors';
 import { jsonNavigatorOutputSchema } from '../actions/json_schema';
 import { geminiNavigatorOutputSchema } from '../actions/json_gemini';
 import { calcBranchPathHashSet } from '@src/background/dom/views';
+import { URLNotAllowedError } from '@src/background/browser/views';
 const logger = createLogger('NavigatorAgent');
 
 export class NavigatorActionRegistry {
@@ -82,6 +85,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       let response = undefined;
       try {
         response = await structuredLlm.invoke(inputMessages, {
+          signal: this.context.controller.signal,
           ...this.callOptions,
         });
 
@@ -89,6 +93,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
           return response.parsed;
         }
       } catch (error) {
+        if (isAbortedError(error)) {
+          throw error;
+        }
         const errorMessage = `Failed to invoke ${this.modelName} with structured output: ${error}`;
         throw new Error(errorMessage);
       }
@@ -139,7 +146,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
       // call the model to get the actions to take
       const inputMessages = messageManager.getMessages();
-      // logger.info('Navigator input messages', inputMessages);
+      // logger.info('Navigator input message', inputMessages[inputMessages.length - 1]);
 
       const modelOutput = await this.invoke(inputMessages);
 
@@ -177,6 +184,12 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       }
       if (isForbiddenError(error)) {
         throw new ChatModelForbiddenError(LLM_FORBIDDEN_ERROR_MESSAGE, error);
+      }
+      if (isAbortedError(error)) {
+        throw new RequestCancelledError((error as Error).message);
+      }
+      if (error instanceof URLNotAllowedError) {
+        throw error;
       }
 
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -280,7 +293,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     }
 
     const browserContext = this.context.browserContext;
-    const browserState = await browserContext.getState();
+    const browserState = await browserContext.getState(this.context.options.useVision);
     const cachedPathHashes = await calcBranchPathHashSet(browserState);
 
     await browserContext.removeHighlight();
@@ -301,7 +314,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
         const indexArg = actionInstance.getIndexArg(actionArgs);
         if (i > 0 && indexArg !== null) {
-          const newState = await browserContext.getState();
+          const newState = await browserContext.getState(this.context.options.useVision);
           const newPathHashes = await calcBranchPathHashSet(newState);
           // next action requires index but there are new elements on the page
           if (!newPathHashes.isSubsetOf(cachedPathHashes)) {
@@ -329,6 +342,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         // TODO: wait for 1 second for now, need to optimize this to avoid unnecessary waiting
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
+        if (error instanceof URLNotAllowedError) {
+          throw error;
+        }
         const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error('doAction error', actionName, actionArgs, errorMessage);
         // unexpected error, emit event

@@ -4,12 +4,14 @@ import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
+import { FirewallSettings } from './components/FirewallSettings';
 
-type TabTypes = 'general' | 'models' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'help';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: 'General' },
   { id: 'models', icon: '📊', label: 'Models' },
+  { id: 'firewall', icon: '🔒', label: 'Firewall' },
   { id: 'help', icon: '📚', label: 'Help' },
 ];
 
@@ -32,7 +34,7 @@ const Options = () => {
 
   const handleTabClick = (tabId: TabTypes) => {
     if (tabId === 'help') {
-      window.location.href = 'https://nanobrowser.ai/docs';
+      window.open('https://nanobrowser.ai/docs', '_blank');
     } else {
       setActiveTab(tabId);
     }
@@ -44,6 +46,8 @@ const Options = () => {
         return <GeneralSettings isDarkMode={isDarkMode} />;
       case 'models':
         return <ModelSettings isDarkMode={isDarkMode} />;
+      case 'firewall':
+        return <FirewallSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }

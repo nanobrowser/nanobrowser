@@ -27,7 +27,7 @@ export type RawDomElementNode = {
 export type RawDomTreeNode = RawDomTextNode | RawDomElementNode;
 
 export interface BuildDomTreeArgs {
-  doHighlightElements: boolean;
+  showHighlightElements: boolean;
   focusHighlightIndex: number;
   viewportExpansion: number;
   debugMode?: boolean;
