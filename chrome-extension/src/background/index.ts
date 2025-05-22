@@ -14,7 +14,7 @@ import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { McpHostManager, McpHostOptions } from './mcp/host-manager';
-import { GetBrowserStateHandler, NavigateToHandler, RunTaskHandler } from './task';
+import { GetBrowserStateHandler, NavigateToHandler } from './task';
 
 const logger = createLogger('background');
 
@@ -26,12 +26,10 @@ let currentPort: chrome.runtime.Port | null = null;
 const mcpHostManager = new McpHostManager();
 
 // Create handler instances with required dependencies
-const runTaskHandler = new RunTaskHandler(browserContext, setupExecutor);
 const navigateToHandler = new NavigateToHandler(browserContext);
 const getBrowserStateHandler = new GetBrowserStateHandler(browserContext);
 
 // Register RPC method handlers
-mcpHostManager.registerRpcMethod('run_task', runTaskHandler.handleRunTask.bind(runTaskHandler));
 mcpHostManager.registerRpcMethod('navigate_to', navigateToHandler.handleNavigateTo.bind(navigateToHandler));
 mcpHostManager.registerRpcMethod(
   'get_browser_state',
