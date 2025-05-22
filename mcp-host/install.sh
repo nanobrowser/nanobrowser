@@ -71,13 +71,42 @@ fi
 print_message "${GREEN}Using existing build for Nanobrowser MCP Native Messaging Host...${NC}"
 cd "$SCRIPT_DIR"
 
-# Create logs directory
-LOGS_DIR="$HOME/.nanobrowser/logs"
+# Create required directories
+NANOBROWSER_DIR="$HOME/.nanobrowser"
+LOGS_DIR="$NANOBROWSER_DIR/logs"
+BIN_DIR="$NANOBROWSER_DIR/bin"
+APP_DIR="$NANOBROWSER_DIR/app"
+
 mkdir -p "$LOGS_DIR"
-print_message "${BLUE}Log directory created: ${BOLD}$LOGS_DIR${NC}"
+mkdir -p "$BIN_DIR"
+mkdir -p "$APP_DIR"
+
+print_message "${BLUE}Directories created:${NC}"
+print_message "${BLUE}  - Log directory: ${BOLD}$LOGS_DIR${NC}"
+print_message "${BLUE}  - Binary directory: ${BOLD}$BIN_DIR${NC}"
+print_message "${BLUE}  - Application directory: ${BOLD}$APP_DIR${NC}"
+
+# Copy application files
+print_message "${BLUE}Copying application files...${NC}"
+if [ -d "$SCRIPT_DIR/dist" ]; then
+  cp -r "$SCRIPT_DIR/dist"/* "$APP_DIR/"
+  
+  # Copy node_modules for dependencies
+  print_message "${BLUE}Copying dependencies...${NC}"
+  if [ -d "$SCRIPT_DIR/node_modules" ]; then
+    cp -r "$SCRIPT_DIR/node_modules" "$APP_DIR/"
+    print_message "${GREEN}Dependencies copied successfully.${NC}"
+  else
+    print_message "${YELLOW}Warning: node_modules directory not found. Dependencies may be missing.${NC}"
+  fi
+  
+  print_message "${GREEN}Application files copied successfully.${NC}"
+else
+  error_exit "Build directory 'dist' not found. Please build the project first with 'npm run build'."
+fi
 
 # Create the host script
-HOST_SCRIPT="$SCRIPT_DIR/mcp-host.sh"
+HOST_SCRIPT="$BIN_DIR/mcp-host.sh"
 print_message "${BLUE}Creating host script: ${BOLD}$HOST_SCRIPT${NC}"
 
 cat > "$HOST_SCRIPT" << EOF
@@ -86,18 +115,18 @@ cat > "$HOST_SCRIPT" << EOF
 # Set log level (can be overridden by install.sh)
 export LOG_LEVEL=INFO
 
+# Set log directory and file
+export LOG_DIR="$HOME/.nanobrowser/logs"
+export LOG_FILE="mcp-host.log"
+
 # Create logs directory if it doesn't exist
-LOGS_DIR="$HOME/.nanobrowser/logs"
-mkdir -p "\$LOGS_DIR"
+mkdir -p "\$LOG_DIR"
 
-# Redirect stderr to log file for debugging
-LOG_FILE="\$LOGS_DIR/mcp-host.log"
-echo "Starting MCP Host at \$(date)" > "\$LOG_FILE"
+# Use the application from the installed location
+cd "$APP_DIR"
 
-cd "$SCRIPT_DIR"
-
-# Redirect stderr to log file but keep stdout for native messaging
-node dist/index.js 2>> "\$LOG_FILE"
+# Run MCP host - logs are handled internally by the Logger class
+node index.js
 EOF
 
 chmod +x "$HOST_SCRIPT"
