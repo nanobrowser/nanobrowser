@@ -12,13 +12,7 @@ import { createLogger } from './log';
 import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import 'webextension-polyfill';
-import { ExecutionState } from './agent/event/types';
-import { Executor } from './agent/executor';
-import { createChatModel } from './agent/helper';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
-import BrowserContext from './browser/context';
-import { createLogger } from './log';
 import { McpHostManager, McpHostOptions } from './mcp/host-manager';
 import { NavigateToHandler, RunTaskHandler } from './task';
 
