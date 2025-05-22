@@ -12,7 +12,15 @@ import { createLogger } from './log';
 import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import 'webextension-polyfill';
+import { ExecutionState } from './agent/event/types';
+import { Executor } from './agent/executor';
+import { createChatModel } from './agent/helper';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
+import BrowserContext from './browser/context';
+import { createLogger } from './log';
+import { McpHostManager, McpHostOptions } from './mcp/host-manager';
+import { NavigateToHandler, RunTaskHandler } from './task';
 
 const logger = createLogger('background');
 
@@ -20,9 +28,18 @@ const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
 
-// Setup side panel behavior
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
+// Initialize MCP Host Manager
+const mcpHostManager = new McpHostManager();
 
+// Create handler instances with required dependencies
+const runTaskHandler = new RunTaskHandler(browserContext, setupExecutor);
+const navigateToHandler = new NavigateToHandler(browserContext);
+
+// Register RPC method handlers
+mcpHostManager.registerRpcMethod('run_task', runTaskHandler.handleRunTask.bind(runTaskHandler));
+mcpHostManager.registerRpcMethod('navigate_to', navigateToHandler.handleNavigateTo.bind(navigateToHandler));
+
+// No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
 async function isScriptInjected(tabId: number): Promise<boolean> {
   try {
@@ -82,11 +99,75 @@ chrome.tabs.onRemoved.addListener(tabId => {
 
 logger.info('background loaded');
 
-// Listen for simple messages (e.g., from options page)
-chrome.runtime.onMessage.addListener(() => {
+// Listen for simple messages (e.g., from options page or popup)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Handle MCP Host related messages
+  if (message.type === 'startMcpHost') {
+    // Start MCP Host process with provided options
+    logger.info('Received request to start MCP Host:', message.options);
+
+    try {
+      // Chrome will automatically launch the native messaging host
+      // when we connect to it based on the registered manifest
+      const success = mcpHostManager.connect();
+      logger.info('MCP Host connection attempt result:', success);
+      sendResponse({ success });
+    } catch (error) {
+      logger.error('Failed to connect to MCP Host:', error);
+      sendResponse({ success: false, error: String(error) });
+    }
+
+    return true; // Indicate async response
+  }
+
+  if (message.type === 'stopMcpHost') {
+    // Stop MCP Host process
+    logger.info('Received request to stop MCP Host');
+
+    try {
+      // First call stopMcpHost which attempts graceful shutdown
+      mcpHostManager
+        .stopMcpHost()
+        .then(success => {
+          logger.info('MCP Host stop attempt result:', success);
+          // Also disconnect the native connection to ensure the host is killed
+          mcpHostManager.disconnect();
+          logger.info('Native connection disconnected');
+          sendResponse({ success: true });
+        })
+        .catch(error => {
+          logger.error('Failed to stop MCP Host gracefully, forcing disconnect:', error);
+          // Even if graceful shutdown fails, force disconnect
+          mcpHostManager.disconnect();
+          logger.info('Native connection forcefully disconnected');
+          sendResponse({ success: true });
+        });
+    } catch (error) {
+      logger.error('Error initiating MCP Host stop:', error);
+      // Try to disconnect even if there was an error initiating the stop
+      try {
+        mcpHostManager.disconnect();
+        logger.info('Native connection forcefully disconnected after error');
+        sendResponse({ success: true });
+      } catch (disconnectError) {
+        logger.error('Failed to disconnect:', disconnectError);
+        sendResponse({ success: false, error: String(error) });
+      }
+    }
+
+    return true; // Indicate async response
+  }
+
+  if (message.type === 'getMcpHostStatus') {
+    // Return current MCP Host status
+    const status = mcpHostManager.getStatus();
+    logger.info('Returning MCP Host status:', status);
+    sendResponse({ status });
+    return false; // Synchronous response
+  }
+
   // Handle other message types if needed in the future
-  // Return false if response is not sent asynchronously
-  // return false;
+  return false; // Synchronous response for unhandled messages
 });
 
 // Setup connection listener for long-lived connections (e.g., side panel)

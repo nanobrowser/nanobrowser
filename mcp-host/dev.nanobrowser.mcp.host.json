@@ -1,0 +1,7 @@
+{
+  "name": "dev.nanobrowser.mcp.host",
+  "description": "Nanobrowser MCP Native Messaging Host",
+  "path": "/home/yubing/Workspace/elliot245/nanobrowser/mcp-host/mcp-host.sh",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://bedpaaobfpdicbdiadejndbaciocogop/"]
+}

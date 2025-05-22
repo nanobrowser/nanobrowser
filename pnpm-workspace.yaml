@@ -1,4 +1,5 @@
 packages:
+  - "mcp-host"
   - "chrome-extension"
   - "pages/*"
   - "packages/*"
