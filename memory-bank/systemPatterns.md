@@ -61,7 +61,31 @@ graph TD
 - **MCP Server**: Exposes browser capabilities through standardized protocol
 - **External AI Systems**: Can access browser state and operations via MCP
 
-### 4. Communication Flow
+### 4. RPC Handler Pattern
+The project uses a consistent pattern for implementing RPC handlers that expose browser functionality through the MCP interface:
+
+```mermaid
+graph TD
+    McpHost[MCP Host Manager] ---> |registers| RpcHandler[RPC Method Handler]
+    RpcHandler ---> |calls| HandlerClass[Handler Class]
+    HandlerClass ---> |uses| BrowserContext[Browser Context]
+    BrowserContext ---> |interacts with| Browser[Browser APIs]
+    
+    ExternalSystem[External AI System] ---> |requests| McpHost
+    HandlerClass ---> |formats & returns| Response[Structured Response]
+    Response ---> ExternalSystem
+```
+
+- **Handler Class Structure**: Each RPC method is implemented as a class with clear responsibility
+- **Dependency Injection**: Dependencies like BrowserContext are injected through constructors
+- **Method Binding**: Handler methods are bound to their instances during registration
+- **Standardized Error Handling**: Consistent error codes and message formats
+- **Data Formatting**: Human-readable and structured data representations
+- **Layered Architecture**: Clear separation between RPC interface, handler logic, and browser interaction
+
+This pattern enables consistent implementation of browser capabilities as RPC methods, making them accessible through the MCP protocol while maintaining clean separation of concerns.
+
+### 5. Communication Flow
 - **User → Extension**: Via the side panel interface
 - **Between Agents**: Through structured message passing
 - **Extension → Web Page**: Via content scripts and browser APIs
@@ -135,6 +159,26 @@ Applied to testing framework migration:
 - Compatibility layer between Jest and Vitest APIs
 - Single process execution for specific integration tests
 - Strategic test skipping with documentation for challenging tests
+
+### 7. RPC Handler Pattern
+Implemented for MCP interface to browser functionality:
+
+```mermaid
+graph TD
+    A[Handler Class Creation] --> B[Dependency Injection]
+    B --> C[Handler Method Implementation]
+    C --> D[Error Handling]
+    D --> E[Response Formatting]
+    E --> F[Export & Registration]
+```
+
+Key aspects of the RPC handler pattern include:
+- **Class-Based Structure**: Each handler is a class with a clear responsibility
+- **Constructor Dependency Injection**: Dependencies like BrowserContext are injected
+- **Handler Method Implementation**: Following the RpcHandler interface
+- **Standardized Error Handling**: Consistent error codes and formats
+- **Response Formatting**: Structuring data for both human and machine consumption
+- **Export and Registration**: Centralized export and binding during registration
 
 ## Component Relationships
 
@@ -241,6 +285,30 @@ graph TD
     
     FinalEvent --> Cleanup[Resource Cleanup]
     Cleanup --> End[End Task Execution]
+```
+
+### 4. RPC Handler Implementation Flow
+
+```mermaid
+graph TD
+    A[Identify RPC Method Need] --> B[Create Handler Class]
+    B --> C[Implement Handler Method]
+    C --> D[Format Response Data]
+    D --> E[Export from index.ts]
+    E --> F[Register in background.ts]
+    
+    subgraph "Handler Class Structure"
+        G[Constructor with Dependencies] --> H[Logger Setup]
+        H --> I[Helper Methods]
+        I --> J[Main Handler Method]
+        J --> K[Error Handling]
+    end
+    
+    subgraph "Registration Process"
+        L[Import Handler] --> M[Create Instance]
+        M --> N[Bind Method to Instance]
+        N --> O[Register with McpHostManager]
+    end
 ```
 
 ## Critical Implementation Paths
@@ -380,7 +448,42 @@ graph TD
    - Consecutive failure count tracked against threshold
    - Graceful degradation for unavailable elements
 
-### 4. Navigator Action System
+### 4. RPC Handler Implementation Path
+
+1. **Handler Class Creation**:
+   - Create a new TypeScript class in the appropriate directory (e.g., `task/`)
+   - Class name follows the pattern `Get[Resource]Handler` or `[Action]Handler`
+   - Implement the class with proper TypeScript types and documentation
+
+2. **Dependency Injection**:
+   - Declare required dependencies in the constructor (typically BrowserContext)
+   - Initialize a logger instance for consistent logging
+   - Store dependencies as private class members
+
+3. **Handler Method Implementation**:
+   - Implement a public method following the RpcHandler interface
+   - Method accepts an RpcRequest and returns a Promise<RpcResponse>
+   - Access browser state or perform operations through the browserContext
+
+4. **Error Handling**:
+   - Implement comprehensive try/catch blocks
+   - Format errors with standard error codes and messages
+   - Include detailed debugging information when appropriate
+   - Log errors with appropriate severity levels
+
+5. **Response Formatting**:
+   - Format responses with consistent structure
+   - For state requests, include both human-readable and structured data
+   - For operation requests, include success/failure status and relevant metadata
+   - Format complex data as JSON with appropriate nesting
+
+6. **Export and Registration**:
+   - Export the handler class from its module
+   - Add an export in task/index.ts for centralized access
+   - Import and instantiate the handler in background/index.ts
+   - Register the handler method with McpHostManager using method binding
+
+### 5. Navigator Action System
 
 The Navigator agent can execute 17 distinct browser operations:
 

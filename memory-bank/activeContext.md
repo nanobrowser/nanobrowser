@@ -31,6 +31,7 @@ The Algonius Browser project is currently focused on rebranding from Nanobrowser
 - **Execution Flow Documentation**: Capturing the detailed task execution process
 - **Agent Interaction Patterns**: Documenting how the three agents collaborate
 - **Browser Automation Capabilities**: Analyzing the browser interaction operations
+- **RPC Handler Implementation**: Creating standardized handlers for browser functionality exposure via MCP
 
 ## Recent Changes
 
@@ -135,6 +136,16 @@ The Jest to Vitest migration is now complete, with proper handling of test-speci
 
 13. **Browser Automation**: Cataloged the 17 distinct operations the Navigator agent can perform to interact with web pages, including element manipulation, navigation, scrolling, and form interaction.
 
+14. **RPC Handler Pattern Implementation**: Developed a standardized approach for implementing RPC handlers that expose browser functionality through the MCP interface:
+   - **GetDomStateHandler Implementation**: Created a new handler that exposes DOM state to MCP clients in both human-readable and structured formats
+   - **Class-Based Structure**: Designed handlers as TypeScript classes with clear responsibility
+   - **Dependency Injection**: Implemented constructor-based dependency injection for BrowserContext and other dependencies
+   - **Method Implementation**: Created handler methods following the RpcHandler interface
+   - **Comprehensive Error Handling**: Added structured error response handling with appropriate error codes
+   - **Dual Data Representation**: Provided both human-readable formatted text and structured data for machine consumption
+   - **Integration with Agent Patterns**: Aligned DOM representation with the format used by Agent system for consistency
+   - **Export and Registration**: Established a pattern for exporting and registering handlers in the system
+
 ## Next Steps
 
 Based on our improved understanding of the system and recent developments, the following steps are recommended:
@@ -174,6 +185,12 @@ Based on our improved understanding of the system and recent developments, the f
    - Expand Memory Bank with additional context as discovered
    - Create technical documentation for developers, including MCP integration
    - Develop user documentation for extension users
+
+7. **RPC Handler Extensions**:
+   - Identify additional browser capabilities that should be exposed via RPC
+   - Implement additional RPC handlers following the established pattern
+   - Enhance existing handlers with additional capabilities
+   - Ensure consistency across handler implementations
 
 ## Active Decisions and Considerations
 
@@ -217,6 +234,11 @@ Based on our improved understanding of the system and recent developments, the f
 - **Consideration**: Need to confirm actual completion vs. premature termination
 - **Current Approach**: Dedicated Validator agent with configurable validation attempts (maxValidatorFailures)
 
+### RPC Handler Design
+- **Decision Point**: How to structure RPC handlers for browser functionality
+- **Consideration**: Need balance between human-readable output and structured data for machine consumption
+- **Current Approach**: Dual representation with both formatted text and structured data objects
+
 ## Important Patterns and Preferences
 
 ### Project Rebranding Patterns
@@ -245,6 +267,15 @@ Based on our improved understanding of the system and recent developments, the f
 - **Action Intent Documentation**: Each action includes an intent description for transparency
 - **Action Result Tracking**: Standardized ActionResult objects for consistent outcome reporting
 
+### RPC Handler Patterns
+- **Class-Based Implementation**: Each RPC handler is a separate class with clear responsibility
+- **Constructor Dependency Injection**: Dependencies are passed through constructors
+- **Method Binding**: Handler methods are bound to their instances during registration
+- **Dual Data Representation**: Providing both human-readable text and structured data
+- **Consistent Error Formatting**: Using standard JSON-RPC error codes and messages
+- **BFS Tree Traversal**: Using breadth-first search for DOM tree traversal when extracting elements
+- **Clear Documentation**: Comprehensive comments explaining handler purpose and methods
+
 ## Development Process Summary
 
 ### Rebranding Process
@@ -272,6 +303,37 @@ When addressing the failing test in McpHostManager's heartbeat functionality (sp
 5. **Resolution Decision**: After multiple approaches, decided to remove the problematic test case while keeping the other heartbeat tests that successfully validate related functionality.
 
 This workflow demonstrates the team's approach to test-driven development with careful analysis, multiple solution attempts, and practical decision-making when facing technical limitations.
+
+### RPC Handler Development Process
+When implementing the `get_dom_state` RPC handler, we followed this systematic process:
+
+1. **Requirements Analysis**: 
+   - Understood the need for a DOM state representation similar to what agents use
+   - Identified the need for both human-readable and structured data formats
+
+2. **Research Existing Patterns**:
+   - Analyzed how the Agent system formats DOM data in `BasePrompt.buildBrowserStateUserMessage`
+   - Examined the DOM tree structure and traversal methods in `DOMElementNode`
+
+3. **Handler Implementation**:
+   - Created a new TypeScript class `GetDomStateHandler`
+   - Implemented constructor with dependency injection for BrowserContext
+   - Created a main handler method following the RpcHandler interface
+   - Added comprehensive error handling with try/catch
+   - Implemented DOM formatting with consistent user-friendly representations
+   - Added a helper method to extract interactive elements using BFS traversal
+
+4. **Integration**:
+   - Updated task/index.ts to export the new handler
+   - Added handler instantiation and registration in background/index.ts
+   - Registered the RPC method with the McpHostManager
+
+5. **Documentation**:
+   - Added comprehensive comments explaining the handler's purpose
+   - Documented method parameters and return values
+   - Updated the systemPatterns.md with the new RPC Handler Pattern
+
+This process demonstrates our approach to extending the MCP interface with new browser functionality while maintaining clean separation of concerns and consistent patterns.
 
 ## Learnings and Project Insights
 
@@ -318,5 +380,13 @@ Our ongoing development and code analysis has revealed several important insight
 - Context management between agent calls significantly impacts token usage
 - Action validation and error handling are crucial for reliable automation
 - Native Messaging adds minimal overhead but requires careful buffer management
+
+### RPC Handler Insights
+- Standardized handler patterns improve code organization and maintainability
+- Class-based structure with dependency injection provides clean separation of concerns
+- DOM state representation benefits from both human-readable and structured formats
+- Reusing the same formatting approaches across agent and MCP interfaces ensures consistency
+- BFS traversal is effective for extracting interactive elements from the DOM tree
+- Consistent error handling patterns improve troubleshooting and client experience
 
 This document will continue to be updated as we gain deeper insights through ongoing code analysis and development efforts.

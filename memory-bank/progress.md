@@ -1,278 +1,209 @@
 # Progress: Algonius Browser
 
-## Current Status
+This document tracks the progress of the Algonius Browser project, documenting what has been completed, what is in progress, and what remains to be done.
 
-Algonius Browser is a functioning Chrome extension that provides AI web automation through a multi-agent system and MCP integration. The extension is currently available through:
+## Completed Features
 
-1. **Chrome Web Store**: Stable version with reviewed features
-2. **Manual Installation**: Latest version with newest features
-3. **Source Build**: Development version for contributors
+### Project Setup and Infrastructure
+- [x] Project structure and monorepo configuration
+- [x] Development environment configuration
+- [x] Continuous integration setup
+- [x] Extension packaging and distribution workflow
+- [x] Project rebranding from Nanobrowser to Algonius Browser
 
-### Development Status
-- **Version**: 0.1.5 (according to package.json)
-- **Phase**: Early public release
-- **Documentation**: Initial Memory Bank setup complete
-- **Rebranding**: Transition from Nanobrowser to Algonius Browser in progress
+### Core Extension Components
+- [x] Background script implementation
+- [x] Content script injection
+- [x] Side panel UI
+- [x] Options page for configuration
+- [x] Storage system for persisting settings
+- [x] Event system for component communication
+- [x] Multi-language support (i18n)
 
-## What Works
+### Agent System
+- [x] Agent architecture and communication system
+- [x] Task execution flow
+- [x] Planner agent implementation
+- [x] Navigator agent implementation
+- [x] Validator agent implementation
+- [x] Agent prompt engineering
+- [x] Context management and message passing
+- [x] Execution state tracking
 
-### Core Functionality
-- ✅ **Chrome Extension Integration**: Extension loads and functions in Chrome
-- ✅ **Side Panel Interface**: User can interact with agents via side panel
-- ✅ **Multi-agent System**: Planner, Navigator, and Validator agents collaborate
-- ✅ **LLM Provider Integration**: Support for OpenAI, Anthropic, Gemini, and Ollama
-- ✅ **Comprehensive Web Automation**: 17 distinct browser operations including:
-  - ✅ **Navigation**: URL visiting, back navigation, Google search
-  - ✅ **Element Interaction**: Clicking, text input, dropdown selection
-  - ✅ **Tab Management**: Opening, closing, and switching tabs
-  - ✅ **Page Navigation**: Scrolling, finding text
-  - ✅ **Special Actions**: Keyboard input, content caching
-- ✅ **Task History**: Conversation history management
-- ✅ **Follow-up Questions**: Contextual follow-ups after task completion
-- ✅ **MCP Integration**: Fully implemented MCP SEE service via Chrome Native Messaging
-- ✅ **MCP Host Control UI**: Complete user interface for managing MCP Host connection
-- ✅ **MCP Error Handling**: Robust error detection and user guidance for installation issues
+### Browser Automation
+- [x] Browser context implementation
+- [x] Puppeteer integration
+- [x] DOM element indexing and tracking
+- [x] Click and form input operations
+- [x] Navigation and scrolling actions
+- [x] Tab management
+- [x] State capture and serialization
+- [x] Vision-based processing
+- [x] Action result tracking and error handling
 
-### Agent System Features
-- ✅ **Execution Loop**: Robust planning-execution-validation cycle
-- ✅ **Error Recovery**: Configurable thresholds for retries and failures
-- ✅ **Event System**: Comprehensive event propagation for monitoring
-- ✅ **Context Management**: Effective context preservation between agent calls
-- ✅ **Action Validation**: Schema-based validation of agent-proposed actions
+### LLM Provider Integration
+- [x] Provider abstraction layer
+- [x] Model selection for different agent roles
+- [x] Prompt formatting and result parsing
+- [x] Error handling for API calls
+- [x] Rate limiting and retry logic
 
-### User Experience
-- ✅ **Configuration Interface**: Users can set up API keys and select models
-- ✅ **Real-time Status Updates**: Progress indicators for ongoing tasks
-- ✅ **Agent Model Selection**: Different models can be assigned to different agents
-- ✅ **Firefox Support**: Basic compatibility with Firefox browser
-- ✅ **Task Status Visibility**: Clear indication of execution state and outcomes
-- ✅ **MCP Host Management**: User interface for controlling and monitoring MCP Host
-- ✅ **Installation Guidance**: Clear instructions for MCP Host installation when needed
+### MCP Integration
+- [x] Chrome Native Messaging Host setup
+- [x] Message protocol implementation
+- [x] MCP Server implementation
+- [x] Resource definition and registration
+- [x] Tool definition and validation
+- [x] Native Host Manager for communication
+- [x] Status monitoring and control
+- [x] Error handling and recovery
+- [x] Browser state exposure as resources
+- [x] Browser operations as tools
 
-### Integration Features
-- ✅ **MCP Documentation**: Comprehensive, well-structured technical documentation for MCP SEE service implementation
-- ✅ **Native Messaging Architecture**: Clearly defined and documented communication architecture between extension and MCP host
-- ✅ **Resource Definition**: Thoroughly mapped browser states to MCP resources with detailed API reference
-- ✅ **Tool Definition**: Precisely mapped browser operations to MCP tools with standardized schemas
-- ✅ **Class-Based Resource Architecture**: Implemented class-based structure with dependency injection for resources
-  - ✅ **NativeMessaging Injection**: Resources receive messaging instance via constructor
-  - ✅ **Factory Function Pattern**: Central resource creation with proper dependency management
-  - ✅ **Enhanced Testability**: Improved structure for unit testing with mock dependencies
-  - ✅ **Notification System**: Built-in notification methods for resource state changes
-- ✅ **Chrome Runtime Error Handling**: Robust detection and processing of Chrome's native messaging errors
-- ✅ **Error Message Standardization**: Consistent formatting and detection of error messages
-- ✅ **Rebranding**: Updated core documentation from Nanobrowser to Algonius Browser
+### RPC Handlers
+- [x] Handler pattern definition and documentation
+- [x] `navigate_to` handler implementation
+- [x] `get_browser_state` handler implementation
+- [x] `get_dom_state` handler implementation
+- [x] Standardized error handling
+- [x] Consistent response formatting
+- [x] Export and registration workflow
 
-## What's Left to Build
+### Testing
+- [x] Unit testing framework
+- [x] Integration testing setup
+- [x] Mock objects and test utilities
+- [x] Test coverage for critical components
+- [x] Jest to Vitest migration
 
-Based on our code analysis and project documentation, the following areas are identified for future development:
+### Documentation
+- [x] README and project description
+- [x] Architecture documentation
+- [x] API reference for key components
+- [x] Memory Bank documentation system
+- [x] Development workflow documentation
+- [x] MCP SEE service documentation
 
-### Project Rebranding
-- 🔄 **Complete Rebranding**: Continue updating all code references from Nanobrowser to Algonius Browser
-- 🔄 **Configuration File Updates**: Address remaining configuration files, especially those related to the MCP host
-- 🔄 **Dev.nanobrowser.mcp.host.json Renaming**: Consider appropriately renaming this file if needed
-- 🔄 **Social Media Updates**: Update social media handles and links in documentation
+## In Progress
 
-### MCP Integration Development
-- ✅ **Native Messaging Host Implementation**: Implemented Native Messaging Host with messaging protocol, resource handlers, and tool handlers
-- ✅ **MCP Server Implementation**: Developed MCP server implementation with resource and tool registration
-- ✅ **Browser Resource Handlers**: Implemented handlers for exposing browser state as resources
-- ✅ **Browser Tool Handlers**: Implemented handlers for executing browser operations as tools
-- ✅ **Extension Integration**: Implemented Chrome extension client for Native Messaging with MCP client, service module, and background integration
-- ✅ **Streamable HTTP Protocol Support**: Implemented standards-compliant MCP server using the Streamable HTTP protocol with session management, resource/tool exposure via HTTP endpoints, and Server-Sent Events for notifications
-- ✅ **MCP HTTP Server**: Implemented HTTP server for MCP with:
-  - ✅ **Express Integration**: HTTP server with Express framework and REST API endpoints
-  - ✅ **Session Management**: Session-based connections with persistent transport objects
-  - ✅ **Browser State Propagation**: Synchronization of browser state to connected MCP clients
-  - ✅ **Configuration Options**: Configurable port and log level settings
-  - ✅ **UI Controls**: Start/stop functionality and status monitoring from the extension popup
-- 🔄 **Security Controls**: Implement security measures for Native Messaging communication
-- ✅ **MCP Host Control**: Implemented MCP Host status monitoring and control functionality
-  - ✅ **Core Components**: Implemented McpHostManager with connection handling, heartbeat mechanism, and status management
-  - ✅ **Message Handlers**: Implemented StatusHandler, PingHandler, and ShutdownHandler for message processing
-  - ✅ **Comprehensive Tests**: Added extensive test coverage for McpHostManager and message handlers
-  - ✅ **Native Messaging Integration**: Fixed critical manifest file naming issue to ensure Chrome properly recognizes the Native Messaging Host
-  - ✅ **Installation Script**: Updated `install.sh` to properly generate and install manifest file with correct naming convention
-  - ✅ **ESM Support**: Added proper Node.js ESM module support with experimental-specifier-resolution flag
-  - ✅ **UI Implementation**: Completed Popup UI for MCP Host control and status display with error handling
-  - ✅ **Background Integration**: Integrated MCP Host Manager with Background Script
-  - ✅ **Error Handling**: Implemented robust error detection, message formatting, and user guidance
+### MCP Integration Enhancements
+- [ ] Additional browser resources
+- [ ] Enhanced tool capabilities
+- [ ] Performance optimization
+- [ ] Security hardening
+- [ ] Cross-platform support improvements
+- [ ] MCP HTTP Server enhancement
+- [ ] Resource caching and optimization
 
-### Agent System Enhancements
-- 🔄 **Advanced Planning Strategies**: More sophisticated task decomposition algorithms
-- 🔄 **Enhanced Context Management**: More efficient context preservation techniques
-- 🔄 **Agent Specialization**: Further refinement of agent role boundaries
-- 🔄 **Memory Optimization**: Improved strategies for managing context window limitations
-- 🔄 **Agent Collaboration**: Enhanced communication between agents for complex tasks
+### Agent System Improvements
+- [ ] Improved context management
+- [ ] Optimized prompt engineering
+- [ ] Enhanced error recovery
+- [ ] Better validation strategies
+- [ ] Reduced token usage
+- [ ] Support for more complex tasks
 
-### Browser Automation Extensions
-- 🔄 **Advanced Element Recognition**: Better identification of interactive elements
-- 🔄 **Dynamic Web Support**: Improved handling of JavaScript-heavy applications
-- 🔄 **Visual Element Detection**: Enhanced vision-based interaction capabilities
-- 🔄 **Form Handling**: More sophisticated form interaction capabilities
-- 🔄 **Authentication Handling**: Better support for login processes and sessions
+### UI/UX Enhancements
+- [ ] Improved task status display
+- [ ] Better error messaging
+- [ ] Enhanced user interaction during task execution
+- [ ] Responsive design improvements
+- [ ] Accessibility enhancements
+- [ ] Dark mode support
 
-### LLM Integration Improvements
-- 🔄 **Additional LLM Providers**: Integration with more LLM APIs
-- 🔄 **Prompt Optimization**: More efficient prompt design to reduce token usage
-- 🔄 **Response Parsing**: Enhanced parsing of structured outputs from LLMs
-- 🔄 **Model-Specific Tuning**: Adjusting prompts based on model capabilities
-- 🔄 **Context Window Management**: Better handling of context limitations
-- 🔄 **MCP Client Support**: Integration with external AI systems via MCP
+### Documentation
+- [ ] End-user installation guide
+- [ ] Troubleshooting guide
+- [ ] API examples for MCP integration
+- [ ] Developer onboarding documentation
+- [ ] Video tutorials and demonstrations
 
-### System Improvements
-- 🔄 **Performance Optimizations**: Reduce latency and improve responsiveness
-- 🔄 **Concurrency Management**: Better handling of parallel processes
-- 🔄 **Resource Utilization**: More efficient use of browser resources
-- 🔄 **Error Resilience**: Enhanced error detection and recovery mechanisms
-- 🔄 **Security Enhancements**: Improved handling of sensitive data and operations
-- 🔄 **Native Messaging Optimization**: Efficient buffer management and protocol handling
+## Recent Progress
 
-### User Experience Enhancements
-- 🔄 **Task Progress Visualization**: Better visualization of execution progress
-- 🔄 **Task Debugging Tools**: Tools for diagnosing and fixing task execution issues
-- 🔄 **Configuration Wizards**: Simplified setup for new users
-- 🔄 **Workflow Templates**: Pre-configured scenarios for common use cases
-- 🔄 **Customizable Workflows**: User-defined sequences of actions
-- ✅ **MCP Integration UI**: Implemented user interface for configuring and monitoring MCP connections
-- ✅ **Error Handling UI**: Added comprehensive error messaging and installation instructions
+### MCP RPC Handler Implementation (2025-05-22)
+Implemented the `get_dom_state` RPC handler to provide a standardized way for MCP clients to access DOM state in both human-readable and structured formats. This handler follows the established RPC handler pattern with:
 
-### Technical Infrastructure
-- ✅ **MCP Host Vite Integration**: Implemented Vite build system for MCP Host for improved development experience
-- ✅ **Test Framework Modernization**: Successfully migrated from Jest to Vitest with the following improvements:
-  - ✅ **Compatible API**: Created a compatibility layer to ease transition from Jest
-  - ✅ **Improved Performance**: Leveraged Vitest's faster test execution
-  - ✅ **Concurrent Test Support**: Configured single process execution for tests with serialization issues
-  - ✅ **Test Skipping Strategy**: Temporarily skipped HTTP MCP server tests with documented solutions
-  - ✅ **Backward Compatibility**: Maintained Jest scripts for comparison testing
-  - ✅ **MCP Host Manager Tests**: Implemented comprehensive tests for chrome-extension MCP Host Manager component
-- 🔄 **Test Coverage**: Comprehensive automated testing suite
-- 🔄 **Documentation**: Detailed developer and user documentation
-- 🔄 **Accessibility**: Enhanced support for assistive technologies
-- 🔄 **Internationalization**: Support for additional languages
-- 🔄 **Plugin System**: Extensibility for community-developed capabilities
-- 🔄 **Native Host Installation**: Automated installation and registration of Native Messaging Host
+1. **Class-Based Structure**: Created a new `GetDomStateHandler` class with clear responsibility
+2. **Dependency Injection**: Used constructor to inject BrowserContext dependency
+3. **Handler Method Implementation**: Implemented the handleGetDomState method following the RpcHandler interface
+4. **Error Handling**: Added comprehensive try/catch with standardized error codes
+5. **Dual Data Representation**: Provided both formatted text and structured interactive elements
+6. **Integration with Agent Patterns**: Aligned DOM representation with the format used by Agent system
+7. **Export and Registration**: Updated task/index.ts and background/index.ts for proper integration
+
+This implementation provides MCP clients with the ability to:
+- Receive a human-readable representation of the DOM similar to what the Agent system uses
+- Access structured data about interactive elements for programmatic interaction
+- Get page metadata including scroll position, URL, and title
+- Optionally receive page screenshots
+
+The handler was successfully integrated into the extension's background script and is now available as an RPC method for MCP clients.
+
+### MCP Host Control and Error Handling (2025-05-20)
+Completed the implementation of MCP Host control functionality and fixed critical error handling issues:
+
+1. **Connection Management**: Enhanced the McpHostManager to properly track connection state
+2. **Status Reporting**: Implemented status reporting for connected/disconnected states
+3. **Error Handling**: Fixed Native Messaging error detection and propagation
+4. **UI Integration**: Connected status reporting to the Options page UI
+5. **User Guidance**: Added clear installation instructions for users encountering errors
+
+These improvements ensure that:
+- The extension can reliably connect to the Native Host
+- Users receive clear error messages when connection fails
+- The UI accurately reflects the current connection state
+- Installation instructions are clear and easy to follow
+
+### Project Rebranding (2025-05-18)
+Successfully completed the rebranding from Nanobrowser to Algonius Browser:
+
+1. **Documentation Updates**: Updated README.md and other documentation to reflect the new name
+2. **Project Goals**: Clarified the project's focus on MCP integration
+3. **Acknowledgments**: Added reference to the original Nanobrowser project
+4. **Memory Bank**: Updated all Memory Bank files to ensure consistent branding
+
+This rebranding establishes a clear identity for the project and sets the stage for future development focused on MCP integration.
 
 ## Known Issues
 
-Based on code analysis and architecture review, we've identified several current limitations and challenges:
+### Integration Testing
+- Some HTTP MCP server tests are currently skipped due to axios serialization limitations
+- Working on a solution to properly test the HTTP server components
 
-### Project Rebranding Challenges
-- **Internal vs. External Names**: Careful consideration needed for which internal code names need to be updated vs. which are strictly internal implementations
-- **Configuration File Dependencies**: Browser extension and native host configuration files rely on specific naming conventions
-- **Native Messaging Host Naming**: The native messaging host registration uses "dev.nanobrowser.mcp.host.json" format which may need special handling during rebranding
+### Native Messaging
+- Installation process requires manual steps on some platforms
+- Working on improving the installation experience and documentation
 
-### Software Development Processes
+### Browser Automation
+- Some complex web applications with shadow DOM or iframe structures may not be properly indexed
+- Investigating improvements to DOM traversal and element identification
 
-#### Test-Driven Development
-- ✅ **Systematic Test Workflow**: Established a process for addressing test failures:
-  1. **Identification**: Run test suite to identify failing tests
-  2. **Analysis**: Examine test structure and the mechanism being tested
-  3. **Multiple Approaches**: Try different testing strategies when facing challenges
-  4. **Decision Making**: Make practical decisions about test coverage vs. stability
-  5. **Documentation**: Record testing challenges and solutions for future reference
-- ✅ **Mocking Strategy**: Developed comprehensive mocking for Chrome Extensions API:
-  - Global mock setup for chrome.runtime in test initialization
-  - Port object mocking with message and disconnect event listeners
-  - Message callback capture and simulation
-  - Timer control for time-dependent operations
-- ✅ **Test Isolation**: Created properly isolated tests with cleanup between runs:
-  - Test setup with vi.clearAllMocks() and vi.useFakeTimers()
-  - Test teardown with vi.clearAllMocks() and vi.useRealTimers()
-  - Preventing test contamination with proper isolation
+### Performance
+- Large DOM trees can cause performance issues during state capture
+- Investigating optimizations for DOM tree processing and serialization
 
-#### Technical Challenges
-- **Vitest Timer Handling**: Some timer-based tests require careful implementation to avoid infinite loops
-- **Mocking Chrome Extensions API**: Testing native messaging requires properly mocking the Chrome Extensions API
-- **MCP Host Communication**: Testing MCP Host communication requires reliable event handling and message validation
-- **Test Case Dependencies**: Some test cases may have interdependencies that complicate isolated testing
-- **Mock Timing Issues**: Tests involving timeouts and intervals require precise timer control
-- **Chrome Runtime Error Detection**: Native messaging errors are not thrown as exceptions but set in chrome.runtime.lastError
+## Next Milestones
 
-### LLM Integration Challenges
-- **Context Window Limitations**: Large web pages can exceed model context limits
-- **Token Cost Management**: Planning and validation phases have high token usage
-- **Structured Output Parsing**: Occasional parsing failures with complex outputs
-- **Provider-Specific Behaviors**: Inconsistencies between different LLM providers
+### Milestone 1: MCP API Enhancement
+- Implement additional RPC handlers for more browser capabilities
+- Enhance existing handlers with additional features
+- Optimize performance for large state transfers
+- Improve documentation and examples
 
-### Browser Automation Challenges
-- **Dynamic Content Handling**: Difficulties with rapidly changing page content
-- **Shadow DOM Support**: Limited interaction with shadow DOM elements
-- **iFrame Traversal**: Challenges accessing content within nested iframes
-- **Element Selection Reliability**: Index-based selection can be brittle after DOM changes
+### Milestone 2: Agent-MCP Integration
+- Enable agent system to leverage MCP tools and resources
+- Implement specialized agents for MCP interaction
+- Optimize task delegation between internal and external systems
+- Document integration patterns and best practices
 
-### Architecture Limitations
-- **Error Recovery**: Some error conditions lead to unrecoverable states
-- **Long-Running Tasks**: Performance degradation with extended execution times
-- **Memory Management**: Potential memory leaks with complex browser operations
-- **Event Consistency**: Occasional event propagation issues between components
-- **Error Format Standardization**: Need for consistent error message formatting across components
+### Milestone 3: Distribution and Deployment
+- Streamline installation process for end users
+- Create comprehensive documentation for setup and usage
+- Implement update mechanism for Native Host
+- Establish release process for coordinated updates
 
-## Evolution of Project Decisions
-
-### Current Architecture Decisions
-
-#### Project Rebranding Strategy
-- **Decision**: Fork Nanobrowser to create Algonius Browser with a focused mission on MCP integration
-- **Rationale**: This establishes a distinct project identity while maintaining open-source etiquette by acknowledging the original project
-- **Evolution**: Starting with user-facing documentation updates followed by a systematic approach to updating internal code references
-- **Future Consideration**: Potential for complete renaming of all internal references and configuration files while maintaining functionality
-
-#### MCP Integration Strategy
-- **Decision**: Implement MCP SEE service using Chrome Native Messaging
-- **Rationale**: Provides secure local communication without network exposure while enabling standardized browser access for external AI systems
-- **Evolution**: Detailed architecture with message protocol, resource mapping, and tool definitions
-- **Future Consideration**: Potential for direct integration with high-performance browser automation libraries
-
-#### Multi-Agent System Design
-- **Decision**: Three specialized agents (Planner, Navigator, Validator) with clear responsibilities
-- **Rationale**: This approach provides clear separation of concerns and enables specialized prompting
-- **Evolution**: The system has evolved to include configurable planning intervals for token efficiency
-- **Future Consideration**: Potential for agent specialization based on specific task types and integration with external specialized models via MCP
-
-#### Execution Flow Pattern
-- **Decision**: Iterative execution loop with periodic planning and validation checkpoints
-- **Rationale**: Balances strategic planning with tactical execution
-- **Evolution**: Added configurability for planning frequency and validation thresholds
-- **Future Consideration**: More dynamic determination of when planning is needed
-
-#### Browser Interaction Model
-- **Decision**: Index-based element selection with action intent documentation
-- **Rationale**: Provides clear identification of interactive elements
-- **Evolution**: Enhanced with vision-based capabilities for complex scenarios
-- **Future Consideration**: Hybrid approaches combining indices with semantic understanding and standardization through MCP tools
-
-#### Error Handling Strategy
-- **Decision**: Progressive failure thresholds with configurable limits
-- **Rationale**: Balances persistence with recognition of irrecoverable situations
-- **Evolution**: Added separate thresholds for navigation and validation failures
-- **Future Consideration**: More sophisticated error classification and recovery strategies
-
-### Future Decision Points
-- Balancing model capabilities with cost for different agent roles
-- Strategies for reducing context window pressure in complex web pages
-- Approaches to handling authentication and session management
-- Methods for improving reliability with dynamic web applications
-
-## Milestones and Progress Tracking
-
-### Completed Milestones
-- ✅ Initial public release on Chrome Web Store
-- ✅ Basic multi-agent system implementation
-- ✅ Support for multiple LLM providers
-- ✅ Memory Bank documentation system setup
-- ✅ MCP Integration via Chrome Native Messaging
-- ✅ Comprehensive MCP SEE service documentation with standardized structure and terminology
-- ✅ MCP Host Control UI with robust error handling
-- ✅ Native Messaging error detection and user guidance
-- ✅ Initial project rebranding from Nanobrowser to Algonius Browser
-
-### Upcoming Milestones
-- 🔄 Complete project rebranding across all components
-- 🔄 Enhanced web automation capabilities
-- 🔄 Improved agent coordination
-- 🔄 Performance optimization
-- 🔄 Extended browser compatibility
-- 🔄 Community contribution expansion
-
-This document will be regularly updated to reflect the current progress, emerging issues, and evolving priorities of the Algonius Browser project.
+### Milestone 4: External AI Integration
+- Document API for external AI system integration
+- Create example integrations with popular AI frameworks
+- Implement authentication and authorization for MCP access
+- Develop guidelines for effective integration patterns
