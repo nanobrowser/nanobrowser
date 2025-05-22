@@ -6,3 +6,4 @@
 
 export * from './navigate-to-handler';
 export * from './get-browser-state-handler';
+export * from './get-dom-state-handler';
