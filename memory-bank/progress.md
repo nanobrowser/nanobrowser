@@ -120,6 +120,27 @@ This document tracks the progress of the Algonius Browser project, documenting w
 
 ## Recent Progress
 
+### MCP Host Port Conflict Resolution and Uninstall Script (2025-05-22)
+Created a comprehensive solution for resolving port conflicts in the MCP Host and implemented an uninstall script for cleanup:
+
+1. **Port Conflict Detection**: Enhanced the MCP HTTP server to properly detect and handle port conflicts:
+   - Added explicit error event handler for Node.js EADDRINUSE errors
+   - Improved error messages to include EADDRINUSE code for better diagnostics
+   - Modified the MCP Host to exit with non-zero status code when port conflicts occur
+   - Enhanced the port conflict test to correctly detect both error messages and exit codes
+
+2. **Uninstall Script Implementation**: Created a robust uninstall.sh script with the following capabilities:
+   - **Process Detection**: Identifies and terminates mcp-host processes
+   - **Port Cleanup**: Detects and frees the default port 7890 or user-specified port
+   - **File Cleanup**: Removes installed manifest files from Chrome/Chromium directories
+   - **Log Management**: Optional cleanup of log files with --keep-logs flag
+   - **Platform Support**: Works on both Linux and macOS environments
+   - **Force Mode**: Includes --force option for automated cleanup without prompts
+   - **Verification**: Confirms port is freed after process termination
+   - **Help System**: Includes detailed help output with --help flag
+
+This implementation solves a critical issue where MCP Host processes could remain running and block ports, making it difficult to restart the host. The uninstall script provides a user-friendly way to clean up the system and ensure a fresh installation.
+
 ### MCP RPC Handler Implementation (2025-05-22)
 Implemented the `get_dom_state` RPC handler to provide a standardized way for MCP clients to access DOM state in both human-readable and structured formats. This handler follows the established RPC handler pattern with:
 

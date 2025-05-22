@@ -37,6 +37,21 @@ The Algonius Browser project is currently focused on rebranding from Nanobrowser
 
 Recent exploration and development has resulted in significant advancements:
 
+1. **MCP Host Port Conflict Resolution**: Added robust port conflict detection and uninstall script:
+   - **Port Conflict Detection Enhancement**: Improved error handling for EADDRINUSE errors in the MCP HTTP server
+   - **Detailed Error Messages**: Added explicit error messages that include the EADDRINUSE code for better diagnostics
+   - **Non-Zero Exit Code**: Modified server to exit with status code 1 when port conflicts occur
+   - **Uninstall Script Creation**: Created a comprehensive uninstall.sh script for cleaning up mcp-host:
+     - Detects and kills processes related to mcp-host
+     - Identifies and frees port 7890 (or custom port specified with --port)
+     - Removes installed manifest files from Chrome/Chromium directories
+     - Cleans up log files (optionally preserved with --keep-logs)
+     - Provides detailed logging and confirmation prompts
+     - Supports --force mode for automated cleanup without prompts
+     - Handles both Linux and macOS environments
+     - Verifies port is correctly freed after process termination
+   - **Test Improvements**: Enhanced port conflict test to properly detect errors and exit codes
+
 1. **Project Rebranding**: Successfully rebranded from Nanobrowser to Algonius Browser:
    - **README.md Updates**: Completely updated the README.md file to replace all instances of "Nanobrowser" with "Algonius Browser"
    - **GitHub Repository URLs**: Updated all GitHub repository URLs from "nanobrowser/nanobrowser" to "algonius/algonius-browser"
