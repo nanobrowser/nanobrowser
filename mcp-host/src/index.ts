@@ -82,10 +82,14 @@ mcpServerManager
       logger.info(`MCP HTTP server auto-started successfully on port ${mcpServerPort}`);
     } else {
       logger.error('Failed to auto-start MCP HTTP server: Server already running');
+
+      process.exit(0);
     }
   })
   .catch((error: Error) => {
     logger.error('Exception during MCP HTTP server auto-start:', error);
+
+    process.exit(0);
   });
 
 // Send initial ready message to let the extension know we're available
@@ -127,6 +131,7 @@ process.on('SIGTERM', async () => {
 // Error handling for uncaught exceptions
 process.on('uncaughtException', error => {
   logger.error('Uncaught exception:', error);
+
   messaging.sendMessage({
     type: 'error',
     error: error.message,
