@@ -6,3 +6,4 @@
 
 export * from './run-task-handler';
 export * from './navigate-to-handler';
+export * from './get-browser-state-handler';
