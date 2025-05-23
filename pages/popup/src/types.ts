@@ -1,19 +1,4 @@
 /**
- * MCP Host Status interface
+ * Re-export MCP related types from the shared package
  */
-export interface McpHostStatus {
-  isConnected: boolean;
-  startTime: number | null;
-  lastHeartbeat: number | null;
-  version: string | null;
-  runMode: string | null;
-}
-
-/**
- * MCP Host Configuration options
- */
-export interface McpHostOptions {
-  runMode: string;
-  port?: number;
-  logLevel?: string;
-}
+export type { McpHostStatus, McpHostOptions, McpError, McpErrorCode } from '@extension/shared';

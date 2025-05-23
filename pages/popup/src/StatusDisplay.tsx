@@ -1,14 +1,33 @@
-import React from 'react';
-import { McpHostStatus } from '@src/types';
+import React, { useEffect, useState } from 'react';
+import { McpHostStatus, McpError } from '@src/types';
 
 interface StatusDisplayProps {
   status: McpHostStatus;
   loading: boolean;
-  error: string | null;
+  error: McpError | null;
   onRefresh: () => void;
 }
 
 export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, error, onRefresh }) => {
+  // State to control error message visibility
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<McpError | null>(null);
+
+  // Show error for a specified duration when it changes
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+      setShowError(true);
+
+      // Hide error after 8 seconds to give users more time to read
+      const timer = setTimeout(() => {
+        setShowError(false);
+      }, 8000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   // Format timestamp to human-readable date
   const formatTimestamp = (timestamp: number | null) => {
     if (!timestamp) return 'N/A';
@@ -46,9 +65,38 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
-          <p>{error}</p>
+      {/* Floating error message with backdrop */}
+      {showError && errorMessage && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+          {/* Semi-transparent backdrop */}
+          <div
+            className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"
+            onClick={() => setShowError(false)}></div>
+
+          {/* Error message container */}
+          <div className="bg-red-100 border-2 border-red-400 text-red-700 px-5 py-4 rounded-lg shadow-lg max-w-md w-full relative z-10 animate-fadeIn">
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-lg">{errorMessage.code}</p>
+              <button
+                onClick={() => setShowError(false)}
+                className="text-red-500 hover:text-red-700 focus:outline-none ml-4">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"></path>
+                </svg>
+              </button>
+            </div>
+            <p className="mt-2">{errorMessage.message}</p>
+            {errorMessage.details !== undefined && errorMessage.details !== null && (
+              <div className="text-xs mt-3 overflow-auto max-h-32 p-2 bg-red-50 rounded whitespace-pre-wrap">
+                {typeof errorMessage.details === 'string'
+                  ? errorMessage.details
+                  : JSON.stringify(errorMessage.details, null, 2)}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

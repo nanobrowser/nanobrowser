@@ -1,7 +1,7 @@
 import React from 'react';
 import { StatusDisplay } from '@src/StatusDisplay';
 import { ControlPanel } from '@src/ControlPanel';
-import { useMcpHost } from '@src/useMcpHost';
+import { useMcpHost } from '@extension/shared';
 
 export const Popup: React.FC = () => {
   const { status, loading, error, refreshStatus, startMcpHost, stopMcpHost } = useMcpHost();

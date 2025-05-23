@@ -105,16 +105,50 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Start MCP Host process with provided options
     logger.info('Received request to start MCP Host:', message.options);
 
-    try {
-      // Chrome will automatically launch the native messaging host
-      // when we connect to it based on the registered manifest
-      const success = mcpHostManager.connect();
-      logger.info('MCP Host connection attempt result:', success);
-      sendResponse({ success });
-    } catch (error) {
-      logger.error('Failed to connect to MCP Host:', error);
-      sendResponse({ success: false, error: String(error) });
-    }
+    // Use Promise-based connect method
+    mcpHostManager
+      .connect()
+      .then(success => {
+        logger.info('MCP Host connection successful:', success);
+        sendResponse({ success });
+      })
+      .catch(error => {
+        // Check if this is our structured error or a regular error
+        if (error && typeof error === 'object' && 'code' in error) {
+          // This is our structured McpError
+          logger.error(`Failed to connect to MCP Host: [${error.code}] ${error.message}`);
+
+          // Log additional context based on error code
+          if (error.code === 'MCP_HOST_NOT_FOUND') {
+            logger.error('This error indicates the MCP Host is not installed or registered correctly.');
+            logger.error('Make sure the native messaging host manifest is properly installed.');
+          }
+
+          // Send the structured error back to the UI
+          sendResponse({
+            success: false,
+            error: error, // Pass the entire error object
+          });
+        } else {
+          // Handle legacy or unexpected errors
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error('Failed to connect to MCP Host:', errorMessage);
+
+          // Send the error back to the UI
+          sendResponse({
+            success: false,
+            error: {
+              code: 'MCP_UNKNOWN_ERROR',
+              message: errorMessage,
+            },
+          });
+        }
+
+        // Log last error from Chrome runtime for debugging
+        if (chrome.runtime.lastError) {
+          logger.error('Chrome runtime last error:', chrome.runtime.lastError);
+        }
+      });
 
     return true; // Indicate async response
   }
