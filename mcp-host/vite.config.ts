@@ -49,7 +49,6 @@ export default defineConfig({
         'stream',
         'util',
         'zlib',
-        'iconv2',
       ],
       output: {
         // Ensure all dynamically imported modules are inlined into a single file [[3]]
