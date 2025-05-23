@@ -7,6 +7,7 @@ import (
 
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
+	"go.uber.org/zap"
 )
 
 // CurrentStateResource implements the current browser state resource
@@ -75,19 +76,19 @@ func (r *CurrentStateResource) Read() (types.ResourceContent, error) {
 	}, types.RpcOptions{Timeout: 5000})
 
 	if err != nil {
-		r.logger.Error("Error requesting browser state", err)
+		r.logger.Error("Error requesting browser state", zap.Error(err))
 		return types.ResourceContent{}, fmt.Errorf("failed to request browser state: %w", err)
 	}
 
 	if resp.Error != nil {
-		r.logger.Error("RPC error getting browser state", resp.Error)
+		r.logger.Error("RPC error getting browser state", zap.Any("respError", resp.Error))
 		return types.ResourceContent{}, fmt.Errorf("RPC error: %s", resp.Error.Message)
 	}
 
 	// Convert result to JSON
 	jsonBytes, err := json.MarshalIndent(resp.Result, "", "  ")
 	if err != nil {
-		r.logger.Error("Error marshaling browser state", err)
+		r.logger.Error("Error marshaling browser state", zap.Error(err))
 		return types.ResourceContent{}, fmt.Errorf("failed to marshal browser state: %w", err)
 	}
 
@@ -117,7 +118,7 @@ func (r *CurrentStateResource) NotifyStateChange(state interface{}) {
 	})
 
 	if err != nil {
-		r.logger.Error("Error sending resource_updated message", err)
+		r.logger.Error("Error sending resource_updated message", zap.Error(err))
 	}
 }
 

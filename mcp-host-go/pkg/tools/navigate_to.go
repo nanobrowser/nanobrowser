@@ -5,6 +5,7 @@ import (
 
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
+	"go.uber.org/zap"
 )
 
 // NavigateToTool implements a tool for navigating to URLs
@@ -66,7 +67,7 @@ func (t *NavigateToTool) GetInputSchema() interface{} {
 
 // Execute executes the navigate_to tool
 func (t *NavigateToTool) Execute(args map[string]interface{}) (types.ToolResult, error) {
-	t.logger.Info("Executing navigate_to tool with args:", args)
+	t.logger.Info("Executing navigate_to tool with args:", zap.Any("args", args))
 
 	// Extract URL from arguments
 	url, ok := args["url"].(string)
@@ -83,12 +84,12 @@ func (t *NavigateToTool) Execute(args map[string]interface{}) (types.ToolResult,
 	}, types.RpcOptions{Timeout: 5000})
 
 	if err != nil {
-		t.logger.Error("Error calling navigate_to", err)
+		t.logger.Error("Error calling navigate_to", zap.Error(err))
 		return types.ToolResult{}, fmt.Errorf("navigate_to RPC failed: %w", err)
 	}
 
 	if resp.Error != nil {
-		t.logger.Error("RPC error in navigate_to", resp.Error)
+		t.logger.Error("RPC error in navigate_to", zap.Any("respError", resp.Error))
 		return types.ToolResult{}, fmt.Errorf("RPC error: %s", resp.Error.Message)
 	}
 

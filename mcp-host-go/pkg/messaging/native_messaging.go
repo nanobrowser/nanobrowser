@@ -12,6 +12,7 @@ import (
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // NativeMessaging implements the types.Messaging interface for Chrome native messaging
@@ -85,7 +86,7 @@ func (nm *NativeMessaging) Start() error {
 					nm.logger.Info("Native messaging: stdin closed")
 					return
 				}
-				nm.logger.Error("Error reading from stdin", err)
+				nm.logger.Error("Error reading from stdin", zap.Error(err))
 				return
 			}
 
@@ -120,14 +121,14 @@ func (nm *NativeMessaging) processBuffer() {
 		// Process the message
 		var message types.Message
 		if err := json.Unmarshal(messageJSON, &message); err != nil {
-			nm.logger.Error("Error parsing message JSON", err, string(messageJSON))
+			nm.logger.Error("Error parsing message JSON", zap.Error(err), zap.String("json", string(messageJSON)))
 			continue
 		}
 
 		// Handle the message asynchronously
 		go func(msg types.Message) {
 			if err := nm.handleMessage(msg); err != nil {
-				nm.logger.Error("Error handling message", err, msg)
+				nm.logger.Error("Error handling message", zap.Error(err), zap.Any("message", msg))
 			}
 		}(message)
 	}
@@ -135,11 +136,11 @@ func (nm *NativeMessaging) processBuffer() {
 
 // handleMessage processes a received message
 func (nm *NativeMessaging) handleMessage(message types.Message) error {
-	nm.logger.Debug("Received message", message)
+	nm.logger.Debug("Received message", zap.Any("message", message))
 
 	handler, ok := nm.messageHandlers[message.Type]
 	if !ok {
-		nm.logger.Warn("No handler registered for message type", message.Type)
+		nm.logger.Warn("No handler registered for message type", zap.String("type", message.Type))
 		return nm.SendMessage(types.Message{
 			Type:  "error",
 			Error: &types.ErrorInfo{Message: fmt.Sprintf("Unknown message type: %s", message.Type)},
@@ -169,13 +170,13 @@ func (nm *NativeMessaging) handleMessage(message types.Message) error {
 
 // RegisterHandler registers a handler for a specific message type
 func (nm *NativeMessaging) RegisterHandler(messageType string, handler types.MessageHandler) {
-	nm.logger.Debug("Registering handler for message type", messageType)
+	nm.logger.Debug("Registering handler for message type", zap.String("type", messageType))
 	nm.messageHandlers[messageType] = handler
 }
 
 // RegisterRpcMethod registers a handler for an RPC method
 func (nm *NativeMessaging) RegisterRpcMethod(method string, handler types.RpcHandler) {
-	nm.logger.Debug("Registering RPC handler for method", method)
+	nm.logger.Debug("Registering RPC handler for method", zap.String("method", method))
 	nm.rpcHandlers[method] = handler
 
 	// Register the RPC request handler if not already registered
@@ -186,7 +187,7 @@ func (nm *NativeMessaging) RegisterRpcMethod(method string, handler types.RpcHan
 
 // SendMessage sends a message to stdout
 func (nm *NativeMessaging) SendMessage(message types.Message) error {
-	nm.logger.Debug("Sending message", message)
+	nm.logger.Debug("Sending message", zap.Any("message", message))
 
 	// Convert message to JSON
 	messageJSON, err := json.Marshal(message)
@@ -221,7 +222,7 @@ func (nm *NativeMessaging) RpcRequest(request types.RpcRequest, options types.Rp
 		request.ID = id
 	}
 
-	nm.logger.Debug("Sending RPC request", request.Method, "id:", id)
+	nm.logger.Debug("Sending RPC request", zap.String("method", request.Method), zap.String("id", id))
 
 	timeout := 5000 // Default 5 seconds
 	if options.Timeout > 0 {
@@ -278,14 +279,14 @@ func (nm *NativeMessaging) registerRpcResponseHandler() {
 		}
 
 		id := response.ID
-		nm.logger.Debug("Received RPC response for ID", id)
+		nm.logger.Debug("Received RPC response for ID", zap.String("id", id))
 
 		nm.mutex.Lock()
 		defer nm.mutex.Unlock()
 
 		pending, exists := nm.pendingRequests[id]
 		if !exists {
-			nm.logger.Warn("No pending request found for RPC response ID", id)
+			nm.logger.Warn("No pending request found for RPC response ID", zap.String("id", id))
 			return nil
 		}
 
@@ -314,11 +315,11 @@ func (nm *NativeMessaging) registerRpcRequestHandler() {
 		}
 
 		method := request.Method
-		nm.logger.Debug("Handling RPC request", method)
+		nm.logger.Debug("Handling RPC request", zap.String("method", method))
 
 		handler, exists := nm.rpcHandlers[method]
 		if !exists {
-			nm.logger.Warn("No handler registered for RPC method", method)
+			nm.logger.Warn("No handler registered for RPC method", zap.String("method", method))
 			return nm.SendMessage(types.Message{
 				Type: "rpc_response",
 				ID:   request.ID,
@@ -332,7 +333,7 @@ func (nm *NativeMessaging) registerRpcRequestHandler() {
 		// Handle the request
 		response, err := handler(request)
 		if err != nil {
-			nm.logger.Error("Error in RPC handler", err)
+			nm.logger.Error("Error in RPC handler", zap.Error(err))
 			return nm.SendMessage(types.Message{
 				Type: "rpc_response",
 				ID:   request.ID,

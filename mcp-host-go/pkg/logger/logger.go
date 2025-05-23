@@ -1,218 +1,139 @@
 package logger
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
-	"sync"
-	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-// LogLevel defines the severity levels for logging
-type LogLevel int
-
-const (
-	// ERROR is the level for error messages
-	ERROR LogLevel = iota
-	// WARN is the level for warning messages
-	WARN
-	// INFO is the level for informational messages
-	INFO
-	// DEBUG is the level for debug messages
-	DEBUG
-)
-
-// String returns the string representation of the log level
-func (l LogLevel) String() string {
-	switch l {
-	case ERROR:
-		return "ERROR"
-	case WARN:
-		return "WARN"
-	case INFO:
-		return "INFO"
-	case DEBUG:
-		return "DEBUG"
-	default:
-		return "UNKNOWN"
-	}
-}
-
-// Logger defines the interface for logging operations
+// Logger defines the logging interface based on zap
 type Logger interface {
-	Error(message string, args ...interface{})
-	Warn(message string, args ...interface{})
-	Info(message string, args ...interface{})
-	Debug(message string, args ...interface{})
+	// Core logging methods with structured fields
+	Debug(msg string, fields ...zap.Field)
+	Info(msg string, fields ...zap.Field)
+	Warn(msg string, fields ...zap.Field)
+	Error(msg string, fields ...zap.Field)
+
+	// Create child loggers
+	Named(name string) Logger
+	With(fields ...zap.Field) Logger
+
+	// Utility methods for common patterns
+	Sync() error // Flush any buffered log entries
 }
 
-// FileLogger implements the Logger interface with file output
-type FileLogger struct {
-	moduleName string
-	logLevel   LogLevel
-	writer     io.Writer
-	mutex      sync.Mutex
+// ZapLogger wraps zap.Logger to implement our Logger interface
+type ZapLogger struct {
+	*zap.Logger
 }
 
-// Config holds configuration parameters for the logger
-type Config struct {
-	LogLevel   LogLevel
-	LogDir     string
-	LogFile    string
-	ModuleName string
+// Ensure ZapLogger implements Logger interface
+var _ Logger = (*ZapLogger)(nil)
+
+// Debug logs a debug message with structured fields
+func (l *ZapLogger) Debug(msg string, fields ...zap.Field) {
+	l.Logger.Debug(msg, fields...)
 }
 
-// NewFileLogger creates a new file logger with the given configuration
-func NewFileLogger(config Config) (*FileLogger, error) {
-	// Ensure log directory exists
-	if err := os.MkdirAll(config.LogDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create log directory: %w", err)
-	}
+// Info logs an info message with structured fields
+func (l *ZapLogger) Info(msg string, fields ...zap.Field) {
+	l.Logger.Info(msg, fields...)
+}
 
-	// Open log file
-	logPath := filepath.Join(config.LogDir, config.LogFile)
-	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// Warn logs a warning message with structured fields
+func (l *ZapLogger) Warn(msg string, fields ...zap.Field) {
+	l.Logger.Warn(msg, fields...)
+}
+
+// Error logs an error message with structured fields
+func (l *ZapLogger) Error(msg string, fields ...zap.Field) {
+	l.Logger.Error(msg, fields...)
+}
+
+// Named creates a child logger with the given name
+func (l *ZapLogger) Named(name string) Logger {
+	return &ZapLogger{l.Logger.Named(name)}
+}
+
+// With creates a child logger with additional fields
+func (l *ZapLogger) With(fields ...zap.Field) Logger {
+	return &ZapLogger{l.Logger.With(fields...)}
+}
+
+// Sync flushes any buffered log entries
+func (l *ZapLogger) Sync() error {
+	return l.Logger.Sync()
+}
+
+// NewLogger creates a new logger for the given module
+func NewLogger(module string) (Logger, error) {
+	zapLogger, err := buildZapLogger()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open log file: %w", err)
+		return nil, fmt.Errorf("failed to build zap logger: %w", err)
 	}
 
-	// Write header
-	startMsg := fmt.Sprintf("\n[%s] === MCP Host Logging Started (Module: %s) ===\n",
-		time.Now().Format(time.RFC3339), config.ModuleName)
-	if _, err := file.WriteString(startMsg); err != nil {
-		return nil, fmt.Errorf("failed to write log header: %w", err)
-	}
-
-	return &FileLogger{
-		moduleName: config.ModuleName,
-		logLevel:   config.LogLevel,
-		writer:     file,
-	}, nil
+	return &ZapLogger{zapLogger.Named(module)}, nil
 }
 
-// DefaultConfig returns a default logger configuration
-func DefaultConfig(moduleName string) Config {
-	// Get log level from environment variable
-	logLevel := DEBUG
-	switch os.Getenv("LOG_LEVEL") {
-	case "ERROR":
-		logLevel = ERROR
-	case "WARN":
-		logLevel = WARN
-	case "INFO":
-		logLevel = INFO
-	case "DEBUG":
-		logLevel = DEBUG
-	}
-
-	// Get log directory
-	logDir := os.Getenv("LOG_DIR")
-	if logDir == "" {
-		logDir = filepath.Join(os.TempDir(), "mcp-host")
-	}
-
-	// Get log file name
-	logFile := os.Getenv("LOG_FILE")
-	if logFile == "" {
-		logFile = "mcp-host.log"
-	}
-
-	return Config{
-		ModuleName: moduleName,
-		LogLevel:   logLevel,
-		LogDir:     logDir,
-		LogFile:    logFile,
-	}
+// NewLoggerFromZap wraps an existing zap logger
+func NewLoggerFromZap(zapLogger *zap.Logger) Logger {
+	return &ZapLogger{zapLogger}
 }
 
-// formatMessage formats a log message with timestamp, level, module name and args
-func (l *FileLogger) formatMessage(level LogLevel, message string, args ...interface{}) string {
-	timestamp := time.Now().Format(time.RFC3339)
-	prefix := fmt.Sprintf("[%s] [%s] [%s]", timestamp, level.String(), l.moduleName)
+// buildZapLogger builds a zap logger based on environment configuration
+func buildZapLogger() (*zap.Logger, error) {
+	var config zap.Config
 
-	formattedMessage := fmt.Sprintf("%s %s", prefix, message)
+	// Choose configuration based on environment
+	if isConsoleMode() || isDevelopmentMode() {
+		config = zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	} else {
+		config = zap.NewProductionConfig()
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
 
-	// Format additional arguments
-	if len(args) > 0 {
-		formattedArgs := make([]string, len(args))
-		for i, arg := range args {
-			if obj, ok := arg.(interface{}); ok {
-				if jsonBytes, err := json.Marshal(obj); err == nil {
-					formattedArgs[i] = string(jsonBytes)
-				} else {
-					formattedArgs[i] = fmt.Sprintf("%+v", arg)
-				}
-			} else {
-				formattedArgs[i] = fmt.Sprintf("%+v", arg)
-			}
+	// Configure log level from environment
+	if level := os.Getenv("LOG_LEVEL"); level != "" {
+		var zapLevel zapcore.Level
+		if err := zapLevel.UnmarshalText([]byte(level)); err != nil {
+			return nil, fmt.Errorf("invalid log level %s: %w", level, err)
 		}
-		for _, arg := range formattedArgs {
-			formattedMessage += " " + arg
+		config.Level = zap.NewAtomicLevelAt(zapLevel)
+	}
+
+	// Configure output paths
+	config.OutputPaths = []string{"stdout"}
+	config.ErrorOutputPaths = []string{"stderr"}
+
+	// Add file output if specified
+	if logFile := os.Getenv("LOG_FILE"); logFile != "" {
+		config.OutputPaths = append(config.OutputPaths, logFile)
+	}
+
+	// Add directory-based file output if specified
+	if logDir := os.Getenv("LOG_DIR"); logDir != "" {
+		logFile := "mcp-host.log"
+		if customFile := os.Getenv("LOG_FILE"); customFile != "" {
+			logFile = customFile
 		}
+		filePath := fmt.Sprintf("%s/%s", logDir, logFile)
+		config.OutputPaths = append(config.OutputPaths, filePath)
 	}
 
-	return formattedMessage
+	return config.Build()
 }
 
-// writeToFile writes a formatted log message to the file
-func (l *FileLogger) writeToFile(formattedMessage string) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.writer != nil {
-		_, _ = fmt.Fprintln(l.writer, formattedMessage)
-	}
+// isConsoleMode checks if console mode is enabled
+func isConsoleMode() bool {
+	return os.Getenv("LOG_FORMAT") == "console"
 }
 
-// Error logs an error message
-func (l *FileLogger) Error(message string, args ...interface{}) {
-	if l.logLevel >= ERROR {
-		formattedMessage := l.formatMessage(ERROR, message, args...)
-		l.writeToFile(formattedMessage)
-	}
-}
-
-// Warn logs a warning message
-func (l *FileLogger) Warn(message string, args ...interface{}) {
-	if l.logLevel >= WARN {
-		formattedMessage := l.formatMessage(WARN, message, args...)
-		l.writeToFile(formattedMessage)
-	}
-}
-
-// Info logs an informational message
-func (l *FileLogger) Info(message string, args ...interface{}) {
-	if l.logLevel >= INFO {
-		formattedMessage := l.formatMessage(INFO, message, args...)
-		l.writeToFile(formattedMessage)
-	}
-}
-
-// Debug logs a debug message
-func (l *FileLogger) Debug(message string, args ...interface{}) {
-	if l.logLevel >= DEBUG {
-		formattedMessage := l.formatMessage(DEBUG, message, args...)
-		l.writeToFile(formattedMessage)
-	}
-}
-
-// Close closes the log file
-func (l *FileLogger) Close() error {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if closer, ok := l.writer.(io.Closer); ok {
-		endMsg := fmt.Sprintf("\n[%s] === MCP Host Logging Ended (Module: %s) ===\n",
-			time.Now().Format(time.RFC3339), l.moduleName)
-		_, _ = fmt.Fprintln(l.writer, endMsg)
-		return closer.Close()
-	}
-	return nil
-}
-
-// NewLogger is a convenience function that creates a logger with default config
-func NewLogger(moduleName string) (Logger, error) {
-	return NewFileLogger(DefaultConfig(moduleName))
+// isDevelopmentMode checks if development mode is enabled
+func isDevelopmentMode() bool {
+	env := os.Getenv("GO_ENV")
+	return env == "development" || env == "dev"
 }
