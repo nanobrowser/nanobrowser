@@ -10,9 +10,6 @@ MANIFEST_DIR="${HOME}/.config/google-chrome/NativeMessagingHosts"
 MANIFEST_NAME="dev.nanobrowser.mcp.host.json"
 MANIFEST_SOURCE="$(pwd)/manifest/${MANIFEST_NAME}"
 
-# Create wrapper script
-WRAPPER_PATH="${INSTALL_DIR}/mcp-host.sh"
-
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -50,7 +47,7 @@ if [ ! -f "${MANIFEST_SOURCE}" ]; then
 {
   "name": "dev.nanobrowser.mcp.host",
   "description": "Nanobrowser MCP Native Messaging Host",
-  "path": "${WRAPPER_PATH}",
+  "path": "${INSTALL_DIR}/${BINARY_NAME}",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://neiiiibdmgkoabmaodedfkgomofhcbal/"]
 }
@@ -62,16 +59,8 @@ log "Building MCP host..."
 cd "$(dirname "$0")"
 go build -o "${INSTALL_DIR}/${BINARY_NAME}" ./cmd/mcp-host
 
-# Create wrapper script
-log "Creating wrapper script..."
-cat > "${WRAPPER_PATH}" << EOF
-#!/bin/bash
-cd "${HOME}"
-exec "${INSTALL_DIR}/${BINARY_NAME}"
-EOF
-
-# Make the wrapper script executable
-chmod +x "${WRAPPER_PATH}"
+# Make the binary executable
+chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 
 # Install the manifest file
 log "Installing manifest file..."
@@ -79,5 +68,4 @@ cp "${MANIFEST_SOURCE}" "${MANIFEST_DIR}/${MANIFEST_NAME}"
 
 log "Installation completed successfully!"
 log "Installed binary: ${INSTALL_DIR}/${BINARY_NAME}"
-log "Installed wrapper script: ${WRAPPER_PATH}"
 log "Installed manifest: ${MANIFEST_DIR}/${MANIFEST_NAME}"

@@ -8,9 +8,6 @@ INSTALL_DIR="${HOME}/.nanobrowser/bin"
 MANIFEST_DIR="${HOME}/.config/google-chrome/NativeMessagingHosts"
 MANIFEST_NAME="dev.nanobrowser.mcp.host.json"
 
-# Create wrapper script
-WRAPPER_PATH="${INSTALL_DIR}/mcp-host.sh"
-
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -36,14 +33,6 @@ if [ -f "${INSTALL_DIR}/${BINARY_NAME}" ]; then
   rm "${INSTALL_DIR}/${BINARY_NAME}"
 else
   warn "Binary not found: ${INSTALL_DIR}/${BINARY_NAME}"
-fi
-
-# Remove wrapper script
-if [ -f "${WRAPPER_PATH}" ]; then
-  log "Removing wrapper script: ${WRAPPER_PATH}"
-  rm "${WRAPPER_PATH}"
-else
-  warn "Wrapper script not found: ${WRAPPER_PATH}"
 fi
 
 # Remove manifest file
