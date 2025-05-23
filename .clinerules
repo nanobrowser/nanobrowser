@@ -10,11 +10,11 @@ flowchart TD
     PB[projectbrief.md] --> PC[productContext.md]
     PB --> SP[systemPatterns.md]
     PB --> TC[techContext.md]
-    
+
     PC --> AC[activeContext.md]
     SP --> AC
     TC --> AC
-    
+
     AC --> P[progress.md]
 
 ### Core Files (Required)
@@ -73,10 +73,10 @@ Create additional files/folders within memory-bank/ when they help organize:
 flowchart TD
     Start[Start] --> ReadFiles[Read Memory Bank]
     ReadFiles --> CheckFiles{Files Complete?}
-    
+
     CheckFiles -->|No| Plan[Create Plan]
     Plan --> Document[Document in Chat]
-    
+
     CheckFiles -->|Yes| Verify[Verify Context]
     Verify --> Strategy[Develop Strategy]
     Strategy --> Present[Present Approach]
@@ -98,16 +98,16 @@ Memory Bank updates occur when:
 
 flowchart TD
     Start[Update Process]
-    
+
     subgraph Process
         P1[Review ALL Files]
         P2[Document Current State]
         P3[Clarify Next Steps]
         P4[Document Insights & Patterns]
-        
+
         P1 --> P2 --> P3 --> P4
     end
-    
+
     Start --> Process
 
 Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md and progress.md as they track current state.
