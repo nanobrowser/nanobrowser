@@ -91,15 +91,6 @@ print_message "${BLUE}Copying application files...${NC}"
 if [ -d "$SCRIPT_DIR/dist" ]; then
   cp -r "$SCRIPT_DIR/dist"/* "$APP_DIR/"
   
-  # Copy node_modules for dependencies
-  print_message "${BLUE}Copying dependencies...${NC}"
-  if [ -d "$SCRIPT_DIR/node_modules" ]; then
-    cp -r "$SCRIPT_DIR/node_modules" "$APP_DIR/"
-    print_message "${GREEN}Dependencies copied successfully.${NC}"
-  else
-    print_message "${YELLOW}Warning: node_modules directory not found. Dependencies may be missing.${NC}"
-  fi
-  
   print_message "${GREEN}Application files copied successfully.${NC}"
 else
   error_exit "Build directory 'dist' not found. Please build the project first with 'npm run build'."
@@ -126,7 +117,7 @@ mkdir -p "\$LOG_DIR"
 cd "$APP_DIR"
 
 # Run MCP host - logs are handled internally by the Logger class
-node index.js
+node index.cjs
 EOF
 
 chmod +x "$HOST_SCRIPT"

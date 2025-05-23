@@ -7,35 +7,33 @@ const srcDir = resolve(rootDir, 'src');
 const outDir = resolve(rootDir, 'dist');
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': srcDir,
-    },
-  },
+  // Resolve TypeScript path aliases (ensure 'paths' is properly configured in tsconfig.json)
   plugins: [
-    tsconfigPaths(),
-    // VitePluginNode has compatibility issues with the current Vite version
+    tsconfigPaths({
+      // Allow resolving path aliases in non-TypeScript files (like Vue templates) [[1]]
+      strict: false,
+    }),
   ],
+
   build: {
     outDir,
     emptyOutDir: true,
     sourcemap: true,
     minify: false,
-    target: 'node16',
+    target: 'node16', // Specify Node.js version [[8]]
 
-    // Build for ESM
+    // Output as CommonJS format (recommended for Node.js)
     lib: {
       entry: {
         index: resolve(srcDir, 'index.ts'),
       },
-      formats: ['es'],
-      fileName: (format, entryName) => `${entryName}.js`,
+      formats: ['cjs'], // Use CommonJS format [[2]]
+      fileName: (format, entryName) => `${entryName}.cjs`, // Adapt file extension
     },
 
     rollupOptions: {
+      // Exclude all Node.js built-in modules (to avoid bundling errors) [[9]]
       external: [
-        'express',
-        'zod',
         'async_hooks',
         'string_decoder',
         'crypto',
@@ -46,15 +44,21 @@ export default defineConfig({
         'url',
         'buffer',
         'node:crypto',
-        '@modelcontextprotocol/sdk',
+        'net', // Added: Exclude browser-incompatible built-in modules
+        'querystring',
+        'stream',
+        'util',
+        'zlib',
+        'iconv2',
       ],
+      output: {
+        // Ensure all dynamically imported modules are inlined into a single file [[3]]
+        inlineDynamicImports: true,
+        format: 'cjs', // Output format consistent with lib.formats
+      },
     },
   },
   optimizeDeps: {
-    exclude: ['fsevents'],
-  },
-  server: {
-    port: 8765,
-    host: 'localhost',
+    exclude: ['fsevents'], // Exclude native modules
   },
 });
