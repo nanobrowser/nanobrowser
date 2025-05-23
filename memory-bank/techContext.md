@@ -15,6 +15,8 @@
 - **pnpm**: Fast, disk-efficient package manager with workspace support
 - **Turbo**: Build system for monorepo optimization
 - **ESBuild**: JavaScript bundler used by Vite for high-performance builds
+- **Go Modules**: Go's built-in dependency management for MCP host
+- **Make**: Build automation tool for Go MCP host with comprehensive targets
 
 ### Testing & Quality
 - **Vitest**: Modern, Vite-native testing framework for unit and integration tests
@@ -186,5 +188,106 @@ graph TD
 - **Storage Management**: Persistent data handling
 - **Native Messaging Integration**: Communication with external processes
 - **MCP Server Implementation**: Exposing browser capabilities via MCP
+
+## Go MCP Host Build System
+
+### Go Environment Requirements
+- **Go**: 1.21 or higher
+- **Make**: GNU Make for build automation
+- **Chrome/Chromium**: For Native Messaging Host registration
+
+### Go MCP Host Structure
+```
+mcp-host-go/
+├── cmd/mcp-host/         # Main application entry point
+├── pkg/                  # Core packages
+│   ├── dual/            # Dual server (Native Messaging + SSE)
+│   ├── logger/          # Structured logging
+│   ├── messaging/       # Chrome Native Messaging protocol
+│   ├── mcp/             # MCP server implementation
+│   ├── sse/             # SSE-based MCP server
+│   └── types/           # Shared types and interfaces
+├── manifest/            # Chrome Native Messaging manifests
+├── bin/                 # Build artifacts (gitignored)
+├── Makefile            # Build automation
+├── install.sh          # Installation script
+└── uninstall.sh        # Cleanup script
+```
+
+### Build System Features
+The Go MCP host uses a comprehensive Makefile with the following capabilities:
+
+#### Build Targets
+- **`make build`**: Compile optimized binary with build flags
+- **`make build-all`**: Cross-platform builds (Linux, macOS, Windows)
+- **`make run`**: Build and execute the binary
+- **`make clean`**: Remove build artifacts and clean Go cache
+
+#### Development Targets
+- **`make test`**: Run all tests with verbose output
+- **`make lint`**: Run golangci-lint for code quality
+- **`make vet`**: Run Go vet for code analysis
+- **`make deps`**: Update dependencies and tidy modules
+- **`make tidy`**: Clean up Go module dependencies
+
+#### Installation Targets
+- **`make install`**: Build and install the MCP host system-wide
+- **`make uninstall`**: Remove installed components and cleanup
+
+#### Build Configuration
+```makefile
+# Build flags for optimization
+LDFLAGS=-ldflags "-s -w"          # Strip symbols and debug info
+BUILD_FLAGS=-trimpath             # Remove file system paths
+BUILD_DIR=bin                     # Unified build directory
+```
+
+### Installation Process
+The installation system provides intelligent binary management:
+
+1. **Smart Binary Detection**: `install.sh` checks for existing binary in `bin/`
+2. **Conditional Building**: Only rebuilds if binary doesn't exist
+3. **System Integration**: 
+   - Copies binary to `~/.nanobrowser/bin/`
+   - Creates Chrome Native Messaging manifest
+   - Registers with Chrome/Chromium browsers
+4. **Manifest Generation**: Auto-generates manifest with correct binary path
+
+### Git Configuration
+Comprehensive `.gitignore` covering Go development patterns:
+- **Build Artifacts**: `bin/`, `build/`, `*.exe`, `*.dll`, `*.so`
+- **Go Files**: `vendor/`, `*.test`, `*.out`, `go.work`, `go.work.sum`
+- **Development Tools**: `.idea/`, `.vscode/`, `*.swp`, `*.swo`
+- **System Files**: `.DS_Store`, `Thumbs.db`, `desktop.ini`
+- **Logs and Temporary**: `*.log`, `*.tmp`, `*.temp`
+- **Testing**: `coverage.out`, `*.cover`, `*.prof`, `*.pprof`
+
+### Build System Optimizations (2025-05-24)
+Recent improvements to the build system include:
+
+1. **Warning Resolution**: 
+   - Eliminated Makefile "overriding recipe" warnings
+   - Changed BUILD_DIR from 'build' to 'bin' for consistency
+   - Resolved circular dependency issues
+
+2. **Workflow Optimization**:
+   - Simplified install target to directly call install.sh
+   - Removed redundant file copying operations
+   - Streamlined build process with unified directory usage
+
+3. **Script Enhancement**:
+   - Updated install.sh to use existing binaries when available
+   - Added intelligent binary detection and conditional building
+   - Improved path consistency across build tools
+
+### Cross-Platform Support
+- **Linux**: Primary development and deployment platform
+- **macOS**: Full support with proper manifest registration
+- **Windows**: Cross-compilation support with .exe handling
+
+### Dependencies Management
+- **Go Modules**: Automatic dependency resolution and versioning
+- **mark3labs/mcp-go**: Industry-standard MCP library for SSE support
+- **Clean Architecture**: Minimal external dependencies with clear interfaces
 
 This technical context provides the foundation for understanding the development environment, constraints, and practices used in the Algonius Browser project.

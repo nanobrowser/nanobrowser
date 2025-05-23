@@ -2,7 +2,7 @@
 
 # Variables
 BINARY_NAME=mcp-host
-BUILD_DIR=build
+BUILD_DIR=bin
 INSTALL_DIR=$(HOME)/.nanobrowser/bin
 MANIFEST_DIR=$(HOME)/.config/google-chrome/NativeMessagingHosts
 MANIFEST_NAME=dev.nanobrowser.mcp.host.json
@@ -61,13 +61,7 @@ build: $(BUILD_DIR)
 .PHONY: install
 install: build
 	@echo "${GREEN}Installing MCP host...${NC}"
-	# Copy binary to build directory
-	mkdir -p $(BUILD_DIR)
-	cp $(BUILD_DIR)/$(BINARY_NAME) ./$(BINARY_NAME)
-	# Run the install script
 	./install.sh
-	# Clean up temporary binary
-	rm -f ./$(BINARY_NAME)
 	@echo "${GREEN}Installation completed successfully!${NC}"
 
 # Uninstall the MCP host

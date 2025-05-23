@@ -54,10 +54,17 @@ if [ ! -f "${MANIFEST_SOURCE}" ]; then
 EOF
 fi
 
-# Build the binary
-log "Building MCP host..."
-cd "$(dirname "$0")"
-go build -o "${INSTALL_DIR}/${BINARY_NAME}" ./cmd/mcp-host
+# Check if binary exists in bin directory, if not build it
+BIN_PATH="$(pwd)/bin/${BINARY_NAME}"
+if [ ! -f "${BIN_PATH}" ]; then
+  log "Binary not found in bin/, building MCP host..."
+  cd "$(dirname "$0")"
+  go build -o "${BIN_PATH}" ./cmd/mcp-host
+fi
+
+# Copy binary to install directory
+log "Installing MCP host binary..."
+cp "${BIN_PATH}" "${INSTALL_DIR}/${BINARY_NAME}"
 
 # Make the binary executable
 chmod +x "${INSTALL_DIR}/${BINARY_NAME}"

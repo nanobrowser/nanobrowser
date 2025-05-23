@@ -1,473 +1,164 @@
 # Active Context: Algonius Browser
 
-## Current Work Focus
+## Current Work Focus - COMPLETED ✅
 
-The Algonius Browser project is currently focused on rebranding from Nanobrowser and completing the MCP Host Control functionality while continuing to extend its capabilities through MCP (Model Context Protocol) integration via Chrome Native Messaging and enhancing Memory Bank documentation with deeper technical insights.
+### Latest Achievement: Build System Optimization (2025-05-24 06:12)
+Successfully resolved Makefile warnings and optimized the build system for mcp-host-go project.
 
-### Primary Objectives
-1. **Project Rebranding**: Transitioning from the original Nanobrowser project to Algonius Browser with a focused mission on MCP integration
-   - Updated README.md with comprehensive rebranding from Nanobrowser to Algonius Browser
-   - Added acknowledgment to the original Nanobrowser project as the source fork
-   - Added clear Project Goals section highlighting the MCP integration focus
-   - Updated all documentation to reflect the new project name and mission
-   - Maintained functional code compatibility while updating branding references
-2. **MCP Host Control Implementation**: Developing a comprehensive system to monitor and control the MCP Host process
-   - Completed core message handlers (StatusHandler, PingHandler, ShutdownHandler) with test coverage
-   - Implemented McpHostManager for Chrome extension to control and monitor host processes
-   - Implemented error handling improvements for Native Messaging API
-   - Completed user interface components and background script integration
-3. **MCP SEE Service Implementation**: Building a Chrome Native Messaging Host to expose browser capabilities as MCP resources and tools
-   - Implemented message handlers for MCP Host with comprehensive test coverage
-   - Developed MCP Host Manager for Chrome extension to control and monitor host processes
-4. **Memory Bank Enhancement**: Enriching documentation with technical implementation details
-5. **Multi-Agent System Analysis**: Documenting the execution flow and agent interactions
-6. **Browser Automation Understanding**: Mapping Navigator agent capabilities and browser interactions
+#### Build System Improvements - 2025-05-24 06:12
+- ✅ **Makefile Warning Resolution**: Eliminated "overriding recipe" and "circular dependency" warnings
+- ✅ **Build Directory Unification**: Changed BUILD_DIR from 'build' to 'bin' for consistency
+- ✅ **Install Script Optimization**: Updated install.sh to intelligently use existing binaries
+- ✅ **Git Configuration**: Created comprehensive .gitignore for Go project best practices
+- ✅ **Workflow Streamlining**: Simplified Makefile install target for cleaner execution
 
-### Active Development Areas
-- **Project Rebranding**: Focus on ensuring all references to the project name are updated while maintaining functionality
-- **MCP Host Control UI**: Enhanced the UI for managing MCP Host status and operations
-- **Chrome Native Messaging Integration**: Completed the Native Messaging Host for MCP services
-- **MCP Resources & Tools**: Exposing browser state and operations via MCP protocol
-- **Execution Flow Documentation**: Capturing the detailed task execution process
-- **Agent Interaction Patterns**: Documenting how the three agents collaborate
-- **Browser Automation Capabilities**: Analyzing the browser interaction operations
-- **RPC Handler Implementation**: Creating standardized handlers for browser functionality exposure via MCP
+### Previous Achievement: Dual MCP Server Implementation (2025-05-24 05:45)
+Successfully implemented dual server architecture supporting both Native Messaging and SSE protocols simultaneously.
 
-## Recent Changes
+#### Dual Server Status - COMPLETED
+- ✅ **SSE Server Implementation**: Complete with mark3labs/mcp-go integration
+- ✅ **Dual Server Architecture**: Unified management of both server types
+- ✅ **Main Application Updates**: Updated to use dual server configuration
+- ✅ **Build and Testing**: All code compiles and tests pass
+- ✅ **Documentation**: Created comprehensive dual server architecture documentation
 
-Recent exploration and development has resulted in significant advancements:
+#### Completed Work Summary
+1. **SSE Server Implementation (`pkg/sse/server.go`)**:
+   - Integrated `mark3labs/mcp-go` library for industry-standard SSE-based MCP communication
+   - Adapted internal types to mark3labs MCP format for tools and resources
+   - Implemented proper schema conversion for tool parameters using PropertyOption types
+   - Added HTTP server capabilities for external MCP client access
+   - Fixed compilation issues with type compatibility
 
-1. **Go MCP Host Implementation**: Created a complete Go-based implementation of the MCP host:
-   - **Clean Architecture**: Implemented with a clean layered architecture following dependency injection
-   - **Core Components**: Created logger, messaging, MCP server, tools, and resources packages
-   - **Native Messaging**: Implemented Chrome Native Messaging protocol handling
-   - **Type Safety**: Utilized Go's strong type system for reliable component interfaces
-   - **Build System**: Created a comprehensive Makefile for building, testing, and installing
-   - **Installation Scripts**: Developed install.sh and uninstall.sh scripts
-   - **Chrome Integration**: Ensured proper registration with Chrome via Native Messaging manifest
-   - **Tool & Resource Structure**: Established patterns for implementing MCP tools and resources
-   - **Directory Organization**: Created a logical project structure for maintainability
+2. **Dual Server Architecture (`pkg/dual/server.go`)**:
+   - Created unified server management supporting both Native Messaging and SSE protocols
+   - Registers tools and resources with both server implementations simultaneously
+   - Provides unified start/stop/status management with proper error handling
+   - Ensures consistent behavior across both protocols
+   - Thread-safe operations with proper mutex usage
 
-2. **MCP Host Port Conflict Resolution**: Added robust port conflict detection and uninstall script:
-   - **Port Conflict Detection Enhancement**: Improved error handling for EADDRINUSE errors in the MCP HTTP server
-   - **Detailed Error Messages**: Added explicit error messages that include the EADDRINUSE code for better diagnostics
-   - **Non-Zero Exit Code**: Modified server to exit with status code 1 when port conflicts occur
-   - **Uninstall Script Creation**: Created a comprehensive uninstall.sh script for cleaning up mcp-host:
-     - Detects and kills processes related to mcp-host
-     - Identifies and frees port 7890 (or custom port specified with --port)
-     - Removes installed manifest files from Chrome/Chromium directories
-     - Cleans up log files (optionally preserved with --keep-logs)
-     - Provides detailed logging and confirmation prompts
-     - Supports --force mode for automated cleanup without prompts
-     - Handles both Linux and macOS environments
-     - Verifies port is correctly freed after process termination
-   - **Test Improvements**: Enhanced port conflict test to properly detect errors and exit codes
+3. **Main Application Updates (`cmd/mcp-host/main.go`)**:
+   - Updated to use the new dual server instead of single Native Messaging server
+   - Added environment variable configuration for SSE server (port, base URL, base path)
+   - Enhanced logging to show both server endpoints on startup
+   - Graceful shutdown for both servers with proper error handling
 
-3. **Project Rebranding**: Successfully rebranded from Nanobrowser to Algonius Browser:
-   - **README.md Updates**: Completely updated the README.md file to replace all instances of "Nanobrowser" with "Algonius Browser"
-   - **GitHub Repository URLs**: Updated all GitHub repository URLs from "nanobrowser/nanobrowser" to "algonius/algonius-browser"
-   - **Project Focus Clarification**: Added a new "Project Goals" section that clearly articulates the focus on MCP integration
-   - **Original Project Acknowledgment**: Added reference to the original Nanobrowser project in the Acknowledgments section
-   - **Intro Description Update**: Refined the main introduction to emphasize the MCP integration focus
-   - **Memory Bank Updates**: Updated all memory bank files to reflect the rebranding while preserving technical documentation
-
-4. **MCP Host Error Handling Fix**: Resolved critical issues with the Native Messaging error handling that appeared after merging with the master branch:
-   - **Chrome Runtime Error Detection**: Fixed the critical issue in McpHostManager where Chrome's native messaging errors weren't being properly detected and propagated
-   - **Error Message Standardization**: Ensured consistent error message formatting for improved error detection in the UI
-   - **McpSettings UI Component**: Fixed syntax errors in the conditional logic that displays installation instructions when the native messaging host is not found
-   - **Component Import Fix**: Resolved missing import for McpSettings component in Options.tsx that prevented the MCP tab from rendering properly
-   - **Error Pattern Recognition**: Enhanced error detection to cover all variations of native messaging host errors
-   - **Comprehensive Error User Guidance**: Improved installation instructions for users encountering native messaging host errors
-
-5. **MCP Resources Class-Based Refactoring**: Converted MCP resource implementations to use class-based structure with dependency injection:
-   - **Class-Based Architecture**: Transformed resource modules from object literals to proper TypeScript classes
-   - **NativeMessaging Injection**: Implemented dependency injection pattern for NativeMessaging through constructors
-   - **Factory Function Pattern**: Added factory functions to create resources with proper dependencies
-   - **Enhanced Logging**: Added detailed logging in resource implementations
-   - **Notification Support**: Added methods to notify subscribers of resource state changes
-   - **Backward Compatibility**: Maintained backward compatibility for existing code
-   - **Resource Initialization Flow**: Improved resource initialization with centralized resource creation
-   - **Test Compatibility**: Ensured compatibility with existing tests
-   - **Code Organization**: Better encapsulation of resource behavior and state
-
-6. **MCP Host Native Messaging Integration Fix**: Resolved critical issue with the Native Messaging Host integration:
-   - **Manifest File Naming**: Fixed an issue where the Native Messaging Host manifest was incorrectly named `manifest.json` instead of the required `dev.nanobrowser.mcp.host.json`
-   - **Installation Script Update**: Modified the `install.sh` script to correctly name and copy the manifest file to Chrome's NativeMessagingHosts directory
-   - **Node.js ESM Support**: Added proper Node.js ESM module flags (`--experimental-specifier-resolution=node`) to the MCP Host execution script
-   - **File Organization**: Cleaned up old manifest files to ensure Chrome only recognizes the correct host definition
-   - **Installation Verification**: Added verification to ensure the manifest is installed in the correct location with the proper format
-   - **Testing**: Verified proper installation and connection with Chrome extension
-
-7. **MCP Host Components Implementation**: Implemented key components of the MCP Host architecture:
-   - **Message Handlers**: Created specialized handler classes for different message types (StatusHandler, PingHandler, ShutdownHandler)
-   - **Status Management**: Implemented mechanisms to track MCP Host status including connection state, heartbeat, and version information
-   - **McpHostManager**: Expanded the Chrome extension's host manager with robust connection, status tracking, and control capabilities
-   - **Test Coverage**: Added comprehensive tests for message handlers and host manager functionality
-   - **Error Handling**: Implemented graceful handling of timeouts and disconnections
-
-8. **Improved MCP SEE Service Documentation**: Completely restructured and enhanced the MCP SEE service documentation in `docs/chrome-mcp-host.md`:
-   - Added comprehensive introductory sections with clear explanations of key concepts
-   - Standardized terminology throughout the document (consistently using "MCP 服务器" instead of mixed terminology)
-   - Improved section organization with logical flow and consistent formatting
-   - Enhanced code examples with explanatory comments for easier understanding
-   - Refined diagrams and visual representations of the architecture
-   - Added detailed API reference for MCP resources and tools
-   - Improved deployment instructions with platform-specific steps
-   - Enhanced security considerations section with clear mitigation strategies
-
-9. **MCP Host Vite Integration**: Implemented Vite build system for the MCP Host component, including:
-   - Configuration for Vite and Vitest
-   - Express app integration for development server
-   - Multiple entry points for different build targets
-   - Compatibility with existing TypeScript building
-   - Migration path from Jest to Vitest for testing
-   - Improved development workflow with hot module replacement
-   - Resolved serialization issues with Vitest test runner
-
-The Jest to Vitest migration is now complete, with proper handling of test-specific issues:
-   - Successfully migrated test utilities and mock objects
-   - Added configuration to run integration tests in a single process when needed
-   - Temporarily skipped HTTP MCP server tests due to axios serialization limitations
-   - Maintained backward compatibility with Jest for comparison testing
-   - Documented issues and potential solutions for HTTP MCP server tests
-
-10. **Chrome Native Messaging MCP Implementation**: Completed the implementation of MCP integration using Chrome Native Messaging, including:
-   - Native Messaging Host with messaging protocol and MCP server
-   - Browser resource handlers for exposing browser state
-   - Browser tool handlers for executing browser operations
-   - Chrome extension client with MCP client and service module
-   - Background script integration to initialize MCP service
-   - Streamable HTTP protocol implementation for standard MCP communication
-
-11. **MCP Streamable HTTP Protocol Support**: Implemented standards-compliant MCP server using the Streamable HTTP protocol:
-   - Server-side implementation with session management
-   - Resource and tool exposure via HTTP endpoints
-   - Server-Sent Events (SSE) for notifications
-   - Full JSON-RPC compliance for requests and responses
-   - Support for both traditional native messaging and HTTP-based communication
-
-12. **MCP HTTP Server Implementation**: Developed a complete HTTP server for MCP based on Express:
-   - **McpServerManager Class**: Created a central manager class for the MCP HTTP server with robust lifecycle management (start/stop)
-   - **Session Management**: Implemented session-based connections with persistent transport objects and automatic cleanup
-   - **Express Integration**: Built on Express.js framework with JSON-RPC and SSE endpoints
-   - **Message Handlers**: Added dedicated handlers (McpServerStartHandler, McpServerStopHandler, McpServerStatusHandler) for server control
-   - **Browser State Synchronization**: Implemented browser state updates from Chrome extension to MCP server for connected clients
-   - **Extension UI Integration**: Added server control capabilities to the Chrome extension popup UI via the useMcpHost hook
-   - **Configuration Options**: Made server configurable with port and log level settings
-   - **Background Integration**: Added message handlers in the extension background script for MCP server operations
-
-13. **Task Execution Flow**: Mapped the complete flow from user input to task completion, including the initialization, planning, navigation, and validation phases.
-
-14. **Agent Interactions**: Identified the precise communication patterns and responsibility handoffs between Planner, Navigator, and Validator agents.
-
-15. **Browser Automation**: Cataloged the 17 distinct operations the Navigator agent can perform to interact with web pages, including element manipulation, navigation, scrolling, and form interaction.
-
-16. **RPC Handler Pattern Implementation**: Developed a standardized approach for implementing RPC handlers that expose browser functionality through the MCP interface:
-   - **GetDomStateHandler Implementation**: Created a new handler that exposes DOM state to MCP clients in both human-readable and structured formats
-   - **Class-Based Structure**: Designed handlers as TypeScript classes with clear responsibility
-   - **Dependency Injection**: Implemented constructor-based dependency injection for BrowserContext and other dependencies
-   - **Method Implementation**: Created handler methods following the RpcHandler interface
-   - **Comprehensive Error Handling**: Added structured error response handling with appropriate error codes
-   - **Dual Data Representation**: Provided both human-readable formatted text and structured data for machine consumption
-   - **Integration with Agent Patterns**: Aligned DOM representation with the format used by Agent system for consistency
-   - **Export and Registration**: Established a pattern for exporting and registering handlers in the system
-
-## Next Steps
-
-Based on our improved understanding of the system and recent developments, the following steps are recommended:
-
-1. **Complete Project Rebranding**:
-   - Update any remaining code references from "Nanobrowser" to "Algonius Browser"
-   - Update any remaining configuration files, especially those related to the MCP host
-   - Ensure the dev.nanobrowser.mcp.host.json file is appropriately renamed if needed
-   - Consider updating social media handles and links in documentation
-
-2. **MCP SEE Service Testing and Enhancement**:
-   - Test the implemented Native Messaging Host with various scenarios
-   - Refine error handling and security measures
-   - Test MCP resource access and tool functionality with external AI systems
-   - Document API for external AI system integration
-   - Create end-user documentation for installation and usage
-   - Improve the Go-based implementation with additional features
-
-3. **Go MCP Host Enhancement**:
-   - Implement additional browser resources beyond current_state
-   - Add more browser operation tools beyond navigate_to
-   - Create comprehensive test suite for the Go implementation
-   - Develop improved error handling and logging capabilities
-   - Enhance cross-platform support for different operating systems
-
-4. **Agent Optimization**:
-   - Analyze how agent prompts could be improved for better task execution
-   - Review the context management between agents to reduce token usage
-   - Examine how agent error handling and recovery mechanisms work
-   - Explore integration with MCP tools and resources
-
-5. **Browser Interaction Enhancement**:
-   - Assess potential improvements to element selection and interaction
-   - Explore adding new browser automation capabilities
-   - Investigate more sophisticated DOM parsing for better web understanding
-   - Ensure compatibility with MCP operation patterns
-
-6. **Testing and Validation**:
-   - Review current testing approach
-   - Develop testing strategies for the multi-agent system and MCP integration
-   - Implement validation mechanisms for agent behaviors
-   - Create test cases for Native Messaging communication
-
-7. **Documentation Enhancement**:
-   - Expand Memory Bank with additional context as discovered
-   - Create technical documentation for developers, including MCP integration
-   - Develop user documentation for extension users
-
-8. **RPC Handler Extensions**:
-   - Identify additional browser capabilities that should be exposed via RPC
-   - Implement additional RPC handlers following the established pattern
-   - Enhance existing handlers with additional capabilities
-   - Ensure consistency across handler implementations
-
-## Active Decisions and Considerations
-
-### Project Rebranding Strategy
-- **Decision Point**: How to effectively rebrand from Nanobrowser to Algonius Browser while maintaining functionality
-- **Consideration**: Need to update all user-facing references while being careful with internal/functional naming
-- **Current Approach**: Start with README.md and Memory Bank, then address UI components and core configuration
-
-### MCP Integration Strategy
-- **Decision Point**: How to best integrate MCP protocol with browser automation
-- **Consideration**: Need to balance security, performance, and usability
-- **Current Approach**: Chrome Native Messaging for secure local communication between extension and external AI systems
-
-### Native Messaging Implementation
-- **Decision Point**: How to structure the Native Host architecture
-- **Consideration**: Need reliable message passing and error handling
-- **Current Approach**: Modular design with separate components for messaging, MCP server, browser resources, and tools
-
-### Go MCP Host Implementation
-- **Decision Point**: How to architect the Go-based MCP host implementation
-- **Consideration**: Need clean architecture, maintainability, and testability
-- **Current Approach**: Clean dependency injection with interfaces, clear component responsibilities, and comprehensive build tooling
-
-### Execution Flow Optimization
-- **Decision Point**: How to balance planning frequency and execution efficiency
-- **Consideration**: The planning step is costly in tokens but essential for complex tasks
-- **Current Approach**: Periodic planning based on a configurable interval (planningInterval)
-
-### Browser Context Management
-- **Decision Point**: How to effectively manage browser state across operations
-- **Consideration**: Need to maintain accurate state while minimizing browser API calls
-- **Current Approach**: Centralized browserContext that provides abstraction over Puppeteer
-
-### Agent Communication
-- **Decision Point**: How agents pass context and maintain state between steps
-- **Consideration**: Need to balance comprehensive context with token efficiency
-- **Current Approach**: MessageManager service with specialized message types for different interactions
-
-### Error Recovery
-- **Decision Point**: How to handle failures during task execution
-- **Consideration**: Need balance between persistence and recognizing irrecoverable situations
-- **Current Approach**: Tracking consecutive failures with configurable thresholds (maxFailures)
-
-### Validation Strategy
-- **Decision Point**: How to verify task completion effectively
-- **Consideration**: Need to confirm actual completion vs. premature termination
-- **Current Approach**: Dedicated Validator agent with configurable validation attempts (maxValidatorFailures)
-
-### RPC Handler Design
-- **Decision Point**: How to structure RPC handlers for browser functionality
-- **Consideration**: Need balance between human-readable output and structured data for machine consumption
-- **Current Approach**: Dual representation with both formatted text and structured data objects
-
-## Important Patterns and Preferences
-
-### Project Rebranding Patterns
-- **User-facing First**: Prioritize updating user-visible elements before internal ones
-- **Functionality Preservation**: Ensure functionality doesn't break during name changes
-- **Documentation Accuracy**: Keep documentation in sync with code changes
-- **Consistent Terminology**: Use "Algonius Browser" consistently throughout the project
-
-### MCP Integration Patterns
-- **Resource-Tool Separation**: Clear distinction between browser state (resources) and browser operations (tools)
-- **Schema-Based Validation**: All MCP tools use JSON Schema for request validation
-- **Layered Architecture**: Separation of messaging protocol, MCP server, and browser integration
-
-### Go Implementation Patterns
-- **Interface-Driven Design**: Define clean interfaces for all components
-- **Dependency Injection**: Pass dependencies through constructors
-- **Error Handling**: Comprehensive error handling with appropriate logging
-- **Build System**: Use Makefile for standardized build, test, and installation
-- **Cross-Platform Support**: Handle platform-specific variations appropriately
-
-### Execution Patterns
-- **Initialization-Planning-Execution-Validation Cycle**: The core task execution pattern
-- **Event-Driven Communication**: Agents communicate state through a structured event system
-- **Action Registry Pattern**: Navigator uses a registry of possible actions with schema validation
-
-### Error Handling Patterns
-- **Graduated Recovery**: Multiple attempts before failure with configurable thresholds
-- **State Preservation**: Maintaining context even through errors to enable recovery
-- **Event Propagation**: Error events bubble up through the system for user visibility
-
-### Browser Interaction Patterns
-- **Element Indexing**: Using numeric indices for element selection rather than complex selectors
-- **Action Intent Documentation**: Each action includes an intent description for transparency
-- **Action Result Tracking**: Standardized ActionResult objects for consistent outcome reporting
-
-### RPC Handler Patterns
-- **Class-Based Implementation**: Each RPC handler is a separate class with clear responsibility
-- **Constructor Dependency Injection**: Dependencies are passed through constructors
-- **Method Binding**: Handler methods are bound to their instances during registration
-- **Dual Data Representation**: Providing both human-readable text and structured data
-- **Consistent Error Formatting**: Using standard JSON-RPC error codes and messages
-- **BFS Tree Traversal**: Using breadth-first search for DOM tree traversal when extracting elements
-- **Clear Documentation**: Comprehensive comments explaining handler purpose and methods
-
-## Development Process Summary
-
-### Rebranding Process
-When rebranding from Nanobrowser to Algonius Browser, we followed a systematic approach:
-
-1. **Documentation Update**: Started with updating the README.md to set clear project goals and direction.
-2. **Memory Bank Updates**: Updated all memory bank files to ensure consistent project reference.
-3. **Careful Consideration**: Distinguished between user-facing branding and internal code references.
-4. **Functionality Preservation**: Ensured all functionality remained intact during the name change.
-
-### Go MCP Host Development Process
-When implementing the Go-based MCP host, we followed this systematic approach:
-
-1. **Requirements Analysis**: 
-   - Identified the need for a clean, maintainable Go implementation
-   - Established key components needed: logger, messaging, MCP server, tools, resources
-
-2. **Architecture Design**:
-   - Created a clean layered architecture with dependency injection
-   - Established clear interfaces for all components
-   - Designed a logical directory structure for maintainability
-
-3. **Implementation**:
-   - Created core packages for logger, messaging, MCP server, types
-   - Implemented native messaging protocol handling
-   - Created tool and resource implementations
-   - Developed command line interface for the application
-
-4. **Build System**:
-   - Created a comprehensive Makefile with build, test, install targets
-   - Implemented install.sh and uninstall.sh scripts
-   - Ensured Chrome integration with proper manifest file
+4. **Build and Testing**:
+   - All code compiles successfully with Go build system
+   - Fixed type compatibility issues with mark3labs/mcp-go PropertyOption types
+   - Binary builds correctly with `make build`
+   - Created and successfully ran test to verify dual server functionality
+   - Ready for testing with external MCP clients
 
 5. **Documentation**:
-   - Added comprehensive comments to code
-   - Created README.md for the Go implementation
-   - Updated memory bank files to include Go implementation details
+   - Created comprehensive `docs/dual-server-architecture.md` documentation
+   - Updated `memory-bank/progress.md` with dual server implementation details
+   - Documented configuration options, usage examples, and troubleshooting
 
-### Test Development Workflow
-When addressing the failing test in McpHostManager's heartbeat functionality (specifically the "should update status to disconnected on ping timeout" test), we followed a systematic troubleshooting process:
+## Implementation Benefits
 
-1. **Problem Identification**: Ran the test suite to identify the failing test and understand the exact assertion failure (the status remained connected when it should have been disconnected).
+### For Chrome Extension Users
+- **Unchanged Interface**: Existing extension functionality remains identical
+- **Performance**: Direct Native Messaging communication maintains efficiency
+- **Security**: Leverages Chrome's built-in security model
 
-2. **Test Analysis**: Examined the test structure and the underlying mechanism it was attempting to test (ping timeout detection).
+### For External AI Tools
+- **Standard Protocol**: Industry-standard MCP over HTTP/SSE
+- **Language Agnostic**: Any language with HTTP/SSE support can connect
+- **Development Tools**: Easy integration with development workflows
+- **Testing**: Simplified testing and debugging capabilities
 
-3. **Solution Approaches**:
-   - First attempt: Revised the test to use a more direct approach to simulate the ping timeout scenario.
-   - Second attempt: Modified the test to directly capture and invoke the timeout callback function.
-   - Third attempt: Tried a different approach using VI timer mocking and console spying.
+### For Developers
+- **Unified Codebase**: Single implementation serves both protocols
+- **Consistency**: Same tools and resources available via both interfaces
+- **Maintainability**: Single source of truth for business logic
+- **Extensibility**: Easy to add new tools/resources to both servers
 
-4. **Challenge with Timer Mocking**: Encountered issues with `vi.runAllTimers()` causing infinite loops, which is a known limitation with complex timer-based tests.
+## Server Endpoints
 
-5. **Resolution Decision**: After multiple approaches, decided to remove the problematic test case while keeping the other heartbeat tests that successfully validate related functionality.
+The dual server now provides:
 
-This workflow demonstrates the team's approach to test-driven development with careful analysis, multiple solution attempts, and practical decision-making when facing technical limitations.
+1. **Native Messaging**: Available via Chrome extension (existing functionality)
+2. **SSE Server**: Available at `http://localhost:8080/mcp` (configurable)
+   - `GET /mcp/sse` - SSE endpoint for real-time communication
+   - `POST /mcp/tools/{name}` - Tool execution endpoint
+   - `GET /mcp/resources/{uri}` - Resource access endpoint
 
-### RPC Handler Development Process
-When implementing the `get_dom_state` RPC handler, we followed this systematic process:
+## Next Steps Recommendations
 
-1. **Requirements Analysis**: 
-   - Understood the need for a DOM state representation similar to what agents use
-   - Identified the need for both human-readable and structured data formats
+With the dual server implementation complete, suggested next priorities:
 
-2. **Research Existing Patterns**:
-   - Analyzed how the Agent system formats DOM data in `BasePrompt.buildBrowserStateUserMessage`
-   - Examined the DOM tree structure and traversal methods in `DOMElementNode`
+1. **Testing with External Clients**:
+   - Test SSE server with external MCP clients
+   - Verify tool and resource functionality via HTTP/SSE
+   - Test concurrent usage of both Native Messaging and SSE protocols
 
-3. **Handler Implementation**:
-   - Created a new TypeScript class `GetDomStateHandler`
-   - Implemented constructor with dependency injection for BrowserContext
-   - Created a main handler method following the RpcHandler interface
-   - Added comprehensive error handling with try/catch
-   - Implemented DOM formatting with consistent user-friendly representations
-   - Added a helper method to extract interactive elements using BFS traversal
+2. **Additional Tools and Resources**:
+   - Implement additional browser resources beyond `current_state`
+   - Add more browser operation tools beyond `navigate_to`
+   - Enhance existing tools with additional capabilities
 
-4. **Integration**:
-   - Updated task/index.ts to export the new handler
-   - Added handler instantiation and registration in background/index.ts
-   - Registered the RPC method with the McpHostManager
+3. **Enhanced Features**:
+   - Add authentication for SSE server (for production use)
+   - Implement rate limiting for external clients
+   - Add metrics and monitoring capabilities
 
-5. **Documentation**:
-   - Added comprehensive comments explaining the handler's purpose
-   - Documented method parameters and return values
-   - Updated the systemPatterns.md with the new RPC Handler Pattern
+4. **Documentation and Examples**:
+   - Create client examples in multiple programming languages
+   - Document integration patterns for AI frameworks
+   - Create end-user installation and usage guides
 
-This process demonstrates our approach to extending the MCP interface with new browser functionality while maintaining clean separation of concerns and consistent patterns.
+## Configuration
 
-## Learnings and Project Insights
+The dual server supports environment variable configuration:
 
-Our ongoing development and code analysis has revealed several important insights about the system:
+```bash
+# SSE Server Configuration
+SSE_PORT=":8080"                    # Port for SSE server
+SSE_BASE_URL="http://localhost:8080" # Base URL for SSE server
+SSE_BASE_PATH="/mcp"                # Base path for MCP endpoints
 
-### Rebranding Insights
-- The project rebranding emphasizes a focused mission on MCP integration as a key differentiator
-- Maintaining acknowledgment of the original project establishes proper open-source etiquette
-- Clear project goals in documentation help align future development efforts
-- The rebranding provides an opportunity to refine and clarify the project's direction
+# Runtime Configuration
+RUN_MODE="production"               # Runtime mode (development/production)
+```
 
-### MCP Integration Insights
-- Chrome Native Messaging provides a secure and efficient channel for MCP protocol integration
-- The implemented MCP client-server architecture includes:
-  - Robust message handling with request IDs and timeouts
-  - Error propagation and recovery mechanisms
-  - State synchronization between browser and MCP host
-  - Modular design allowing future extensions
-- Exposing browser capabilities as MCP resources and tools creates a powerful extension point for AI systems
-- Structured message passing with error handling is critical for reliable communication
-- Separating browser state (resources) from operations (tools) provides a clean abstraction
-- The active-passive architecture (extension sends updates to host) ensures minimal performance impact
+## Recent Development History
 
-### Go Implementation Insights
-- Go's strong typing and interface-driven design creates a maintainable and testable MCP host
-- Clean dependency injection simplifies testing and component replacement
-- Go's concurrency model is well-suited for handling message passing and processing
-- A structured build system with Makefile ensures consistent development practices
-- Go's standard library provides most of the functionality needed, minimizing external dependencies
+### Previous Major Achievements
 
-### Agent System Architecture
-- The multi-agent approach effectively delegates specialized responsibilities but requires careful coordination
-- The Planner agent serves as a strategic coordinator, while Navigator handles tactical execution
-- Validator provides an important quality check that improves overall reliability
-- MCP integration can potentially enhance agent capabilities with external specialized models
+1. **Go MCP Host Implementation (2025-05-23)**: Created complete Go-based implementation with clean architecture
+2. **Project Rebranding (2025-05-18)**: Successfully rebranded from Nanobrowser to Algonius Browser
+3. **MCP Host Control Implementation**: Developed comprehensive system to monitor and control MCP Host process
+4. **Chrome Native Messaging Integration**: Completed Native Messaging Host for MCP services
+5. **RPC Handler Pattern**: Established standardized handlers for browser functionality exposure
 
-### Execution Flow Insights
-- The system uses a loop-based execution model with state transitions rather than a linear process
-- Task execution is broken into steps with coordinated handoffs between agents
-- Event system plays a critical role in maintaining execution state and enabling monitoring
-- Native Messaging introduces additional considerations for state synchronization
+### Architecture Evolution
 
-### Browser Automation Capabilities
-- The Navigator has a comprehensive set of web interaction capabilities (17 distinct operations)
-- Element interaction relies on a combination of indexing and DOM understanding
-- Operations are designed with intent documentation for better transparency and troubleshooting
-- MCP tools can provide standardized access to these capabilities for external systems
+The project has evolved from a Chrome extension with browser automation to a comprehensive MCP platform supporting:
 
-### Performance Considerations
-- Planning is computationally expensive but essential for complex tasks
-- Context management between agent calls significantly impacts token usage
-- Action validation and error handling are crucial for reliable automation
-- Native Messaging adds minimal overhead but requires careful buffer management
+- **Chrome Extension Integration**: Via Native Messaging protocol
+- **External AI Tool Integration**: Via HTTP/SSE protocol
+- **Unified Tool/Resource Interface**: Same capabilities accessible through both protocols
+- **Clean Architecture**: Go-based implementation with dependency injection
+- **Comprehensive Documentation**: Technical and user documentation
 
-### RPC Handler Insights
-- Standardized handler patterns improve code organization and maintainability
-- Class-based structure with dependency injection provides clean separation of concerns
-- DOM state representation benefits from both human-readable and structured formats
-- Reusing the same formatting approaches across agent and MCP interfaces ensures consistency
-- BFS traversal is effective for extracting interactive elements from the DOM tree
-- Consistent error handling patterns improve troubleshooting and client experience
+## Technical Insights
 
-This document will continue to be updated as we gain deeper insights through ongoing code analysis and development efforts.
+### Dual Server Implementation Insights
+- **Protocol Abstraction**: Successfully abstracted MCP functionality to work with multiple transport protocols
+- **Type Adaptation**: Effective conversion between internal types and external library formats
+- **Concurrent Server Management**: Proper handling of multiple server lifecycles with unified control
+- **Error Handling**: Robust error handling with graceful degradation and cleanup
+
+### mark3labs/mcp-go Integration Insights
+- **Industry Standard**: Using established Go MCP library ensures compatibility and reliability
+- **Schema Conversion**: PropertyOption types provide flexible parameter configuration
+- **HTTP/SSE Protocol**: Standard web protocols enable broad client compatibility
+- **Real-time Communication**: SSE streaming enables real-time tool execution feedback
+
+### Build System Insights
+- **Go Toolchain**: Go's built-in build system provides reliable compilation and dependency management
+- **Type Safety**: Go's strong typing caught integration issues early in development
+- **Cross-Platform**: Go's cross-platform nature ensures broad deployment compatibility
+
+This dual server implementation represents a significant milestone in making the Algonius Browser MCP capabilities accessible to a wide range of AI tools and frameworks while maintaining existing Chrome extension functionality.
