@@ -31,17 +31,32 @@ graph TD
 - **Validator Agent**: Verifies task completion and result accuracy
 
 ### 3. MCP Integration System
-The MCP SEE (Surface Extension Environments) service architecture:
+The current SSE-based MCP architecture:
 
 ```mermaid
 graph TD
-    A[Chrome Extension] ---> B[Native Messaging Interface]
-    B <---> C[Native Host Application]
-    C ---> D[MCP Server Implementation]
-    D ---> E1[Browser Resources]
-    D ---> E2[Browser Operation Tools]
+    A[Chrome Extension] --> B[Native Messaging Protocol]
+    B --> C[Go MCP Host]
+    C --> D[SSE Server]
+    C --> E[Native Messaging Handler]
     
-    F[External AI Systems] ---> C
+    subgraph "Go MCP Host Components"
+        F[Main Container with DI]
+        G[Native Messaging]
+        H[SSE Server with mark3labs/mcp-go]
+        I[Tools & Resources]
+        J[Status Handler]
+        K[Logger]
+    end
+    
+    C --> F
+    F --> G
+    F --> H
+    F --> I
+    F --> J
+    F --> K
+    
+    L[External AI Systems] --> H
     
     subgraph "Chrome Browser"
         A
@@ -51,15 +66,22 @@ graph TD
     subgraph "Local Machine"
         C
         D
-        E1
-        E2
+        E
+        F
+        G
+        H
+        I
+        J
+        K
     end
 ```
 
 - **Chrome Extension**: Captures browser state and executes operations
-- **Native Messaging Host**: Provides communication channel and MCP server implementation
-- **MCP Server**: Exposes browser capabilities through standardized protocol
-- **External AI Systems**: Can access browser state and operations via MCP
+- **Native Messaging Protocol**: Bidirectional communication channel between extension and host
+- **Go MCP Host**: Single application managing both Native Messaging and SSE server
+- **SSE Server**: HTTP/SSE endpoint using mark3labs/mcp-go for external AI systems
+- **Dependency Injection Container**: Clean architecture with explicit dependencies
+- **External AI Systems**: Access browser capabilities via standard MCP over HTTP/SSE
 
 ### 4. RPC Handler Pattern
 The project uses a consistent pattern for implementing RPC handlers that expose browser functionality through the MCP interface:

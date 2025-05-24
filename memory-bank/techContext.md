@@ -201,12 +201,15 @@ graph TD
 mcp-host-go/
 ├── cmd/mcp-host/         # Main application entry point
 ├── pkg/                  # Core packages
-│   ├── dual/            # Dual server (Native Messaging + SSE)
+│   ├── handlers/        # RPC and request handlers
 │   ├── logger/          # Structured logging
 │   ├── messaging/       # Chrome Native Messaging protocol
-│   ├── mcp/             # MCP server implementation
+│   ├── resources/       # MCP resource implementations
 │   ├── sse/             # SSE-based MCP server
+│   ├── tools/           # MCP tool implementations
 │   └── types/           # Shared types and interfaces
+├── tests/               # Integration testing suite
+│   └── integration/     # Integration test environment
 ├── manifest/            # Chrome Native Messaging manifests
 ├── bin/                 # Build artifacts (gitignored)
 ├── Makefile            # Build automation

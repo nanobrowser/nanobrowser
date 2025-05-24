@@ -195,8 +195,8 @@ Completed comprehensive optimization of the mcp-host-go build system and develop
 - **Version Control Hygiene**: Proper .gitignore prevents accidental commits of build artifacts
 - **Cross-Platform Compatibility**: Scripts work correctly on Linux/macOS environments
 
-### Dual Server Implementation (2025-05-24)
-Successfully implemented a dual MCP server that supports both Native Messaging and SSE protocols:
+### Simplified SSE-Based MCP Architecture (2025-05-24)
+Successfully implemented a simplified SSE-based MCP architecture with direct Native Messaging integration:
 
 1. **SSE Server Implementation**:
    - Integrated `mark3labs/mcp-go` library for SSE-based MCP communication
@@ -205,29 +205,30 @@ Successfully implemented a dual MCP server that supports both Native Messaging a
    - Implemented proper schema conversion for tool parameters
    - Added HTTP server capabilities for external MCP client access
 
-2. **Dual Server Architecture**:
-   - Created `pkg/dual/server.go` for unified server management
-   - Supports both Native Messaging (Chrome extension) and SSE (external clients)
-   - Registers tools and resources with both server implementations
-   - Provides unified start/stop/status management
-   - Ensures consistent behavior across both protocols
+2. **Simplified Architecture**:
+   - Removed dual server manager - now uses direct SSE server with Native Messaging forwarding
+   - Single application with dependency injection container in `main.go`
+   - Clean separation of concerns with dedicated packages for each component
+   - SSE server forwards requests to Chrome extension via Native Messaging
+   - Unified tool/resource registration with clean interface abstractions
 
 3. **Main Application Updates**:
-   - Updated `main.go` to use the new dual server
+   - Updated `main.go` to use container-based dependency injection
    - Added environment variable configuration for SSE server
    - Configurable port, base URL, and base path for SSE endpoint
-   - Enhanced logging to show both server endpoints
-   - Graceful shutdown for both servers
+   - Enhanced logging to show SSE server endpoint on startup
+   - Graceful shutdown with proper cleanup
 
 4. **Build and Testing**:
    - All code compiles successfully with Go build system
    - Fixed type compatibility issues with mark3labs/mcp-go
    - Binary builds correctly with make build
+   - Comprehensive integration testing suite with real MCP clients
    - Ready for testing with external MCP clients
 
-This implementation enables the MCP host to serve both:
-- **Native Messaging**: Chrome extension integration (existing functionality)
-- **SSE**: External AI tools and frameworks via HTTP/SSE protocol
+This implementation enables the MCP host to serve:
+- **Native Messaging**: Direct Chrome extension integration (existing functionality)
+- **SSE**: External AI tools and frameworks via HTTP/SSE protocol with Native Messaging forwarding
 
 ### Go MCP Host Implementation (2025-05-23)
 Created a complete Go-based implementation of the MCP host with a clean architecture approach:
