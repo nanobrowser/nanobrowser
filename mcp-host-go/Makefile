@@ -34,17 +34,21 @@ help:
 	@echo "MCP Host Go Makefile"
 	@echo "--------------------"
 	@echo "Available targets:"
-	@echo "  make build       - Build the MCP host binary"
-	@echo "  make install     - Build and install the MCP host"
-	@echo "  make uninstall   - Remove the MCP host"
-	@echo "  make clean       - Remove build artifacts"
-	@echo "  make test        - Run tests"
-	@echo "  make lint        - Run linter"
-	@echo "  make vet         - Run Go vet"
-	@echo "  make deps        - Download dependencies"
-	@echo "  make tidy        - Tidy Go modules"
-	@echo "  make all         - Clean, build, and test"
-	@echo "  make help        - Show this help message"
+	@echo "  make build                    - Build the MCP host binary"
+	@echo "  make install                  - Build and install the MCP host"
+	@echo "  make uninstall                - Remove the MCP host"
+	@echo "  make clean                    - Remove build artifacts"
+	@echo "  make test                     - Run unit tests"
+	@echo "  make test-integration         - Run integration tests"
+	@echo "  make test-integration-verbose - Run integration tests with verbose output"
+	@echo "  make test-integration-clean   - Run integration tests and clean artifacts"
+	@echo "  make test-integration-coverage- Run integration tests with coverage"
+	@echo "  make lint                     - Run linter"
+	@echo "  make vet                      - Run Go vet"
+	@echo "  make deps                     - Download dependencies"
+	@echo "  make tidy                     - Tidy Go modules"
+	@echo "  make all                      - Clean, build, and test"
+	@echo "  make help                     - Show this help message"
 
 # Create build directory
 $(BUILD_DIR):
@@ -84,6 +88,31 @@ clean:
 test:
 	@echo "${GREEN}Running tests...${NC}"
 	$(GOTEST) -v ./...
+
+# Run integration tests
+.PHONY: test-integration
+test-integration: build
+	@echo "${GREEN}Running integration tests...${NC}"
+	cd tests/integration && $(GOTEST) -v -timeout=5m ./...
+
+# Run integration tests with verbose output
+.PHONY: test-integration-verbose
+test-integration-verbose: build
+	@echo "${GREEN}Running integration tests with verbose output...${NC}"
+	cd tests/integration && $(GOTEST) -v -timeout=5m -args -test.v ./...
+
+# Clean up test artifacts and run integration tests
+.PHONY: test-integration-clean
+test-integration-clean: test-integration
+	@echo "${GREEN}Cleaning up test artifacts...${NC}"
+	rm -rf /tmp/mcp-host-test*
+
+# Run integration tests with coverage
+.PHONY: test-integration-coverage
+test-integration-coverage: build
+	@echo "${GREEN}Running integration tests with coverage...${NC}"
+	cd tests/integration && $(GOTEST) -v -timeout=5m -coverprofile=coverage.out ./...
+	cd tests/integration && go tool cover -html=coverage.out -o coverage.html
 
 # Run linter
 .PHONY: lint
