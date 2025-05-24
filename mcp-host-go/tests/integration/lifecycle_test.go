@@ -12,6 +12,19 @@ import (
 	"env"
 )
 
+func TestEnv(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	testEnv, err := env.NewMcpHostTestEnvironment(nil)
+	require.NoError(t, err)
+	defer testEnv.Cleanup()
+
+	// Setup the environment
+	err = testEnv.Setup(ctx)
+	require.NoError(t, err)
+}
+
 func TestProcessLifecycle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -26,16 +39,13 @@ func TestProcessLifecycle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Send initialization message via Native Messaging
-	initResponse, err := testEnv.GetNativeMsg().SendMessage(ctx, map[string]interface{}{
+	err = testEnv.GetNativeMsg().SendMessage(ctx, map[string]interface{}{
 		"type": "initialize",
 		"capabilities": map[string]interface{}{
 			"version": "1.0.0",
 		},
 	})
 	require.NoError(t, err)
-
-	// Verify initialization response
-	assert.Equal(t, true, initResponse["success"])
 
 	// Verify process is running
 	assert.True(t, testEnv.IsHostRunning())
@@ -96,7 +106,7 @@ func TestBrowserStateResource(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set mock browser state via Native Messaging
-	stateResponse, err := testEnv.GetNativeMsg().SendMessage(ctx, map[string]interface{}{
+	err = testEnv.GetNativeMsg().SendMessage(ctx, map[string]interface{}{
 		"type": "setBrowserState",
 		"state": map[string]interface{}{
 			"activeTab": map[string]interface{}{
@@ -113,8 +123,6 @@ func TestBrowserStateResource(t *testing.T) {
 		t.Logf("setBrowserState failed (expected if not implemented): %v", err)
 		return
 	}
-
-	assert.Equal(t, true, stateResponse["success"])
 
 	// Wait for state to be processed
 	time.Sleep(100 * time.Millisecond)

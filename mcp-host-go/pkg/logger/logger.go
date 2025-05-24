@@ -110,17 +110,19 @@ func ensureLogDirExists(filePath string) error {
 // The logger outputs ONLY to file, not to stdout/stderr to avoid
 // interference with native messaging which uses stdout/stderr
 func buildZapLogger() (*zap.Logger, error) {
-	var config zap.Config
+	// Always use console (text) format for better readability
+	config := zap.NewDevelopmentConfig()
 
-	// Choose configuration based on environment
-	if isConsoleMode() || isDevelopmentMode() {
-		config = zap.NewDevelopmentConfig()
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	} else {
-		config = zap.NewProductionConfig()
-		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	}
+	// Configure console-style encoding for text format
+	config.Encoding = "console"
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	config.EncoderConfig.ConsoleSeparator = " | "
+
+	// Enable development mode and set caller skip to show real calling location
+	// instead of the wrapper methods in this logger package
+	config.Development = true
 
 	// Configure log level from environment
 	if level := os.Getenv("LOG_LEVEL"); level != "" {
@@ -173,17 +175,12 @@ func buildZapLogger() (*zap.Logger, error) {
 		config.ErrorOutputPaths = append(config.ErrorOutputPaths, "stderr")
 	}
 
-	// Build the logger
-	return config.Build()
-}
+	// Build the logger with caller skip to show real calling location
+	// Skip 1 level to bypass our wrapper methods
+	logger, err := config.Build(zap.AddCallerSkip(1))
+	if err != nil {
+		return nil, err
+	}
 
-// isConsoleMode checks if console mode is enabled
-func isConsoleMode() bool {
-	return os.Getenv("LOG_FORMAT") == "console"
-}
-
-// isDevelopmentMode checks if development mode is enabled
-func isDevelopmentMode() bool {
-	env := os.Getenv("GO_ENV")
-	return env == "development" || env == "dev"
+	return logger, nil
 }

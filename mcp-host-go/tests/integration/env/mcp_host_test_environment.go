@@ -1,8 +1,11 @@
 package env
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,14 +15,15 @@ import (
 )
 
 type McpHostTestEnvironment struct {
-	hostProcess *exec.Cmd
-	mcpClient   *MockMcpSSEClient
-	nativeMsg   *NativeMessagingManager
-	port        int
-	baseURL     string
-	basePath    string
-	logFilePath string
-	testDataDir string
+	hostProcess    *exec.Cmd
+	mcpClient      *McpSSEClient
+	nativeMsg      *NativeMessagingManager
+	port           int
+	baseURL        string
+	basePath       string
+	logFilePath    string
+	testDataDir    string
+	logMonitorStop chan struct{}
 }
 
 type TestConfig struct {
@@ -44,7 +48,7 @@ func NewMcpHostTestEnvironment(config *TestConfig) (*McpHostTestEnvironment, err
 	}
 
 	baseURL := fmt.Sprintf("http://localhost:%d", port)
-	basePath := "/mcp"
+	basePath := "/sse"
 
 	// Create test data directory
 	testDataDir := config.TestDataDir
@@ -57,11 +61,12 @@ func NewMcpHostTestEnvironment(config *TestConfig) (*McpHostTestEnvironment, err
 	}
 
 	return &McpHostTestEnvironment{
-		port:        port,
-		baseURL:     baseURL,
-		basePath:    basePath,
-		testDataDir: testDataDir,
-		logFilePath: filepath.Join(testDataDir, "mcp-host.log"),
+		port:           port,
+		baseURL:        baseURL,
+		basePath:       basePath,
+		testDataDir:    testDataDir,
+		logFilePath:    filepath.Join(testDataDir, "mcp-host.log"),
+		logMonitorStop: make(chan struct{}),
 	}, nil
 }
 
@@ -76,13 +81,16 @@ func (env *McpHostTestEnvironment) Setup(ctx context.Context) error {
 		return fmt.Errorf("failed to start MCP host: %w", err)
 	}
 
+	// Start log monitoring
+	go env.startLogMonitor(ctx)
+
 	// Wait for the host to be ready
 	if err := env.waitForHostReady(ctx); err != nil {
 		return fmt.Errorf("MCP host failed to become ready: %w", err)
 	}
 
 	// Create MCP client
-	env.mcpClient = NewMockMcpSSEClient(env.baseURL + env.basePath)
+	env.mcpClient = NewMcpSSEClient(env.baseURL + env.basePath)
 
 	return nil
 }
@@ -146,6 +154,112 @@ func (env *McpHostTestEnvironment) startMcpHost(ctx context.Context) error {
 	return nil
 }
 
+// startLogMonitor starts a goroutine to monitor and output MCP host logs to console
+func (env *McpHostTestEnvironment) startLogMonitor(ctx context.Context) {
+	log.Printf("[LOG-MONITOR] Starting log monitor for file: %s", env.logFilePath)
+
+	go func() {
+		// Wait a moment for the log file to be created
+		time.Sleep(500 * time.Millisecond)
+
+		for {
+			select {
+			case <-ctx.Done():
+				log.Printf("[LOG-MONITOR] Context cancelled, stopping log monitor")
+				return
+			case <-env.logMonitorStop:
+				log.Printf("[LOG-MONITOR] Stop signal received, stopping log monitor")
+				return
+			default:
+			}
+
+			// Try to open and read the log file
+			if err := env.readAndOutputLogs(); err != nil {
+				// Log file might not exist yet, wait and retry
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			// Wait a bit before checking for new log entries
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+}
+
+// readAndOutputLogs reads the log file and outputs new lines to console
+func (env *McpHostTestEnvironment) readAndOutputLogs() error {
+	file, err := os.Open(env.logFilePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Keep track of the last read position
+	// For simplicity, we'll read from the end and follow new content
+	// In a more sophisticated implementation, we could track the last read position
+
+	scanner := bufio.NewScanner(file)
+	var lines []string
+
+	// Read all lines first
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	// Output recent lines (last 10 or all if fewer than 10)
+	start := 0
+	if len(lines) > 10 {
+		start = len(lines) - 10
+	}
+
+	for i := start; i < len(lines); i++ {
+		log.Printf("[MCP-HOST] %s", lines[i])
+	}
+
+	return nil
+}
+
+// tailLogFile continuously tails the log file and outputs new lines
+func (env *McpHostTestEnvironment) tailLogFile(ctx context.Context) error {
+	file, err := os.Open(env.logFilePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Seek to end of file
+	file.Seek(0, io.SeekEnd)
+
+	reader := bufio.NewReader(file)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-env.logMonitorStop:
+			return nil
+		default:
+		}
+
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				// No new data, wait a bit
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			return err
+		}
+
+		// Output the log line with prefix
+		log.Printf("[MCP-HOST] %s", line[:len(line)-1]) // Remove trailing newline
+	}
+}
+
 func (env *McpHostTestEnvironment) waitForHostReady(ctx context.Context) error {
 	// Wait for SSE server to be ready by trying to connect to a basic endpoint
 	client := &http.Client{Timeout: 1 * time.Second}
@@ -161,6 +275,7 @@ func (env *McpHostTestEnvironment) waitForHostReady(ctx context.Context) error {
 		resp, err := client.Get(env.baseURL + env.basePath + "/")
 		if err == nil {
 			resp.Body.Close()
+			log.Printf("[LOG-MONITOR] MCP host is ready at %s", env.baseURL+env.basePath)
 			return nil
 		}
 		if resp != nil {
@@ -184,7 +299,7 @@ func (env *McpHostTestEnvironment) IsHostRunning() bool {
 }
 
 // Accessor methods for private fields
-func (env *McpHostTestEnvironment) GetMcpClient() *MockMcpSSEClient {
+func (env *McpHostTestEnvironment) GetMcpClient() *McpSSEClient {
 	return env.mcpClient
 }
 
@@ -199,8 +314,13 @@ func (env *McpHostTestEnvironment) GetHostProcess() *exec.Cmd {
 func (env *McpHostTestEnvironment) Cleanup() error {
 	var errors []error
 
+	// Stop log monitor
+	log.Printf("[LOG-MONITOR] Stopping log monitor")
+	close(env.logMonitorStop)
+
 	// Shutdown the host process
 	if env.hostProcess != nil && env.hostProcess.Process != nil {
+		log.Printf("[LOG-MONITOR] Shutting down MCP host process")
 		if err := env.hostProcess.Process.Signal(os.Interrupt); err != nil {
 			errors = append(errors, fmt.Errorf("failed to send interrupt signal: %w", err))
 		}
@@ -216,8 +336,10 @@ func (env *McpHostTestEnvironment) Cleanup() error {
 			if err != nil {
 				errors = append(errors, fmt.Errorf("process exited with error: %w", err))
 			}
+			log.Printf("[LOG-MONITOR] MCP host process exited")
 		case <-time.After(10 * time.Second):
 			// Force kill if graceful shutdown takes too long
+			log.Printf("[LOG-MONITOR] Force killing MCP host process")
 			if err := env.hostProcess.Process.Kill(); err != nil {
 				errors = append(errors, fmt.Errorf("failed to kill process: %w", err))
 			}

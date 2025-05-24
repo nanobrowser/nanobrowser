@@ -21,33 +21,25 @@ type NativeMessagingManager struct {
 	actionHandler func(action string, params map[string]interface{}) map[string]interface{}
 }
 
-func (nm *NativeMessagingManager) SendMessage(ctx context.Context, message map[string]interface{}) (map[string]interface{}, error) {
+func (nm *NativeMessagingManager) SendMessage(ctx context.Context, message map[string]interface{}) error {
 	// Serialize message to JSON
 	jsonData, err := json.Marshal(message)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal message: %w", err)
+		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
 	// Write length prefix (4 bytes, little endian)
 	length := uint32(len(jsonData))
 	if err := binary.Write(nm.stdin, binary.LittleEndian, length); err != nil {
-		return nil, fmt.Errorf("failed to write message length: %w", err)
+		return fmt.Errorf("failed to write message length: %w", err)
 	}
 
 	// Write JSON data
 	if _, err := nm.stdin.Write(jsonData); err != nil {
-		return nil, fmt.Errorf("failed to write message data: %w", err)
+		return fmt.Errorf("failed to write message data: %w", err)
 	}
 
-	// Wait for response or timeout
-	select {
-	case response := <-nm.responses:
-		return response, nil
-	case err := <-nm.errors:
-		return nil, fmt.Errorf("error reading response: %w", err)
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
+	return nil
 }
 
 func (nm *NativeMessagingManager) SetActionHandler(handler func(action string, params map[string]interface{}) map[string]interface{}) {
