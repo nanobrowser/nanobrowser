@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -82,7 +83,32 @@ func NewLoggerFromZap(zapLogger *zap.Logger) Logger {
 	return &ZapLogger{zapLogger}
 }
 
+// getDefaultLogFilePath returns the default log file path based on the OS
+func getDefaultLogFilePath() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Fallback to temp directory if home directory can't be determined
+		return filepath.Join(os.TempDir(), "mcp-host", "logs", "mcp-host.log")
+	}
+	return filepath.Join(homeDir, ".mcp-host", "logs", "mcp-host.log")
+}
+
+// ensureLogDirExists creates the log directory if it doesn't exist
+func ensureLogDirExists(filePath string) error {
+	// Get the directory part of the file path
+	logDir := filepath.Dir(filePath)
+
+	// Create the directory with all parent directories if they don't exist
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return fmt.Errorf("failed to create log directory %s: %w", logDir, err)
+	}
+
+	return nil
+}
+
 // buildZapLogger builds a zap logger based on environment configuration
+// The logger outputs ONLY to file, not to stdout/stderr to avoid
+// interference with native messaging which uses stdout/stderr
 func buildZapLogger() (*zap.Logger, error) {
 	var config zap.Config
 
@@ -105,25 +131,49 @@ func buildZapLogger() (*zap.Logger, error) {
 		config.Level = zap.NewAtomicLevelAt(zapLevel)
 	}
 
-	// Configure output paths
-	config.OutputPaths = []string{"stdout"}
-	config.ErrorOutputPaths = []string{"stderr"}
+	// Initialize empty output paths - we don't use stdout/stderr by default
+	// as this would interfere with native messaging
+	config.OutputPaths = []string{}
+	config.ErrorOutputPaths = []string{}
 
-	// Add file output if specified
+	// Determine the log file path
+	var logFilePath string
+
+	// Check if LOG_FILE is specified directly
 	if logFile := os.Getenv("LOG_FILE"); logFile != "" {
-		config.OutputPaths = append(config.OutputPaths, logFile)
+		logFilePath = logFile
+	} else if logDir := os.Getenv("LOG_DIR"); logDir != "" {
+		// If LOG_DIR is specified, use it with default filename
+		logFilePath = filepath.Join(logDir, "mcp-host.log")
+	} else {
+		// Use default path if no environment variables are set
+		logFilePath = getDefaultLogFilePath()
 	}
 
-	// Add directory-based file output if specified
-	if logDir := os.Getenv("LOG_DIR"); logDir != "" {
-		logFile := "mcp-host.log"
-		if customFile := os.Getenv("LOG_FILE"); customFile != "" {
-			logFile = customFile
-		}
-		filePath := fmt.Sprintf("%s/%s", logDir, logFile)
-		config.OutputPaths = append(config.OutputPaths, filePath)
+	// Ensure log directory exists
+	if err := ensureLogDirExists(logFilePath); err != nil {
+		// If we can't create the directory, log a warning and continue
+		// The logger will attempt to write to the file anyway, and may fail
+		fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
 	}
 
+	// Add log file to output paths
+	config.OutputPaths = append(config.OutputPaths, logFilePath)
+	config.ErrorOutputPaths = append(config.ErrorOutputPaths, logFilePath)
+
+	// Only add stdout if explicitly requested via environment variable
+	// This should NOT be used in production with native messaging
+	if os.Getenv("LOG_TO_STDOUT") == "true" {
+		config.OutputPaths = append(config.OutputPaths, "stdout")
+	}
+
+	// Only add stderr if explicitly requested via environment variable
+	// This should NOT be used in production with native messaging
+	if os.Getenv("LOG_TO_STDERR") == "true" {
+		config.ErrorOutputPaths = append(config.ErrorOutputPaths, "stderr")
+	}
+
+	// Build the logger
 	return config.Build()
 }
 

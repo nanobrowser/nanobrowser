@@ -2,7 +2,18 @@
 
 ## Current Work Focus - COMPLETED ✅
 
-### Latest Achievement: Build System Optimization (2025-05-24 06:12)
+### Latest Achievement: Logging System Optimization (2025-05-24 08:43)
+Successfully modified the logging system to avoid interference with Native Messaging by redirecting all logs exclusively to files.
+
+#### Logging System Improvements - 2025-05-24 08:43
+- ✅ **File-Only Logging**: Reconfigured logger to write only to files, not to stdout/stderr
+- ✅ **Default Log Path**: Added smart default log path in user home directory (`~/.mcp-host/logs/mcp-host.log`)
+- ✅ **Auto Directory Creation**: Implemented automatic log directory creation
+- ✅ **Flexible Configuration**: Added environment variables for customizing log output
+- ✅ **User Feedback**: Added startup/shutdown messages showing log file location
+- ✅ **Native Messaging Compatibility**: Fixed conflict between logging and Native Messaging protocol
+
+### Previous Achievement: Build System Optimization (2025-05-24 06:12)
 Successfully resolved Makefile warnings and optimized the build system for mcp-host-go project.
 
 #### Build System Improvements - 2025-05-24 06:12
@@ -86,12 +97,13 @@ The dual server now provides:
 
 ## Next Steps Recommendations
 
-With the dual server implementation complete, suggested next priorities:
+With the logging system optimized, suggested next priorities:
 
-1. **Testing with External Clients**:
-   - Test SSE server with external MCP clients
-   - Verify tool and resource functionality via HTTP/SSE
-   - Test concurrent usage of both Native Messaging and SSE protocols
+1. **Testing**:
+   - Test MCP host with logging disabled to stdout
+   - Verify that logs are correctly written to the configured file path
+   - Test different log configuration options through environment variables
+   - Verify that Native Messaging continues to function correctly
 
 2. **Additional Tools and Resources**:
    - Implement additional browser resources beyond `current_state`
@@ -110,16 +122,25 @@ With the dual server implementation complete, suggested next priorities:
 
 ## Configuration
 
-The dual server supports environment variable configuration:
+The MCP host now supports the following environment variables for logging configuration:
 
 ```bash
+# Logging Configuration
+LOG_FILE="/path/to/custom/logfile.log"   # Specific log file path
+LOG_DIR="/path/to/log/directory"         # Directory for logs (uses mcp-host.log as filename)
+LOG_LEVEL="debug|info|warn|error"        # Log level
+LOG_TO_STDOUT="true"                     # Optional: Enable stdout logging (NOT recommended with Native Messaging)
+LOG_TO_STDERR="true"                     # Optional: Enable stderr logging (NOT recommended with Native Messaging)
+LOG_FORMAT="console"                     # Use console format for logs (vs JSON)
+GO_ENV="development"                     # Development mode enables additional logging features
+
 # SSE Server Configuration
-SSE_PORT=":8080"                    # Port for SSE server
-SSE_BASE_URL="http://localhost:8080" # Base URL for SSE server
-SSE_BASE_PATH="/mcp"                # Base path for MCP endpoints
+SSE_PORT=":8080"                         # Port for SSE server
+SSE_BASE_URL="http://localhost:8080"     # Base URL for SSE server
+SSE_BASE_PATH="/mcp"                     # Base path for MCP endpoints
 
 # Runtime Configuration
-RUN_MODE="production"               # Runtime mode (development/production)
+RUN_MODE="production"                    # Runtime mode (development/production)
 ```
 
 ## Recent Development History
@@ -144,6 +165,13 @@ The project has evolved from a Chrome extension with browser automation to a com
 
 ## Technical Insights
 
+### Logging System Implementation Insights
+- **Native Messaging Compatibility**: Redirecting logs to files avoids interference with stdout/stderr used by Native Messaging
+- **User Home Directory Detection**: Uses Go's os.UserHomeDir() for cross-platform home directory detection
+- **Fallback Strategy**: Falls back to system temp directory if home directory cannot be determined
+- **Safe Directory Creation**: Automatically creates log directories with proper permissions
+- **User Feedback**: Minimizes stdout/stderr usage while still providing essential feedback on startup/shutdown
+
 ### Dual Server Implementation Insights
 - **Protocol Abstraction**: Successfully abstracted MCP functionality to work with multiple transport protocols
 - **Type Adaptation**: Effective conversion between internal types and external library formats
@@ -161,4 +189,4 @@ The project has evolved from a Chrome extension with browser automation to a com
 - **Type Safety**: Go's strong typing caught integration issues early in development
 - **Cross-Platform**: Go's cross-platform nature ensures broad deployment compatibility
 
-This dual server implementation represents a significant milestone in making the Algonius Browser MCP capabilities accessible to a wide range of AI tools and frameworks while maintaining existing Chrome extension functionality.
+This logging system optimization represents an important improvement in ensuring compatibility between the Algonius Browser MCP host and the Chrome extension's Native Messaging protocol while maintaining full debugging capabilities through file-based logging.
