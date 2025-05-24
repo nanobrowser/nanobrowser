@@ -140,12 +140,13 @@ func (env *McpHostTestEnvironment) startMcpHost(ctx context.Context) error {
 
 	// Store pipes for Native Messaging
 	env.nativeMsg = &NativeMessagingManager{
-		stdin:     stdin,
-		stdout:    stdout,
-		stderr:    stderr,
-		pid:       env.hostProcess.Process.Pid,
-		responses: make(chan map[string]interface{}, 10),
-		errors:    make(chan error, 10),
+		stdin:       stdin,
+		stdout:      stdout,
+		stderr:      stderr,
+		pid:         env.hostProcess.Process.Pid,
+		responses:   make(chan map[string]interface{}, 10),
+		errors:      make(chan error, 10),
+		rpcHandlers: make(map[string]RpcHandler),
 	}
 
 	// Start reading messages from stdout
