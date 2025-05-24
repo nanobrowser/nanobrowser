@@ -96,8 +96,8 @@ func (env *McpHostTestEnvironment) Setup(ctx context.Context) error {
 }
 
 func (env *McpHostTestEnvironment) buildMcpHost() error {
-	// Build the binary using the Makefile
-	cmd := exec.Command("make", "build")
+	// Build the binary using go build with -mod=mod flag to avoid vendor issues
+	cmd := exec.Command("go", "build", "-mod=mod", "-o", "bin/mcp-host", "./cmd/mcp-host")
 	cmd.Dir = "../../"
 	return cmd.Run()
 }

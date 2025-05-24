@@ -19,7 +19,11 @@ GOVET=$(GOCMD) vet
 GOLINT=golangci-lint
 
 # Build flags
-LDFLAGS=-ldflags "-s -w"
+VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+BUILD_TIME=$(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+LDFLAGS=-ldflags "-s -w -X 'github.com/algonius/algonius-browser/mcp-host-go/pkg/handlers.Version=$(VERSION)' -X 'github.com/algonius/algonius-browser/mcp-host-go/pkg/handlers.BuildTime=$(BUILD_TIME)' -X 'github.com/algonius/algonius-browser/mcp-host-go/pkg/handlers.GitCommit=$(GIT_COMMIT)'"
 BUILD_FLAGS=-trimpath
 
 # Colors

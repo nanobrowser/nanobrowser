@@ -8,21 +8,35 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 // RpcHandler defines the signature for RPC method handlers
 type RpcHandler func(params map[string]interface{}) (interface{}, error)
 
+// pendingRpcRequest represents a pending RPC request
+type pendingRpcRequest struct {
+	done     chan struct{}
+	response map[string]interface{}
+	err      error
+	timer    *time.Timer
+}
+
 // NativeMessagingManager handles communication with the MCP host process via Native Messaging protocol
 type NativeMessagingManager struct {
-	stdin         io.WriteCloser
-	stdout        io.ReadCloser
-	stderr        io.ReadCloser
-	pid           int
-	responses     chan map[string]interface{}
-	errors        chan error
-	actionHandler func(action string, params map[string]interface{}) map[string]interface{}
-	rpcHandlers   map[string]RpcHandler // method name -> handler
+	stdin           io.WriteCloser
+	stdout          io.ReadCloser
+	stderr          io.ReadCloser
+	pid             int
+	responses       chan map[string]interface{}
+	errors          chan error
+	actionHandler   func(action string, params map[string]interface{}) map[string]interface{}
+	rpcHandlers     map[string]RpcHandler // method name -> handler
+	pendingRequests map[string]*pendingRpcRequest
+	mutex           sync.Mutex
 }
 
 func (nm *NativeMessagingManager) SendMessage(ctx context.Context, message map[string]interface{}) error {
@@ -44,6 +58,61 @@ func (nm *NativeMessagingManager) SendMessage(ctx context.Context, message map[s
 	}
 
 	return nil
+}
+
+// RpcRequest sends an RPC request and waits for the response
+func (nm *NativeMessagingManager) RpcRequest(ctx context.Context, method string, params map[string]interface{}) (map[string]interface{}, error) {
+	// Generate unique ID for this request
+	id := uuid.New().String()
+
+	// Initialize pending requests map if needed
+	nm.mutex.Lock()
+	if nm.pendingRequests == nil {
+		nm.pendingRequests = make(map[string]*pendingRpcRequest)
+	}
+	nm.mutex.Unlock()
+
+	// Create pending request
+	pending := &pendingRpcRequest{
+		done: make(chan struct{}),
+	}
+
+	// Set timeout (5 seconds)
+	pending.timer = time.AfterFunc(5*time.Second, func() {
+		nm.mutex.Lock()
+		defer nm.mutex.Unlock()
+		if _, exists := nm.pendingRequests[id]; exists {
+			pending.err = fmt.Errorf("RPC request timeout: %s (id: %s)", method, id)
+			close(pending.done)
+			delete(nm.pendingRequests, id)
+		}
+	})
+
+	// Register pending request
+	nm.mutex.Lock()
+	nm.pendingRequests[id] = pending
+	nm.mutex.Unlock()
+
+	// Send the request
+	request := map[string]interface{}{
+		"type":   "rpc_request",
+		"id":     id,
+		"method": method,
+		"params": params,
+	}
+
+	if err := nm.SendMessage(ctx, request); err != nil {
+		nm.mutex.Lock()
+		delete(nm.pendingRequests, id)
+		nm.mutex.Unlock()
+		pending.timer.Stop()
+		return nil, err
+	}
+
+	// Wait for response or timeout
+	<-pending.done
+
+	return pending.response, pending.err
 }
 
 func (nm *NativeMessagingManager) SetActionHandler(handler func(action string, params map[string]interface{}) map[string]interface{}) {
@@ -112,6 +181,11 @@ func (nm *NativeMessagingManager) startMessageReader(ctx context.Context) {
 				return
 			}
 
+			// Handle RPC responses
+			if nm.handleRpcResponse(message) {
+				continue
+			}
+
 			// Handle RPC requests
 			if nm.handleRpcRequest(ctx, message) {
 				continue
@@ -138,6 +212,38 @@ func (nm *NativeMessagingManager) startMessageReader(ctx context.Context) {
 			fmt.Fprintf(os.Stderr, "[mcp-host stderr]: %s\n", scanner.Text())
 		}
 	}()
+}
+
+// handleRpcResponse processes RPC responses and returns true if the message was handled
+func (nm *NativeMessagingManager) handleRpcResponse(message map[string]interface{}) bool {
+	// Check if this message has an ID (indicating it's a response to our request)
+	id, hasId := message["id"].(string)
+	if !hasId {
+		return false
+	}
+
+	nm.mutex.Lock()
+	defer nm.mutex.Unlock()
+
+	// Check if we have a pending request for this ID
+	pending, exists := nm.pendingRequests[id]
+	if !exists {
+		return false // Not a response to our request
+	}
+
+	// Stop the timer
+	pending.timer.Stop()
+
+	// Set the response
+	pending.response = message
+
+	// Signal completion
+	close(pending.done)
+
+	// Remove from pending requests
+	delete(nm.pendingRequests, id)
+
+	return true
 }
 
 // handleRpcRequest processes RPC requests and returns true if the message was handled
