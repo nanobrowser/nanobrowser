@@ -258,6 +258,8 @@ export class McpHostManager {
       // Check if init was successful
       if (response && response.result && response.result.status === 'initialized') {
         console.log('MCP Host initialized successfully');
+        // Set the start time when the host is successfully initialized
+        this.updateStatus({ startTime: Date.now() });
         return true;
       } else {
         console.error('MCP Host init failed:', response.error || 'Unknown error');
@@ -315,6 +317,7 @@ export class McpHostManager {
             this.updateStatus({
               isConnected: false,
               lastHeartbeat: null,
+              startTime: null,
             });
 
             resolve(true);
@@ -499,7 +502,10 @@ export class McpHostManager {
   private handleDisconnect(): void {
     this.stopHeartbeat();
     this.port = null;
-    this.updateStatus({ isConnected: false });
+    this.updateStatus({
+      isConnected: false,
+      startTime: null,
+    });
   }
 
   /**
@@ -632,8 +638,19 @@ export class McpHostManager {
             }
           }
 
+          // Parse start_time from MCP Host response
+          let startTime = this.status.startTime; // Keep existing startTime if available
+          if (statusData.start_time) {
+            if (typeof statusData.start_time === 'string') {
+              startTime = new Date(statusData.start_time).getTime();
+            } else if (typeof statusData.start_time === 'number') {
+              startTime = statusData.start_time;
+            }
+          }
+
           this.updateStatus({
             lastHeartbeat,
+            startTime,
             version: statusData.version || null,
             uptime: statusData.uptime || null,
             ssePort: statusData.sse_port || null,

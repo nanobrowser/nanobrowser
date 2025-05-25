@@ -9,7 +9,6 @@ export interface McpHostStatus {
   startTime: number | null;
   lastHeartbeat: number | null;
   version: string | null;
-  runMode: string | null;
   uptime?: string;
   ssePort?: string;
   sseBaseURL?: string;
@@ -33,7 +32,6 @@ export function useMcpHost() {
     startTime: null,
     lastHeartbeat: null,
     version: null,
-    runMode: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<McpError | null>(null);

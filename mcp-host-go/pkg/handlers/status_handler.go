@@ -42,6 +42,7 @@ type StatusResponse struct {
 	SSEPort     string    `json:"sse_port"`
 	SSEBaseURL  string    `json:"sse_base_url"`
 	SSEBasePath string    `json:"sse_base_path"`
+	StartTime   time.Time `json:"start_time"`
 	CurrentTime time.Time `json:"current_time"`
 	Uptime      string    `json:"uptime"`
 	BuildInfo   BuildInfo `json:"build_info"`
@@ -83,6 +84,7 @@ func (sh *StatusHandler) HandleStatus(request types.RpcRequest) (types.RpcRespon
 		SSEPort:     sh.ssePort,
 		SSEBaseURL:  sh.sseBaseURL,
 		SSEBasePath: sh.sseBasePath,
+		StartTime:   sh.startTime,
 		CurrentTime: time.Now(),
 		Uptime:      uptimeStr,
 		BuildInfo: BuildInfo{
@@ -95,6 +97,7 @@ func (sh *StatusHandler) HandleStatus(request types.RpcRequest) (types.RpcRespon
 	sh.logger.Debug("Status response prepared",
 		zap.String("version", status.Version),
 		zap.String("uptime", status.Uptime),
+		zap.Time("start_time", status.StartTime),
 		zap.Time("current_time", status.CurrentTime))
 
 	return types.RpcResponse{

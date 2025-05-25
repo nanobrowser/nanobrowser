@@ -118,10 +118,16 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
             <span className="font-medium text-gray-900 dark:text-white">{status.version || 'N/A'}</span>
           </div>
 
-          <div className="flex items-center">
-            <span className="flex-1 text-gray-600 dark:text-gray-300">Run Mode:</span>
-            <span className="font-medium text-gray-900 dark:text-white">{status.runMode || 'N/A'}</span>
-          </div>
+          {status.sseBaseURL && (
+            <div className="flex items-center">
+              <span className="flex-1 text-gray-600 dark:text-gray-300">SSE Endpoint:</span>
+              <span
+                className="font-medium text-gray-900 dark:text-white text-sm truncate max-w-48"
+                title={status.sseBaseURL}>
+                {status.sseBaseURL}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center">
             <span className="flex-1 text-gray-600 dark:text-gray-300">Start Time:</span>
