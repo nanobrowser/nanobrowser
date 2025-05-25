@@ -1,8 +1,57 @@
 # Active Context: Algonius Browser
 
-## Current Work Focus - MCP Resource Implementation Phase ✅
+## Current Work Focus - MCP Tool Implementation Phase ✅
 
-### Latest Achievement: DOM State Resource Implementation and Testing (2025-05-25 20:16)
+### Latest Achievement: Scroll Page Tool Implementation and Testing (2025-05-26 07:34)
+Successfully implemented and tested the new `scroll_page` MCP tool to provide comprehensive page scrolling capabilities to external AI systems.
+
+#### Scroll Page Tool Implementation - 2025-05-26 07:34
+- ✅ **MCP Tool Implementation**: Created complete Go implementation for scroll_page tool with comprehensive parameter validation
+- ✅ **Chrome Extension Handler**: Implemented scroll-page-handler.ts in Chrome extension with proper action routing
+- ✅ **Integration Testing**: Created comprehensive test suite with 5 different test functions covering all scroll actions
+- ✅ **Parameter Validation**: Implemented robust validation for action types, pixels, and element_index parameters
+- ✅ **Error Handling**: Added comprehensive error handling throughout the tool chain
+- ✅ **Tool Registration**: Successfully registered scroll_page tool alongside existing navigate_to tool
+
+#### Technical Implementation Details
+1. **Tool Implementation (`mcp-host-go/pkg/tools/scroll_page.go`)**:
+   - Created `ScrollPageTool` struct implementing MCP tool interface
+   - Added structured logging with configurable log levels
+   - Implemented comprehensive parameter validation for all scroll actions
+   - Added support for 5 scroll actions: up, down, to_top, to_bottom, to_element
+   - Integrated with existing Native Messaging infrastructure
+
+2. **Chrome Extension Handler (`chrome-extension/src/background/task/scroll-page-handler.ts`)**:
+   - Created `ScrollPageHandler` class following established RPC handler pattern
+   - Implemented proper dependency injection with BrowserContext
+   - Added comprehensive error handling and logging
+   - Implemented action routing for all 5 scroll types
+   - Added proper TypeScript types and documentation
+
+3. **Tool Registration (`mcp-host-go/cmd/mcp-host/main.go`)**:
+   - Registered `scroll_page` tool with MCP server
+   - Added proper tool metadata (name, description, parameter schema)
+   - Ensured co-existence with existing `navigate_to` tool
+   - Verified dependency injection for tool initialization
+
+4. **Integration Testing (`mcp-host-go/tests/integration/scroll_page_test.go`)**:
+   - Created `TestScrollPageToolBasicActions` for testing all 5 scroll actions
+   - Created `TestScrollPageToolElementScroll` for element-specific scrolling
+   - Created `TestScrollPageToolParameterValidation` for testing parameter validation
+   - Created `TestScrollPageToolWithDOMState` for testing integration with DOM state resource
+   - Created `TestScrollPageToolCompleteWorkflow` for testing complete scroll workflows
+   - Added mock RPC handlers simulating browser extension responses
+   - Implemented proper test setup and cleanup procedures
+
+#### Benefits Achieved
+- **Comprehensive Scroll Control**: External AI systems can now control page scrolling in 5 different ways
+- **Parameter Validation**: Robust validation ensures proper tool usage and clear error messages
+- **Enhanced Testing**: Comprehensive test suite ensures reliable tool functionality
+- **Error Handling**: Comprehensive error handling provides clear feedback for debugging
+- **Standardized Interface**: Scroll functionality exposed through standard MCP protocol
+- **Documentation**: Well-documented code aids in future maintenance and extension
+
+### Previous Achievement: DOM State Resource Implementation and Testing (2025-05-25 20:16)
 Successfully implemented and tested the new `get_dom_state` MCP resource to provide comprehensive DOM state access to external AI systems.
 
 #### DOM State Resource Implementation - 2025-05-25 20:16

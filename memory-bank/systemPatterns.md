@@ -505,7 +505,41 @@ graph TD
    - Import and instantiate the handler in background/index.ts
    - Register the handler method with McpHostManager using method binding
 
-### 5. Navigator Action System
+### 5. MCP Tool Implementation Pattern
+
+The project uses a consistent pattern for implementing MCP tools that expose browser functionality:
+
+```mermaid
+graph TD
+    A[Tool Class Creation] --> B[Parameter Schema Definition]
+    B --> C[Parameter Validation Implementation]
+    C --> D[Native Messaging Integration]
+    D --> E[Chrome Extension Handler]
+    E --> F[Tool Registration]
+    F --> G[Integration Testing]
+```
+
+Key aspects of the MCP tool pattern include:
+- **Tool Struct Implementation**: Each tool is a Go struct implementing the MCP tool interface
+- **Parameter Schema**: JSON schema definition for tool parameters with proper validation
+- **Parameter Validation**: Comprehensive validation of input parameters with clear error messages
+- **Native Messaging Integration**: Tool requests forwarded to Chrome extension via Native Messaging
+- **Chrome Extension Handler**: TypeScript handler class following RPC handler pattern
+- **Tool Registration**: Centralized registration with MCP server and dependency injection
+- **Integration Testing**: Comprehensive test suite covering all tool functionality
+
+#### Current MCP Tools
+1. **navigate_to Tool**: Navigate browser to specified URL
+   - Parameters: `url` (string, required)
+   - Validation: URL format validation
+   - Actions: Page navigation with error handling
+
+2. **scroll_page Tool**: Control page scrolling in various ways
+   - Parameters: `action` (enum: up, down, to_top, to_bottom, to_element), `pixels` (number, optional), `element_index` (number, conditional)
+   - Validation: Action type validation, conditional parameter validation
+   - Actions: 5 different scroll operations with parameter-specific behavior
+
+### 6. Navigator Action System
 
 The Navigator agent can execute 17 distinct browser operations:
 
