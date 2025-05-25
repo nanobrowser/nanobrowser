@@ -37,6 +37,7 @@ type Container struct {
 	Messaging       types.Messaging
 	Server          *sse.SSEServer
 	NavigateTool    types.Tool
+	ScrollPageTool  types.Tool
 	CurrentStateRes types.Resource
 	DomStateRes     types.Resource
 	StatusHandler   *handlers.StatusHandler
@@ -86,6 +87,11 @@ func main() {
 	// Register tools
 	if err := container.Server.RegisterTool(container.NavigateTool); err != nil {
 		container.Logger.Error("Failed to register navigate_to tool", zap.Error(err))
+		os.Exit(1)
+	}
+
+	if err := container.Server.RegisterTool(container.ScrollPageTool); err != nil {
+		container.Logger.Error("Failed to register scroll_page tool", zap.Error(err))
 		os.Exit(1)
 	}
 
@@ -267,6 +273,15 @@ func initContainer(startTime time.Time) (*Container, error) {
 		return nil, fmt.Errorf("failed to create navigate_to tool: %w", err)
 	}
 	container.NavigateTool = navigateTool
+
+	scrollPageTool, err := tools.NewScrollPageTool(tools.ScrollPageConfig{
+		Logger:    toolLogger,
+		Messaging: container.Messaging,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create scroll_page tool: %w", err)
+	}
+	container.ScrollPageTool = scrollPageTool
 
 	return container, nil
 }
