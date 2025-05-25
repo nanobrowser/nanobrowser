@@ -403,7 +403,7 @@ export class McpHostManager {
    */
   private async handleRpcRequest(data: any): Promise<void> {
     const { method, id, params } = data;
-    console.debug(`[McpHostManager] Received RPC request: ${method} (id: ${id})`);
+    console.log(`[McpHostManager] Received RPC request: ${method} (id: ${id})`);
 
     // Find the registered handler for this method
     const handler = this.rpcMethodHandlers.get(method);
@@ -429,7 +429,7 @@ export class McpHostManager {
       // Make sure the response includes the request ID
       response.id = id;
 
-      console.debug(`[McpHostManager] Send RPC response:`, response);
+      console.log(`[McpHostManager] Send RPC response:`, response);
 
       this.port?.postMessage({
         type: 'rpc_response',
@@ -476,6 +476,8 @@ export class McpHostManager {
   }
 
   private handleMessage(message: any): void {
+    console.debug(`[McpHostManager] Received message:`, message);
+
     switch (message.type) {
       case 'status':
         this.updateStatus(message.data);

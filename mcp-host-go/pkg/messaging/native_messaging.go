@@ -136,7 +136,7 @@ func (nm *NativeMessaging) processBuffer() {
 
 // handleMessage processes a received message
 func (nm *NativeMessaging) handleMessage(message types.Message) error {
-	nm.logger.Debug("Received message", zap.Any("message", message))
+	nm.logger.Info("Received message", zap.Any("message", message))
 
 	handler, ok := nm.messageHandlers[message.Type]
 	if !ok {
@@ -222,7 +222,7 @@ func (nm *NativeMessaging) RpcRequest(request types.RpcRequest, options types.Rp
 		request.ID = id
 	}
 
-	nm.logger.Debug("Sending RPC request", zap.String("method", request.Method), zap.String("id", id))
+	nm.logger.Info("Sending RPC request", zap.String("method", request.Method), zap.String("id", id))
 
 	timeout := 5000 // Default 5 seconds
 	if options.Timeout > 0 {
@@ -266,6 +266,8 @@ func (nm *NativeMessaging) RpcRequest(request types.RpcRequest, options types.Rp
 
 	// Wait for response or timeout
 	<-pending.done
+
+	nm.logger.Info("RPC request Done", zap.Any("response", pending.response), zap.Any("err", pending.err))
 
 	return pending.response, pending.err
 }

@@ -98,9 +98,6 @@ export class GetDomStateHandler {
           pixelsAbove: browserState.pixelsAbove,
           pixelsBelow: browserState.pixelsBelow,
         },
-
-        // Optional screenshot if available
-        screenshot: browserState.screenshot,
       };
 
       this.logger.debug('Returning formatted DOM state for MCP host');

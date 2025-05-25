@@ -6,26 +6,25 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
-	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"go.uber.org/zap"
+
+	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
+	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
 )
 
 // SSEServer represents an SSE MCP server that forwards requests to Chrome extension
 type SSEServer struct {
-	logger     logger.Logger
-	messaging  types.Messaging
-	mcpServer  *server.MCPServer
-	sseServer  *server.SSEServer
-	port       string
-	baseURL    string
-	basePath   string
-	hostInfo   types.HostInfo
-	tools      map[string]types.Tool
-	resources  map[string]types.Resource
-	httpServer *http.Server
+	logger    logger.Logger
+	messaging types.Messaging
+	mcpServer *server.MCPServer
+	sseServer *server.SSEServer
+	port      string
+	baseURL   string
+	hostInfo  types.HostInfo
+	tools     map[string]types.Tool
+	resources map[string]types.Resource
 }
 
 // SSEServerConfig contains configuration for SSE server
@@ -34,7 +33,6 @@ type SSEServerConfig struct {
 	Messaging types.Messaging
 	Port      string
 	BaseURL   string
-	BasePath  string
 	HostInfo  types.HostInfo
 }
 
@@ -63,7 +61,6 @@ func NewSSEServer(config SSEServerConfig) (*SSEServer, error) {
 		sseServer: sseServer,
 		port:      config.Port,
 		baseURL:   config.BaseURL,
-		basePath:  config.BasePath,
 		hostInfo:  config.HostInfo,
 		tools:     make(map[string]types.Tool),
 		resources: make(map[string]types.Resource),

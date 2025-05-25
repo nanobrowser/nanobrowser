@@ -131,6 +131,8 @@ func buildZapLogger() (*zap.Logger, error) {
 			return nil, fmt.Errorf("invalid log level %s: %w", level, err)
 		}
 		config.Level = zap.NewAtomicLevelAt(zapLevel)
+	} else {
+		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	}
 
 	// Initialize empty output paths - we don't use stdout/stderr by default

@@ -20,7 +20,6 @@ type McpHostTestEnvironment struct {
 	nativeMsg      *NativeMessagingManager
 	port           int
 	baseURL        string
-	basePath       string
 	logFilePath    string
 	testDataDir    string
 	logMonitorStop chan struct{}
@@ -47,8 +46,7 @@ func NewMcpHostTestEnvironment(config *TestConfig) (*McpHostTestEnvironment, err
 		}
 	}
 
-	baseURL := fmt.Sprintf("http://localhost:%d", port)
-	basePath := "/sse"
+	baseURL := fmt.Sprintf("http://localhost:%d/sse", port)
 
 	// Create test data directory
 	testDataDir := config.TestDataDir
@@ -63,7 +61,6 @@ func NewMcpHostTestEnvironment(config *TestConfig) (*McpHostTestEnvironment, err
 	return &McpHostTestEnvironment{
 		port:           port,
 		baseURL:        baseURL,
-		basePath:       basePath,
 		testDataDir:    testDataDir,
 		logFilePath:    filepath.Join(testDataDir, "mcp-host.log"),
 		logMonitorStop: make(chan struct{}),
@@ -90,7 +87,7 @@ func (env *McpHostTestEnvironment) Setup(ctx context.Context) error {
 	}
 
 	// Create MCP client
-	env.mcpClient = NewMcpSSEClient(env.baseURL + env.basePath)
+	env.mcpClient = NewMcpSSEClient(env.baseURL)
 
 	return nil
 }
@@ -107,7 +104,6 @@ func (env *McpHostTestEnvironment) startMcpHost(ctx context.Context) error {
 	environ := append(os.Environ(),
 		fmt.Sprintf("SSE_PORT=:%d", env.port),
 		fmt.Sprintf("SSE_BASE_URL=%s", env.baseURL),
-		fmt.Sprintf("SSE_BASE_PATH=%s", env.basePath),
 		fmt.Sprintf("LOG_FILE=%s", env.logFilePath),
 		"LOG_LEVEL=debug",
 		"RUN_MODE=test",
@@ -273,10 +269,10 @@ func (env *McpHostTestEnvironment) waitForHostReady(ctx context.Context) error {
 		}
 
 		// Try to connect to the base URL
-		resp, err := client.Get(env.baseURL + env.basePath + "/")
+		resp, err := client.Get(env.baseURL + "/")
 		if err == nil {
 			resp.Body.Close()
-			log.Printf("[LOG-MONITOR] MCP host is ready at %s", env.baseURL+env.basePath)
+			log.Printf("[LOG-MONITOR] MCP host is ready at %s", env.baseURL)
 			return nil
 		}
 		if resp != nil {

@@ -25,13 +25,10 @@ const (
 	Name = "dev.nanobrowser.mcp.host"
 
 	// Default SSE port
-	DefaultSSEPort = ":8080"
+	DefaultSSEPort = ":7890"
 
 	// Default SSE base URL
-	DefaultSSEBaseURL = "http://localhost:8080"
-
-	// Default SSE base path
-	DefaultSSEBasePath = "/mcp"
+	DefaultSSEBaseURL = "http://localhost:7890/sse"
 )
 
 // Container is a dependency injection container
@@ -100,7 +97,7 @@ func main() {
 
 	// Log server information
 	container.Logger.Info("SSE MCP server started successfully")
-	container.Logger.Info("SSE Server available at", zap.String("url", getSSEBaseURL()+getSSEBasePath()))
+	container.Logger.Info("SSE Server available at", zap.String("url", getSSEBaseURL()))
 	container.Logger.Info("External AI systems can connect via HTTP/SSE")
 	container.Logger.Info("Requests will be forwarded to Chrome extension via Native Messaging")
 	container.Logger.Info("Init, Status, and Shutdown RPC handlers registered for browser extension")
@@ -171,11 +168,10 @@ func initContainer(startTime time.Time) (*Container, error) {
 	}
 
 	statusHandler, err := handlers.NewStatusHandler(handlers.StatusHandlerConfig{
-		Logger:      statusLogger,
-		StartTime:   startTime,
-		SSEPort:     getSSEPort(),
-		SSEBaseURL:  getSSEBaseURL(),
-		SSEBasePath: getSSEBasePath(),
+		Logger:     statusLogger,
+		StartTime:  startTime,
+		SSEPort:    getSSEPort(),
+		SSEBaseURL: getSSEBaseURL(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create status handler: %w", err)
@@ -222,7 +218,6 @@ func initContainer(startTime time.Time) (*Container, error) {
 		Messaging: container.Messaging,
 		Port:      getSSEPort(),
 		BaseURL:   getSSEBaseURL(),
-		BasePath:  getSSEBasePath(),
 		HostInfo: types.HostInfo{
 			Name:    Name,
 			Version: Version,
@@ -324,13 +319,4 @@ func getSSEBaseURL() string {
 		return DefaultSSEBaseURL
 	}
 	return baseURL
-}
-
-// getSSEBasePath returns the SSE base path from environment or default
-func getSSEBasePath() string {
-	basePath := os.Getenv("SSE_BASE_PATH")
-	if basePath == "" {
-		return DefaultSSEBasePath
-	}
-	return basePath
 }

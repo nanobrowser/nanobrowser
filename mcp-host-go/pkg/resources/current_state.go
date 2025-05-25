@@ -68,7 +68,7 @@ func (r *CurrentStateResource) GetDescription() string {
 
 // Read reads the current browser state
 func (r *CurrentStateResource) Read() (types.ResourceContent, error) {
-	r.logger.Debug("Reading current browser state")
+	r.logger.Info("Reading current browser state")
 
 	// Request browser state from the extension
 	resp, err := r.messaging.RpcRequest(types.RpcRequest{
@@ -84,6 +84,8 @@ func (r *CurrentStateResource) Read() (types.ResourceContent, error) {
 		r.logger.Error("RPC error getting browser state", zap.Any("respError", resp.Error))
 		return types.ResourceContent{}, fmt.Errorf("RPC error: %s", resp.Error.Message)
 	}
+
+	r.logger.Info("Reading current browser state ok", zap.Any("resp", resp))
 
 	// Convert result to JSON
 	jsonBytes, err := json.MarshalIndent(resp.Result, "", "  ")
