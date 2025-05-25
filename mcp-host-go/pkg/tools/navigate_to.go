@@ -81,7 +81,7 @@ func (t *NavigateToTool) Execute(args map[string]interface{}) (types.ToolResult,
 		Params: map[string]interface{}{
 			"url": url,
 		},
-	}, types.RpcOptions{Timeout: 5000})
+	}, types.RpcOptions{Timeout: 10000})
 
 	if err != nil {
 		t.logger.Error("Error calling navigate_to", zap.Error(err))

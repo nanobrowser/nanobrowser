@@ -86,16 +86,6 @@ export class GetBrowserStateHandler {
       const browserState = {
         activeTab: {
           id: fullState.tabId,
-          url: fullState.url,
-          title: fullState.title,
-          domState: fullState.elementTree
-            ? {
-                // Convert DOM tree to a simplified representation
-                elements: this.domElementNodeToSimplifiedFormat(fullState.elementTree),
-                pixelsAbove: fullState.pixelsAbove,
-                pixelsBelow: fullState.pixelsBelow,
-              }
-            : undefined,
         },
         tabs: fullState.tabs.map(tab => ({
           id: tab.id,
