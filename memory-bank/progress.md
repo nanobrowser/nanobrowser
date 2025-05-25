@@ -72,6 +72,14 @@ This document tracks the progress of the Algonius Browser project, documenting w
 - [x] Consistent response formatting
 - [x] Export and registration workflow
 
+### MCP Resources
+- [x] Browser state resource (`browser://current/state`)
+- [x] DOM state resource (`browser://dom/state`)
+- [x] Resource registration and metadata
+- [x] Resource handler implementation
+- [x] JSON serialization and error handling
+- [x] Integration testing for resources
+
 ### Testing
 - [x] Unit testing framework
 - [x] Integration testing setup
@@ -167,6 +175,43 @@ With the heartbeat optimization completed, the project is ready for the next pha
 - [ ] Video tutorials and demonstrations
 
 ## Recent Progress
+
+### DOM State Resource Implementation and Testing (2025-05-25)
+Successfully implemented and tested the new `get_dom_state` MCP resource to provide comprehensive DOM state access to external AI systems:
+
+**Implementation Details**:
+1. **Resource Implementation (`mcp-host-go/pkg/resources/dom_state.go`)**:
+   - Created `DomStateResource` struct implementing MCP resource interface
+   - Added structured logging with configurable log levels
+   - Implemented `GetDomState` method with comprehensive error handling
+   - Added JSON marshaling with proper error propagation
+   - Integrated with existing Native Messaging infrastructure
+
+2. **Resource Registration (`mcp-host-go/cmd/mcp-host/main.go`)**:
+   - Registered `browser://dom/state` resource with MCP server
+   - Added proper resource metadata (name, description, MIME type)
+   - Ensured co-existence with existing `browser://current/state` resource
+   - Verified dependency injection for resource initialization
+
+3. **Integration Testing (`mcp-host-go/tests/integration/dom_state_test.go`)**:
+   - Created `TestDomStateResource` for isolated DOM state testing
+   - Created `TestDomStateResourceWithBrowserState` for comprehensive resource testing
+   - Added mock RPC handlers simulating browser extension responses
+   - Implemented proper test setup and cleanup procedures
+   - Added validation for resource discovery and content access
+
+**Benefits Achieved**:
+- **Comprehensive DOM Access**: External AI systems can now access detailed DOM state including interactive elements
+- **Standardized Interface**: DOM state exposed through standard MCP protocol for language-agnostic access
+- **Enhanced Testing**: Robust test infrastructure ensures reliable resource functionality
+- **Co-existence**: New resource works alongside existing browser state resource without conflicts
+- **Error Handling**: Comprehensive error handling provides clear feedback for debugging
+- **Documentation**: Well-documented code aids in future maintenance and extension
+
+**Files Modified**:
+- `mcp-host-go/pkg/resources/dom_state.go` - New DOM state resource implementation
+- `mcp-host-go/cmd/mcp-host/main.go` - Resource registration and dependency injection
+- `mcp-host-go/tests/integration/dom_state_test.go` - Comprehensive test suite
 
 ### Stop Button Status Update Fix (2025-05-25)
 Successfully resolved an issue where the stop button in the popup didn't immediately update the status to "Disconnected":

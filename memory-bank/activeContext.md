@@ -1,8 +1,48 @@
 # Active Context: Algonius Browser
 
-## Current Work Focus - UI Optimization Phase ✅
+## Current Work Focus - MCP Resource Implementation Phase ✅
 
-### Latest Achievement: Heartbeat Optimization for Chrome Extension (2025-05-24 23:10)
+### Latest Achievement: DOM State Resource Implementation and Testing (2025-05-25 20:16)
+Successfully implemented and tested the new `get_dom_state` MCP resource to provide comprehensive DOM state access to external AI systems.
+
+#### DOM State Resource Implementation - 2025-05-25 20:16
+- ✅ **DOM State Resource**: Created complete Go implementation for exposing DOM state via MCP protocol
+- ✅ **Resource Handler**: Implemented `DomStateResource` handler with proper error handling and logging
+- ✅ **Integration Testing**: Created comprehensive test suite with both unit and integration tests
+- ✅ **RPC Communication**: Verified end-to-end communication from MCP client through SSE server to Chrome extension
+- ✅ **Test Infrastructure**: Enhanced test environment with proper mock handlers and validation
+- ✅ **Resource Registration**: Successfully registered DOM state resource alongside existing browser state resource
+
+#### Technical Implementation Details
+1. **Resource Implementation (`mcp-host-go/pkg/resources/dom_state.go`)**:
+   - Created `DomStateResource` struct implementing MCP resource interface
+   - Added structured logging with configurable log levels
+   - Implemented `GetDomState` method with comprehensive error handling
+   - Added JSON marshaling with proper error propagation
+   - Integrated with existing Native Messaging infrastructure
+
+2. **Resource Registration (`mcp-host-go/cmd/mcp-host/main.go`)**:
+   - Registered `browser://dom/state` resource with MCP server
+   - Added proper resource metadata (name, description, MIME type)
+   - Ensured co-existence with existing `browser://current/state` resource
+   - Verified dependency injection for resource initialization
+
+3. **Integration Testing (`mcp-host-go/tests/integration/dom_state_test.go`)**:
+   - Created `TestDomStateResource` for isolated DOM state testing
+   - Created `TestDomStateResourceWithBrowserState` for comprehensive resource testing
+   - Added mock RPC handlers simulating browser extension responses
+   - Implemented proper test setup and cleanup procedures
+   - Added validation for resource discovery and content access
+
+#### Benefits Achieved
+- **Comprehensive DOM Access**: External AI systems can now access detailed DOM state including interactive elements
+- **Standardized Interface**: DOM state exposed through standard MCP protocol for language-agnostic access
+- **Enhanced Testing**: Robust test infrastructure ensures reliable resource functionality
+- **Co-existence**: New resource works alongside existing browser state resource without conflicts
+- **Error Handling**: Comprehensive error handling provides clear feedback for debugging
+- **Documentation**: Well-documented code aids in future maintenance and extension
+
+### Previous Achievement: Heartbeat Optimization for Chrome Extension (2025-05-24 23:10)
 Successfully implemented comprehensive heartbeat system improvements to eliminate UI polling and provide real-time status updates.
 
 #### Heartbeat System Improvements - 2025-05-24 23:10
