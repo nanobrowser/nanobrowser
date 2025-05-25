@@ -24,8 +24,6 @@ bin/
 dist/
 
 # Binary executables
-mcp-host
-mcp-host-*
 *.exe
 
 # Development and debug files
