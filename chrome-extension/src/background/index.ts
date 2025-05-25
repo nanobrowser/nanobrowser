@@ -158,29 +158,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     logger.info('Received request to stop MCP Host');
 
     try {
-      // First call stopMcpHost which attempts graceful shutdown
+      // Call stopMcpHost which handles graceful shutdown and disconnection internally
       mcpHostManager
         .stopMcpHost()
         .then(success => {
-          logger.info('MCP Host stop attempt result:', success);
-          // Also disconnect the native connection to ensure the host is killed
-          mcpHostManager.disconnect();
-          logger.info('Native connection disconnected');
+          logger.info('MCP Host stopped successfully:', success);
+          // Status already updated by stopMcpHost internal disconnect() call
           sendResponse({ success: true });
         })
         .catch(error => {
-          logger.error('Failed to stop MCP Host gracefully, forcing disconnect:', error);
-          // Even if graceful shutdown fails, force disconnect
-          mcpHostManager.disconnect();
-          logger.info('Native connection forcefully disconnected');
+          logger.error('Failed to stop MCP Host gracefully:', error);
+          // Force disconnect only if stopMcpHost failed completely
+          if (mcpHostManager.getStatus().isConnected) {
+            mcpHostManager.disconnect();
+            logger.info('Native connection forcefully disconnected');
+          }
           sendResponse({ success: true });
         });
     } catch (error) {
       logger.error('Error initiating MCP Host stop:', error);
-      // Try to disconnect even if there was an error initiating the stop
+      // Try to disconnect only if still connected
       try {
-        mcpHostManager.disconnect();
-        logger.info('Native connection forcefully disconnected after error');
+        if (mcpHostManager.getStatus().isConnected) {
+          mcpHostManager.disconnect();
+          logger.info('Native connection forcefully disconnected after error');
+        }
         sendResponse({ success: true });
       } catch (disconnectError) {
         logger.error('Failed to disconnect:', disconnectError);

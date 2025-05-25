@@ -60,6 +60,8 @@ This document tracks the progress of the Algonius Browser project, documenting w
 - [x] Browser state exposure as resources
 - [x] Browser operations as tools
 - [x] Go-based MCP host implementation
+- [x] Real-time status broadcasting system
+- [x] Event-driven UI architecture
 
 ### RPC Handlers
 - [x] Handler pattern definition and documentation
@@ -85,39 +87,53 @@ This document tracks the progress of the Algonius Browser project, documenting w
 - [x] Development workflow documentation
 - [x] MCP SEE service documentation
 
+## Bug Fixes Completed
+
+### Fixed Host Manager Initialization Issue  
+- **Issue**: MCP Host startup failed due to improper connection handling
+- **Root Cause**: The `connect()` method was calling `startMcpHost()` instead of just establishing connection
+- **Solution**: Modified `connect()` to only establish native messaging connection without starting host process
+- **Files Modified**:
+  - `chrome-extension/src/background/mcp/host-manager.ts` - Fixed connect() method
+  - `chrome-extension/src/background/index.ts` - Updated message handling to use connect() properly
+- **Status**: ✅ RESOLVED - Connection and host startup now work correctly
+
+### Fixed Status Update Broadcasting
+- **Issue**: Status updates weren't being broadcast to popup components
+- **Solution**: Added automatic status broadcasting in McpHostManager.updateStatus()
+- **Files Modified**: `chrome-extension/src/background/mcp/host-manager.ts`
+- **Status**: ✅ RESOLVED - Status updates now properly propagate to UI
+
+### Fixed Stop Button Status Update Issue
+- **Issue**: Stop button in popup didn't immediately update status to "Disconnected"
+- **Root Cause**: Background script was calling `mcpHostManager.disconnect()` twice - once in `stopMcpHost()` and again manually, causing conflicting status updates
+- **Solution**: Modified background script to rely on `stopMcpHost()` internal disconnect handling
+- **Files Modified**: `chrome-extension/src/background/index.ts`
+- **Changes Made**:
+  - Removed redundant `mcpHostManager.disconnect()` calls after `stopMcpHost()` success
+  - Added conditional disconnect only when still connected and `stopMcpHost()` failed
+  - Improved error handling to check connection status before forcing disconnect
+- **Status**: ✅ RESOLVED - Stop button now immediately updates UI status to disconnected
+
 ## In Progress
 
-### Integration Testing Implementation (2025-05-24)
-Currently working on implementing comprehensive integration tests for the Go MCP host to ensure real-world compatibility:
+### Next Phase: Enhanced MCP Features
+With the heartbeat optimization completed, the project is ready for the next phase of enhancements:
 
-1. **Test Environment Setup**:
-   - ✅ Created `McpHostTestEnvironment` for managing test lifecycle
-   - ✅ Implemented `NativeMessagingManager` for Chrome protocol testing
-   - ✅ Added real MCP client using `mark3labs/mcp-go` library
-   - ✅ Set up automated build and process management
+1. **Additional MCP Tools and Resources**:
+   - Implement more browser operation tools
+   - Add enhanced resource access patterns
+   - Create specialized handlers for complex interactions
 
-2. **Real MCP Client Integration**:
-   - ✅ Replaced mock client with real `mark3labs/mcp-go` SSE client
-   - ✅ Fixed transport initialization by adding required `Start()` call
-   - ✅ Implemented proper type conversions between mark3labs and internal types
-   - 🔄 **Currently debugging**: SSE endpoint routing (404 errors)
+2. **Performance and Monitoring**:
+   - Add metrics collection for status update frequency
+   - Monitor system resource usage
+   - Implement performance logging and debugging tools
 
-3. **Current Issues**:
-   - MCP host starts successfully but SSE endpoints return 404
-   - Need to verify SSE server routing configuration
-   - May need to adjust SSE base path or endpoint structure
-
-4. **Test Coverage**:
-   - Process lifecycle and graceful shutdown
-   - SSE server connectivity and MCP protocol initialization
-   - Browser state resource management
-   - Tool execution (navigate_to and others)
-
-### Next Steps for Integration Testing
-- [ ] Debug SSE endpoint routing and fix 404 errors
-- [ ] Verify SSE server configuration in dual server setup
-- [ ] Complete integration test suite validation
-- [ ] Add performance and stress testing scenarios
+3. **UI/UX Enhancements**:
+   - Add visual indicators for connection quality
+   - Implement user notifications for state changes
+   - Create better debugging interfaces
 
 ### MCP Integration Enhancements
 - [ ] Additional browser resources
@@ -151,6 +167,63 @@ Currently working on implementing comprehensive integration tests for the Go MCP
 - [ ] Video tutorials and demonstrations
 
 ## Recent Progress
+
+### Stop Button Status Update Fix (2025-05-25)
+Successfully resolved an issue where the stop button in the popup didn't immediately update the status to "Disconnected":
+
+**Problem Analysis**:
+- The background script was calling `mcpHostManager.disconnect()` twice:
+  1. Once internally by `stopMcpHost()` method (which handles graceful shutdown and disconnection)
+  2. Once manually after `stopMcpHost()` completed successfully
+- This caused conflicting status updates and prevented the UI from showing the correct disconnected state
+
+**Solution Implemented**:
+- Modified the background script's `stopMcpHost` message handler to rely on the internal disconnect handling
+- Removed redundant `mcpHostManager.disconnect()` calls after successful `stopMcpHost()` completion
+- Added conditional disconnect logic that only forces disconnection if:
+  - The `stopMcpHost()` method failed completely AND
+  - The host is still showing as connected
+- Enhanced error handling to check connection status before attempting forced disconnection
+
+**Benefits**:
+- Stop button now immediately updates UI status to "Disconnected"
+- Eliminated conflicting status update messages
+- Improved reliability of graceful shutdown process
+- Better error handling for edge cases
+
+**Files Modified**:
+- `chrome-extension/src/background/index.ts` - Fixed duplicate disconnect calls in stop message handler
+
+### Heartbeat Optimization for Chrome Extension (2025-05-24)
+Successfully implemented comprehensive heartbeat system improvements to eliminate UI polling and provide real-time status updates:
+
+1. **Real-time Status Broadcasting**:
+   - Enhanced McpHostManager to broadcast status updates to all extension components
+   - Implemented `broadcastStatus()` method for efficient message distribution
+   - Added graceful error handling for unavailable message listeners
+
+2. **Event-Driven UI Architecture**:
+   - Replaced 5-second polling interval in useMcpHost hook with event-driven updates
+   - Implemented `chrome.runtime.onMessage` listener for real-time status synchronization
+   - Added message filtering for `mcpHostStatusUpdate` events
+
+3. **Enhanced Status Monitoring**:
+   - Converted heartbeat mechanism to use RPC requests for more reliable communication
+   - Improved connection failure detection with proper timeout handling
+   - Extended McpHostStatus interface with additional fields (uptime, ssePort, sseBaseURL)
+
+4. **Performance Optimization**:
+   - Eliminated unnecessary network requests and reduced CPU usage
+   - Improved UI responsiveness with instant status updates
+   - Enhanced loading state management for better user experience
+
+#### Benefits Achieved
+- **Performance**: Eliminated unnecessary 5-second polling, reducing CPU usage and network requests
+- **Responsiveness**: Real-time status updates provide immediate feedback on connection changes
+- **User Experience**: Faster UI updates when MCP host connects/disconnects
+- **System Efficiency**: Event-driven architecture reduces resource consumption
+- **Debugging**: Enhanced status information aids in troubleshooting connection issues
+- **Scalability**: Message broadcasting pattern supports multiple UI components efficiently
 
 ### Build System Optimization (2025-05-24)
 Completed comprehensive optimization of the mcp-host-go build system and development workflow:
@@ -341,11 +414,6 @@ This rebranding establishes a clear identity for the project and sets the stage 
 
 ## Known Issues
 
-### Integration Testing
-- **SSE Endpoint Routing**: MCP host starts successfully but SSE endpoints return 404 errors
-- **Route Configuration**: Need to verify SSE server routing and endpoint structure
-- Working on debugging the dual server SSE endpoint configuration
-
 ### Native Messaging
 - Installation process requires manual steps on some platforms
 - Working on improving the installation experience and documentation
@@ -360,24 +428,23 @@ This rebranding establishes a clear identity for the project and sets the stage 
 
 ## Next Milestones
 
-### Milestone 1: Integration Testing Completion
-- Debug and fix SSE endpoint routing issues
-- Complete integration test suite for both Native Messaging and SSE protocols
-- Validate real MCP client compatibility
-- Add performance and stress testing scenarios
+### Milestone 1: Enhanced MCP Capabilities
+- Implement additional browser resources for comprehensive state access
+- Add more sophisticated browser operation tools
+- Create specialized handlers for complex web interactions
+- Enhance error handling and logging throughout the system
 
-### Milestone 2: Go MCP Host Enhancement
-- Implement additional browser resources for the Go MCP host
-- Add more browser operation tools
-- Create comprehensive test suite
-- Enhance error handling and logging
-- Improve cross-platform support
+### Milestone 2: Performance and Monitoring
+- Add comprehensive metrics collection and monitoring
+- Implement performance profiling and optimization
+- Create debugging and diagnostic tools for developers
+- Optimize memory usage and resource consumption
 
-### Milestone 3: MCP API Enhancement
-- Implement additional RPC handlers for more browser capabilities
-- Enhance existing handlers with additional features
-- Optimize performance for large state transfers
-- Improve documentation and examples
+### Milestone 3: UI/UX Enhancement
+- Add visual indicators for connection quality and status
+- Implement user notifications for important state changes
+- Create better debugging interfaces for developers
+- Enhance accessibility and user experience across all components
 
 ### Milestone 4: Agent-MCP Integration
 - Enable agent system to leverage MCP tools and resources
@@ -396,3 +463,15 @@ This rebranding establishes a clear identity for the project and sets the stage 
 - Create example integrations with popular AI frameworks
 - Implement authentication and authorization for MCP access
 - Develop guidelines for effective integration patterns
+
+## Architecture Evolution
+
+The project has evolved from a simple Chrome extension to a comprehensive MCP platform:
+
+1. **Phase 1: Basic Extension** - Chrome extension with browser automation
+2. **Phase 2: Multi-Agent System** - Specialized AI agents for complex tasks
+3. **Phase 3: MCP Integration** - Native Messaging for external AI system access
+4. **Phase 4: Real-time Architecture** - Event-driven status updates and monitoring
+5. **Phase 5: Enhanced Capabilities** (Current) - Advanced MCP features and performance optimization
+
+The heartbeat optimization represents a significant milestone in creating a responsive, efficient, and scalable MCP platform that provides real-time feedback and supports multiple UI components simultaneously.

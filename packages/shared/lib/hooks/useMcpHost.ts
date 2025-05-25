@@ -10,6 +10,9 @@ export interface McpHostStatus {
   lastHeartbeat: number | null;
   version: string | null;
   runMode: string | null;
+  uptime?: string;
+  ssePort?: string;
+  sseBaseURL?: string;
 }
 
 /**
@@ -166,18 +169,25 @@ export function useMcpHost() {
     }
   };
 
-  // Load initial status
+  // Load initial status and set up message listener
   useEffect(() => {
     refreshStatus();
 
-    // Set up a refresh interval
-    const intervalId = setInterval(() => {
-      refreshStatus();
-    }, 5000);
+    // Listen for status updates from background
+    const handleMessage = (message: any) => {
+      if (message.type === 'mcpHostStatusUpdate') {
+        console.debug('[useMcpHost] Received status update:', message.status);
+        setStatus(message.status);
+        setLoading(false);
+      }
+    };
+
+    // Register message listener
+    chrome.runtime.onMessage.addListener(handleMessage);
 
     // Clean up on component unmount
     return () => {
-      clearInterval(intervalId);
+      chrome.runtime.onMessage.removeListener(handleMessage);
     };
   }, []);
 

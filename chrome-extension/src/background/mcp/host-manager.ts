@@ -71,6 +71,9 @@ export interface McpHostStatus {
   lastHeartbeat: number | null;
   version: string | null;
   runMode: string | null;
+  uptime?: string;
+  ssePort?: string;
+  sseBaseURL?: string;
 }
 
 // Define the MCP Host configuration options
@@ -163,8 +166,6 @@ export class McpHostManager {
       // Most connection errors trigger onDisconnect almost immediately
       setTimeout(() => {
         if (this.port) {
-          // Connection appears successful - set up remaining handlers and state
-
           // Update and broadcast status
           this.updateStatus({ isConnected: true });
 
@@ -173,6 +174,8 @@ export class McpHostManager {
 
           // Resolve the promise
           resolve(true);
+
+          this.port.onDisconnect.removeListener(disconnectHandler);
         }
       }, 100);
     });
@@ -228,7 +231,7 @@ export class McpHostManager {
   }
 
   /**
-   * Starts the MCP Host process.
+   * Starts the MCP Host process using RPC.
    * @param {McpHostOptions} options Configuration options.
    * @returns {Promise<boolean>} True if the Host was started successfully.
    * @throws Will reject with an error if connection fails (e.g., host not installed)
@@ -239,41 +242,35 @@ export class McpHostManager {
       return false;
     }
 
-    // Send start request to the main extension process
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'init',
-          options,
-        },
-        response => {
-          if (response && response.success) {
-            // Try to connect to the newly started Host
-            setTimeout(async () => {
-              try {
-                // Now using the Promise-based connect() method
-                const connected = await this.connect();
-                resolve(connected);
-              } catch (error) {
-                console.error('Failed to connect to MCP Host after init:', error);
-                reject(error); // Propagate the error up
-              }
-            }, 500); // Give some time for the process to start
-          } else {
-            // Check if there's an error message in the response
-            if (response && response.error) {
-              reject(new Error(response.error));
-            } else {
-              resolve(false);
-            }
-          }
-        },
-      );
-    });
+    try {
+      // First establish connection to MCP Host
+      const connected = await this.connect();
+      if (!connected) {
+        return false;
+      }
+
+      // Send init RPC request
+      const response = await this.rpcRequest({
+        method: 'init',
+        params: options,
+      });
+
+      // Check if init was successful
+      if (response && response.result && response.result.status === 'initialized') {
+        console.log('MCP Host initialized successfully');
+        return true;
+      } else {
+        console.error('MCP Host init failed:', response.error || 'Unknown error');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to start MCP Host:', error);
+      throw error;
+    }
   }
 
   /**
-   * Stops the MCP Host process.
+   * Stops the MCP Host process using RPC.
    * @returns {Promise<boolean>} True if the Host was stopped successfully.
    */
   public async stopMcpHost(): Promise<boolean> {
@@ -281,26 +278,61 @@ export class McpHostManager {
       return false;
     }
 
-    return new Promise(resolve => {
-      // Send shutdown command
-      this.port?.postMessage({ type: 'shutdown' });
+    try {
+      // Send shutdown RPC request
+      const response = await this.rpcRequest(
+        {
+          method: 'shutdown',
+          params: {},
+        },
+        { timeout: this.GRACEFUL_SHUTDOWN_TIMEOUT_MS },
+      );
 
-      // Set a timeout for graceful shutdown
-      const timeout = setTimeout(() => {
-        // Force disconnect if graceful shutdown times out
-        this.disconnect();
-        resolve(true);
-      }, this.GRACEFUL_SHUTDOWN_TIMEOUT_MS);
+      // Check if shutdown was successful
+      if (response && response.result && response.result.status === 'shutting_down') {
+        console.log('MCP Host shutdown initiated');
 
-      // Add a one-time disconnect listener
-      const disconnectHandler = () => {
-        clearTimeout(timeout);
-        resolve(true);
-      };
+        // Wait for disconnect event or timeout
+        return new Promise(resolve => {
+          const timeout = setTimeout(() => {
+            // Force disconnect if graceful shutdown times out
+            this.disconnect();
+            resolve(true);
+          }, this.GRACEFUL_SHUTDOWN_TIMEOUT_MS);
 
-      // Wait for disconnect event
-      this.port?.onDisconnect.addListener(disconnectHandler);
-    });
+          // Add a one-time disconnect listener
+          const disconnectHandler = () => {
+            const lastError = chrome.runtime.lastError;
+            if (lastError) {
+              const errorMessage = lastError.message;
+              console.info(`Native messaging disconnect ok, message: ${errorMessage}`);
+              this.port = null;
+            }
+
+            clearTimeout(timeout);
+
+            // Update status
+            this.updateStatus({
+              isConnected: false,
+              lastHeartbeat: null,
+            });
+
+            resolve(true);
+          };
+
+          // Wait for disconnect event
+          this.port?.onDisconnect.addListener(disconnectHandler);
+        });
+      } else {
+        console.error('MCP Host shutdown failed:', response.error || 'Unknown error');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to stop MCP Host:', error);
+      // Force disconnect on error
+      this.disconnect();
+      return true;
+    }
   }
 
   /**
@@ -484,6 +516,29 @@ export class McpHostManager {
 
     // Notify listeners
     this.notifyListeners();
+
+    // Broadcast status to popup and other components
+    this.broadcastStatus();
+  }
+
+  /**
+   * Broadcasts status updates to all extension components
+   * @private
+   */
+  private broadcastStatus(): void {
+    try {
+      chrome.runtime
+        .sendMessage({
+          type: 'mcpHostStatusUpdate',
+          status: this.getStatus(),
+        })
+        .catch(error => {
+          // Ignore errors if no listeners (e.g., popup is closed)
+          console.debug('[McpHostManager] No message listeners available:', error.message);
+        });
+    } catch (error) {
+      console.debug('[McpHostManager] Failed to broadcast status:', error);
+    }
   }
 
   /**
@@ -508,10 +563,13 @@ export class McpHostManager {
     // Clear any existing heartbeat
     this.stopHeartbeat();
 
+    // Send status request
+    this.sendStatusRequest();
+
     // Set up new heartbeat interval
     // Use globalThis to be compatible with both browser and Node.js environments
     this.heartbeatInterval = globalThis.setInterval(() => {
-      this.sendPing();
+      this.sendStatusRequest();
     }, this.HEARTBEAT_INTERVAL_MS);
   }
 
@@ -532,10 +590,10 @@ export class McpHostManager {
   }
 
   /**
-   * Sends a ping message to check if the MCP Host is alive using RPC.
+   * Sends a status request to get complete information from MCP Host using RPC.
    * @private
    */
-  private sendPing(): void {
+  private sendStatusRequest(): void {
     if (!this.port) {
       this.stopHeartbeat();
       return;
@@ -547,25 +605,45 @@ export class McpHostManager {
       this.pingTimeout = null;
     }
 
-    // Use RPC to send ping request
+    // Use RPC to send status request
     this.rpcRequest(
       {
-        method: 'ping',
+        method: 'status',
         params: {},
       },
       { timeout: this.PING_TIMEOUT_MS },
     )
       .then(response => {
-        console.log('Ping response:', response);
+        console.debug('Status response:', response);
 
-        // Process successful response, update the last heartbeat time
+        // Process successful response, update status with complete information
         if (response && response.result) {
-          this.updateStatus({ lastHeartbeat: response.result.timestamp });
+          const statusData = response.result;
+
+          // Convert current_time string to timestamp if needed
+          let lastHeartbeat = null;
+          if (statusData.current_time) {
+            if (typeof statusData.current_time === 'string') {
+              lastHeartbeat = new Date(statusData.current_time).getTime();
+            } else if (typeof statusData.current_time === 'number') {
+              lastHeartbeat = statusData.current_time;
+            } else {
+              lastHeartbeat = Date.now();
+            }
+          }
+
+          this.updateStatus({
+            lastHeartbeat,
+            version: statusData.version || null,
+            uptime: statusData.uptime || null,
+            ssePort: statusData.sse_port || null,
+            sseBaseURL: statusData.sse_base_url || null,
+          });
         }
       })
       .catch(error => {
         // Connection might be lost or request timed out
-        console.log('Ping failed:', error.message || 'No response from MCP Host');
+        console.log('Status request failed:', error.message || 'No response from MCP Host');
 
         // Mark as disconnected
         this.updateStatus({ isConnected: false });

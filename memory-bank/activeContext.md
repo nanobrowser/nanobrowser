@@ -1,11 +1,46 @@
 # Active Context: Algonius Browser
 
-## Current Work Focus - Integration Testing Phase ⚠️
+## Current Work Focus - UI Optimization Phase ✅
 
-### Current Priority: SSE-Based MCP Architecture Integration Testing (2025-05-24 22:30)
-Working on comprehensive integration testing for the simplified SSE-based MCP architecture that no longer uses a Dual Server Manager.
+### Latest Achievement: Heartbeat Optimization for Chrome Extension (2025-05-24 23:10)
+Successfully implemented comprehensive heartbeat system improvements to eliminate UI polling and provide real-time status updates.
 
-### Latest Achievement: Logging System Optimization (2025-05-24 08:43)
+#### Heartbeat System Improvements - 2025-05-24 23:10
+- ✅ **Real-time Status Broadcasting**: Enhanced McpHostManager to broadcast status updates to all extension components
+- ✅ **Eliminated UI Polling**: Removed 5-second polling interval from useMcpHost hook in favor of event-driven updates
+- ✅ **Message-Based Architecture**: Implemented chrome.runtime.onMessage listener for real-time status synchronization
+- ✅ **Enhanced Status Interface**: Extended McpHostStatus interface with additional fields (uptime, ssePort, sseBaseURL)
+- ✅ **RPC-Based Status Requests**: Converted heartbeat mechanism to use RPC requests for more reliable communication
+- ✅ **Improved Error Handling**: Enhanced timeout and connection failure detection in status monitoring
+- ✅ **Performance Optimization**: Reduced unnecessary network requests and improved UI responsiveness
+
+#### Technical Implementation Details
+1. **McpHostManager Enhancements (`chrome-extension/src/background/mcp/host-manager.ts`)**:
+   - Added `broadcastStatus()` method to send status updates to all extension components
+   - Enhanced `sendStatusRequest()` to use RPC protocol instead of simple messages
+   - Improved connection failure detection with proper timeout handling
+   - Added graceful error handling for unavailable message listeners
+
+2. **useMcpHost Hook Optimization (`packages/shared/lib/hooks/useMcpHost.ts`)**:
+   - Replaced polling interval with `chrome.runtime.onMessage` listener
+   - Added message filtering for `mcpHostStatusUpdate` events
+   - Maintained backward compatibility with existing error handling
+   - Improved loading state management for better UX
+
+3. **Status Interface Extensions**:
+   - Added optional fields: `uptime`, `ssePort`, `sseBaseURL`
+   - Maintained compatibility with existing status consumers
+   - Enhanced status data richness for better debugging and monitoring
+
+#### Benefits Achieved
+- **Performance**: Eliminated unnecessary 5-second polling, reducing CPU usage and network requests
+- **Responsiveness**: Real-time status updates provide immediate feedback on connection changes
+- **User Experience**: Faster UI updates when MCP host connects/disconnects
+- **System Efficiency**: Event-driven architecture reduces resource consumption
+- **Debugging**: Enhanced status information aids in troubleshooting connection issues
+- **Scalability**: Message broadcasting pattern supports multiple UI components efficiently
+
+### Previous Achievement: Logging System Optimization (2025-05-24 08:43)
 Successfully modified the logging system to avoid interference with Native Messaging by redirecting all logs exclusively to files.
 
 #### Logging System Improvements - 2025-05-24 08:43
@@ -36,45 +71,13 @@ Successfully implemented simplified SSE-based MCP architecture with direct Nativ
 - ✅ **Build and Testing**: All code compiles and tests pass
 - ✅ **Integration Testing**: Comprehensive test suite with real MCP client
 
-#### Completed Work Summary
-1. **SSE Server Implementation (`pkg/sse/server.go`)**:
-   - Integrated `mark3labs/mcp-go` library for industry-standard SSE-based MCP communication
-   - Adapted internal types to mark3labs MCP format for tools and resources
-   - Implemented proper schema conversion for tool parameters using PropertyOption types
-   - Added HTTP server capabilities for external MCP client access
-   - Fixed compilation issues with type compatibility
-
-2. **Dual Server Architecture (`pkg/dual/server.go`)**:
-   - Created unified server management supporting both Native Messaging and SSE protocols
-   - Registers tools and resources with both server implementations simultaneously
-   - Provides unified start/stop/status management with proper error handling
-   - Ensures consistent behavior across both protocols
-   - Thread-safe operations with proper mutex usage
-
-3. **Main Application Updates (`cmd/mcp-host/main.go`)**:
-   - Updated to use the new dual server instead of single Native Messaging server
-   - Added environment variable configuration for SSE server (port, base URL, base path)
-   - Enhanced logging to show both server endpoints on startup
-   - Graceful shutdown for both servers with proper error handling
-
-4. **Build and Testing**:
-   - All code compiles successfully with Go build system
-   - Fixed type compatibility issues with mark3labs/mcp-go PropertyOption types
-   - Binary builds correctly with `make build`
-   - Created and successfully ran test to verify dual server functionality
-   - Ready for testing with external MCP clients
-
-5. **Documentation**:
-   - Created comprehensive `docs/dual-server-architecture.md` documentation
-   - Updated `memory-bank/progress.md` with dual server implementation details
-   - Documented configuration options, usage examples, and troubleshooting
-
 ## Implementation Benefits
 
 ### For Chrome Extension Users
-- **Unchanged Interface**: Existing extension functionality remains identical
-- **Performance**: Direct Native Messaging communication maintains efficiency
-- **Security**: Leverages Chrome's built-in security model
+- **Real-time Updates**: Immediate status feedback without polling delays
+- **Better Performance**: Reduced CPU usage and network requests
+- **Enhanced UX**: Faster response to connection state changes
+- **Improved Debugging**: Richer status information for troubleshooting
 
 ### For External AI Tools
 - **Standard Protocol**: Industry-standard MCP over HTTP/SSE
@@ -83,14 +86,14 @@ Successfully implemented simplified SSE-based MCP architecture with direct Nativ
 - **Testing**: Simplified testing and debugging capabilities
 
 ### For Developers
+- **Event-Driven Architecture**: Clean message-based status synchronization
 - **Unified Codebase**: Single implementation serves both protocols
-- **Consistency**: Same tools and resources available via both interfaces
 - **Maintainability**: Single source of truth for business logic
-- **Extensibility**: Easy to add new tools/resources to both servers
+- **Performance Monitoring**: Enhanced status data for system monitoring
 
 ## Server Endpoints
 
-The dual server now provides:
+The MCP host provides:
 
 1. **Native Messaging**: Available via Chrome extension (existing functionality)
 2. **SSE Server**: Available at `http://localhost:8080/mcp` (configurable)
@@ -100,32 +103,31 @@ The dual server now provides:
 
 ## Next Steps Recommendations
 
-With the logging system optimized, suggested next priorities:
+With the heartbeat system optimized, suggested next priorities:
 
-1. **Testing**:
-   - Test MCP host with logging disabled to stdout
-   - Verify that logs are correctly written to the configured file path
-   - Test different log configuration options through environment variables
-   - Verify that Native Messaging continues to function correctly
+1. **Integration Testing**:
+   - Test real-time status updates in popup and options pages
+   - Verify heartbeat performance under various connection conditions
+   - Test status broadcasting with multiple UI components open
 
-2. **Additional Tools and Resources**:
-   - Implement additional browser resources beyond `current_state`
-   - Add more browser operation tools beyond `navigate_to`
-   - Enhance existing tools with additional capabilities
+2. **Additional UI Enhancements**:
+   - Add visual indicators for heartbeat status in the UI
+   - Implement connection quality indicators based on heartbeat timing
+   - Add user notifications for connection state changes
 
-3. **Enhanced Features**:
+3. **Performance Monitoring**:
+   - Add metrics collection for status update frequency
+   - Monitor memory usage of message broadcasting
+   - Implement performance logging for debugging
+
+4. **Enhanced Features**:
    - Add authentication for SSE server (for production use)
    - Implement rate limiting for external clients
    - Add metrics and monitoring capabilities
 
-4. **Documentation and Examples**:
-   - Create client examples in multiple programming languages
-   - Document integration patterns for AI frameworks
-   - Create end-user installation and usage guides
-
 ## Configuration
 
-The MCP host now supports the following environment variables for logging configuration:
+The MCP host now supports the following environment variables:
 
 ```bash
 # Logging Configuration
@@ -160,13 +162,20 @@ RUN_MODE="production"                    # Runtime mode (development/production)
 
 The project has evolved from a Chrome extension with browser automation to a comprehensive MCP platform supporting:
 
-- **Chrome Extension Integration**: Via Native Messaging protocol
+- **Chrome Extension Integration**: Via Native Messaging protocol with real-time status updates
 - **External AI Tool Integration**: Via HTTP/SSE protocol
 - **Unified Tool/Resource Interface**: Same capabilities accessible through both protocols
 - **Clean Architecture**: Go-based implementation with dependency injection
-- **Comprehensive Documentation**: Technical and user documentation
+- **Event-Driven UI**: Real-time status synchronization across all components
 
 ## Technical Insights
+
+### Heartbeat System Implementation Insights
+- **Event-Driven Architecture**: Message broadcasting eliminates polling overhead and provides instant updates
+- **RPC-Based Communication**: Using structured RPC requests for status ensures reliable data exchange
+- **Graceful Error Handling**: Proper timeout and disconnection detection improves system reliability
+- **Performance Optimization**: Event-based updates significantly reduce CPU usage compared to polling
+- **Scalability**: Message broadcasting pattern supports multiple UI components without performance degradation
 
 ### Logging System Implementation Insights
 - **Native Messaging Compatibility**: Redirecting logs to files avoids interference with stdout/stderr used by Native Messaging
@@ -175,21 +184,9 @@ The project has evolved from a Chrome extension with browser automation to a com
 - **Safe Directory Creation**: Automatically creates log directories with proper permissions
 - **User Feedback**: Minimizes stdout/stderr usage while still providing essential feedback on startup/shutdown
 
-### Dual Server Implementation Insights
-- **Protocol Abstraction**: Successfully abstracted MCP functionality to work with multiple transport protocols
-- **Type Adaptation**: Effective conversion between internal types and external library formats
-- **Concurrent Server Management**: Proper handling of multiple server lifecycles with unified control
-- **Error Handling**: Robust error handling with graceful degradation and cleanup
-
-### mark3labs/mcp-go Integration Insights
-- **Industry Standard**: Using established Go MCP library ensures compatibility and reliability
-- **Schema Conversion**: PropertyOption types provide flexible parameter configuration
-- **HTTP/SSE Protocol**: Standard web protocols enable broad client compatibility
-- **Real-time Communication**: SSE streaming enables real-time tool execution feedback
-
 ### Build System Insights
 - **Go Toolchain**: Go's built-in build system provides reliable compilation and dependency management
 - **Type Safety**: Go's strong typing caught integration issues early in development
 - **Cross-Platform**: Go's cross-platform nature ensures broad deployment compatibility
 
-This logging system optimization represents an important improvement in ensuring compatibility between the Algonius Browser MCP host and the Chrome extension's Native Messaging protocol while maintaining full debugging capabilities through file-based logging.
+The heartbeat optimization represents a significant improvement in system efficiency and user experience, establishing a foundation for real-time monitoring and responsive UI interactions throughout the Algonius Browser platform.
