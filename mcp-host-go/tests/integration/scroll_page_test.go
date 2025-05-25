@@ -186,7 +186,7 @@ func TestScrollPageToolElementScroll(t *testing.T) {
 	// Test to_element action with valid element_index
 	result, err := testEnv.GetMcpClient().CallTool("scroll_page", map[string]interface{}{
 		"action":        "to_element",
-		"element_index": 5.0,
+		"element_index": 5,
 	})
 
 	require.NoError(t, err)
@@ -200,7 +200,7 @@ func TestScrollPageToolElementScroll(t *testing.T) {
 
 	capturedParams := capturedScrollRequests[0]
 	assert.Equal(t, "to_element", capturedParams["action"])
-	assert.Equal(t, 5, capturedParams["element_index"])
+	assert.Equal(t, 5.0, capturedParams["element_index"])
 
 	t.Log("Successfully tested to_element action with element_index")
 }
@@ -420,7 +420,7 @@ func TestScrollPageToolWithDOMState(t *testing.T) {
 	// Now test scrolling to an element that exists in the DOM
 	result, err := testEnv.GetMcpClient().CallTool("scroll_page", map[string]interface{}{
 		"action":        "to_element",
-		"element_index": 2.0, // Scroll to the Submit button
+		"element_index": uint64(2), // Scroll to the Submit button
 	})
 
 	require.NoError(t, err)
@@ -434,7 +434,7 @@ func TestScrollPageToolWithDOMState(t *testing.T) {
 
 	capturedParams := capturedScrollRequests[0]
 	assert.Equal(t, "to_element", capturedParams["action"])
-	assert.Equal(t, 2, capturedParams["element_index"])
+	assert.Equal(t, 2.0, capturedParams["element_index"])
 
 	// Verify we can still get DOM state after scrolling
 	domContentAfter, err := testEnv.GetMcpClient().ReadResource("browser://dom/state")
@@ -452,6 +452,9 @@ func TestScrollPageToolCompleteWorkflow(t *testing.T) {
 	testEnv, err := env.NewMcpHostTestEnvironment(nil)
 	require.NoError(t, err)
 	defer testEnv.Cleanup()
+
+	err = testEnv.Setup(ctx)
+	require.NoError(t, err)
 
 	// Track all scroll operations
 	var scrollHistory []map[string]interface{}
@@ -472,7 +475,7 @@ func TestScrollPageToolCompleteWorkflow(t *testing.T) {
 				"newPosition": 100, // Simulated scroll position
 			}, nil
 		case "to_element":
-			elementIndex := params["element_index"].(int)
+			elementIndex := params["element_index"].(float64)
 			return map[string]interface{}{
 				"success":      true,
 				"message":      "Scrolled to element",
@@ -498,9 +501,6 @@ func TestScrollPageToolCompleteWorkflow(t *testing.T) {
 			return nil, fmt.Errorf("invalid action: %s", action)
 		}
 	})
-
-	err = testEnv.Setup(ctx)
-	require.NoError(t, err)
 
 	// Initialize MCP client
 	err = testEnv.GetMcpClient().Initialize(ctx)
@@ -534,7 +534,7 @@ func TestScrollPageToolCompleteWorkflow(t *testing.T) {
 		},
 		{
 			"action":        "to_element",
-			"element_index": 3.0,
+			"element_index": 3,
 		},
 		{
 			"action": "to_top",
@@ -565,7 +565,7 @@ func TestScrollPageToolCompleteWorkflow(t *testing.T) {
 	assert.Equal(t, 400.0, scrollHistory[0]["pixels"])
 
 	assert.Equal(t, "to_element", scrollHistory[1]["action"])
-	assert.Equal(t, 3, scrollHistory[1]["element_index"])
+	assert.Equal(t, 3.0, scrollHistory[1]["element_index"])
 
 	assert.Equal(t, "to_top", scrollHistory[2]["action"])
 

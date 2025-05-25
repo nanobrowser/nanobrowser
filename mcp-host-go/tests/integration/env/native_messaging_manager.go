@@ -287,7 +287,8 @@ func (nm *NativeMessagingManager) handleRpcRequest(ctx context.Context, message 
 // sendRpcResponse sends an RPC response back to the MCP host
 func (nm *NativeMessagingManager) sendRpcResponse(ctx context.Context, id interface{}, result interface{}, err error) {
 	response := map[string]interface{}{
-		"id": id,
+		"type": "rpc_response",
+		"id":   id,
 	}
 
 	if err != nil {
