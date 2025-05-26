@@ -33,19 +33,20 @@ const (
 
 // Container is a dependency injection container
 type Container struct {
-	Logger          logger.Logger
-	Messaging       types.Messaging
-	Server          *sse.SSEServer
-	NavigateTool    types.Tool
-	ScrollPageTool  types.Tool
-	CurrentStateRes types.Resource
-	DomStateRes     types.Resource
-	StatusHandler   *handlers.StatusHandler
-	InitHandler     *handlers.InitHandler
-	ShutdownHandler *handlers.ShutdownHandler
-	LogFilePath     string // Store the log file path for printing in shutdown messages
-	StartTime       time.Time
-	ShutdownChan    chan struct{} // Channel for graceful shutdown coordination
+	Logger              logger.Logger
+	Messaging           types.Messaging
+	Server              *sse.SSEServer
+	NavigateTool        types.Tool
+	ScrollPageTool      types.Tool
+	GetDomExtraElements types.Tool
+	CurrentStateRes     types.Resource
+	DomStateRes         types.Resource
+	StatusHandler       *handlers.StatusHandler
+	InitHandler         *handlers.InitHandler
+	ShutdownHandler     *handlers.ShutdownHandler
+	LogFilePath         string // Store the log file path for printing in shutdown messages
+	StartTime           time.Time
+	ShutdownChan        chan struct{} // Channel for graceful shutdown coordination
 }
 
 func main() {
@@ -92,6 +93,11 @@ func main() {
 
 	if err := container.Server.RegisterTool(container.ScrollPageTool); err != nil {
 		container.Logger.Error("Failed to register scroll_page tool", zap.Error(err))
+		os.Exit(1)
+	}
+
+	if err := container.Server.RegisterTool(container.GetDomExtraElements); err != nil {
+		container.Logger.Error("Failed to register get_dom_extra_elements tool", zap.Error(err))
 		os.Exit(1)
 	}
 
@@ -282,6 +288,15 @@ func initContainer(startTime time.Time) (*Container, error) {
 		return nil, fmt.Errorf("failed to create scroll_page tool: %w", err)
 	}
 	container.ScrollPageTool = scrollPageTool
+
+	getDomExtraElements, err := tools.NewGetDomExtraElementsTool(tools.GetDomExtraElementsConfig{
+		Logger:    toolLogger,
+		Messaging: container.Messaging,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create get_dom_extra_elements tool: %w", err)
+	}
+	container.GetDomExtraElements = getDomExtraElements
 
 	return container, nil
 }

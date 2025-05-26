@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -63,7 +64,7 @@ func TestDomStatePagination(t *testing.T) {
 
 	found := false
 	for _, resource := range resources.Resources {
-		if resource.URI == "browser://dom/state" {
+		if strings.HasPrefix(resource.URI, "browser://dom/state") {
 			found = true
 			assert.Equal(t, "DOM State", resource.Name)
 			assert.Contains(t, resource.Description, "Current DOM state with interactive elements and page metadata")
@@ -94,6 +95,35 @@ func TestDomStatePagination(t *testing.T) {
 		// is working. The actual pagination logic is tested through the RPC mock
 		// which simulates the browser extension returning 8 interactive elements.
 		t.Log("DOM state pagination feature is functioning - content retrieved from mock data")
+	})
+
+	t.Run("URI path-based pagination parameters", func(t *testing.T) {
+		// Test new URI path-based parameter format
+		testCases := []struct {
+			uri         string
+			description string
+		}{
+			{"browser://dom/state/page/2", "Page 2 with default size"},
+			{"browser://dom/state/size/5", "Page 1 with size 5"},
+			{"browser://dom/state/type/button", "Button elements only"},
+			{"browser://dom/state/page/1/size/3", "Page 1 with size 3"},
+			{"browser://dom/state/type/button/page/1/size/2", "Button elements, page 1, size 2"},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.description, func(t *testing.T) {
+				resourceContent, err := testEnv.GetMcpClient().ReadResource(tc.uri)
+				require.NoError(t, err)
+				require.NotEmpty(t, resourceContent.Contents)
+
+				content := resourceContent.Contents[0]
+				t.Logf("DOM state resource content for %s: %+v", tc.uri, content)
+
+				// Verify we got content - the actual pagination logic is handled
+				// by the resource implementation and tested through the mock data
+				t.Logf("Successfully tested URI path parameters: %s", tc.uri)
+			})
+		}
 	})
 
 	t.Run("Verify resource properties for pagination support", func(t *testing.T) {

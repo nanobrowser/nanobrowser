@@ -3,7 +3,6 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
@@ -41,20 +40,16 @@ func NewDomStateResource(config DomStateConfig) (*DomStateResource, error) {
 		uri:      "browser://dom/state",
 		name:     "DOM State",
 		mimeType: "text/markdown",
-		description: `Current DOM state with interactive elements and page metadata in AI-friendly Markdown format.
+		description: `Current DOM state overview with up to 20 interactive elements and page metadata in AI-friendly Markdown format.
 
-Query Parameters:
-• page: Page number for pagination (default: 1, min: 1)
-• pageSize: Elements per page (default: 100, max: 1000)
-• elementType: Filter by type - button|input|link|select|textarea (default: all)
+This resource provides a quick overview of the page's interactive elements. For pages with more than 20 interactive elements, use the 'get_dom_extra_elements' tool to access additional elements with pagination and filtering options.
 
-Examples:
-- Default: Returns first 100 elements
-- ?page=2&pageSize=50: Second page with 50 elements
-- ?elementType=button: Only button elements
-- ?page=1&pageSize=20&elementType=input: First 20 input elements
-
-Response includes pagination metadata and filtered results in Markdown format.`,
+The overview includes:
+• Page metadata (URL, title, scroll position)
+• First 20 interactive elements (buttons, inputs, links, etc.)
+• Total count of all interactive elements
+• Simplified DOM structure
+• Clear indication when more elements are available`,
 		logger:    config.Logger,
 		messaging: config.Messaging,
 	}, nil
@@ -80,18 +75,14 @@ func (r *DomStateResource) GetDescription() string {
 	return r.description
 }
 
-// Read reads the current DOM state (uses default pagination)
+// Read reads the current DOM state overview
 func (r *DomStateResource) Read() (types.ResourceContent, error) {
 	return r.ReadWithArguments(r.uri, nil)
 }
 
-// ReadWithArguments reads the DOM state with optional pagination parameters
+// ReadWithArguments reads the DOM state overview (arguments are ignored for overview mode)
 func (r *DomStateResource) ReadWithArguments(uri string, arguments map[string]any) (types.ResourceContent, error) {
-	r.logger.Debug("Reading DOM state with arguments", zap.Any("arguments", arguments))
-
-	// Parse pagination parameters from arguments
-	params := r.parsePaginationParams(arguments)
-	r.logger.Debug("Parsed pagination params", zap.Any("params", params))
+	r.logger.Debug("Reading DOM state overview", zap.String("uri", uri))
 
 	// Request DOM state from the extension
 	resp, err := r.messaging.RpcRequest(types.RpcRequest{
@@ -115,18 +106,18 @@ func (r *DomStateResource) ReadWithArguments(uri string, arguments map[string]an
 		return types.ResourceContent{}, fmt.Errorf("failed to parse DOM state data: %w", err)
 	}
 
-	// Apply pagination and filtering
-	paginatedState := r.applyPaginationAndFiltering(domStateData, params)
+	// Create overview with max 20 elements
+	overview := r.createOverview(domStateData)
 
 	// Convert to Markdown format
-	markdownContent := r.convertToMarkdown(paginatedState)
+	markdownContent := r.convertToMarkdown(overview)
 
-	r.logger.Debug("Successfully retrieved and paginated DOM state",
-		zap.Int("responseSize", len(markdownContent)),
-		zap.Int("totalElements", paginatedState.Pagination.TotalElements),
-		zap.Int("pageElements", len(paginatedState.InteractiveElements)))
+	r.logger.Debug("Successfully retrieved DOM state overview",
+		zap.Int("totalElements", overview.TotalElements),
+		zap.Int("overviewElements", len(overview.OverviewElements)),
+		zap.Bool("hasMore", overview.HasMoreElements))
 
-	// Return the paginated DOM state as resource content
+	// Return the DOM state overview as resource content
 	return types.ResourceContent{
 		Contents: []types.ResourceItem{
 			{
@@ -156,13 +147,6 @@ func (r *DomStateResource) NotifyStateChange(state interface{}) {
 	}
 }
 
-// PaginationParams represents pagination parameters
-type PaginationParams struct {
-	Page        int    // Page number, starting from 1
-	PageSize    int    // Number of elements per page
-	ElementType string // Element type filter (optional)
-}
-
 // DomStateData represents the raw DOM state data from Chrome extension
 type DomStateData struct {
 	FormattedDom        string                   `json:"formattedDom"`
@@ -170,71 +154,38 @@ type DomStateData struct {
 	Meta                interface{}              `json:"meta"`
 }
 
-// PaginatedDomState represents the paginated DOM state
-type PaginatedDomState struct {
-	FormattedDom        string                   `json:"formattedDom"`
-	InteractiveElements []map[string]interface{} `json:"interactiveElements"`
-	Meta                interface{}              `json:"meta"`
-	Pagination          PaginationInfo           `json:"pagination"`
-	Filter              *FilterInfo              `json:"filter,omitempty"`
+// DomStateOverview represents the overview of DOM state (max 20 elements)
+type DomStateOverview struct {
+	FormattedDom     string                   `json:"formattedDom"`
+	OverviewElements []map[string]interface{} `json:"overviewElements"`
+	Meta             interface{}              `json:"meta"`
+	TotalElements    int                      `json:"totalElements"`
+	HasMoreElements  bool                     `json:"hasMoreElements"`
+	OverviewLimit    int                      `json:"overviewLimit"`
 }
 
-// PaginationInfo contains pagination metadata
-type PaginationInfo struct {
-	CurrentPage     int  `json:"currentPage"`
-	PageSize        int  `json:"pageSize"`
-	TotalElements   int  `json:"totalElements"`
-	TotalPages      int  `json:"totalPages"`
-	HasNextPage     bool `json:"hasNextPage"`
-	HasPreviousPage bool `json:"hasPreviousPage"`
-}
+// createOverview creates an overview with max 20 elements
+func (r *DomStateResource) createOverview(data DomStateData) DomStateOverview {
+	totalElements := len(data.InteractiveElements)
+	overviewLimit := 20
+	hasMore := totalElements > overviewLimit
 
-// FilterInfo contains filter metadata
-type FilterInfo struct {
-	ElementType *string `json:"elementType,omitempty"`
-}
-
-// parsePaginationParams parses pagination parameters from arguments map
-func (r *DomStateResource) parsePaginationParams(arguments map[string]any) PaginationParams {
-	params := PaginationParams{
-		Page:     1,  // Default to page 1
-		PageSize: 20, // Default page size
+	// Get first 20 elements (or all if less than 20)
+	var overviewElements []map[string]interface{}
+	if totalElements <= overviewLimit {
+		overviewElements = data.InteractiveElements
+	} else {
+		overviewElements = data.InteractiveElements[:overviewLimit]
 	}
 
-	if arguments == nil {
-		return params
+	return DomStateOverview{
+		FormattedDom:     data.FormattedDom,
+		OverviewElements: overviewElements,
+		Meta:             data.Meta,
+		TotalElements:    totalElements,
+		HasMoreElements:  hasMore,
+		OverviewLimit:    overviewLimit,
 	}
-
-	// Parse page parameter
-	if pageVal, exists := arguments["page"]; exists {
-		if pageStr, ok := pageVal.(string); ok {
-			if page, err := strconv.Atoi(pageStr); err == nil && page > 0 {
-				params.Page = page
-			}
-		} else if pageFloat, ok := pageVal.(float64); ok && pageFloat > 0 {
-			params.Page = int(pageFloat)
-		}
-	}
-
-	// Parse pageSize parameter
-	if pageSizeVal, exists := arguments["pageSize"]; exists {
-		if pageSizeStr, ok := pageSizeVal.(string); ok {
-			if pageSize, err := strconv.Atoi(pageSizeStr); err == nil && pageSize > 0 && pageSize <= 1000 {
-				params.PageSize = pageSize
-			}
-		} else if pageSizeFloat, ok := pageSizeVal.(float64); ok && pageSizeFloat > 0 && pageSizeFloat <= 1000 {
-			params.PageSize = int(pageSizeFloat)
-		}
-	}
-
-	// Parse elementType parameter
-	if elementTypeVal, exists := arguments["elementType"]; exists {
-		if elementTypeStr, ok := elementTypeVal.(string); ok && elementTypeStr != "" {
-			params.ElementType = elementTypeStr
-		}
-	}
-
-	return params
 }
 
 // parseResponseToStruct converts response result to a struct
@@ -252,123 +203,48 @@ func (r *DomStateResource) parseResponseToStruct(result interface{}, target inte
 	return nil
 }
 
-// applyPaginationAndFiltering applies pagination and filtering to DOM state data
-func (r *DomStateResource) applyPaginationAndFiltering(data DomStateData, params PaginationParams) PaginatedDomState {
-	// Start with all interactive elements
-	elements := data.InteractiveElements
-
-	// Apply element type filtering if specified
-	var filterInfo *FilterInfo
-	if params.ElementType != "" {
-		filteredElements := make([]map[string]interface{}, 0)
-		for _, element := range elements {
-			if elementType, exists := element["type"]; exists {
-				if typeStr, ok := elementType.(string); ok && typeStr == params.ElementType {
-					filteredElements = append(filteredElements, element)
-				}
-			}
-		}
-		elements = filteredElements
-		filterInfo = &FilterInfo{ElementType: &params.ElementType}
-	}
-
-	totalElements := len(elements)
-	totalPages := r.calculateTotalPages(totalElements, params.PageSize)
-
-	// Ensure page is within valid range
-	if params.Page > totalPages && totalPages > 0 {
-		params.Page = totalPages
-	}
-
-	// Calculate pagination bounds
-	startIndex := (params.Page - 1) * params.PageSize
-	endIndex := startIndex + params.PageSize
-
-	// Apply bounds checking
-	if startIndex >= totalElements {
-		startIndex = totalElements
-	}
-	if endIndex > totalElements {
-		endIndex = totalElements
-	}
-
-	// Get paginated elements
-	var paginatedElements []map[string]interface{}
-	if startIndex < endIndex {
-		paginatedElements = elements[startIndex:endIndex]
-	} else {
-		paginatedElements = make([]map[string]interface{}, 0)
-	}
-
-	// Build pagination info
-	paginationInfo := PaginationInfo{
-		CurrentPage:     params.Page,
-		PageSize:        params.PageSize,
-		TotalElements:   totalElements,
-		TotalPages:      totalPages,
-		HasNextPage:     params.Page < totalPages,
-		HasPreviousPage: params.Page > 1,
-	}
-
-	return PaginatedDomState{
-		FormattedDom:        data.FormattedDom,
-		InteractiveElements: paginatedElements,
-		Meta:                data.Meta,
-		Pagination:          paginationInfo,
-		Filter:              filterInfo,
-	}
-}
-
-// calculateTotalPages calculates total pages based on total elements and page size
-func (r *DomStateResource) calculateTotalPages(totalElements, pageSize int) int {
-	if pageSize <= 0 {
-		return 0
-	}
-	// Manual ceiling calculation: (totalElements + pageSize - 1) / pageSize
-	return (totalElements + pageSize - 1) / pageSize
-}
-
-// convertToMarkdown converts the paginated DOM state to AI-friendly Markdown format
-func (r *DomStateResource) convertToMarkdown(state PaginatedDomState) string {
+// convertToMarkdown converts the DOM state overview to AI-friendly Markdown format
+func (r *DomStateResource) convertToMarkdown(overview DomStateOverview) string {
 	var builder strings.Builder
 
-	// Header with pagination info
-	builder.WriteString("# DOM State\n\n")
-
-	// Pagination information
-	builder.WriteString("## Pagination\n")
-	builder.WriteString(fmt.Sprintf("- **Current Page:** %d of %d\n", state.Pagination.CurrentPage, state.Pagination.TotalPages))
-	builder.WriteString(fmt.Sprintf("- **Page Size:** %d elements\n", state.Pagination.PageSize))
-	builder.WriteString(fmt.Sprintf("- **Total Elements:** %d\n", state.Pagination.TotalElements))
-	builder.WriteString(fmt.Sprintf("- **Has Next Page:** %t\n", state.Pagination.HasNextPage))
-	builder.WriteString(fmt.Sprintf("- **Has Previous Page:** %t\n", state.Pagination.HasPreviousPage))
-
-	// Filter information if applied
-	if state.Filter != nil && state.Filter.ElementType != nil {
-		builder.WriteString(fmt.Sprintf("- **Filtered by Element Type:** %s\n", *state.Filter.ElementType))
-	}
-	builder.WriteString("\n")
+	// Header
+	builder.WriteString("# DOM State Overview\n\n")
 
 	// Page metadata if available
-	if state.Meta != nil {
+	if overview.Meta != nil {
 		builder.WriteString("## Page Metadata\n")
-		if metaMap, ok := state.Meta.(map[string]interface{}); ok {
+		if metaMap, ok := overview.Meta.(map[string]interface{}); ok {
 			for key, value := range metaMap {
 				builder.WriteString(fmt.Sprintf("- **%s:** %v\n", key, value))
 			}
 		} else {
-			builder.WriteString(fmt.Sprintf("- %v\n", state.Meta))
+			builder.WriteString(fmt.Sprintf("- %v\n", overview.Meta))
 		}
 		builder.WriteString("\n")
 	}
 
-	// Interactive elements section
-	builder.WriteString("## Interactive Elements\n\n")
+	// Overview summary
+	builder.WriteString("## Interactive Elements Summary\n")
+	builder.WriteString(fmt.Sprintf("- **Total Elements:** %d\n", overview.TotalElements))
+	builder.WriteString(fmt.Sprintf("- **Showing:** First %d elements\n", len(overview.OverviewElements)))
 
-	if len(state.InteractiveElements) == 0 {
+	if overview.HasMoreElements {
+		remainingElements := overview.TotalElements - len(overview.OverviewElements)
+		builder.WriteString(fmt.Sprintf("- **Additional Elements:** %d more elements available\n", remainingElements))
+		builder.WriteString("- **Access More:** Use the `get_dom_extra_elements` tool for pagination and filtering\n")
+	} else {
+		builder.WriteString("- **Status:** All interactive elements shown\n")
+	}
+	builder.WriteString("\n")
+
+	// Interactive elements section
+	if len(overview.OverviewElements) == 0 {
+		builder.WriteString("## Interactive Elements\n\n")
 		builder.WriteString("*No interactive elements found on this page.*\n\n")
 	} else {
-		for i, element := range state.InteractiveElements {
+		builder.WriteString("## Interactive Elements (Overview)\n\n")
+
+		for i, element := range overview.OverviewElements {
 			builder.WriteString(fmt.Sprintf("### Element %d\n", i+1))
 
 			// Element properties in a structured format
@@ -423,11 +299,24 @@ func (r *DomStateResource) convertToMarkdown(state PaginatedDomState) string {
 		}
 	}
 
-	// Formatted DOM section
-	if strings.TrimSpace(state.FormattedDom) != "" {
+	// Additional elements hint
+	if overview.HasMoreElements {
+		builder.WriteString("---\n\n")
+		builder.WriteString("**📋 Need More Elements?**\n\n")
+		builder.WriteString("This overview shows the first 20 interactive elements. ")
+		builder.WriteString(fmt.Sprintf("There are %d more elements available on this page.\n\n", overview.TotalElements-len(overview.OverviewElements)))
+		builder.WriteString("Use the `get_dom_extra_elements` tool to:\n")
+		builder.WriteString("- Access elements beyond the first 20\n")
+		builder.WriteString("- Filter by element type (button, input, link, etc.)\n")
+		builder.WriteString("- Navigate through pages of elements\n")
+		builder.WriteString("- Get specific ranges of elements\n\n")
+	}
+
+	// Formatted DOM section (simplified)
+	if strings.TrimSpace(overview.FormattedDom) != "" {
 		builder.WriteString("## DOM Structure\n\n")
 		builder.WriteString("```html\n")
-		builder.WriteString(state.FormattedDom)
+		builder.WriteString(overview.FormattedDom)
 		builder.WriteString("\n```\n")
 	}
 

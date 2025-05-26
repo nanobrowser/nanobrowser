@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -139,6 +140,34 @@ func (s *SSEServer) RegisterResource(resource types.Resource) error {
 	return nil
 }
 
+// findMatchingResource finds a resource that matches the requested URI
+func (s *SSEServer) findMatchingResource(requestedURI string) types.Resource {
+	// First try exact match
+	if resource, exists := s.resources[requestedURI]; exists {
+		return resource
+	}
+
+	// Then try pattern matching for path-based parameters
+	for baseURI, resource := range s.resources {
+		if s.matchesURIPattern(requestedURI, baseURI) {
+			return resource
+		}
+	}
+
+	return nil
+}
+
+// matchesURIPattern checks if a requested URI matches a base URI pattern
+func (s *SSEServer) matchesURIPattern(requestedURI, baseURI string) bool {
+	// Simple pattern matching for DOM state resource
+	// This specifically handles browser://dom/state/* patterns
+	if baseURI == "browser://dom/state" {
+		return strings.HasPrefix(requestedURI, "browser://dom/state")
+	}
+
+	return false
+}
+
 // Start starts the SSE MCP server
 func (s *SSEServer) Start() error {
 	s.logger.Info("Starting SSE MCP server",
@@ -221,12 +250,28 @@ func (s *SSEServer) createResourceHandlerForResource(resource types.Resource) se
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		s.logger.Debug("Reading resource via SSE",
 			zap.String("uri", resource.GetURI()),
+			zap.String("requestedURI", request.Params.URI),
 			zap.Any("arguments", request.Params.Arguments))
 
+		// Check if this is a pattern match request
+		var targetResource types.Resource = resource
+		if request.Params.URI != resource.GetURI() {
+			// Look for a matching resource pattern
+			matchedResource := s.findMatchingResource(request.Params.URI)
+			if matchedResource != nil {
+				targetResource = matchedResource
+				s.logger.Debug("Matched URI pattern",
+					zap.String("requestedURI", request.Params.URI),
+					zap.String("baseURI", targetResource.GetURI()))
+			}
+		}
+
 		// Read the resource with arguments if provided
-		content, err := resource.ReadWithArguments(request.Params.URI, request.Params.Arguments)
+		content, err := targetResource.ReadWithArguments(request.Params.URI, request.Params.Arguments)
 		if err != nil {
-			s.logger.Error("Failed to read resource", zap.Error(err), zap.String("uri", resource.GetURI()))
+			s.logger.Error("Failed to read resource", zap.Error(err),
+				zap.String("uri", targetResource.GetURI()),
+				zap.String("requestedURI", request.Params.URI))
 			return nil, fmt.Errorf("failed to read resource: %w", err)
 		}
 

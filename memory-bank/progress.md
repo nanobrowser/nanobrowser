@@ -184,6 +184,56 @@ With the heartbeat optimization completed, the project is ready for the next pha
 
 ## Recent Progress
 
+### Get DOM Extra Elements Tool Implementation (2025-05-26)
+Successfully implemented and integrated the `get_dom_extra_elements` MCP tool to provide comprehensive DOM element access with pagination and filtering capabilities:
+
+**Implementation Details**:
+1. **Tool Implementation (`mcp-host-go/pkg/tools/get_dom_extra_elements.go`)**:
+   - Created `GetDomExtraElementsTool` struct implementing MCP tool interface
+   - Added comprehensive pagination system with parameters: `page`, `pageSize`, `elementType`, `startIndex`
+   - Implemented element type filtering for buttons, inputs, links, selects, textareas, and all
+   - Added flexible pagination with both page-based and index-based access
+   - Integrated with existing DOM state RPC method for data retrieval
+   - Added structured logging and comprehensive error handling
+   - Returns JSON-formatted results with pagination metadata and filter information
+
+2. **Tool Registration (`mcp-host-go/cmd/mcp-host/main.go`)**:
+   - Registered `get_dom_extra_elements` tool with MCP server
+   - Added proper dependency injection with logger and messaging components
+   - Ensured co-existence with existing tools (`navigate_to`, `scroll_page`)
+   - Verified build compatibility and successful compilation
+
+3. **Tool Interface Compliance**:
+   - Fixed method signatures to match `types.Tool` interface exactly
+   - Updated `GetInputSchema()` to return `interface{}` instead of `map[string]interface{}`
+   - Modified `Execute()` to return `types.ToolResult` with proper JSON content
+   - Ensured all error cases return proper `types.ToolResult{}` instead of nil
+
+**Technical Features**:
+- **Pagination Support**: Navigate through pages of DOM elements with configurable page sizes (1-100)
+- **Element Filtering**: Filter by specific element types or view all interactive elements
+- **Flexible Access**: Use page-based pagination or start from specific element index
+- **Comprehensive Metadata**: Returns pagination info including current page, total pages, navigation flags
+- **Parameter Validation**: Robust validation with detailed error messages for invalid parameters
+- **Efficient Data Structure**: Reuses existing DOM state data with client-side filtering and pagination
+- **JSON Output**: Structured JSON response compatible with MCP protocol requirements
+
+**Benefits Achieved**:
+- **Scalable DOM Access**: Handle large pages with hundreds or thousands of elements efficiently
+- **Targeted Element Retrieval**: Focus on specific element types for specialized automation tasks
+- **Memory Efficiency**: Paginated responses reduce memory usage and improve performance
+- **Developer Experience**: Clear parameter documentation and comprehensive error handling
+- **Integration Ready**: Seamlessly integrates with existing MCP infrastructure
+- **Future Extensible**: Clean architecture allows for easy addition of new filtering criteria
+
+**Files Created/Modified**:
+- `mcp-host-go/pkg/tools/get_dom_extra_elements.go` - New tool implementation
+- `mcp-host-go/cmd/mcp-host/main.go` - Tool registration and dependency injection
+
+This implementation complements the existing DOM state resource by providing a tool-based interface for programmatic DOM element access with advanced pagination and filtering capabilities, making it easier for external AI systems to work with complex web pages.
+
+## Recent Progress
+
 ### Scroll Page Tool Implementation and Testing (2025-05-26)
 Successfully implemented and tested the new `scroll_page` MCP tool to provide comprehensive page scrolling capabilities to external AI systems:
 
