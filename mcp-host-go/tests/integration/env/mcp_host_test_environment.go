@@ -79,7 +79,9 @@ func (env *McpHostTestEnvironment) Setup(ctx context.Context) error {
 	}
 
 	// Start log monitoring
-	go env.startLogMonitor(ctx)
+	if os.Getenv("OUTPUT_MCP_HOST_LOG") == "true" {
+		go env.startLogMonitor(ctx)
+	}
 
 	// Wait for the host to be ready
 	if err := env.waitForHostReady(ctx); err != nil {

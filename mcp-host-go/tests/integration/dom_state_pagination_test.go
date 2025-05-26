@@ -69,7 +69,7 @@ func TestDomStatePagination(t *testing.T) {
 			assert.Contains(t, resource.Description, "Current DOM state with interactive elements and page metadata")
 			assert.Contains(t, resource.Description, "Query Parameters:")
 			assert.Contains(t, resource.Description, "page: Page number for pagination")
-			assert.Equal(t, "application/json", resource.MIMEType)
+			assert.Equal(t, "text/markdown", resource.MIMEType)
 			break
 		}
 	}

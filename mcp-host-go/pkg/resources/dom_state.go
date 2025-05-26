@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
@@ -39,8 +40,8 @@ func NewDomStateResource(config DomStateConfig) (*DomStateResource, error) {
 	return &DomStateResource{
 		uri:      "browser://dom/state",
 		name:     "DOM State",
-		mimeType: "application/json",
-		description: `Current DOM state with interactive elements and page metadata.
+		mimeType: "text/markdown",
+		description: `Current DOM state with interactive elements and page metadata in AI-friendly Markdown format.
 
 Query Parameters:
 • page: Page number for pagination (default: 1, min: 1)
@@ -53,7 +54,7 @@ Examples:
 - ?elementType=button: Only button elements
 - ?page=1&pageSize=20&elementType=input: First 20 input elements
 
-Response includes pagination metadata and filtered results.`,
+Response includes pagination metadata and filtered results in Markdown format.`,
 		logger:    config.Logger,
 		messaging: config.Messaging,
 	}, nil
@@ -117,15 +118,11 @@ func (r *DomStateResource) ReadWithArguments(uri string, arguments map[string]an
 	// Apply pagination and filtering
 	paginatedState := r.applyPaginationAndFiltering(domStateData, params)
 
-	// Convert to JSON
-	jsonBytes, err := json.MarshalIndent(paginatedState, "", "  ")
-	if err != nil {
-		r.logger.Error("Error marshaling paginated DOM state", zap.Error(err))
-		return types.ResourceContent{}, fmt.Errorf("failed to marshal DOM state: %w", err)
-	}
+	// Convert to Markdown format
+	markdownContent := r.convertToMarkdown(paginatedState)
 
 	r.logger.Debug("Successfully retrieved and paginated DOM state",
-		zap.Int("responseSize", len(jsonBytes)),
+		zap.Int("responseSize", len(markdownContent)),
 		zap.Int("totalElements", paginatedState.Pagination.TotalElements),
 		zap.Int("pageElements", len(paginatedState.InteractiveElements)))
 
@@ -135,7 +132,7 @@ func (r *DomStateResource) ReadWithArguments(uri string, arguments map[string]an
 			{
 				URI:      uri,
 				MimeType: r.mimeType,
-				Text:     string(jsonBytes),
+				Text:     markdownContent,
 			},
 		},
 	}, nil
@@ -200,8 +197,8 @@ type FilterInfo struct {
 // parsePaginationParams parses pagination parameters from arguments map
 func (r *DomStateResource) parsePaginationParams(arguments map[string]any) PaginationParams {
 	params := PaginationParams{
-		Page:     1,   // Default to page 1
-		PageSize: 100, // Default page size
+		Page:     1,  // Default to page 1
+		PageSize: 20, // Default page size
 	}
 
 	if arguments == nil {
@@ -329,4 +326,110 @@ func (r *DomStateResource) calculateTotalPages(totalElements, pageSize int) int 
 	}
 	// Manual ceiling calculation: (totalElements + pageSize - 1) / pageSize
 	return (totalElements + pageSize - 1) / pageSize
+}
+
+// convertToMarkdown converts the paginated DOM state to AI-friendly Markdown format
+func (r *DomStateResource) convertToMarkdown(state PaginatedDomState) string {
+	var builder strings.Builder
+
+	// Header with pagination info
+	builder.WriteString("# DOM State\n\n")
+
+	// Pagination information
+	builder.WriteString("## Pagination\n")
+	builder.WriteString(fmt.Sprintf("- **Current Page:** %d of %d\n", state.Pagination.CurrentPage, state.Pagination.TotalPages))
+	builder.WriteString(fmt.Sprintf("- **Page Size:** %d elements\n", state.Pagination.PageSize))
+	builder.WriteString(fmt.Sprintf("- **Total Elements:** %d\n", state.Pagination.TotalElements))
+	builder.WriteString(fmt.Sprintf("- **Has Next Page:** %t\n", state.Pagination.HasNextPage))
+	builder.WriteString(fmt.Sprintf("- **Has Previous Page:** %t\n", state.Pagination.HasPreviousPage))
+
+	// Filter information if applied
+	if state.Filter != nil && state.Filter.ElementType != nil {
+		builder.WriteString(fmt.Sprintf("- **Filtered by Element Type:** %s\n", *state.Filter.ElementType))
+	}
+	builder.WriteString("\n")
+
+	// Page metadata if available
+	if state.Meta != nil {
+		builder.WriteString("## Page Metadata\n")
+		if metaMap, ok := state.Meta.(map[string]interface{}); ok {
+			for key, value := range metaMap {
+				builder.WriteString(fmt.Sprintf("- **%s:** %v\n", key, value))
+			}
+		} else {
+			builder.WriteString(fmt.Sprintf("- %v\n", state.Meta))
+		}
+		builder.WriteString("\n")
+	}
+
+	// Interactive elements section
+	builder.WriteString("## Interactive Elements\n\n")
+
+	if len(state.InteractiveElements) == 0 {
+		builder.WriteString("*No interactive elements found on this page.*\n\n")
+	} else {
+		for i, element := range state.InteractiveElements {
+			builder.WriteString(fmt.Sprintf("### Element %d\n", i+1))
+
+			// Element properties in a structured format
+			for key, value := range element {
+				if value != nil {
+					switch key {
+					case "type":
+						builder.WriteString(fmt.Sprintf("- **Type:** %v\n", value))
+					case "text":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **Text:** %s\n", str))
+						}
+					case "id":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **ID:** %s\n", str))
+						}
+					case "class":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **Class:** %s\n", str))
+						}
+					case "href":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **URL:** %s\n", str))
+						}
+					case "value":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **Value:** %s\n", str))
+						}
+					case "placeholder":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **Placeholder:** %s\n", str))
+						}
+					case "selector":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **Selector:** `%s`\n", str))
+						}
+					case "xpath":
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **XPath:** `%s`\n", str))
+						}
+					default:
+						// Handle other properties
+						if str, ok := value.(string); ok && strings.TrimSpace(str) != "" {
+							builder.WriteString(fmt.Sprintf("- **%s:** %s\n", strings.Title(key), str))
+						} else if value != "" {
+							builder.WriteString(fmt.Sprintf("- **%s:** %v\n", strings.Title(key), value))
+						}
+					}
+				}
+			}
+			builder.WriteString("\n")
+		}
+	}
+
+	// Formatted DOM section
+	if strings.TrimSpace(state.FormattedDom) != "" {
+		builder.WriteString("## DOM Structure\n\n")
+		builder.WriteString("```html\n")
+		builder.WriteString(state.FormattedDom)
+		builder.WriteString("\n```\n")
+	}
+
+	return builder.String()
 }

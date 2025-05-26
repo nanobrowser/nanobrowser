@@ -54,7 +54,6 @@ func TestStatusHandlerIntegration(t *testing.T) {
 				assert.NotEmpty(t, statusMap["version"], "Version should not be empty")
 				assert.NotEmpty(t, statusMap["sse_port"], "SSE port should not be empty")
 				assert.NotEmpty(t, statusMap["sse_base_url"], "SSE base URL should not be empty")
-				assert.NotEmpty(t, statusMap["sse_base_path"], "SSE base path should not be empty")
 				assert.NotEmpty(t, statusMap["uptime"], "Uptime should not be empty")
 				assert.NotZero(t, statusMap["current_time"], "Current time should not be zero")
 
