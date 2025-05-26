@@ -219,10 +219,12 @@ func (s *SSEServer) createToolHandlerForTool(tool types.Tool) server.ToolHandler
 // createResourceHandlerForResource creates a resource handler function for the provided resource
 func (s *SSEServer) createResourceHandlerForResource(resource types.Resource) server.ResourceHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
-		s.logger.Debug("Reading resource via SSE", zap.String("uri", resource.GetURI()))
+		s.logger.Debug("Reading resource via SSE",
+			zap.String("uri", resource.GetURI()),
+			zap.Any("arguments", request.Params.Arguments))
 
-		// Read the resource
-		content, err := resource.Read()
+		// Read the resource with arguments if provided
+		content, err := resource.ReadWithArguments(request.Params.URI, request.Params.Arguments)
 		if err != nil {
 			s.logger.Error("Failed to read resource", zap.Error(err), zap.String("uri", resource.GetURI()))
 			return nil, fmt.Errorf("failed to read resource: %w", err)

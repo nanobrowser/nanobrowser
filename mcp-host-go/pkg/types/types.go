@@ -103,6 +103,7 @@ type Resource interface {
 	GetMimeType() string
 	GetDescription() string
 	Read() (ResourceContent, error)
+	ReadWithArguments(uri string, arguments map[string]any) (ResourceContent, error)
 	NotifyStateChange(state interface{})
 }
 

@@ -232,42 +232,58 @@ Successfully implemented and tested the new `scroll_page` MCP tool to provide co
 - `mcp-host-go/tests/integration/scroll_page_test.go` - Comprehensive test suite
 - `chrome-extension/src/background/index.ts` - Handler registration
 
-### DOM State Resource Implementation and Testing (2025-05-25)
-Successfully implemented and tested the new `get_dom_state` MCP resource to provide comprehensive DOM state access to external AI systems:
+### DOM State Resource with Pagination Implementation and Testing (2025-05-26)
+Successfully implemented and tested comprehensive DOM state resource with pagination and filtering capabilities for external AI systems:
 
 **Implementation Details**:
-1. **Resource Implementation (`mcp-host-go/pkg/resources/dom_state.go`)**:
-   - Created `DomStateResource` struct implementing MCP resource interface
-   - Added structured logging with configurable log levels
-   - Implemented `GetDomState` method with comprehensive error handling
-   - Added JSON marshaling with proper error propagation
-   - Integrated with existing Native Messaging infrastructure
+1. **Enhanced Resource Implementation (`mcp-host-go/pkg/resources/dom_state.go`)**:
+   - Created `DomStateResource` struct implementing MCP resource interface with pagination support
+   - Added comprehensive pagination system with query parameters: `page`, `pageSize`, `elementType`
+   - Implemented element type filtering for buttons, inputs, links, selects, and textareas
+   - Added structured logging with configurable log levels and detailed debugging
+   - Enhanced resource description with comprehensive query parameter documentation
+   - Implemented robust parameter parsing and validation with type checking
+   - Added pagination metadata in response including page counts, navigation flags, and filtering info
 
 2. **Resource Registration (`mcp-host-go/cmd/mcp-host/main.go`)**:
    - Registered `browser://dom/state` resource with MCP server
-   - Added proper resource metadata (name, description, MIME type)
+   - Added detailed resource metadata with pagination documentation
    - Ensured co-existence with existing `browser://current/state` resource
    - Verified dependency injection for resource initialization
 
-3. **Integration Testing (`mcp-host-go/tests/integration/dom_state_test.go`)**:
-   - Created `TestDomStateResource` for isolated DOM state testing
-   - Created `TestDomStateResourceWithBrowserState` for comprehensive resource testing
-   - Added mock RPC handlers simulating browser extension responses
-   - Implemented proper test setup and cleanup procedures
-   - Added validation for resource discovery and content access
+3. **Comprehensive Integration Testing**:
+   - **Basic DOM State Testing (`mcp-host-go/tests/integration/dom_state_test.go`)**:
+     - Created `TestDomStateResource` for isolated DOM state testing
+     - Created `TestDomStateResourceWithBrowserState` for comprehensive resource testing
+     - Updated test assertions to validate new pagination-enhanced description
+   - **Pagination Testing (`mcp-host-go/tests/integration/dom_state_pagination_test.go`)**:
+     - Created `TestDomStatePagination` for testing pagination functionality
+     - Created `TestDomStateElementFiltering` for testing element type filtering
+     - Added mock RPC handlers with multiple interactive elements for thorough testing
+     - Implemented proper test setup and cleanup procedures
+     - Added validation for pagination metadata and filtered results
+
+**Technical Features**:
+- **Pagination Support**: Query parameters for page (1+), pageSize (1-1000), and elementType filtering
+- **Element Filtering**: Filter by button, input, link, select, textarea types
+- **Pagination Metadata**: Complete pagination info including current page, total pages, navigation flags
+- **Parameter Validation**: Robust validation with type checking and range limits
+- **Backwards Compatibility**: Default behavior unchanged, pagination optional
+- **Error Handling**: Comprehensive error handling with detailed logging
 
 **Benefits Achieved**:
-- **Comprehensive DOM Access**: External AI systems can now access detailed DOM state including interactive elements
-- **Standardized Interface**: DOM state exposed through standard MCP protocol for language-agnostic access
-- **Enhanced Testing**: Robust test infrastructure ensures reliable resource functionality
-- **Co-existence**: New resource works alongside existing browser state resource without conflicts
-- **Error Handling**: Comprehensive error handling provides clear feedback for debugging
-- **Documentation**: Well-documented code aids in future maintenance and extension
+- **Scalable DOM Access**: Handle large pages with thousands of elements efficiently
+- **Targeted Element Retrieval**: Filter specific element types for focused analysis
+- **Memory Efficiency**: Paginated responses reduce memory usage and network overhead
+- **Enhanced User Experience**: Faster response times for large pages
+- **Comprehensive Testing**: Robust test infrastructure ensures reliable functionality
+- **API Documentation**: Clear parameter documentation in resource description
+- **Backwards Compatibility**: Existing integrations continue working without changes
 
 **Files Modified**:
-- `mcp-host-go/pkg/resources/dom_state.go` - New DOM state resource implementation
-- `mcp-host-go/cmd/mcp-host/main.go` - Resource registration and dependency injection
-- `mcp-host-go/tests/integration/dom_state_test.go` - Comprehensive test suite
+- `mcp-host-go/pkg/resources/dom_state.go` - Enhanced DOM state resource with pagination
+- `mcp-host-go/tests/integration/dom_state_test.go` - Updated test assertions
+- `mcp-host-go/tests/integration/dom_state_pagination_test.go` - New pagination test suite
 
 ### Stop Button Status Update Fix (2025-05-25)
 Successfully resolved an issue where the stop button in the popup didn't immediately update the status to "Disconnected":

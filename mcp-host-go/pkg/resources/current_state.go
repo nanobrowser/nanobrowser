@@ -68,6 +68,11 @@ func (r *CurrentStateResource) GetDescription() string {
 
 // Read reads the current browser state
 func (r *CurrentStateResource) Read() (types.ResourceContent, error) {
+	return r.ReadWithArguments(r.uri, nil)
+}
+
+// ReadWithArguments reads the current browser state (ignores arguments for compatibility)
+func (r *CurrentStateResource) ReadWithArguments(uri string, arguments map[string]any) (types.ResourceContent, error) {
 	r.logger.Info("Reading current browser state")
 
 	// Request browser state from the extension
