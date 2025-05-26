@@ -1,4 +1,5 @@
 import { type ProviderConfig, type ModelConfig, ProviderTypeEnum } from '@extension/storage';
+import { ChatGroq } from '@langchain/groq';
 import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
@@ -207,16 +208,48 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       };
       return new ChatGoogleGenerativeAI(args);
     }
-    case ProviderTypeEnum.Grok: {
-      const args = {
+    case ProviderTypeEnum.Grok: { // This is for xAI's Grok
+      const args: {
+        model: string;
+        apiKey?: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration?: { baseURL?: string }; // ChatXAI might take a configuration object for baseURL
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
         maxTokens,
-        configuration: {},
       };
+      if (providerConfig.baseUrl) { // xAI's Grok might also use a custom baseURL
+        args.configuration = { baseURL: providerConfig.baseUrl };
+      }
+      // If ChatXAI doesn't use `configuration` for baseURL, this might need adjustment.
+      // Based on the previous setup for Grok (xAI) using ChatGroq, it did use this structure.
+      // Assuming ChatXAI follows a similar pattern for custom endpoints.
       return new ChatXAI(args) as BaseChatModel;
+    }
+    case ProviderTypeEnum.GroqCloud: { // This is for Groq company's API
+      const args: {
+        model: string;
+        apiKey?: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration?: { baseURL?: string };
+      } = {
+        model: modelConfig.modelName,
+        apiKey: providerConfig.apiKey,
+        temperature,
+        topP,
+        maxTokens,
+      };
+      if (providerConfig.baseUrl) {
+        args.configuration = { baseURL: providerConfig.baseUrl };
+      }
+      return new ChatGroq(args) as BaseChatModel;
     }
     case ProviderTypeEnum.Ollama: {
       const args: {

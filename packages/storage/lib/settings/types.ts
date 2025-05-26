@@ -13,7 +13,8 @@ export enum ProviderTypeEnum {
   Anthropic = 'anthropic',
   DeepSeek = 'deepseek',
   Gemini = 'gemini',
-  Grok = 'grok',
+  Grok = 'grok', // For xAI
+  GroqCloud = 'groqcloud', // For Groq company API
   Ollama = 'ollama',
   AzureOpenAI = 'azure_openai',
   OpenRouter = 'openrouter',
@@ -31,7 +32,14 @@ export const llmProviderModelNames = {
     'gemini-2.0-flash',
     // 'gemini-2.0-flash-thinking-exp-01-21', // TODO: not support function calling for now
   ],
-  [ProviderTypeEnum.Grok]: ['grok-3', 'grok-3-fast', 'grok-3-mini', 'grok-3-mini-fast'],
+  [ProviderTypeEnum.Grok]: ['grok-3', 'grok-3-fast', 'grok-3-mini', 'grok-3-mini-fast'], // Should remain for xAI
+  [ProviderTypeEnum.GroqCloud]: [
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+    'gemma2-9b-it',
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+  ],
   [ProviderTypeEnum.Ollama]: ['qwen3:14b', 'falcon3:10b', 'qwen2.5-coder:14b', 'mistral-small:24b'],
   [ProviderTypeEnum.AzureOpenAI]: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3'],
   [ProviderTypeEnum.OpenRouter]: [
@@ -129,6 +137,11 @@ export const llmProviderParameters = {
       temperature: 0.1,
       topP: 0.8,
     },
+  },
+  [ProviderTypeEnum.GroqCloud]: { // New entry for Groq company
+    [AgentNameEnum.Planner]: { temperature: 0.7, topP: 0.9 },
+    [AgentNameEnum.Navigator]: { temperature: 0.3, topP: 0.85 },
+    [AgentNameEnum.Validator]: { temperature: 0.1, topP: 0.8 },
   },
   [ProviderTypeEnum.OpenRouter]: {
     [AgentNameEnum.Planner]: {

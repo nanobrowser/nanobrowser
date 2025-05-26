@@ -18,6 +18,7 @@ import {
 } from './errors';
 import { jsonNavigatorOutputSchema } from '../actions/json_schema';
 import { geminiNavigatorOutputSchema } from '../actions/json_gemini';
+import { groqNavigatorOutputSchema } from '../actions/json_groq';
 import { calcBranchPathHashSet } from '@src/background/dom/views';
 import { URLNotAllowedError } from '@src/background/browser/views';
 const logger = createLogger('NavigatorAgent');
@@ -69,7 +70,16 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
     this.actionRegistry = actionRegistry;
 
-    this.jsonSchema = this.modelName.startsWith('gemini') ? geminiNavigatorOutputSchema : jsonNavigatorOutputSchema;
+    // this.jsonSchema = this.modelName.startsWith('gemini') ? geminiNavigatorOutputSchema : jsonNavigatorOutputSchema;
+    if (this.options.providerId === 'gemini') { // Direct string comparison for 'gemini'
+      this.jsonSchema = geminiNavigatorOutputSchema;
+    } else if (this.options.providerId === ProviderTypeEnum.GroqCloud) { // For Groq company
+      this.jsonSchema = groqNavigatorOutputSchema;
+    } else {
+      // For ProviderTypeEnum.Grok (xAI), and any other provider not explicitly handled,
+      // fall back to the default jsonNavigatorOutputSchema.
+      this.jsonSchema = jsonNavigatorOutputSchema;
+    }
 
     // logger.info('Navigator zod schema', JSON.stringify(zodToJsonSchema(this.modelOutputSchema), null, 2));
   }

@@ -60,7 +60,8 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.Anthropic:
     case ProviderTypeEnum.DeepSeek:
     case ProviderTypeEnum.Gemini:
-    case ProviderTypeEnum.Grok:
+    case ProviderTypeEnum.Grok: // For xAI
+    case ProviderTypeEnum.GroqCloud: // For Groq company
     case ProviderTypeEnum.Ollama:
     case ProviderTypeEnum.OpenRouter:
       return providerId;
@@ -81,8 +82,10 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'DeepSeek';
     case ProviderTypeEnum.Gemini:
       return 'Gemini';
-    case ProviderTypeEnum.Grok:
+    case ProviderTypeEnum.Grok: // For xAI
       return 'Grok';
+    case ProviderTypeEnum.GroqCloud: // For Groq company
+      return 'Groq';
     case ProviderTypeEnum.Ollama:
       return 'Ollama';
     case ProviderTypeEnum.AzureOpenAI:
@@ -101,7 +104,6 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
     case ProviderTypeEnum.Anthropic:
     case ProviderTypeEnum.DeepSeek:
     case ProviderTypeEnum.Gemini:
-    case ProviderTypeEnum.Grok:
     case ProviderTypeEnum.OpenRouter: // OpenRouter uses modelNames
       return {
         apiKey: '',
@@ -109,6 +111,24 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
         type: providerId,
         baseUrl: providerId === ProviderTypeEnum.OpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
+        createdAt: Date.now(),
+      };
+    case ProviderTypeEnum.Grok: // For xAI
+      return {
+        apiKey: '',
+        name: getDefaultDisplayNameFromProviderId(providerId),
+        type: providerId,
+        baseUrl: 'https://api.x.ai/v1', // Example, replace with actual if different or keep if same as GroqCloud initially
+        modelNames: [...(llmProviderModelNames[providerId] || [])],
+        createdAt: Date.now(),
+      };
+    case ProviderTypeEnum.GroqCloud: // For Groq company
+      return {
+        apiKey: '',
+        name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.GroqCloud),
+        type: ProviderTypeEnum.GroqCloud,
+        baseUrl: 'https://api.groq.com/openai/v1',
+        modelNames: [...(llmProviderModelNames[ProviderTypeEnum.GroqCloud] || [])],
         createdAt: Date.now(),
       };
 
