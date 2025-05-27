@@ -39,6 +39,7 @@ type Container struct {
 	NavigateTool        types.Tool
 	ScrollPageTool      types.Tool
 	GetDomExtraElements types.Tool
+	ClickElementTool    types.Tool
 	CurrentStateRes     types.Resource
 	DomStateRes         types.Resource
 	StatusHandler       *handlers.StatusHandler
@@ -98,6 +99,11 @@ func main() {
 
 	if err := container.Server.RegisterTool(container.GetDomExtraElements); err != nil {
 		container.Logger.Error("Failed to register get_dom_extra_elements tool", zap.Error(err))
+		os.Exit(1)
+	}
+
+	if err := container.Server.RegisterTool(container.ClickElementTool); err != nil {
+		container.Logger.Error("Failed to register click_element tool", zap.Error(err))
 		os.Exit(1)
 	}
 
@@ -297,6 +303,15 @@ func initContainer(startTime time.Time) (*Container, error) {
 		return nil, fmt.Errorf("failed to create get_dom_extra_elements tool: %w", err)
 	}
 	container.GetDomExtraElements = getDomExtraElements
+
+	clickElementTool, err := tools.NewClickElementTool(tools.ClickElementConfig{
+		Logger:    toolLogger,
+		Messaging: container.Messaging,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create click_element tool: %w", err)
+	}
+	container.ClickElementTool = clickElementTool
 
 	return container, nil
 }

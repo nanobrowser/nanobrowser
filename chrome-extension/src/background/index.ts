@@ -16,6 +16,7 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { McpHostManager, McpHostOptions } from './mcp/host-manager';
 import { GetBrowserStateHandler, GetDomStateHandler, NavigateToHandler } from './task';
 import { ScrollPageHandler } from './task/scroll-page-handler';
+import { ClickElementHandler } from './task/click-element-handler';
 
 const logger = createLogger('background');
 
@@ -31,6 +32,7 @@ const navigateToHandler = new NavigateToHandler(browserContext);
 const getBrowserStateHandler = new GetBrowserStateHandler(browserContext);
 const getDomStateHandler = new GetDomStateHandler(browserContext);
 const scrollPageHandler = new ScrollPageHandler(browserContext);
+const clickElementHandler = new ClickElementHandler(browserContext);
 
 // Register RPC method handlers
 mcpHostManager.registerRpcMethod('navigate_to', navigateToHandler.handleNavigateTo.bind(navigateToHandler));
@@ -40,6 +42,7 @@ mcpHostManager.registerRpcMethod(
 );
 mcpHostManager.registerRpcMethod('get_dom_state', getDomStateHandler.handleGetDomState.bind(getDomStateHandler));
 mcpHostManager.registerRpcMethod('scroll_page', scrollPageHandler.handleScrollPage.bind(scrollPageHandler));
+mcpHostManager.registerRpcMethod('click_element', clickElementHandler.handleClickElement.bind(clickElementHandler));
 
 // No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
