@@ -85,9 +85,9 @@ func TestDomStateResource(t *testing.T) {
 		if resource.URI == "browser://dom/state" {
 			found = true
 			assert.Equal(t, "DOM State", resource.Name)
-			assert.Contains(t, resource.Description, "Current DOM state with interactive elements and page metadata")
-			assert.Contains(t, resource.Description, "Query Parameters:")
-			assert.Contains(t, resource.Description, "page: Page number for pagination")
+			assert.Contains(t, resource.Description, "Current DOM state overview with up to 20 interactive elements")
+			assert.Contains(t, resource.Description, "get_dom_extra_elements")
+			assert.Contains(t, resource.Description, "Page metadata (URL, title, scroll position)")
 			assert.Equal(t, "text/markdown", resource.MIMEType)
 			break
 		}

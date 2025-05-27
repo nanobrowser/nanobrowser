@@ -2,10 +2,12 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -67,9 +69,9 @@ func TestDomStatePagination(t *testing.T) {
 		if strings.HasPrefix(resource.URI, "browser://dom/state") {
 			found = true
 			assert.Equal(t, "DOM State", resource.Name)
-			assert.Contains(t, resource.Description, "Current DOM state with interactive elements and page metadata")
-			assert.Contains(t, resource.Description, "Query Parameters:")
-			assert.Contains(t, resource.Description, "page: Page number for pagination")
+			assert.Contains(t, resource.Description, "Current DOM state overview with up to 20 interactive elements")
+			assert.Contains(t, resource.Description, "get_dom_extra_elements")
+			assert.Contains(t, resource.Description, "Page metadata (URL, title, scroll position)")
 			assert.Equal(t, "text/markdown", resource.MIMEType)
 			break
 		}
@@ -86,62 +88,63 @@ func TestDomStatePagination(t *testing.T) {
 		content := resourceContent.Contents[0]
 		t.Logf("DOM state resource content received: %+v", content)
 
-		// The content should be a JSON string containing the DOM state
-		// We can't easily validate the exact JSON structure here without
-		// parsing it, but we can verify that we got some content
+		// Type assert to TextResourceContents
+		textContent, ok := content.(mcp.TextResourceContents)
+		require.True(t, ok, "Expected TextResourceContents")
+
+		// The content should be a Markdown string containing the DOM state overview
+		// Verify it contains expected overview content
+		assert.Contains(t, textContent.Text, "DOM State Overview")
+		assert.Contains(t, textContent.Text, "Interactive Elements Summary")
+
 		t.Log("Successfully tested DOM state resource through complete RPC flow")
 
 		// Since we successfully got content, the pagination feature implementation
-		// is working. The actual pagination logic is tested through the RPC mock
-		// which simulates the browser extension returning 8 interactive elements.
-		t.Log("DOM state pagination feature is functioning - content retrieved from mock data")
+		// is working. The actual pagination logic is handled by the get_dom_extra_elements tool
+		// which provides access to elements beyond the first 20.
+		t.Log("DOM state overview feature is functioning - content retrieved from mock data")
 	})
 
-	t.Run("URI path-based pagination parameters", func(t *testing.T) {
-		// Test new URI path-based parameter format
-		testCases := []struct {
-			uri         string
-			description string
-		}{
-			{"browser://dom/state/page/2", "Page 2 with default size"},
-			{"browser://dom/state/size/5", "Page 1 with size 5"},
-			{"browser://dom/state/type/button", "Button elements only"},
-			{"browser://dom/state/page/1/size/3", "Page 1 with size 3"},
-			{"browser://dom/state/type/button/page/1/size/2", "Button elements, page 1, size 2"},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.description, func(t *testing.T) {
-				resourceContent, err := testEnv.GetMcpClient().ReadResource(tc.uri)
-				require.NoError(t, err)
-				require.NotEmpty(t, resourceContent.Contents)
-
-				content := resourceContent.Contents[0]
-				t.Logf("DOM state resource content for %s: %+v", tc.uri, content)
-
-				// Verify we got content - the actual pagination logic is handled
-				// by the resource implementation and tested through the mock data
-				t.Logf("Successfully tested URI path parameters: %s", tc.uri)
-			})
-		}
-	})
-
-	t.Run("Verify resource properties for pagination support", func(t *testing.T) {
-		// Test that the resource is properly configured to support pagination
-		// This validates our implementation structure even if we can't test
-		// the pagination arguments through the current MCP client
+	t.Run("DOM state overview shows element count", func(t *testing.T) {
+		// Test that the overview shows the correct element count
 		resourceContent, err := testEnv.GetMcpClient().ReadResource("browser://dom/state")
 		require.NoError(t, err)
 		require.NotEmpty(t, resourceContent.Contents)
 
-		// Log successful access - this validates that our ReadResourceRequest
-		// implementation is working and could support arguments in the future
-		t.Log("Successfully accessed DOM state resource - pagination infrastructure is in place")
+		// Type assert to TextResourceContents
+		textContent, ok := resourceContent.Contents[0].(mcp.TextResourceContents)
+		require.True(t, ok, "Expected TextResourceContents")
 
-		// Note: The actual pagination parameters (page, pageSize, elementType)
-		// would be tested through direct resource calls or enhanced MCP client
-		// that supports ReadResourceRequest with arguments
-		t.Log("Pagination parameters support implemented in resource handler")
+		t.Logf("DOM state resource content for element count check: %+v", textContent)
+
+		// Verify the overview contains element count information
+		assert.Contains(t, textContent.Text, "Total Elements")
+
+		// Since we have 8 elements in our mock data (less than 20), all should be shown
+		assert.Contains(t, textContent.Text, "All interactive elements shown")
+
+		t.Log("Successfully verified element count in DOM state overview")
+	})
+
+	t.Run("Verify overview structure and hints", func(t *testing.T) {
+		// Test that the resource overview is properly structured
+		resourceContent, err := testEnv.GetMcpClient().ReadResource("browser://dom/state")
+		require.NoError(t, err)
+		require.NotEmpty(t, resourceContent.Contents)
+
+		// Type assert to TextResourceContents
+		textContent, ok := resourceContent.Contents[0].(mcp.TextResourceContents)
+		require.True(t, ok, "Expected TextResourceContents")
+
+		// Verify overview sections are present
+		assert.Contains(t, textContent.Text, "Page Metadata")
+		assert.Contains(t, textContent.Text, "Interactive Elements Summary")
+		assert.Contains(t, textContent.Text, "Interactive Elements (Overview)")
+
+		// Since our mock has only 8 elements, there should be no "more elements" hint
+		assert.NotContains(t, textContent.Text, "📋 Need More Elements?")
+
+		t.Log("Successfully verified DOM state overview structure")
 	})
 
 	t.Log("DOM state pagination test completed successfully")
@@ -191,17 +194,97 @@ func TestDomStateElementFiltering(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, resourceContent.Contents)
 
-	// Verify the content structure - follow the pattern from existing tests
-	content := resourceContent.Contents[0]
-	t.Logf("DOM state resource content received: %+v", content)
+	// Type assert to TextResourceContents
+	textContent, ok := resourceContent.Contents[0].(mcp.TextResourceContents)
+	require.True(t, ok, "Expected TextResourceContents")
 
-	// The content should contain the different element types for filtering
+	t.Logf("DOM state resource content received: %+v", textContent)
+
+	// The content should contain the different element types in the overview
+	assert.Contains(t, textContent.Text, "DOM State Overview")
+	assert.Contains(t, textContent.Text, "Interactive Elements Summary")
+
+	// Verify that we have elements in the overview
+	assert.Contains(t, textContent.Text, "Element 1")
+
 	t.Log("Successfully retrieved DOM state with mixed element types")
 
-	// Since we successfully got content, the element filtering feature
-	// implementation is working. The actual filtering logic would be tested
-	// through direct resource calls with elementType parameters
+	// Since we successfully got content, the element filtering feature infrastructure
+	// is in place. The actual filtering is handled by the get_dom_extra_elements tool
+	// which accepts elementType parameters for filtering specific types of elements.
 	t.Log("Element filtering feature infrastructure is in place")
 
 	t.Log("DOM state element filtering test completed successfully")
+}
+
+func TestDomStateWithManyElements(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	// Setup test environment
+	testEnv, err := env.NewMcpHostTestEnvironment(nil)
+	require.NoError(t, err)
+	defer testEnv.Cleanup()
+
+	err = testEnv.Setup(ctx)
+	require.NoError(t, err)
+
+	// Initialize MCP client session
+	err = testEnv.GetMcpClient().Initialize(ctx)
+	require.NoError(t, err)
+
+	// Mock DOM state with more than 20 elements to test pagination hints
+	var elements []map[string]interface{}
+	for i := 1; i <= 25; i++ {
+		elements = append(elements, map[string]interface{}{
+			"index":    i,
+			"tagName":  "button",
+			"text":     fmt.Sprintf("Button %d", i),
+			"selector": fmt.Sprintf("#btn%d", i),
+			"attributes": map[string]interface{}{
+				"id":   fmt.Sprintf("btn%d", i),
+				"type": "button",
+			},
+		})
+	}
+
+	mockDomState := map[string]interface{}{
+		"formattedDom":        "<html><body>Page with many buttons</body></html>",
+		"interactiveElements": elements,
+		"meta": map[string]interface{}{
+			"url":         "https://example.com/many-elements",
+			"title":       "Page with Many Elements",
+			"tabId":       123,
+			"pixelsAbove": 0,
+			"pixelsBelow": 1000,
+		},
+	}
+
+	// Register RPC handler
+	testEnv.GetNativeMsg().RegisterRpcHandlers(map[string]env.RpcHandler{
+		"get_dom_state": func(params map[string]interface{}) (interface{}, error) {
+			return mockDomState, nil
+		},
+	})
+
+	// Test resource access with many elements
+	resourceContent, err := testEnv.GetMcpClient().ReadResource("browser://dom/state")
+	require.NoError(t, err)
+	require.NotEmpty(t, resourceContent.Contents)
+
+	// Type assert to TextResourceContents
+	textContent, ok := resourceContent.Contents[0].(mcp.TextResourceContents)
+	require.True(t, ok, "Expected TextResourceContents")
+
+	t.Logf("DOM state resource content with many elements: %+v", textContent)
+
+	// Verify overview shows pagination hints for pages with more than 20 elements
+	// Based on the actual output, fix the assertions to match what's actually generated
+	assert.Contains(t, textContent.Text, "DOM State Overview")
+	assert.Contains(t, textContent.Text, "**Total Elements:** 25")
+	assert.Contains(t, textContent.Text, "**Additional Elements:** 5 more elements available")
+	assert.Contains(t, textContent.Text, "📋 Need More Elements?")
+	assert.Contains(t, textContent.Text, "get_dom_extra_elements")
+
+	t.Log("Successfully verified pagination hints for pages with many elements")
 }
