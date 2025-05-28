@@ -1,4 +1,4 @@
-import type { CoordinateSet, ViewportInfo } from './history/views';
+import type { CoordinateSet, ViewportInfo } from './history/view';
 // define the raw types used in pure javascript files that are injected into the page
 
 export type RawDomTextNode = {

@@ -1,5 +1,5 @@
+import { McpError, McpHostStatus } from '@src/types';
 import React, { useEffect, useState } from 'react';
-import { McpHostStatus, McpError } from '@src/types';
 
 interface StatusDisplayProps {
   status: McpHostStatus;
@@ -26,6 +26,8 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
 
       return () => clearTimeout(timer);
     }
+
+    return () => {};
   }, [error]);
 
   // Format timestamp to human-readable date
