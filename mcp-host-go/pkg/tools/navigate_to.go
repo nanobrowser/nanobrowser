@@ -2,6 +2,7 @@ package tools
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/logger"
 	"github.com/algonius/algonius-browser/mcp-host-go/pkg/types"
@@ -59,6 +60,11 @@ func (t *NavigateToTool) GetInputSchema() interface{} {
 				"type":        "string",
 				"description": "URL to navigate to",
 			},
+			"timeout": map[string]interface{}{
+				"type":        "string",
+				"description": "Navigation timeout: 'auto' for intelligent detection or timeout in milliseconds (e.g. '5000')",
+				"default":     "auto",
+			},
 		},
 		"required":             []string{"url"},
 		"additionalProperties": false,
@@ -75,13 +81,38 @@ func (t *NavigateToTool) Execute(args map[string]interface{}) (types.ToolResult,
 		return types.ToolResult{}, fmt.Errorf("url is required and must be a string")
 	}
 
+	// Handle timeout parameter
+	timeoutStr := "auto" // default value
+	if timeoutArg, ok := args["timeout"].(string); ok {
+		timeoutStr = timeoutArg
+	}
+
+	// Parse timeout value
+	var rpcTimeout int
+	if timeoutStr == "auto" {
+		rpcTimeout = 30000 // auto mode uses 30 seconds timeout
+	} else {
+		// Try to parse as number (milliseconds)
+		if parsedTimeout, err := strconv.Atoi(timeoutStr); err == nil {
+			if parsedTimeout < 1000 || parsedTimeout > 120000 {
+				return types.ToolResult{}, fmt.Errorf("timeout must be between 1000 and 120000 milliseconds")
+			}
+			rpcTimeout = parsedTimeout
+		} else {
+			return types.ToolResult{}, fmt.Errorf("timeout must be 'auto' or a timeout in milliseconds")
+		}
+	}
+
+	t.logger.Info("Navigate to URL with timeout", zap.String("url", url), zap.String("timeout", timeoutStr), zap.Int("rpcTimeout", rpcTimeout))
+
 	// Send RPC request to the extension
 	resp, err := t.messaging.RpcRequest(types.RpcRequest{
 		Method: "navigate_to",
 		Params: map[string]interface{}{
-			"url": url,
+			"url":     url,
+			"timeout": timeoutStr,
 		},
-	}, types.RpcOptions{Timeout: 10000})
+	}, types.RpcOptions{Timeout: rpcTimeout + 5000}) // Add 5 seconds buffer for RPC timeout
 
 	if err != nil {
 		t.logger.Error("Error calling navigate_to", zap.Error(err))
@@ -93,12 +124,12 @@ func (t *NavigateToTool) Execute(args map[string]interface{}) (types.ToolResult,
 		return types.ToolResult{}, fmt.Errorf("RPC error: %s", resp.Error.Message)
 	}
 
-	// Return success result
+	// Return enhanced result
 	return types.ToolResult{
 		Content: []types.ToolResultItem{
 			{
 				Type: "text",
-				Text: fmt.Sprintf("navigate_to %s ok", url),
+				Text: fmt.Sprintf("Successfully navigated to %s (strategy: %s)", url, timeoutStr),
 			},
 		},
 	}, nil
