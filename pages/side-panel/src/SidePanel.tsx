@@ -690,7 +690,11 @@ const SidePanel = () => {
                   tabIndex={0}>
                   <GrHistory size={20} />
                 </button>
-                {showMcpIcon && <McpIcon className="header-icon" />}
+                {showMcpIcon && (
+                  <McpIcon
+                    className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  />
+                )}
               </>
             )}
             <a

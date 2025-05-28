@@ -159,14 +159,18 @@ export class McpHostManager {
       // Add our disconnect handler
       this.port.onDisconnect.addListener(disconnectHandler);
 
-      // Set a short timeout to verify successful connection
+      // Set a very short timeout to verify successful connection
       // Most connection errors trigger onDisconnect almost immediately
       setTimeout(() => {
         if (this.port) {
           // Connection appears successful - set up remaining handlers and state
 
-          // Update and broadcast status
-          this.updateStatus({ isConnected: true });
+          // Update and broadcast status with timestamp
+          this.updateStatus({
+            isConnected: true,
+            startTime: Date.now(),
+            lastHeartbeat: Date.now(),
+          });
 
           // Start heartbeat
           this.startHeartbeat();
@@ -174,7 +178,7 @@ export class McpHostManager {
           // Resolve the promise
           resolve(true);
         }
-      }, 100);
+      }, 50); // Reduced from 100ms to 50ms
     });
   }
 
@@ -248,7 +252,7 @@ export class McpHostManager {
         },
         response => {
           if (response && response.success) {
-            // Try to connect to the newly started Host
+            // Try to connect to the newly started Host with minimal delay
             setTimeout(async () => {
               try {
                 // Now using the Promise-based connect() method
@@ -258,7 +262,7 @@ export class McpHostManager {
                 console.error('Failed to connect to MCP Host after init:', error);
                 reject(error); // Propagate the error up
               }
-            }, 500); // Give some time for the process to start
+            }, 100); // Reduced from 500ms to 100ms for faster connection
           } else {
             // Check if there's an error message in the response
             if (response && response.error) {

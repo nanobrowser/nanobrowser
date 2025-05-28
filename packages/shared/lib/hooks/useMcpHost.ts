@@ -70,11 +70,21 @@ export function useMcpHost() {
         chrome.runtime.sendMessage({ type: 'startMcpHost', options }, response => {
           // Check if the connection succeeded
           if (response && response.success) {
-            // Wait a bit for the host to start and refresh status
-            setTimeout(() => {
+            // Immediately refresh status and start quick polling for faster feedback
+            refreshStatus();
+
+            // Poll more frequently for first few seconds after start
+            let pollCount = 0;
+            const quickPoll = setInterval(() => {
               refreshStatus();
-              setLoading(false);
-            }, 1000);
+              pollCount++;
+              if (pollCount >= 6) {
+                // Poll for 3 seconds (6 * 500ms)
+                clearInterval(quickPoll);
+              }
+            }, 500);
+
+            setLoading(false);
             resolve(true);
           } else {
             // Check if the error is already a structured McpError
@@ -143,10 +153,19 @@ export function useMcpHost() {
         type: 'stopMcpHost',
       });
       if (response && response.success) {
-        // Wait a bit for the host to stop and refresh status
-        setTimeout(() => {
+        // Immediately refresh status and start quick polling for faster feedback
+        refreshStatus();
+
+        // Poll more frequently for first few seconds after stop
+        let pollCount = 0;
+        const quickPoll = setInterval(() => {
           refreshStatus();
-        }, 1000);
+          pollCount++;
+          if (pollCount >= 4) {
+            // Poll for 2 seconds (4 * 500ms)
+            clearInterval(quickPoll);
+          }
+        }, 500);
         return true;
       } else {
         setError({
@@ -173,7 +192,7 @@ export function useMcpHost() {
     // Set up a refresh interval
     const intervalId = setInterval(() => {
       refreshStatus();
-    }, 5000);
+    }, 2000); // Reduced from 5s to 2s for better responsiveness
 
     // Clean up on component unmount
     return () => {
