@@ -5,9 +5,9 @@
  * It responds to requests from the MCP Host that need to scroll the page in various ways.
  */
 
-import BrowserContext from '../browser/context';
+import type BrowserContext from '../browser/context';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
 /**
  * Handler for the 'scroll_page' RPC method

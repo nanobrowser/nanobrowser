@@ -1,5 +1,5 @@
 import React from 'react';
-import { McpHostOptions } from '@src/types';
+import type { McpHostOptions } from '@src/types';
 
 interface ControlPanelProps {
   isConnected: boolean;
@@ -26,24 +26,24 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ isConnected, onStart
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mt-4">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">MCP Host Control</h2>
+    <div className="mt-4 rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">MCP Host Control</h2>
 
       <div className="space-y-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Manage the MCP Host process to enable advanced browser functionality
         </p>
 
-        <div className="flex justify-center space-x-2 mt-6">
+        <div className="mt-6 flex justify-center space-x-2">
           {!isConnected && (
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleStartClick}
               disabled={loading}>
               {loading ? (
                 <span className="flex items-center">
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    className="-ml-1 mr-2 size-4 animate-spin text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24">
@@ -69,13 +69,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ isConnected, onStart
 
           {isConnected && onStopHost && (
             <button
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleStopClick}
               disabled={loading}>
               {loading ? (
                 <span className="flex items-center">
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    className="-ml-1 mr-2 size-4 animate-spin text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24">

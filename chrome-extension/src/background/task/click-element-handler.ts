@@ -5,9 +5,9 @@
  * It responds to requests from the MCP Host that need to click interactive elements on pages.
  */
 
-import BrowserContext from '../browser/context';
+import type BrowserContext from '../browser/context';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
 /**
  * Handler for the 'click_element' RPC method

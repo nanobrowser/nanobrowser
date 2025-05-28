@@ -6,9 +6,9 @@
  * like switching, opening, and closing tabs.
  */
 
-import BrowserContext from '../browser/context';
+import type BrowserContext from '../browser/context';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
 /**
  * Interface for manage_tabs request parameters

@@ -5,9 +5,9 @@
  * It receives navigation requests from the MCP Host and performs the URL navigation.
  */
 
-import BrowserContext from '../browser/context';
+import type BrowserContext from '../browser/context';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
 /**
  * Interface for navigate_to request parameters

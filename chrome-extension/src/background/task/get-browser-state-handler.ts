@@ -5,9 +5,9 @@
  * It responds to requests from the MCP Host that need the current browser state.
  */
 
-import BrowserContext from '../browser/context';
+import type BrowserContext from '../browser/context';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 import { DOMElementNode, DOMTextNode, domElementNodeToDict } from '../dom/views';
 
 /**

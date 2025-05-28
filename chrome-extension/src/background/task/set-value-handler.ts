@@ -5,10 +5,10 @@
  * It responds to requests from the MCP Host that need to set values on interactive elements.
  */
 
-import BrowserContext from '../browser/context';
+import type BrowserContext from '../browser/context';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
-import { DOMElementNode } from '../dom/views';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { DOMElementNode } from '../dom/views';
 
 /**
  * Interface for input strategy determination
