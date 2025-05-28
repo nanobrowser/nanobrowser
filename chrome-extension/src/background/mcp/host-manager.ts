@@ -22,7 +22,7 @@ export interface RpcRequest {
   /**
    * Parameters for the method
    */
-  params?: any;
+  params?: unknown;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface RpcResponse {
   /**
    * Result of the method call (if successful)
    */
-  result?: any;
+  result?: unknown;
 
   /**
    * Error information (if the call failed)
@@ -45,7 +45,7 @@ export interface RpcResponse {
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
 }
 
@@ -103,9 +103,9 @@ export class McpHostManager {
   private pendingRequests = new Map<
     string,
     {
-      resolve: (value: any) => void;
-      reject: (reason?: any) => void;
-      timeoutId: any;
+      resolve: (value: RpcResponse) => void;
+      reject: (reason?: unknown) => void;
+      timeoutId: NodeJS.Timeout;
     }
   >();
   private readonly RPC_TIMEOUT_MS = 5000; // 5 seconds default timeout for RPC requests
@@ -370,7 +370,7 @@ export class McpHostManager {
    * Processes an incoming RPC request from the MCP Host.
    * @param data The RPC request data
    */
-  private async handleRpcRequest(data: any): Promise<void> {
+  private async handleRpcRequest(data: { method: string; id?: string; params?: unknown }): Promise<void> {
     const { method, id, params } = data;
     console.debug(`[McpHostManager] Received RPC request: ${method} (id: ${id})`);
 
@@ -421,8 +421,12 @@ export class McpHostManager {
    * Processes an incoming RPC response from the MCP Host.
    * @param data The RPC response data
    */
-  private handleRpcResponse(data: any): void {
-    const { id, result, error } = data;
+  private handleRpcResponse(data: {
+    id: string;
+    result?: unknown;
+    error?: { code: number; message: string; data?: unknown };
+  }): void {
+    const { id, error } = data;
     console.debug(`[McpHostManager] Received RPC response for ID: ${id}`);
 
     // Find the pending request for this ID
@@ -444,20 +448,34 @@ export class McpHostManager {
     }
   }
 
-  private handleMessage(message: any): void {
+  private handleMessage(message: {
+    type: string;
+    data?: unknown;
+    error?: string;
+    method?: string;
+    id?: string;
+    params?: unknown;
+    result?: unknown;
+  }): void {
     switch (message.type) {
       case 'status':
-        this.updateStatus(message.data);
+        this.updateStatus(message.data as Partial<McpHostStatus>);
         break;
       case 'error':
         console.error('MCP Host error:', message.error);
         break;
       // Handle RPC messages
       case 'rpc_request':
-        this.handleRpcRequest(message);
+        if (message.method) {
+          this.handleRpcRequest(message as { method: string; id?: string; params?: unknown });
+        }
         break;
       case 'rpc_response':
-        this.handleRpcResponse(message);
+        if (message.id) {
+          this.handleRpcResponse(
+            message as { id: string; result?: unknown; error?: { code: number; message: string; data?: unknown } },
+          );
+        }
         break;
       default:
         console.log('Unknown message from MCP Host:', message);
@@ -563,8 +581,14 @@ export class McpHostManager {
         console.log('Ping response:', response);
 
         // Process successful response, update the last heartbeat time
-        if (response && response.result) {
-          this.updateStatus({ lastHeartbeat: response.result.timestamp });
+        if (
+          response &&
+          response.result &&
+          typeof response.result === 'object' &&
+          response.result !== null &&
+          'timestamp' in response.result
+        ) {
+          this.updateStatus({ lastHeartbeat: (response.result as { timestamp: number }).timestamp });
         }
       })
       .catch(error => {

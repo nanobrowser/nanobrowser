@@ -120,7 +120,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
           <div className="font-medium">Connection:</div>
           <div className="flex items-center">
             <span
-              className={`mr-2 inline-block h-3 w-3 rounded-full ${
+              className={`mr-2 inline-block size-3 rounded-full ${
                 status.isConnected ? 'bg-green-500' : 'bg-red-500'
               }`}></span>
             <span>{status.isConnected ? 'Connected' : 'Disconnected'}</span>
@@ -149,7 +149,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
               {loading ? (
                 <>
                   <svg
-                    className="mr-2 h-4 w-4 animate-spin"
+                    className="mr-2 size-4 animate-spin"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24">
@@ -180,7 +180,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
               {loading ? (
                 <>
                   <svg
-                    className="mr-2 h-4 w-4 animate-spin"
+                    className="mr-2 size-4 animate-spin"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24">
@@ -207,7 +207,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
 
         {/* Error display */}
         {error && (
-          <div className="mt-4 rounded-md overflow-hidden">
+          <div className="mt-4 overflow-hidden rounded-md">
             <div className={`p-4 ${isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-50 text-red-700'}`}>
               <p className="font-medium">Error: {error.message}</p>
               {error.code && <p className="text-sm opacity-75">Error code: {error.code}</p>}
@@ -217,15 +217,15 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
 
         {/* Installation guide - shown regardless of current error state when installGuideVisible is true */}
         {installGuideVisible && (
-          <div className="mt-4 rounded-md overflow-hidden">
+          <div className="mt-4 overflow-hidden rounded-md">
             <div
-              className={`p-4 border-t relative ${isDarkMode ? 'bg-amber-900/30 border-amber-800 text-amber-200' : 'bg-amber-50 border-amber-100 text-amber-800'}`}>
+              className={`relative border-t p-4 ${isDarkMode ? 'border-amber-800 bg-amber-900/30 text-amber-200' : 'border-amber-100 bg-amber-50 text-amber-800'}`}>
               {/* Add close button */}
               <button
                 onClick={dismissInstallGuide}
-                className={`absolute top-2 right-2 p-1 rounded-full ${isDarkMode ? 'bg-amber-800 hover:bg-amber-700 text-amber-200' : 'bg-amber-200 hover:bg-amber-300 text-amber-800'}`}
+                className={`absolute right-2 top-2 rounded-full p-1 ${isDarkMode ? 'bg-amber-800 text-amber-200 hover:bg-amber-700' : 'bg-amber-200 text-amber-800 hover:bg-amber-300'}`}
                 aria-label="Close installation guide">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="size-5" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fillRule="evenodd"
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -233,17 +233,17 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
                   />
                 </svg>
               </button>
-              <h3 className="font-semibold mb-2">MCP Host Installation Required</h3>
+              <h3 className="mb-2 font-semibold">MCP Host Installation Required</h3>
               <p className="mb-3">
                 This error indicates that you need to install the MCP Host. Please follow these steps:
               </p>
-              <ol className="list-decimal ml-5 space-y-2 mb-3">
+              <ol className="mb-3 ml-5 list-decimal space-y-2">
                 <li className="pl-1">Open your terminal</li>
                 <li className="pl-1">
                   Clone the MCP Host repository:
                   <div className="mt-1">
                     <code
-                      className={`block px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                      className={`block rounded px-2 py-1 font-mono text-sm ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
                       git clone https://github.com/nanobrowser/nanobrowser-mcp-host.git
                     </code>
                   </div>
@@ -252,7 +252,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
                   Navigate to the cloned directory:
                   <div className="mt-1">
                     <code
-                      className={`block px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                      className={`block rounded px-2 py-1 font-mono text-sm ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
                       cd nanobrowser-mcp-host
                     </code>
                   </div>
@@ -261,13 +261,13 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
                   Run the installation script:
                   <div className="mt-1">
                     <code
-                      className={`block px-2 py-1 rounded text-sm font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
+                      className={`block rounded px-2 py-1 font-mono text-sm ${isDarkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
                       ./install.sh
                     </code>
                   </div>
                 </li>
                 <li className="pl-1">
-                  After installation is complete, return to this page and click "Start MCP Host" again
+                  After installation is complete, return to this page and click &quot;Start MCP Host&quot; again
                 </li>
               </ol>
               <p className="text-sm">
@@ -309,7 +309,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
                 copyStatus
                   ? isDarkMode
                     ? 'bg-green-700 hover:bg-green-600'
-                    : 'bg-green-500 hover:bg-green-400 text-white'
+                    : 'bg-green-500 text-white hover:bg-green-400'
                   : isDarkMode
                     ? 'bg-slate-600 hover:bg-slate-500'
                     : 'bg-blue-100 hover:bg-blue-200'
@@ -344,23 +344,23 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
             </div>
             <div className="ml-4">
               {settingsLoading ? (
-                <div className="w-12 h-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+                <div className="h-6 w-12 animate-pulse rounded-full bg-gray-300 dark:bg-gray-600"></div>
               ) : (
-                <label className="relative inline-flex items-center cursor-pointer">
+                // eslint-disable-next-line jsx-a11y/label-has-associated-control
+                <label className="relative inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    className="sr-only peer"
+                    className="peer sr-only"
                     checked={showMcpIcon}
                     onChange={e => handleMcpIconToggle(e.target.checked)}
                   />
-                  <div
-                    className={`w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 
-                    peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer 
-                    peer-checked:after:translate-x-full peer-checked:after:border-white 
-                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                    after:bg-white after:border-gray-300 after:border after:rounded-full 
-                    after:h-5 after:w-5 after:transition-all dark:border-gray-600 
-                    peer-checked:bg-blue-600`}></div>
+                  <span
+                    className={`peer h-6 w-11 cursor-pointer rounded-full bg-gray-200 
+                    after:absolute after:left-[2px] after:top-[2px] after:size-5 
+                    after:rounded-full after:border 
+                    after:border-gray-300 after:bg-white after:transition-all after:content-[''] 
+                    peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none 
+                    peer-focus:ring-4 peer-focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-600 dark:peer-focus:ring-blue-800`}></span>
                 </label>
               )}
             </div>

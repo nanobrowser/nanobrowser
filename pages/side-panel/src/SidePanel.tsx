@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMcpHost } from '@extension/shared';
 import { type Message, Actors, chatHistoryStore, generalSettingsStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiSettings } from 'react-icons/fi';
 import { GrHistory } from 'react-icons/gr';
 import { PiPlusBold } from 'react-icons/pi';
-import { RiPlugFill, RiPlugLine } from 'react-icons/ri';
+
 import { RxDiscordLogo } from 'react-icons/rx';
 import BookmarkList from './components/BookmarkList';
 import ChatHistoryList from './components/ChatHistoryList';
@@ -33,9 +32,6 @@ const SidePanel = () => {
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
-
-  // MCP Host status
-  const { status: mcpStatus } = useMcpHost();
 
   // Check for dark mode preference
   useEffect(() => {

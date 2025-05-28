@@ -187,7 +187,7 @@ export default class MessageManager {
    * Adds a model output message to the history
    * @param modelOutput - The model output
    */
-  public addModelOutput(modelOutput: Record<string, any>): void {
+  public addModelOutput(modelOutput: Record<string, unknown>): void {
     const toolCallId = this.nextToolId();
     const toolCalls = [
       {

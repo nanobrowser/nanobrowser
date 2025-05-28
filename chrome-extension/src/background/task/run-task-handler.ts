@@ -5,11 +5,11 @@
  * It receives task requests from the MCP Host and executes them in the browser context.
  */
 
-import { Executor } from '../agent/executor';
-import BrowserContext from '../browser/context';
-import { Actors, ExecutionState } from '../agent/event/types';
+import type { Executor } from '../agent/executor';
+import type BrowserContext from '../browser/context';
+import { ExecutionState } from '../agent/event/types';
 import { createLogger } from '../log';
-import { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
+import type { RpcHandler, RpcRequest, RpcResponse } from '../mcp/host-manager';
 
 /**
  * Interface for run_task request parameters
@@ -119,7 +119,7 @@ export class RunTaskHandler {
       // Setup and execute the task
       const executor = await this.setupExecutorFn(taskId, params.task, this.browserContext);
 
-      const results = new Array();
+      const results = [];
       // Subscribe to executor events and output them to the console
       this.subscribeToExecutorEvents(executor, taskId, results);
 

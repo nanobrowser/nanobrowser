@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { McpError, McpErrorCode } from '../errors/mcp-errors';
+import type { McpError } from '../errors/mcp-errors';
+import { McpErrorCode } from '../errors/mcp-errors';
 
 /**
  * MCP Host Status interface

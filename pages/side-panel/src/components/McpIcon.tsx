@@ -136,13 +136,15 @@ export const McpIcon: React.FC<McpIconProps> = ({ className = '' }) => {
     }
 
     switch (visualState) {
-      case 'healthy':
+      case 'healthy': {
         const uptime = status.startTime ? Math.floor((Date.now() - status.startTime) / 1000) : 0;
         const lastHeartbeat = status.lastHeartbeat ? Math.floor((Date.now() - status.lastHeartbeat) / 1000) : 0;
         return `MCP Host Connected\nUptime: ${uptime}s\nLast heartbeat: ${lastHeartbeat}s ago\nMode: ${status.runMode || 'unknown'}`;
-      case 'warning':
+      }
+      case 'warning': {
         const warningHeartbeat = status.lastHeartbeat ? Math.floor((Date.now() - status.lastHeartbeat) / 1000) : 0;
         return `MCP Host Warning\nHeartbeat delayed: ${warningHeartbeat}s ago\nMode: ${status.runMode || 'unknown'}`;
+      }
       case 'error':
         return `MCP Host Error\n${error?.message || 'Connection failed'}\nClick to restart`;
       case 'disconnected':
@@ -177,14 +179,14 @@ export const McpIcon: React.FC<McpIconProps> = ({ className = '' }) => {
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
+      className={`rounded-md p-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 ${
         loading ? 'cursor-not-allowed' : 'cursor-pointer'
       } ${className}`}
       aria-label={getAriaLabel()}
       title={getDetailedStatus()}>
       {/* MCP Icon - Protocol communication with bidirectional arrows */}
       <svg
-        className={`w-5 h-5 transition-colors duration-200 ${getIconColor()}`}
+        className={`size-5 transition-colors duration-200 ${getIconColor()}`}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
