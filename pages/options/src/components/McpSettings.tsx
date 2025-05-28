@@ -1,5 +1,6 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { useMcpHost, McpErrorCode } from '@extension/shared';
+import { McpErrorCode, useMcpHost } from '@extension/shared';
+import { generalSettingsStore } from '@extension/storage';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface McpSettingsProps {
   isDarkMode: boolean;
@@ -7,6 +8,10 @@ interface McpSettingsProps {
 
 export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
   const { status, loading, error, startMcpHost, stopMcpHost } = useMcpHost();
+
+  // State for MCP icon display setting
+  const [showMcpIcon, setShowMcpIcon] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
   const handleStartClick = useCallback(async () => {
     // Use default parameters
@@ -31,6 +36,33 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
   // State to track copy operation and installation guide dismiss
   const [copyStatus, setCopyStatus] = useState(false);
   const [installGuideVisible, setInstallGuideVisible] = useState(false);
+
+  // Load general settings on component mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await generalSettingsStore.getSettings();
+        setShowMcpIcon(settings.showMcpIconInSidepanel);
+      } catch (error) {
+        console.error('Failed to load general settings:', error);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // Handle toggle of MCP icon display setting
+  const handleMcpIconToggle = useCallback(async (enabled: boolean) => {
+    try {
+      await generalSettingsStore.updateSettings({
+        showMcpIconInSidepanel: enabled,
+      });
+      setShowMcpIcon(enabled);
+    } catch (error) {
+      console.error('Failed to update MCP icon setting:', error);
+    }
+  }, []);
 
   // Copy SEE endpoint to clipboard with feedback
   const copyEndpoint = () => {
@@ -78,8 +110,11 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
       <h1 className="mb-6 text-2xl font-bold">MCP Host Settings</h1>
 
       {/* Status Section */}
-      <div className={`mb-8 rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-white/50'} p-6 backdrop-blur-sm`}>
-        <h2 className="mb-4 text-xl font-semibold">Status</h2>
+      <div
+        className={`mb-8 rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-white'} p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Status
+        </h2>
 
         <div className="mb-6 grid grid-cols-[120px_1fr] gap-y-3">
           <div className="font-medium">Connection:</div>
@@ -251,8 +286,11 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
       </div>
 
       {/* SEE Protocol Information */}
-      <div className={`mb-8 rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-white/50'} p-6 backdrop-blur-sm`}>
-        <h2 className="mb-4 text-xl font-semibold">SEE Protocol Endpoint</h2>
+      <div
+        className={`mb-8 rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-white'} p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          SEE Protocol Endpoint
+        </h2>
         <p className="mb-3">
           When the MCP Host is running, it exposes browser capabilities via the Model Context Protocol (MCP) Surface
           Extension Environments (SEE) protocol at:
@@ -287,9 +325,55 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
         </p>
       </div>
 
+      {/* Advanced Settings Section */}
+      <div
+        className={`mb-8 rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-white'} p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Advanced Settings
+        </h2>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Display MCP Icon on Sidepanel
+              </h3>
+              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Show a clickable MCP icon in the sidepanel for quick access to start/stop MCP Host
+              </p>
+            </div>
+            <div className="ml-4">
+              {settingsLoading ? (
+                <div className="w-12 h-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+              ) : (
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={showMcpIcon}
+                    onChange={e => handleMcpIconToggle(e.target.checked)}
+                  />
+                  <div
+                    className={`w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 
+                    peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer 
+                    peer-checked:after:translate-x-full peer-checked:after:border-white 
+                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                    after:bg-white after:border-gray-300 after:border after:rounded-full 
+                    after:h-5 after:w-5 after:transition-all dark:border-gray-600 
+                    peer-checked:bg-blue-600`}></div>
+                </label>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Documentation Section */}
-      <div className={`rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-white/50'} p-6 backdrop-blur-sm`}>
-        <h2 className="mb-4 text-xl font-semibold">Documentation</h2>
+      <div
+        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-white'} p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Documentation
+        </h2>
         <p className="mb-3">
           The MCP Host allows external AI systems to access browser capabilities through standardized interfaces using
           the Model Context Protocol.
