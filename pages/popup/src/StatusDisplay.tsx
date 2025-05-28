@@ -1,5 +1,5 @@
+import type { McpError, McpHostStatus } from '@src/types';
 import React, { useEffect, useState } from 'react';
-import { McpHostStatus, McpError } from '@src/types';
 
 interface StatusDisplayProps {
   status: McpHostStatus;
@@ -26,6 +26,8 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
 
       return () => clearTimeout(timer);
     }
+
+    return () => {};
   }, [error]);
 
   // Format timestamp to human-readable date
@@ -48,14 +50,14 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-      <div className="flex justify-between items-center mb-4">
+    <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">MCP Host Status</h2>
         <button
           className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
           onClick={onRefresh}
           disabled={loading}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="size-5" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
               d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
@@ -67,20 +69,20 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
 
       {/* Floating error message with backdrop */}
       {showError && errorMessage && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           {/* Semi-transparent backdrop */}
           <div
             className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"
             onClick={() => setShowError(false)}></div>
 
           {/* Error message container */}
-          <div className="bg-red-100 border-2 border-red-400 text-red-700 px-5 py-4 rounded-lg shadow-lg max-w-md w-full relative z-10 animate-fadeIn">
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-lg">{errorMessage.code}</p>
+          <div className="relative z-10 w-full max-w-md animate-fadeIn rounded-lg border-2 border-red-400 bg-red-100 px-5 py-4 text-red-700 shadow-lg">
+            <div className="flex items-start justify-between">
+              <p className="text-lg font-bold">{errorMessage.code}</p>
               <button
                 onClick={() => setShowError(false)}
-                className="text-red-500 hover:text-red-700 focus:outline-none ml-4">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                className="ml-4 text-red-500 hover:text-red-700 focus:outline-none">
+                <svg className="size-5" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -90,7 +92,7 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
             </div>
             <p className="mt-2">{errorMessage.message}</p>
             {errorMessage.details !== undefined && errorMessage.details !== null && (
-              <div className="text-xs mt-3 overflow-auto max-h-32 p-2 bg-red-50 rounded whitespace-pre-wrap">
+              <div className="mt-3 max-h-32 overflow-auto whitespace-pre-wrap rounded bg-red-50 p-2 text-xs">
                 {typeof errorMessage.details === 'string'
                   ? errorMessage.details
                   : JSON.stringify(errorMessage.details, null, 2)}
@@ -101,8 +103,8 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center p-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center p-4">
+          <div className="size-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -122,7 +124,7 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status, loading, e
             <div className="flex items-center">
               <span className="flex-1 text-gray-600 dark:text-gray-300">SSE Endpoint:</span>
               <span
-                className="font-medium text-gray-900 dark:text-white text-sm truncate max-w-48"
+                className="max-w-48 truncate text-sm font-medium text-gray-900 dark:text-white"
                 title={status.sseBaseURL}>
                 {status.sseBaseURL}
               </span>

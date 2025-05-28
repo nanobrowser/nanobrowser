@@ -43,11 +43,11 @@ code {
   ::-webkit-scrollbar-track {
     background: #1e293b;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: #0ea5e9;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: #38bdf8;
   }
@@ -82,31 +82,31 @@ code {
 }
 
 .header-icon {
-  color: #19C2FF;
+  color: #19c2ff;
   cursor: pointer;
   transition: color 0.2s ease;
   opacity: 0.8;
 }
 
 .header-icon:hover {
-  color: #0073DC;
+  color: #0073dc;
   opacity: 1;
 }
 
 .send-button {
-  color: #19C2FF;
+  color: #19c2ff;
   cursor: pointer;
   transition: color 0.2s ease;
   opacity: 0.8;
 }
 
 .send-button:hover {
-  color: #0073DC;
+  color: #0073dc;
   opacity: 1;
 }
 
 .send-button:disabled {
-  color: #CBD5E1;
+  color: #cbd5e1;
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -122,30 +122,30 @@ code {
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-track {
-  background: #f1f5f9;  /* sky-50 */
+  background: #f1f5f9; /* sky-50 */
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-  background: #7dd3fc;  /* sky-300 - very light blue */
+  background: #7dd3fc; /* sky-300 - very light blue */
   border-radius: 4px;
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;  /* sky-400 - slightly darker on hover */
+  background: #38bdf8; /* sky-400 - slightly darker on hover */
 }
 
 /* Dark mode scrollbar for scrollbar-gutter-stable */
 @media (prefers-color-scheme: dark) {
   .scrollbar-gutter-stable::-webkit-scrollbar-track {
-    background: #1e293b;  /* slate-800 */
+    background: #1e293b; /* slate-800 */
   }
-  
+
   .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-    background: #0ea5e9;  /* sky-500 */
+    background: #0ea5e9; /* sky-500 */
   }
-  
+
   .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;  /* sky-400 */
+    background: #38bdf8; /* sky-400 */
   }
 }
 
@@ -154,11 +154,11 @@ code {
   .dark-mode-text {
     color: #e2e8f0 !important; /* slate-200 */
   }
-  
+
   .dark-mode-bg {
     background-color: #1e293b !important; /* slate-800 */
   }
-  
+
   .dark-mode-border {
     border-color: #475569 !important; /* slate-600 */
   }

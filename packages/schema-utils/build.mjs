@@ -12,4 +12,4 @@ const buildOptions = {
   sourcemap: true,
 };
 
-await esbuild.build(buildOptions); 
+await esbuild.build(buildOptions);

@@ -63,7 +63,7 @@ function MessageBlock({ message, isSameActor, isDarkMode = false }: MessageBlock
           <div className={`whitespace-pre-wrap break-words text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             {isProgress ? (
               <div className={`h-1 overflow-hidden rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                <div className="animate-progress h-full bg-blue-500" />
+                <div className="h-full animate-progress bg-blue-500" />
               </div>
             ) : (
               message.content

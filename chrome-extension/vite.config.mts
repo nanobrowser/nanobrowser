@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { defineConfig, type PluginOption } from "vite";
+import { defineConfig, type PluginOption } from 'vite';
 import libAssetsPlugin from '@laynezh/vite-plugin-lib-assets';
 import makeManifestPlugin from './utils/plugins/make-manifest-plugin';
 import { watchPublicPlugin, watchRebuildPlugin } from '@extension/hmr';
@@ -17,14 +17,14 @@ export default defineConfig({
       '@assets': resolve(srcDir, 'assets'),
     },
     conditions: ['browser', 'module', 'import', 'default'],
-    mainFields: ['browser', 'module', 'main']
+    mainFields: ['browser', 'module', 'main'],
   },
   server: {
     // Restrict CORS to only allow localhost
     cors: {
       origin: ['http://localhost:5173', 'http://localhost:3000'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      credentials: true
+      credentials: true,
     },
     host: 'localhost',
   },

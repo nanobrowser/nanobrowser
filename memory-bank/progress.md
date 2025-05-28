@@ -10,6 +10,7 @@ This document tracks the progress of the Algonius Browser project, documenting w
 - [x] Continuous integration setup
 - [x] Extension packaging and distribution workflow
 - [x] Project rebranding from Nanobrowser to Algonius Browser
+- [x] GitHub workflow configuration - simplified PR build and test pipeline
 
 ### Core Extension Components
 - [x] Background script implementation
