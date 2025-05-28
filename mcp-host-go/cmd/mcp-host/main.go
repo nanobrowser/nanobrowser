@@ -41,6 +41,7 @@ type Container struct {
 	GetDomExtraElements types.Tool
 	ClickElementTool    types.Tool
 	SetValueTool        types.Tool
+	ManageTabsTool      types.Tool
 	CurrentStateRes     types.Resource
 	DomStateRes         types.Resource
 	StatusHandler       *handlers.StatusHandler
@@ -110,6 +111,11 @@ func main() {
 
 	if err := container.Server.RegisterTool(container.SetValueTool); err != nil {
 		container.Logger.Error("Failed to register set_value tool", zap.Error(err))
+		os.Exit(1)
+	}
+
+	if err := container.Server.RegisterTool(container.ManageTabsTool); err != nil {
+		container.Logger.Error("Failed to register manage_tabs tool", zap.Error(err))
 		os.Exit(1)
 	}
 
@@ -327,6 +333,15 @@ func initContainer(startTime time.Time) (*Container, error) {
 		return nil, fmt.Errorf("failed to create set_value tool: %w", err)
 	}
 	container.SetValueTool = setValueTool
+
+	manageTabsTool, err := tools.NewManageTabsTool(tools.ManageTabsConfig{
+		Logger:    toolLogger,
+		Messaging: container.Messaging,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create manage_tabs tool: %w", err)
+	}
+	container.ManageTabsTool = manageTabsTool
 
 	return container, nil
 }

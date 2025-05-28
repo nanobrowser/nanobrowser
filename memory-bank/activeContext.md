@@ -1,8 +1,54 @@
 # Active Context: Algonius Browser
 
-## Current Work Focus - Set Value Tool Implementation Complete ✅
+## Current Work Focus - Manage Tabs Tool Implementation Complete ✅
 
-### Latest Achievement: Set Value Tool Implementation and Testing (2025-05-27 10:25)
+### Latest Achievement: Manage Tabs Tool Implementation (2025-05-28 08:30)
+Successfully implemented the new `manage_tabs` MCP tool to provide comprehensive browser tab management capabilities to external AI systems.
+
+#### Manage Tabs Tool Implementation - 2025-05-28 08:30
+- ✅ **Tool Implementation**: Created complete Go implementation with action-based routing and parameter validation
+- ✅ **Chrome Extension Handler**: Implemented manage-tabs-handler.ts with comprehensive tab management operations
+- ✅ **Tool Registration**: Successfully registered manage_tabs tool in MCP host main.go and Chrome extension
+- ✅ **Multi-Action Support**: Implemented support for switch, open, and close tab operations
+- ✅ **Integration Complete**: All components properly integrated and ready for testing
+
+#### Technical Implementation Details
+1. **Tool Implementation (`mcp-host-go/pkg/tools/manage_tabs.go`)**:
+   - **Core Features**: Created complete tool for managing browser tabs with action-based routing
+   - **Action Support**: Implemented switch, open, and close tab operations
+   - **Parameter Validation**: Implemented robust validation for action, tab_id, url, and background parameters
+   - **Error Handling**: Added comprehensive error handling with detailed messages for each action
+   - **Flexible Design**: Support for both foreground and background tab opening
+
+2. **Chrome Extension Handler (`chrome-extension/src/background/task/manage-tabs-handler.ts`)**:
+   - **Handler Pattern**: Followed established RPC handler pattern with BrowserContext dependency
+   - **Action Routing**: Implemented proper action routing for switch, open, and close operations
+   - **Tab Management**: Leveraged existing BrowserContext methods for reliable tab operations
+   - **Background Support**: Added support for opening tabs in background without focus switching
+   - **Response Formatting**: Added detailed response with operation results and tab information
+
+3. **Registration and Integration**:
+   - **Go Tool Registration**: Added ManageTabsTool to container and registered with MCP server
+   - **Chrome Extension Integration**: Added ManageTabsHandler to background script with proper RPC method registration
+   - **Export Integration**: Updated task index.ts to export the new handler
+   - **Dependency Injection**: Proper initialization with logger and messaging dependencies
+
+4. **Tool Schema Definition**:
+   - **Action Parameter**: Enum-based validation for switch, open, close actions
+   - **Tab ID Parameter**: Required for switch and close actions
+   - **URL Parameter**: Required for open action with validation
+   - **Background Parameter**: Optional boolean for background tab opening
+   - **Comprehensive Documentation**: Clear parameter descriptions and usage examples
+
+#### Benefits Achieved
+- **Tab Management**: External AI systems can now manage browser tabs programmatically
+- **Multi-Window Support**: Support for complex browser workflows across multiple tabs
+- **Background Operations**: Ability to open tabs without disrupting current focus
+- **Reliable Integration**: Leverages existing BrowserContext methods for proven reliability
+- **Flexible Operations**: Support for the three core tab operations needed for automation
+- **Error Handling**: Clear error messages for debugging and troubleshooting
+
+### Previous Achievement: Set Value Tool Implementation and Testing (2025-05-27 10:25)
 Successfully implemented and tested the new `set_value` MCP tool to provide comprehensive form interaction capabilities to external AI systems.
 
 #### Set Value Tool Implementation - 2025-05-27 10:25
@@ -222,6 +268,12 @@ The MCP host provides:
 5. **Click Element Tool** (`click_element`):
    - Click interactive elements on web pages
    - Index-based targeting with configurable wait time
+   - Comprehensive validation and error handling
+
+6. **Manage Tabs Tool** (`manage_tabs`):
+   - Switch between browser tabs, open new tabs, and close existing tabs
+   - Support for foreground and background tab opening
+   - Action-based operation (switch, open, close)
    - Comprehensive validation and error handling
 
 ## Next Steps Recommendations

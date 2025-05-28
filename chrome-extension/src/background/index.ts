@@ -14,7 +14,7 @@ import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { McpHostManager, McpHostOptions } from './mcp/host-manager';
-import { GetBrowserStateHandler, GetDomStateHandler, NavigateToHandler } from './task';
+import { GetBrowserStateHandler, GetDomStateHandler, NavigateToHandler, ManageTabsHandler } from './task';
 import { ScrollPageHandler } from './task/scroll-page-handler';
 import { ClickElementHandler } from './task/click-element-handler';
 import { SetValueHandler } from './task/set-value-handler';
@@ -35,6 +35,7 @@ const getDomStateHandler = new GetDomStateHandler(browserContext);
 const scrollPageHandler = new ScrollPageHandler(browserContext);
 const clickElementHandler = new ClickElementHandler(browserContext);
 const setValueHandler = new SetValueHandler(browserContext);
+const manageTabsHandler = new ManageTabsHandler(browserContext);
 
 // Register RPC method handlers
 mcpHostManager.registerRpcMethod('navigate_to', navigateToHandler.handleNavigateTo.bind(navigateToHandler));
@@ -46,6 +47,7 @@ mcpHostManager.registerRpcMethod('get_dom_state', getDomStateHandler.handleGetDo
 mcpHostManager.registerRpcMethod('scroll_page', scrollPageHandler.handleScrollPage.bind(scrollPageHandler));
 mcpHostManager.registerRpcMethod('click_element', clickElementHandler.handleClickElement.bind(clickElementHandler));
 mcpHostManager.registerRpcMethod('set_value', setValueHandler.handleSetValue.bind(setValueHandler));
+mcpHostManager.registerRpcMethod('manage_tabs', manageTabsHandler.handleManageTabs.bind(manageTabsHandler));
 
 // No longer open side panel on action click, now using popup instead
 // Function to check if script is already injected
