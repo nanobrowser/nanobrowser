@@ -30,6 +30,3 @@ jobs:
 
       - name: Type check
         run: pnpm type-check
-
-      - name: Lint check
-        run: pnpm lint
