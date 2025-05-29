@@ -1,5 +1,5 @@
-import { StorageEnum } from '../base/enums';
 import { createStorage } from '../base/base';
+import { StorageEnum } from '../base/enums';
 import type { BaseStorage } from '../base/types';
 
 // Interface for general settings configuration
@@ -10,6 +10,7 @@ export interface GeneralSettingsConfig {
   useVision: boolean;
   useVisionForPlanner: boolean;
   planningInterval: number;
+  showMcpIconInSidepanel: boolean;
 }
 
 export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
@@ -26,6 +27,7 @@ export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
   useVision: false,
   useVisionForPlanner: false,
   planningInterval: 3,
+  showMcpIconInSidepanel: false,
 };
 
 const storage = createStorage<GeneralSettingsConfig>('general-settings', DEFAULT_GENERAL_SETTINGS, {

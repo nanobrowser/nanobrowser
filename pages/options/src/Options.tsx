@@ -5,13 +5,15 @@ import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
+import { McpSettings } from './components/McpSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'mcp' | 'help';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: 'General' },
   { id: 'models', icon: '📊', label: 'Models' },
   { id: 'firewall', icon: '🔒', label: 'Firewall' },
+  { id: 'mcp', icon: '🔌', label: 'MCP' },
   { id: 'help', icon: '📚', label: 'Help' },
 ];
 
@@ -32,6 +34,17 @@ const Options = () => {
     return () => darkModeMediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  // Handle URL hash for direct tab navigation (e.g., #mcp)
+  useEffect(() => {
+    // Get the hash from URL (removing the # symbol)
+    const hash = window.location.hash.slice(1).toLowerCase();
+
+    // Check if hash matches any valid tab ID
+    if (hash && TABS.some(tab => tab.id === (hash as TabTypes))) {
+      setActiveTab(hash as TabTypes);
+    }
+  }, []);
+
   const handleTabClick = (tabId: TabTypes) => {
     if (tabId === 'help') {
       window.open('https://nanobrowser.ai/docs', '_blank');
@@ -48,6 +61,8 @@ const Options = () => {
         return <ModelSettings isDarkMode={isDarkMode} />;
       case 'firewall':
         return <FirewallSettings isDarkMode={isDarkMode} />;
+      case 'mcp':
+        return <McpSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }

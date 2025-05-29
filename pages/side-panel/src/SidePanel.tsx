@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { RxDiscordLogo } from 'react-icons/rx';
-import { FiSettings } from 'react-icons/fi';
-import { PiPlusBold } from 'react-icons/pi';
-import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore } from '@extension/storage';
+import { type Message, Actors, chatHistoryStore, generalSettingsStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
-import MessageList from './components/MessageList';
-import ChatInput from './components/ChatInput';
-import ChatHistoryList from './components/ChatHistoryList';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FiSettings } from 'react-icons/fi';
+import { GrHistory } from 'react-icons/gr';
+import { PiPlusBold } from 'react-icons/pi';
+
+import { RxDiscordLogo } from 'react-icons/rx';
 import BookmarkList from './components/BookmarkList';
-import { EventType, type AgentEvent, ExecutionState } from './types/event';
+import ChatHistoryList from './components/ChatHistoryList';
+import ChatInput from './components/ChatInput';
+import { McpIcon } from './components/McpIcon';
+import MessageList from './components/MessageList';
 import './SidePanel.css';
+import { type AgentEvent, EventType, ExecutionState } from './types/event';
 
 const SidePanel = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,6 +26,7 @@ const SidePanel = () => {
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
+  const [showMcpIcon, setShowMcpIcon] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -41,6 +44,28 @@ const SidePanel = () => {
 
     darkModeMediaQuery.addEventListener('change', handleChange);
     return () => darkModeMediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  // Load general settings for MCP icon visibility
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await generalSettingsStore.getSettings();
+        setShowMcpIcon(settings.showMcpIconInSidepanel);
+      } catch (error) {
+        console.error('Failed to load general settings:', error);
+      }
+    };
+    loadSettings();
+
+    // Listen for settings changes
+    const unsubscribe = generalSettingsStore.subscribe(() => {
+      loadSettings().catch(error => {
+        console.error('Failed to reload general settings:', error);
+      });
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -661,6 +686,11 @@ const SidePanel = () => {
                   tabIndex={0}>
                   <GrHistory size={20} />
                 </button>
+                {showMcpIcon && (
+                  <McpIcon
+                    className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  />
+                )}
               </>
             )}
             <a
