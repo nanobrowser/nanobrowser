@@ -13,6 +13,8 @@ import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
+import { SpeechToTextService } from './speechToText/service';
+import { ProviderTypeEnum } from '@extension/storage';
 
 const logger = createLogger('background');
 
@@ -181,6 +183,59 @@ chrome.runtime.onConnect.addListener(port => {
             const page = await browserContext.getCurrentPage();
             await page.removeHighlight();
             return port.postMessage({ type: 'success', msg: 'highlight removed' });
+          }
+
+          case 'speech_to_text': {
+            try {
+              if (!message.audio) {
+                return port.postMessage({
+                  type: 'speech_to_text_error',
+                  error: 'No audio data provided',
+                });
+              }
+
+              logger.info('Processing speech-to-text request...');
+
+              // Get Google provider config for speech-to-text
+              const providers = await llmProviderStore.getAllProviders();
+
+              // Find a Gemini provider (look for provider with type 'gemini')
+              const googleProvider = Object.values(providers).find(
+                provider => provider.type === ProviderTypeEnum.Gemini,
+              );
+
+              if (!googleProvider) {
+                return port.postMessage({
+                  type: 'speech_to_text_error',
+                  error:
+                    'Google provider not configured. Please add Google API key in settings to use the speech to text feature.',
+                });
+              }
+
+              // Create speech-to-text service
+              const speechToTextService = new SpeechToTextService(googleProvider);
+
+              // Extract base64 audio data (remove data URL prefix if present)
+              let base64Audio = message.audio;
+              if (base64Audio.startsWith('data:')) {
+                base64Audio = base64Audio.split(',')[1];
+              }
+
+              // Transcribe audio
+              const transcribedText = await speechToTextService.transcribeAudio(base64Audio);
+
+              logger.info('Speech-to-text completed successfully');
+              return port.postMessage({
+                type: 'speech_to_text_result',
+                text: transcribedText,
+              });
+            } catch (error) {
+              logger.error('Speech-to-text failed:', error);
+              return port.postMessage({
+                type: 'speech_to_text_error',
+                error: error instanceof Error ? error.message : 'Speech recognition failed',
+              });
+            }
           }
 
           default:

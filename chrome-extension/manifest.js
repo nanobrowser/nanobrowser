@@ -60,7 +60,15 @@ const manifest = withSidePanel({
   ],
   web_accessible_resources: [
     {
-      resources: ['*.js', '*.css', '*.svg', 'icon-128.png', 'icon-32.png'],
+      resources: [
+        '*.js',
+        '*.css',
+        '*.svg',
+        'icon-128.png',
+        'icon-32.png',
+        'permission/index.html',
+        'permission/permission.js',
+      ],
       matches: ['*://*/*'],
     },
   ],
