@@ -6,7 +6,7 @@ import type { BaseMessage } from '@langchain/core/messages';
 import { createLogger } from '@src/background/log';
 import type { Action } from '../actions/builder';
 import { convertInputMessages, extractJsonFromModelOutput, removeThinkTags } from '../messages/utils';
-import { isAbortedError, RequestCancelledError } from './errors';
+import { isAbortedError } from './errors';
 
 const logger = createLogger('agent');
 
