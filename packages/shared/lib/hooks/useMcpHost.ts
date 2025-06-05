@@ -36,6 +36,39 @@ export function useMcpHost() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<McpError | null>(null);
 
+  // Validate connection status to detect false positives
+  const validateConnectionStatus = async (reportedStatus: McpHostStatus): Promise<McpHostStatus> => {
+    // If status reports connected, perform additional validation
+    if (reportedStatus.isConnected) {
+      try {
+        // Quick validation ping to verify actual connection
+        const pingResponse = await chrome.runtime.sendMessage({
+          type: 'validateMcpConnection',
+        });
+
+        if (!pingResponse || !pingResponse.success) {
+          console.warn('[useMcpHost] Connection validation failed, status may be false positive');
+          // Return corrected status
+          return {
+            ...reportedStatus,
+            isConnected: false,
+            lastHeartbeat: null,
+          };
+        }
+      } catch (error) {
+        console.warn('[useMcpHost] Connection validation error:', error);
+        // On validation error, assume disconnected to be safe
+        return {
+          ...reportedStatus,
+          isConnected: false,
+          lastHeartbeat: null,
+        };
+      }
+    }
+
+    return reportedStatus;
+  };
+
   // Fetch MCP Host status
   const refreshStatus = async () => {
     setLoading(true);
@@ -43,7 +76,9 @@ export function useMcpHost() {
     try {
       const response = await chrome.runtime.sendMessage({ type: 'getMcpHostStatus' });
       if (response && response.status) {
-        setStatus(response.status);
+        // Validate the reported status before setting it
+        const validatedStatus = await validateConnectionStatus(response.status);
+        setStatus(validatedStatus);
       } else {
         setError({
           code: McpErrorCode.UNKNOWN,

@@ -193,6 +193,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false; // Synchronous response
   }
 
+  if (message.type === 'validateMcpConnection') {
+    // Validate MCP connection by attempting a quick ping
+    logger.info('Received request to validate MCP connection');
+
+    if (!mcpHostManager.getStatus().isConnected) {
+      logger.info('MCP Host status shows disconnected, validation failed');
+      sendResponse({ success: false, reason: 'Status shows disconnected' });
+      return false;
+    }
+
+    // Attempt a quick ping to verify actual connection
+    mcpHostManager
+      .rpcRequest(
+        { method: 'ping', params: {} },
+        { timeout: 1000 }, // Very short timeout for validation
+      )
+      .then(response => {
+        const isValid = response && (response.result !== undefined || response.error === undefined);
+        logger.info('MCP connection validation result:', isValid);
+        sendResponse({ success: isValid });
+      })
+      .catch(error => {
+        logger.warning('MCP connection validation failed:', error);
+        sendResponse({ success: false, reason: error.message });
+      });
+
+    return true; // Indicate async response
+  }
+
   // Handle other message types if needed in the future
   // Return false if response is not sent asynchronously
   // return false;

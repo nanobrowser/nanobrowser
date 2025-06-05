@@ -95,9 +95,10 @@ export class McpHostManager {
   private listeners: StatusListener[] = [];
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private pingTimeout: NodeJS.Timeout | null = null;
-  private readonly HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
+  private readonly HEARTBEAT_INTERVAL_MS = 5000; // 5 seconds (reduced for faster detection)
   private readonly PING_TIMEOUT_MS = 20000; // 20 seconds
   private readonly GRACEFUL_SHUTDOWN_TIMEOUT_MS = 1000; // 1 second
+  private readonly CONNECTION_VERIFICATION_TIMEOUT_MS = 2000; // 2 seconds for initial verification
   // RPC-related properties
   private rpcMethodHandlers: Map<string, RpcHandler> = new Map();
   private pendingRequests = new Map<
@@ -109,6 +110,61 @@ export class McpHostManager {
     }
   >();
   private readonly RPC_TIMEOUT_MS = 5000; // 5 seconds default timeout for RPC requests
+
+  /**
+   * Verifies that the connection to MCP Host is actually working by sending a ping request.
+   * @returns {Promise<boolean>} Promise that resolves to true if connection is verified
+   * @private
+   */
+  private async verifyActualConnection(): Promise<boolean> {
+    if (!this.port) {
+      return false;
+    }
+
+    try {
+      console.debug('[McpHostManager] Verifying actual connection with ping...');
+
+      // Send a quick ping to verify the host is actually responding
+      const response = await this.rpcRequest(
+        { method: 'ping', params: {} },
+        { timeout: this.CONNECTION_VERIFICATION_TIMEOUT_MS },
+      );
+
+      // Check if we got a valid response
+      const isValid = response && (response.result !== undefined || response.error === undefined);
+
+      console.debug('[McpHostManager] Connection verification result:', isValid);
+      return isValid;
+    } catch (error) {
+      console.warn('[McpHostManager] Connection verification failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handles connection failure by cleaning up and updating status
+   * @private
+   */
+  private handleConnectionFailure(): void {
+    console.debug('[McpHostManager] Handling connection failure...');
+
+    // Clean up port
+    if (this.port) {
+      try {
+        this.port.disconnect();
+      } catch (error) {
+        // Ignore disconnect errors
+      }
+      this.port = null;
+    }
+
+    // Update status to disconnected
+    this.updateStatus({
+      isConnected: false,
+      startTime: null,
+      lastHeartbeat: null,
+    });
+  }
 
   /**
    * Establishes a connection to the MCP Host Native Messaging host.
@@ -159,26 +215,45 @@ export class McpHostManager {
       // Add our disconnect handler
       this.port.onDisconnect.addListener(disconnectHandler);
 
-      // Set a very short timeout to verify successful connection
-      // Most connection errors trigger onDisconnect almost immediately
-      setTimeout(() => {
+      // Set a timeout to verify successful connection with actual verification
+      setTimeout(async () => {
         if (this.port) {
-          // Connection appears successful - set up remaining handlers and state
+          try {
+            console.debug('[McpHostManager] Attempting connection verification...');
 
-          // Update and broadcast status with timestamp
-          this.updateStatus({
-            isConnected: true,
-            startTime: Date.now(),
-            lastHeartbeat: Date.now(),
-          });
+            // Verify the connection is actually working
+            const verified = await this.verifyActualConnection();
 
-          // Start heartbeat
-          this.startHeartbeat();
+            if (verified) {
+              // Connection is verified - set up remaining handlers and state
+              console.debug('[McpHostManager] Connection verified successfully');
 
-          // Resolve the promise
-          resolve(true);
+              // Update and broadcast status with timestamp
+              this.updateStatus({
+                isConnected: true,
+                startTime: Date.now(),
+                lastHeartbeat: Date.now(),
+              });
+
+              // Start heartbeat
+              this.startHeartbeat();
+
+              // Resolve the promise
+              resolve(true);
+            } else {
+              // Verification failed - clean up and report failure
+              console.warn('[McpHostManager] Connection verification failed');
+              this.handleConnectionFailure();
+              resolve(false);
+            }
+          } catch (error) {
+            // Verification threw an error - treat as connection failure
+            console.error('[McpHostManager] Connection verification error:', error);
+            this.handleConnectionFailure();
+            resolve(false);
+          }
         }
-      }, 50); // Reduced from 100ms to 50ms
+      }, 200); // Increased timeout for verification process
     });
   }
 
