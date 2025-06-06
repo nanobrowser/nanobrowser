@@ -253,7 +253,7 @@ export class McpHostManager {
             resolve(false);
           }
         }
-      }, 200); // Increased timeout for verification process
+      }, 3000); //Increased timeout for verification process
     });
   }
 
