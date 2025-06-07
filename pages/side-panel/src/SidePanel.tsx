@@ -13,6 +13,13 @@ import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
+// Declare chrome API types
+declare global {
+  interface Window {
+    chrome: typeof chrome;
+  }
+}
+
 const SidePanel = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputEnabled, setInputEnabled] = useState(true);
@@ -24,11 +31,16 @@ const SidePanel = () => {
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<number | null>(null);
 
   // Check for dark mode preference
   useEffect(() => {
@@ -239,6 +251,20 @@ const SidePanel = () => {
           });
           setInputEnabled(true);
           setShowStopButton(false);
+        } else if (message && message.type === 'speech_to_text_result') {
+          // Handle speech-to-text result
+          if (message.text && setInputTextRef.current) {
+            setInputTextRef.current(message.text);
+          }
+          setIsProcessingSpeech(false);
+        } else if (message && message.type === 'speech_to_text_error') {
+          // Handle speech-to-text error
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: message.error || 'Speech recognition failed',
+            timestamp: Date.now(),
+          });
+          setIsProcessingSpeech(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
         }
@@ -414,7 +440,6 @@ const SidePanel = () => {
           taskId: sessionIdRef.current,
           tabId,
         });
-        console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
       } else {
         // Send as new task
         await sendMessage({
@@ -423,7 +448,6 @@ const SidePanel = () => {
           taskId: sessionIdRef.current,
           tabId,
         });
-        console.log('new_task sent', text, tabId, sessionIdRef.current);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -612,6 +636,15 @@ const SidePanel = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Stop recording if active
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      // Clear recording timer
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
       stopConnection();
     };
   }, [stopConnection]);
@@ -621,6 +654,170 @@ const SidePanel = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      // Clear the timer
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      // First check if permission is already granted
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+
+      if (permissionStatus.state === 'denied') {
+        appendMessage({
+          actor: Actors.SYSTEM,
+          content: 'Microphone access denied. Please enable microphone permissions in Chrome settings.',
+          timestamp: Date.now(),
+        });
+        return;
+      }
+
+      // If permission is not granted, open permission page
+      if (permissionStatus.state !== 'granted') {
+        const permissionUrl = chrome.runtime.getURL('permission/index.html');
+
+        // Open permission page in a new window
+        chrome.windows.create(
+          {
+            url: permissionUrl,
+            type: 'popup',
+            width: 500,
+            height: 600,
+          },
+          createdWindow => {
+            if (createdWindow?.id) {
+              // Listen for window close to check permission status
+              chrome.windows.onRemoved.addListener(function onWindowClose(windowId) {
+                if (windowId === createdWindow.id) {
+                  chrome.windows.onRemoved.removeListener(onWindowClose);
+                  // Check permission status after window closes
+                  setTimeout(async () => {
+                    try {
+                      const newPermissionStatus = await navigator.permissions.query({
+                        name: 'microphone' as PermissionName,
+                      });
+                      // Only retry if permission was granted
+                      if (newPermissionStatus.state === 'granted') {
+                        handleMicClick();
+                      }
+                      // If denied or prompt, do nothing - let user manually try again
+                    } catch (error) {
+                      console.error('Failed to check permission status:', error);
+                    }
+                  }, 500);
+                }
+              });
+            }
+          },
+        );
+        return;
+      }
+
+      // Permission granted - proceed with recording
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Clear previous audio chunks
+      audioChunksRef.current = [];
+
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      // Handle data available event
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      // Handle stop event
+      mediaRecorder.onstop = async () => {
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+
+        if (audioChunksRef.current.length > 0) {
+          // Create audio blob
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64Audio = reader.result as string;
+
+            // Setup connection if not exists
+            if (!portRef.current) {
+              setupConnection();
+            }
+
+            // Send audio to backend for speech-to-text conversion
+            try {
+              setIsProcessingSpeech(true);
+              portRef.current?.postMessage({
+                type: 'speech_to_text',
+                audio: base64Audio,
+              });
+            } catch (error) {
+              console.error('Failed to send audio for speech-to-text:', error);
+              appendMessage({
+                actor: Actors.SYSTEM,
+                content: 'Failed to process speech recording',
+                timestamp: Date.now(),
+              });
+              setIsRecording(false);
+              setIsProcessingSpeech(false);
+            }
+          };
+          reader.readAsDataURL(audioBlob);
+        }
+      };
+
+      // Set up 2-minute duration limit
+      const maxDuration = 2 * 60 * 1000;
+      recordingTimerRef.current = window.setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        setIsRecording(false);
+        setIsProcessingSpeech(true);
+        recordingTimerRef.current = null;
+      }, maxDuration);
+
+      // Start recording
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+
+      let errorMessage = 'Failed to access microphone. ';
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage += 'Please grant microphone permission.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage += 'No microphone found.';
+        } else {
+          errorMessage += error.message;
+        }
+      }
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: errorMessage,
+        timestamp: Date.now(),
+      });
+      setIsRecording(false);
+    }
+  };
 
   return (
     <div>
@@ -701,6 +898,9 @@ const SidePanel = () => {
                   <ChatInput
                     onSendMessage={handleSendMessage}
                     onStopTask={handleStopTask}
+                    onMicClick={handleMicClick}
+                    isRecording={isRecording}
+                    isProcessingSpeech={isProcessingSpeech}
                     disabled={!inputEnabled || isHistoricalSession}
                     showStopButton={showStopButton}
                     setContent={setter => {
@@ -734,6 +934,9 @@ const SidePanel = () => {
                 <ChatInput
                   onSendMessage={handleSendMessage}
                   onStopTask={handleStopTask}
+                  onMicClick={handleMicClick}
+                  isRecording={isRecording}
+                  isProcessingSpeech={isProcessingSpeech}
                   disabled={!inputEnabled || isHistoricalSession}
                   showStopButton={showStopButton}
                   setContent={setter => {
