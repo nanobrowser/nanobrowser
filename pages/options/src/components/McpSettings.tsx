@@ -31,7 +31,7 @@ export const McpSettings: React.FC<McpSettingsProps> = ({ isDarkMode }) => {
   };
 
   // SEE protocol endpoint
-  const seeEndpoint = 'http://localhost:7890/mcp';
+  const seeEndpoint = 'http://localhost:9666/mcp';
 
   // State to track copy operation and installation guide dismiss
   const [copyStatus, setCopyStatus] = useState(false);
