@@ -35,7 +35,7 @@ Nanobrowser es una herramienta de automatización web con IA que se ejecuta en t
 - **Opciones Flexibles de LLM** - Conéctate con tu proveedor de LLM preferido con la libertad de elegir diferentes modelos para diferentes agentes.
 - **Totalmente Open Source** - Transparencia total en cómo se automatiza tu navegador. Sin procesos ocultos ni cajas negras.
 
-> **Nota:** Actualmente ofrecemos soporte para OpenAI, Anthropic, Gemini, Ollama y proveedores personalizados compatibles con OpenAI, próximamente se ofrecerá soporte a más proveedores.
+> **Nota:** Actualmente ofrecemos soporte para OpenAI, Anthropic, Gemini, Ollama, Bedrock y proveedores personalizados compatibles con OpenAI, próximamente se ofrecerá soporte a más proveedores.
 
 
 ## 📊 Funciones Clave

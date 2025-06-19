@@ -6,7 +6,7 @@
   - Multi-agent System: Uses specialized AI agents (Navigator, Planner, Validator) that collaborate to accomplish complex web workflows
   - AI Web Automation: Automates repetitive web tasks across websites using natural language commands
   - Privacy-Focused: Everything runs locally in your browser - no data sent to external services
-  - Flexible LLM Support: Supports OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, and custom OpenAI-compatible providers
+  - Flexible LLM Support: Supports OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, Bedrock, and custom OpenAI-compatible providers
   - Interactive Side Panel: Chat interface for interacting with the AI agents
 
   How the Chrome Extension is Built

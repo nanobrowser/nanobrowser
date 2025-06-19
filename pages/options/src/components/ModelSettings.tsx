@@ -386,6 +386,11 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         Boolean(config?.baseUrl?.trim()) &&
         Boolean(config?.azureDeploymentNames?.length) &&
         Boolean(config?.azureApiVersion?.trim());
+    } else if (providerType === ProviderTypeEnum.Bedrock) {
+      hasInput =
+        Boolean(config?.awsAccessKeyId?.trim()) &&
+        Boolean(config?.awsSecretAccessKey?.trim()) &&
+        Boolean(config?.awsRegion?.trim());
     } else if (providerType === ProviderTypeEnum.OpenRouter) {
       // OpenRouter needs API Key and optionally Base URL (has default)
       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
@@ -426,6 +431,17 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         return;
       }
 
+      if (providers[provider].type === ProviderTypeEnum.Bedrock) {
+        if (
+          !providers[provider].awsAccessKeyId?.trim() ||
+          !providers[provider].awsSecretAccessKey?.trim() ||
+          !providers[provider].awsRegion?.trim()
+        ) {
+          alert(`AWS credentials and region are required for ${getDefaultDisplayNameFromProviderId(provider)}.`);
+          return;
+        }
+      }
+
       // Ensure modelNames is provided
       let modelNames = providers[provider].modelNames;
       if (!modelNames) {
@@ -450,9 +466,15 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         configToSave.modelNames = undefined;
       } else {
         // Ensure modelNames IS included for non-Azure
-        // Use existing modelNames from state, or default if somehow missing
         configToSave.modelNames =
           providers[provider].modelNames || llmProviderModelNames[provider as keyof typeof llmProviderModelNames] || [];
+      }
+
+      if (providers[provider].type === ProviderTypeEnum.Bedrock) {
+        configToSave.awsAccessKeyId = providers[provider].awsAccessKeyId || '';
+        configToSave.awsSecretAccessKey = providers[provider].awsSecretAccessKey || '';
+        configToSave.awsSessionToken = providers[provider].awsSessionToken || '';
+        configToSave.awsRegion = providers[provider].awsRegion || 'us-east-1';
       }
 
       // Pass the cleaned config to setProvider
@@ -1117,6 +1139,21 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     }));
   };
 
+  const handleBedrockFieldChange = (
+    provider: string,
+    field: 'awsAccessKeyId' | 'awsSecretAccessKey' | 'awsSessionToken' | 'awsRegion',
+    value: string,
+  ) => {
+    setModifiedProviders(prev => new Set(prev).add(provider));
+    setProviders(prev => ({
+      ...prev,
+      [provider]: {
+        ...prev[provider],
+        [field]: value.trim(),
+      },
+    }));
+  };
+
   return (
     <section className="space-y-6">
       {/* LLM Providers Section */}
@@ -1217,7 +1254,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                     )}
 
                     {/* API Key input with label */}
-                    <div className="flex items-center">
+                    {providerConfig.type !== ProviderTypeEnum.Bedrock && (
+                      <div className="flex items-center">
                       <label
                         htmlFor={`${providerId}-api-key`}
                         className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -1279,7 +1317,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                           </button>
                         )}
                       </div>
-                    </div>
+                    )}
 
                     {/* Display API key for newly added providers only when visible */}
                     {modifiedProviders.has(providerId) &&
@@ -1329,6 +1367,64 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}
                             className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bedrock credentials */}
+                    {providerConfig.type === ProviderTypeEnum.Bedrock && (
+                      <div className="space-y-2">
+                        <div className="flex items-center">
+                          <label htmlFor={`${providerId}-aws-access-key`} className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Access Key*
+                          </label>
+                          <input
+                            id={`${providerId}-aws-access-key`}
+                            type="text"
+                            placeholder="AWS Access Key ID"
+                            value={providerConfig.awsAccessKeyId || ''}
+                            onChange={e => handleBedrockFieldChange(providerId, 'awsAccessKeyId', e.target.value)}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <label htmlFor={`${providerId}-aws-secret-key`} className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Secret Key*
+                          </label>
+                          <input
+                            id={`${providerId}-aws-secret-key`}
+                            type="password"
+                            placeholder="AWS Secret Access Key"
+                            value={providerConfig.awsSecretAccessKey || ''}
+                            onChange={e => handleBedrockFieldChange(providerId, 'awsSecretAccessKey', e.target.value)}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <label htmlFor={`${providerId}-aws-session-token`} className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Session
+                          </label>
+                          <input
+                            id={`${providerId}-aws-session-token`}
+                            type="text"
+                            placeholder="AWS Session Token (optional)"
+                            value={providerConfig.awsSessionToken || ''}
+                            onChange={e => handleBedrockFieldChange(providerId, 'awsSessionToken', e.target.value)}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <label htmlFor={`${providerId}-aws-region`} className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Region*
+                          </label>
+                          <input
+                            id={`${providerId}-aws-region`}
+                            type="text"
+                            placeholder="us-east-1"
+                            value={providerConfig.awsRegion || ''}
+                            onChange={e => handleBedrockFieldChange(providerId, 'awsRegion', e.target.value)}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
                           />
                         </div>
                       </div>
