@@ -49,6 +49,18 @@ Looking for a powerful AI web agent without the $200/month price tag of OpenAI O
 - **Multiple LLM Support**: Connect your preferred LLM providers and assign different models to different agents
 
 
+## 🌐 Browser Support
+
+**Officially Supported:**
+- **Chrome** - Full support with all features
+- **Edge** - Full support with all features
+
+**Not Supported:**
+- Firefox, Safari, and other Chromium variants (Opera, Arc, etc.)
+
+> **Note**: While Nanobrowser may function on other Chromium-based browsers, we recommend using Chrome or Edge for the best experience and guaranteed compatibility.
+
+
 ## 🚀 Quick Start
 
 1. **Install from Chrome Web Store** (Stable Version):

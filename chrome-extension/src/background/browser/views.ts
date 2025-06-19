@@ -1,5 +1,5 @@
-import type { DOMState } from '../dom/views';
-import type { DOMHistoryElement } from '../dom/history/view';
+import type { DOMState } from './dom/views';
+import type { DOMHistoryElement } from './dom/history/view';
 
 export interface BrowserContextWindowSize {
   width: number;
@@ -39,12 +39,6 @@ export interface BrowserContextConfig {
   browserWindowSize: BrowserContextWindowSize;
 
   /**
-   * Highlight elements in the DOM on the screen
-   * @default true
-   */
-  highlightElements: boolean;
-
-  /**
    * Viewport expansion in pixels. This amount will increase the number of elements
    * which are included in the state what the LLM will see.
    * If set to -1, all elements will be included (this leads to high token usage).
@@ -76,6 +70,12 @@ export interface BrowserContextConfig {
    * @default 'https://www.google.com'
    */
   homePageUrl: string;
+
+  /**
+   * Display highlights on interactive elements
+   * @default true
+   */
+  displayHighlights: boolean;
 }
 
 export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
@@ -84,12 +84,12 @@ export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
   maximumWaitPageLoadTime: 5.0,
   waitBetweenActions: 0.5,
   browserWindowSize: { width: 1280, height: 1100 },
-  highlightElements: true,
   viewportExpansion: 0,
   allowedUrls: [],
   deniedUrls: [],
   includeDynamicAttributes: true,
   homePageUrl: 'about:blank',
+  displayHighlights: true,
 };
 
 export interface PageState extends DOMState {

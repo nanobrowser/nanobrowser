@@ -43,8 +43,35 @@ export function watchRebuildPlugin(config: PluginConfig): PluginOption {
     };
   }
 
+  const banner = `(function(){let __HMR_ID="${id}";\n${hmrCode}\n})();`;
+
   return {
     name: 'watch-rebuild',
+
+    /**
+     * Use Rollup's banner option to inject HMR code before sourcemap generation.
+     * This ensures that sourcemaps remain accurate by accounting for the injected lines.
+     *
+     * Previously, code was injected in generateBundle() after sourcemap creation,
+     * causing line number mismatches in dev tools.
+     */
+    outputOptions(outputOptions) {
+      const existingBanner = outputOptions.banner;
+
+      if (typeof existingBanner === 'string') {
+        outputOptions.banner = existingBanner + '\n' + banner;
+      } else if (typeof existingBanner === 'function') {
+        outputOptions.banner = (...args) => {
+          const result = existingBanner(...args);
+          return (result || '') + '\n' + banner;
+        };
+      } else {
+        outputOptions.banner = banner;
+      }
+
+      return outputOptions;
+    },
+
     writeBundle() {
       onStart?.();
       if (!ws) {
@@ -56,13 +83,6 @@ export function watchRebuildPlugin(config: PluginConfig): PluginOption {
        * The reload server will send a message to the client to reload or refresh the extension.
        */
       ws.send(MessageInterpreter.send({ type: BUILD_COMPLETE, id }));
-    },
-    generateBundle(_options, bundle) {
-      for (const module of Object.values(bundle)) {
-        if (module.type === 'chunk') {
-          module.code = `(function() {let __HMR_ID = "${id}";\n` + hmrCode + '\n' + '})();' + '\n' + module.code;
-        }
-      }
     },
   };
 }

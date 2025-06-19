@@ -14,9 +14,16 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
   }, []);
 
   const updateSetting = async <K extends keyof GeneralSettingsConfig>(key: K, value: GeneralSettingsConfig[K]) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    await generalSettingsStore.updateSettings({ [key]: value });
+    // Optimistically update the local state for responsiveness
+    setSettings(prevSettings => ({ ...prevSettings, [key]: value }));
+
+    // Call the store to update the setting
+    await generalSettingsStore.updateSettings({ [key]: value } as Partial<GeneralSettingsConfig>);
+
+    // After the store update (which might have side effects, e.g., useVision affecting displayHighlights),
+    // fetch the latest settings from the store and update the local state again to ensure UI consistency.
+    const latestSettings = await generalSettingsStore.getSettings();
+    setSettings(latestSettings);
   };
 
   return (
@@ -100,7 +107,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
           <div className="flex items-center justify-between">
             <div>
               <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Enable Vision with Highlighting
+                Enable Vision
               </h3>
               <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Use vision capability of LLMs (consumes more tokens for better results)
@@ -118,6 +125,31 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
                 htmlFor="useVision"
                 className={`peer h-6 w-11 rounded-full ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300`}>
                 <span className="sr-only">Enable Vision</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Display Highlights
+              </h3>
+              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Show visual highlights on interactive elements (e.g. buttons, links, etc.)
+              </p>
+            </div>
+            <div className="relative inline-flex cursor-pointer items-center">
+              <input
+                id="displayHighlights"
+                type="checkbox"
+                checked={settings.displayHighlights}
+                onChange={e => updateSetting('displayHighlights', e.target.checked)}
+                className="peer sr-only"
+              />
+              <label
+                htmlFor="displayHighlights"
+                className={`peer h-6 w-11 rounded-full ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300`}>
+                <span className="sr-only">Display Highlights</span>
               </label>
             </div>
           </div>
@@ -143,6 +175,32 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
               onChange={e => updateSetting('planningInterval', Number.parseInt(e.target.value, 10))}
               className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
             />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Page Load Wait Time
+              </h3>
+              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Minimum wait time after page loads (250-5000ms)
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label htmlFor="minWaitPageLoad" className="sr-only">
+                Page Load Wait Time
+              </label>
+              <input
+                id="minWaitPageLoad"
+                type="number"
+                min={250}
+                max={5000}
+                step={50}
+                value={settings.minWaitPageLoad}
+                onChange={e => updateSetting('minWaitPageLoad', Number.parseInt(e.target.value, 10))}
+                className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+              />
+            </div>
           </div>
         </div>
       </div>

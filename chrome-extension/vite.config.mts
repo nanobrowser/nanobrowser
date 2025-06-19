@@ -27,6 +27,7 @@ export default defineConfig({
       credentials: true
     },
     host: 'localhost',
+    sourcemapIgnoreList: false,
   },
   plugins: [
     libAssetsPlugin({

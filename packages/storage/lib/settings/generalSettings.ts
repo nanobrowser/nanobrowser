@@ -10,6 +10,8 @@ export interface GeneralSettingsConfig {
   useVision: boolean;
   useVisionForPlanner: boolean;
   planningInterval: number;
+  displayHighlights: boolean;
+  minWaitPageLoad: number;
 }
 
 export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
@@ -26,6 +28,8 @@ export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
   useVision: false,
   useVisionForPlanner: false,
   planningInterval: 3,
+  displayHighlights: true,
+  minWaitPageLoad: 250,
 };
 
 const storage = createStorage<GeneralSettingsConfig>('general-settings', DEFAULT_GENERAL_SETTINGS, {
@@ -37,14 +41,24 @@ export const generalSettingsStore: GeneralSettingsStorage = {
   ...storage,
   async updateSettings(settings: Partial<GeneralSettingsConfig>) {
     const currentSettings = (await storage.get()) || DEFAULT_GENERAL_SETTINGS;
-    await storage.set({
+    const updatedSettings = {
       ...currentSettings,
       ...settings,
-    });
+    };
+
+    // If useVision is true, displayHighlights must also be true
+    if (updatedSettings.useVision && !updatedSettings.displayHighlights) {
+      updatedSettings.displayHighlights = true;
+    }
+
+    await storage.set(updatedSettings);
   },
   async getSettings() {
     const settings = await storage.get();
-    return settings || DEFAULT_GENERAL_SETTINGS;
+    return {
+      ...DEFAULT_GENERAL_SETTINGS,
+      ...settings,
+    };
   },
   async resetToDefaults() {
     await storage.set(DEFAULT_GENERAL_SETTINGS);

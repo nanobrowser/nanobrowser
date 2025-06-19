@@ -4,7 +4,7 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore } from '@extension/storage';
+import { type Message, Actors, chatHistoryStore, agentModelStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
@@ -12,6 +12,13 @@ import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
+
+// Declare chrome API types
+declare global {
+  interface Window {
+    chrome: typeof chrome;
+  }
+}
 
 const SidePanel = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,11 +31,17 @@ const SidePanel = () => {
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
+  const [hasConfiguredModels, setHasConfiguredModels] = useState<boolean | null>(null); // null = loading, false = no models, true = has models
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<number | null>(null);
 
   // Check for dark mode preference
   useEffect(() => {
@@ -42,6 +55,48 @@ const SidePanel = () => {
     darkModeMediaQuery.addEventListener('change', handleChange);
     return () => darkModeMediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  // Check if models are configured
+  const checkModelConfiguration = useCallback(async () => {
+    try {
+      const configuredAgents = await agentModelStore.getConfiguredAgents();
+
+      // Check if at least one agent (preferably Navigator) is configured
+      const hasAtLeastOneModel = configuredAgents.length > 0;
+      setHasConfiguredModels(hasAtLeastOneModel);
+    } catch (error) {
+      console.error('Error checking model configuration:', error);
+      setHasConfiguredModels(false);
+    }
+  }, []);
+
+  // Check model configuration on mount
+  useEffect(() => {
+    checkModelConfiguration();
+  }, [checkModelConfiguration]);
+
+  // Re-check model configuration when the side panel becomes visible again
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Panel became visible, re-check configuration
+        checkModelConfiguration();
+      }
+    };
+
+    const handleFocus = () => {
+      // Panel gained focus, re-check configuration
+      checkModelConfiguration();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [checkModelConfiguration]);
 
   useEffect(() => {
     sessionIdRef.current = currentSessionId;
@@ -239,6 +294,20 @@ const SidePanel = () => {
           });
           setInputEnabled(true);
           setShowStopButton(false);
+        } else if (message && message.type === 'speech_to_text_result') {
+          // Handle speech-to-text result
+          if (message.text && setInputTextRef.current) {
+            setInputTextRef.current(message.text);
+          }
+          setIsProcessingSpeech(false);
+        } else if (message && message.type === 'speech_to_text_error') {
+          // Handle speech-to-text error
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: message.error || 'Speech recognition failed',
+            timestamp: Date.now(),
+          });
+          setIsProcessingSpeech(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
         }
@@ -552,7 +621,6 @@ const SidePanel = () => {
   };
 
   const handleBookmarkSelect = (content: string) => {
-    console.log('handleBookmarkSelect', content);
     if (setInputTextRef.current) {
       setInputTextRef.current(content);
     }
@@ -612,6 +680,15 @@ const SidePanel = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Stop recording if active
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      // Clear recording timer
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
       stopConnection();
     };
   }, [stopConnection]);
@@ -621,6 +698,170 @@ const SidePanel = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      // Clear the timer
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      // First check if permission is already granted
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+
+      if (permissionStatus.state === 'denied') {
+        appendMessage({
+          actor: Actors.SYSTEM,
+          content: 'Microphone access denied. Please enable microphone permissions in Chrome settings.',
+          timestamp: Date.now(),
+        });
+        return;
+      }
+
+      // If permission is not granted, open permission page
+      if (permissionStatus.state !== 'granted') {
+        const permissionUrl = chrome.runtime.getURL('permission/index.html');
+
+        // Open permission page in a new window
+        chrome.windows.create(
+          {
+            url: permissionUrl,
+            type: 'popup',
+            width: 500,
+            height: 600,
+          },
+          createdWindow => {
+            if (createdWindow?.id) {
+              // Listen for window close to check permission status
+              chrome.windows.onRemoved.addListener(function onWindowClose(windowId) {
+                if (windowId === createdWindow.id) {
+                  chrome.windows.onRemoved.removeListener(onWindowClose);
+                  // Check permission status after window closes
+                  setTimeout(async () => {
+                    try {
+                      const newPermissionStatus = await navigator.permissions.query({
+                        name: 'microphone' as PermissionName,
+                      });
+                      // Only retry if permission was granted
+                      if (newPermissionStatus.state === 'granted') {
+                        handleMicClick();
+                      }
+                      // If denied or prompt, do nothing - let user manually try again
+                    } catch (error) {
+                      console.error('Failed to check permission status:', error);
+                    }
+                  }, 500);
+                }
+              });
+            }
+          },
+        );
+        return;
+      }
+
+      // Permission granted - proceed with recording
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Clear previous audio chunks
+      audioChunksRef.current = [];
+
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      // Handle data available event
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      // Handle stop event
+      mediaRecorder.onstop = async () => {
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+
+        if (audioChunksRef.current.length > 0) {
+          // Create audio blob
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64Audio = reader.result as string;
+
+            // Setup connection if not exists
+            if (!portRef.current) {
+              setupConnection();
+            }
+
+            // Send audio to backend for speech-to-text conversion
+            try {
+              setIsProcessingSpeech(true);
+              portRef.current?.postMessage({
+                type: 'speech_to_text',
+                audio: base64Audio,
+              });
+            } catch (error) {
+              console.error('Failed to send audio for speech-to-text:', error);
+              appendMessage({
+                actor: Actors.SYSTEM,
+                content: 'Failed to process speech recording',
+                timestamp: Date.now(),
+              });
+              setIsRecording(false);
+              setIsProcessingSpeech(false);
+            }
+          };
+          reader.readAsDataURL(audioBlob);
+        }
+      };
+
+      // Set up 2-minute duration limit
+      const maxDuration = 2 * 60 * 1000;
+      recordingTimerRef.current = window.setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        setIsRecording(false);
+        setIsProcessingSpeech(true);
+        recordingTimerRef.current = null;
+      }, maxDuration);
+
+      // Start recording
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+
+      let errorMessage = 'Failed to access microphone. ';
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage += 'Please grant microphone permission.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage += 'No microphone found.';
+        } else {
+          errorMessage += error.message;
+        }
+      }
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: errorMessage,
+        timestamp: Date.now(),
+      });
+      setIsRecording(false);
+    }
+  };
 
   return (
     <div>
@@ -694,54 +935,114 @@ const SidePanel = () => {
           </div>
         ) : (
           <>
-            {messages.length === 0 && (
+            {/* Show loading state while checking model configuration */}
+            {hasConfiguredModels === null && (
+              <div
+                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+                <div className="text-center">
+                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent"></div>
+                  <p>Checking configuration...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Show setup message when no models are configured */}
+            {hasConfiguredModels === false && (
+              <div
+                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+                <div className="max-w-md text-center">
+                  <img src="/icon-128.png" alt="Nanobrowser Logo" className="mx-auto mb-4 size-12" />
+                  <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-sky-200' : 'text-sky-700'}`}>
+                    Welcome to Nanobrowser!
+                  </h3>
+                  <p className="mb-4">To get started, please configure your API keys in the settings page.</p>
+                  <button
+                    onClick={() => chrome.runtime.openOptionsPage()}
+                    className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${
+                      isDarkMode ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-sky-500 text-white hover:bg-sky-600'
+                    }`}>
+                    Open Settings
+                  </button>
+                  <div className="mt-4 text-sm opacity-75">
+                    <a
+                      href="https://github.com/nanobrowser/nanobrowser?tab=readme-ov-file#-quick-start"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
+                      Quick Start Guide
+                    </a>
+                    <span className="mx-2">•</span>
+                    <a
+                      href="https://discord.gg/NN3ABHggMK"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
+                      Join Our Community
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Show normal chat interface when models are configured */}
+            {hasConfiguredModels === true && (
               <>
-                <div
-                  className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
-                  <ChatInput
-                    onSendMessage={handleSendMessage}
-                    onStopTask={handleStopTask}
-                    disabled={!inputEnabled || isHistoricalSession}
-                    showStopButton={showStopButton}
-                    setContent={setter => {
-                      setInputTextRef.current = setter;
-                    }}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  <BookmarkList
-                    bookmarks={favoritePrompts}
-                    onBookmarkSelect={handleBookmarkSelect}
-                    onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
-                    onBookmarkDelete={handleBookmarkDelete}
-                    onBookmarkReorder={handleBookmarkReorder}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
+                {messages.length === 0 && (
+                  <>
+                    <div
+                      className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                      <ChatInput
+                        onSendMessage={handleSendMessage}
+                        onStopTask={handleStopTask}
+                        onMicClick={handleMicClick}
+                        isRecording={isRecording}
+                        isProcessingSpeech={isProcessingSpeech}
+                        disabled={!inputEnabled || isHistoricalSession}
+                        showStopButton={showStopButton}
+                        setContent={setter => {
+                          setInputTextRef.current = setter;
+                        }}
+                        isDarkMode={isDarkMode}
+                      />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <BookmarkList
+                        bookmarks={favoritePrompts}
+                        onBookmarkSelect={handleBookmarkSelect}
+                        onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
+                        onBookmarkDelete={handleBookmarkDelete}
+                        onBookmarkReorder={handleBookmarkReorder}
+                        isDarkMode={isDarkMode}
+                      />
+                    </div>
+                  </>
+                )}
+                {messages.length > 0 && (
+                  <div
+                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
+                    <MessageList messages={messages} isDarkMode={isDarkMode} />
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+                {messages.length > 0 && (
+                  <div
+                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
+                    <ChatInput
+                      onSendMessage={handleSendMessage}
+                      onStopTask={handleStopTask}
+                      onMicClick={handleMicClick}
+                      isRecording={isRecording}
+                      isProcessingSpeech={isProcessingSpeech}
+                      disabled={!inputEnabled || isHistoricalSession}
+                      showStopButton={showStopButton}
+                      setContent={setter => {
+                        setInputTextRef.current = setter;
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                )}
               </>
-            )}
-            {messages.length > 0 && (
-              <div
-                className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-                <MessageList messages={messages} isDarkMode={isDarkMode} />
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-            {messages.length > 0 && (
-              <div
-                className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
-                <ChatInput
-                  onSendMessage={handleSendMessage}
-                  onStopTask={handleStopTask}
-                  disabled={!inputEnabled || isHistoricalSession}
-                  showStopButton={showStopButton}
-                  setContent={setter => {
-                    setInputTextRef.current = setter;
-                  }}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
             )}
           </>
         )}

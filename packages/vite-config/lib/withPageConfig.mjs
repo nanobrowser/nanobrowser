@@ -24,6 +24,9 @@ export function withPageConfig(config) {
       {
         base: '',
         plugins: [react(), isDev && watchRebuildPlugin({ refresh: true })],
+        server: {
+          sourcemapIgnoreList: false,
+        },
         build: {
           sourcemap: isDev,
           minify: isProduction,

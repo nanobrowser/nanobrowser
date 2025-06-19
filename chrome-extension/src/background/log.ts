@@ -14,17 +14,25 @@ interface Logger {
 const createLogger = (namespace: string): Logger => {
   const prefix = `[${namespace}]`;
 
+  // Bind console methods directly to preserve call stack and show correct line numbers
+  const boundDebug = console.debug.bind(console, prefix);
+  const boundInfo = console.info.bind(console, prefix);
+  const boundWarn = console.warn.bind(console, prefix);
+  const boundError = console.error.bind(console, prefix);
+  const boundGroup = console.group.bind(console);
+  const boundGroupEnd = console.groupEnd.bind(console);
+
   return {
     debug: (...args: unknown[]) => {
       if (import.meta.env.DEV) {
-        console.debug(prefix, ...args);
+        boundDebug(...args);
       }
     },
-    info: (...args: unknown[]) => console.info(prefix, ...args),
-    warning: (...args: unknown[]) => console.warn(prefix, ...args),
-    error: (...args: unknown[]) => console.error(prefix, ...args),
-    group: (label: string) => console.group(`${prefix} ${label}`),
-    groupEnd: () => console.groupEnd(),
+    info: boundInfo,
+    warning: boundWarn,
+    error: boundError,
+    group: (label: string) => boundGroup(`${prefix} ${label}`),
+    groupEnd: boundGroupEnd,
   };
 };
 

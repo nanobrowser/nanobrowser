@@ -14,8 +14,9 @@ export function isUrlAllowed(url: string, allowList: string[], denyList: string[
 
   const lowerCaseUrl = trimmedUrl.toLowerCase();
 
-  // ALWAYS block dangerous URLs, even if firewall is disabled
+  // ALWAYS block dangerous/forbidden URLs, even if firewall is disabled
   const DANGEROUS_PREFIXES = [
+    'https://chromewebstore.google.com', // scripts are not allowed to be injected into chrome web store
     'chrome-extension://',
     'chrome://',
     'javascript:',

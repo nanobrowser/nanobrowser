@@ -13,6 +13,8 @@ import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
+import { SpeechToTextService } from './services/speechToText';
+import { ProviderTypeEnum } from '@extension/storage';
 
 const logger = createLogger('background');
 
@@ -183,6 +185,46 @@ chrome.runtime.onConnect.addListener(port => {
             return port.postMessage({ type: 'success', msg: 'highlight removed' });
           }
 
+          case 'speech_to_text': {
+            try {
+              if (!message.audio) {
+                return port.postMessage({
+                  type: 'speech_to_text_error',
+                  error: 'No audio data provided',
+                });
+              }
+
+              logger.info('Processing speech-to-text request...');
+
+              // Get all providers for speech-to-text service
+              const providers = await llmProviderStore.getAllProviders();
+
+              // Create speech-to-text service with all providers
+              const speechToTextService = await SpeechToTextService.create(providers);
+
+              // Extract base64 audio data (remove data URL prefix if present)
+              let base64Audio = message.audio;
+              if (base64Audio.startsWith('data:')) {
+                base64Audio = base64Audio.split(',')[1];
+              }
+
+              // Transcribe audio
+              const transcribedText = await speechToTextService.transcribeAudio(base64Audio);
+
+              logger.info('Speech-to-text completed successfully');
+              return port.postMessage({
+                type: 'speech_to_text_result',
+                text: transcribedText,
+              });
+            } catch (error) {
+              logger.error('Speech-to-text failed:', error);
+              return port.postMessage({
+                type: 'speech_to_text_error',
+                error: error instanceof Error ? error.message : 'Speech recognition failed',
+              });
+            }
+          }
+
           default:
             return port.postMessage({ type: 'error', error: 'Unknown message type' });
         }
@@ -257,6 +299,11 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   }
 
   const generalSettings = await generalSettingsStore.getSettings();
+  browserContext.updateConfig({
+    minimumWaitPageLoadTime: generalSettings.minWaitPageLoad / 1000.0,
+    displayHighlights: generalSettings.displayHighlights,
+  });
+
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
     plannerLLM: plannerLLM ?? navigatorLLM,
     validatorLLM: validatorLLM ?? navigatorLLM,

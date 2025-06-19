@@ -16,7 +16,7 @@ import {
   LLM_FORBIDDEN_ERROR_MESSAGE,
   RequestCancelledError,
 } from './errors';
-import { calcBranchPathHashSet } from '@src/background/dom/views';
+import { calcBranchPathHashSet } from '@src/background/browser/dom/views';
 import { URLNotAllowedError } from '@src/background/browser/views';
 import { convertZodToJsonSchema, repairJsonString } from '@src/background/utils';
 
@@ -71,9 +71,6 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
     // The zod object is too complex to be used directly, so we need to convert it to json schema first for the model to use
     this.jsonSchema = convertZodToJsonSchema(this.modelOutputSchema, 'NavigatorAgentOutput', true);
-
-    logger.info('Navigator model name', this.modelName);
-    // logger.info('Navigator zod schema', JSON.stringify(zodToJsonSchema(this.modelOutputSchema), null, 2));
   }
 
   async invoke(inputMessages: BaseMessage[]): Promise<this['ModelOutput']> {

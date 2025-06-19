@@ -15,11 +15,11 @@ import {
   getClickableElements as _getClickableElements,
   removeHighlights as _removeHighlights,
   getScrollInfo as _getScrollInfo,
-} from '../dom/service';
-import { DOMElementNode, type DOMState } from '../dom/views';
+} from './dom/service';
+import { DOMElementNode, type DOMState } from './dom/views';
 import { type BrowserContextConfig, DEFAULT_BROWSER_CONTEXT_CONFIG, type PageState, URLNotAllowedError } from './views';
 import { createLogger } from '@src/background/log';
-import { ClickableElementProcessor } from '../dom/clickable/service';
+import { ClickableElementProcessor } from './dom/clickable/service';
 import { isUrlAllowed } from './util';
 
 const logger = createLogger('Page');
@@ -71,8 +71,14 @@ export default class Page {
     this._tabId = tabId;
     this._config = { ...DEFAULT_BROWSER_CONTEXT_CONFIG, ...config };
     this._state = build_initial_state(tabId, url, title);
-    // chrome://newtab/, chrome://newtab/extensions are not valid web pages, can't be attached
-    this._validWebPage = (tabId && url && url.startsWith('http')) || false;
+    // chrome://newtab/, chrome://newtab/extensions, https://chromewebstore.google.com/ are not valid web pages, can't be attached
+    const lowerCaseUrl = url.trim().toLowerCase();
+    this._validWebPage =
+      (tabId &&
+        lowerCaseUrl &&
+        lowerCaseUrl.startsWith('http') &&
+        !lowerCaseUrl.startsWith('https://chromewebstore.google.com')) ||
+      false;
   }
 
   get tabId(): number {
@@ -166,7 +172,7 @@ export default class Page {
   }
 
   async removeHighlight(): Promise<void> {
-    if (this._config.highlightElements && this._validWebPage) {
+    if (this._config.displayHighlights && this._validWebPage) {
       await _removeHighlights(this._tabId);
     }
   }
@@ -258,8 +264,9 @@ export default class Page {
 
       // Get DOM content (equivalent to dom_service.get_clickable_elements)
       // This part would need to be implemented based on your DomService logic
-      // showHighlightElements is true if useVision is true, otherwise false
-      const content = await this.getClickableElements(useVision, focusElement);
+      // showHighlightElements is true if either useVision or displayHighlights is true
+      const displayHighlights = this._config.displayHighlights || useVision;
+      const content = await this.getClickableElements(displayHighlights, focusElement);
       if (!content) {
         logger.warning('Failed to get clickable elements');
         // Return last known good state if available
@@ -772,20 +779,40 @@ export default class Page {
         return null;
       }
       currentFrame = frame;
+      logger.info('currentFrame changed', currentFrame);
     }
 
     const cssSelector = element.enhancedCssSelectorForElement(this._config.includeDynamicAttributes);
 
     try {
-      const elementHandle: ElementHandle | null = await currentFrame.$(cssSelector);
+      // Try CSS selector first
+      let elementHandle: ElementHandle | null = await currentFrame.$(cssSelector);
+
+      // If CSS selector failed, try XPath
+      if (!elementHandle) {
+        const xpath = element.xpath;
+        if (xpath) {
+          try {
+            logger.info('Trying XPath selector:', xpath);
+            const fullXpath = xpath.startsWith('/') ? xpath : `/${xpath}`;
+            const xpathSelector = `::-p-xpath(${fullXpath})`;
+            elementHandle = await currentFrame.$(xpathSelector);
+          } catch (xpathError) {
+            logger.error('Failed to locate element using XPath:', xpathError);
+          }
+        }
+      }
+
+      // If element found, check visibility and scroll into view
       if (elementHandle) {
-        // Scroll element into view if needed
         const isHidden = await elementHandle.isHidden();
         if (!isHidden) {
           await this._scrollIntoViewIfNeeded(elementHandle);
         }
         return elementHandle;
       }
+
+      logger.info('elementHandle not located');
     } catch (error) {
       logger.error('Failed to locate element:', error);
     }

@@ -1,6 +1,6 @@
 {
   "name": "nanobrowser",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "AI web automation tool",
   "license": "Apache-2.0",
   "repository": {
@@ -35,9 +35,9 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.323",
+    "@types/chrome": "0.0.326",
     "@types/node": "^22.5.5",
-    "@types/react": "18.3.21",
+    "@types/react": "18.3.23",
     "@types/react-dom": "18.3.7",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

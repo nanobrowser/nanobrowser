@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Microphone Permission</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 400px;
+        margin: 50px auto;
+        padding: 20px;
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: white;
+      }
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: white;
+        margin-bottom: 20px;
+      }
+      p {
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+      button {
+        background: #19c2ff;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      button:hover {
+        background: #0073dc;
+        transform: translateY(-2px);
+      }
+      button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .success {
+        color: #4caf50;
+      }
+      .error {
+        color: #f44336;
+      }
+      .mic-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="mic-icon">🎤</div>
+      <h1>Enable Voice Input</h1>
+      <p>Nanobrowser needs microphone access to convert your speech to text.</p>
+      <button id="requestPermission">Grant Microphone Permission</button>
+      <p id="status"></p>
+    </div>
+    <script src="permission.js"></script>
+  </body>
+</html>
