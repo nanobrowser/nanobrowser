@@ -1,6 +1,6 @@
-# Contributing to NanoBrowser
+# Contributing to CloudCerebro
 
-We deeply appreciate your interest in contributing to NanoBrowser! Every contribution helps make Nanobrowser more powerful and accessible for everyone.
+We deeply appreciate your interest in contributing to CloudCerebro! Every contribution helps make CloudCerebro more powerful and accessible for everyone.
 
 ## Quick Start
 

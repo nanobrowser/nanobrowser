@@ -11,12 +11,12 @@ const defaultFavoritePrompts = [
   },
   {
     title: '🐦 Follow us on X/Twitter!',
-    content: 'Follow us at https://x.com/nanobrowser_ai to stay updated on the latest news and features!',
+    content: 'Follow us at https://x.com/cloudcerebro_ai to stay updated on the latest news and features!',
   },
   {
     title: '🌟 Star us on GitHub!',
     content:
-      "Open the Nanobrowser repository at https://github.com/nanobrowser/nanobrowser and check if you've already starred it. If not, please support us by giving us a star!",
+      "Open the CloudCerebro repository at https://github.com/nanobrowser/nanobrowser and check if you've already starred it. If not, please support us by giving us a star!",
   },
 ];
 
