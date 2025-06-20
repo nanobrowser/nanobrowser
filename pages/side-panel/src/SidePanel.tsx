@@ -281,7 +281,7 @@ const SidePanel = () => {
       portRef.current = chrome.runtime.connect({ name: 'side-panel-connection' });
 
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      portRef.current.onMessage.addListener((message: any) => {
+      portRef.current.onMessage.addListener(async (message: any) => {
         // Add type checking for message
         if (message && message.type === EventType.EXECUTION) {
           handleTaskState(message);
@@ -314,24 +314,29 @@ const SidePanel = () => {
           // Handle AppSync-created session auto-opening
           console.log('AppSync session created:', message.chatSessionId);
           if (message.chatSessionId) {
-            setCurrentSessionId(message.chatSessionId);
-            sessionIdRef.current = message.chatSessionId;
-            // Clear current messages and start fresh (not historical)
-            setMessages([]);
-            setIsFollowUpMode(false);
-            setIsHistoricalSession(false);
-            setShowHistory(false);
+            // Load the session to get initial messages
+            const fullSession = await chatHistoryStore.getSession(message.chatSessionId);
+            if (fullSession) {
+              setCurrentSessionId(fullSession.id);
+              setMessages(fullSession.messages);
+              setIsFollowUpMode(false); // New session is not a follow-up initially
+              setIsHistoricalSession(false); // This is an active session
+              setShowHistory(false); // Show the chat, not the history list
+            }
           }
         } else if (message && message.type === 'session_message_added') {
           // Handle real-time message updates for any active session
           console.log('Session message added:', message.chatSessionId, message.message);
-          console.log('Current session ID:', currentSessionId);
-          if (message.chatSessionId === currentSessionId && message.message) {
+          // Use sessionIdRef.current to avoid stale closure
+          if (message.chatSessionId === sessionIdRef.current && message.message) {
             console.log('Adding message to current session');
             // Add the new message to the current session in real-time
             setMessages(prev => [...prev, message.message]);
           } else {
-            console.log('Message not for current session or missing message data');
+            console.log(
+              'Message not for current session or missing message data. Current session:',
+              sessionIdRef.current,
+            );
           }
         }
       });
@@ -699,6 +704,11 @@ const SidePanel = () => {
 
     loadFavorites();
   }, []);
+
+  // Establish connection on component mount
+  useEffect(() => {
+    setupConnection();
+  }, [setupConnection]);
 
   // Cleanup on unmount
   useEffect(() => {

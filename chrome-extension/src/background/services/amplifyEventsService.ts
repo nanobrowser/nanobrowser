@@ -37,6 +37,9 @@ export class AmplifyEventsService {
     logger.info('Initializing AmplifyEventsService');
 
     try {
+      // Load any persisted pending events first
+      await this.loadPendingEventsFromStorage();
+
       // Get Amplify configuration
       const amplifyConfig = await amplifyConfigStore.getConfig();
       logger.info('Retrieved Amplify config:', {
@@ -200,6 +203,7 @@ export class AmplifyEventsService {
           logger.info('Updated event with taskId:', { eventId: event.eventId, taskId: result.taskId });
         }
         this.pendingEvents.set(event.eventId, event);
+        await this.savePendingEventsToStorage();
         logger.info('Stored pending event:', {
           eventId: event.eventId,
           actionType: event.actionType,
@@ -344,6 +348,8 @@ export class AmplifyEventsService {
    */
   async handleTaskCompletion(taskId: string, success: boolean, result?: any, error?: string): Promise<void> {
     logger.info('Handling task completion:', { taskId, success, result });
+    // Ensure we have the latest pending events from storage
+    await this.loadPendingEventsFromStorage();
     logger.info(
       'Current pending events:',
       Array.from(this.pendingEvents.entries()).map(([id, event]) => ({
@@ -361,22 +367,6 @@ export class AmplifyEventsService {
         matchingEventId = eventId;
         logger.info('Found direct taskId match:', { eventId, taskId });
         break;
-      }
-    }
-
-    // If no direct taskId match, check if this is a NEW_SESSION task by matching the most recent event
-    if (!matchingEventId && this.pendingEvents.size > 0) {
-      // Get the most recent NEW_SESSION event (since NEW_SESSION generates its own taskId)
-      let mostRecentEvent: { eventId: string; timestamp: number } | null = null;
-      for (const [eventId, event] of this.pendingEvents.entries()) {
-        if (event.actionType === 'NEW_SESSION') {
-          if (!mostRecentEvent || event.timestamp > mostRecentEvent.timestamp) {
-            mostRecentEvent = { eventId, timestamp: event.timestamp };
-          }
-        }
-      }
-      if (mostRecentEvent) {
-        matchingEventId = mostRecentEvent.eventId;
       }
     }
 
@@ -400,7 +390,7 @@ export class AmplifyEventsService {
             taskId,
             sessionId: originalEvent.sessionId || taskId,
             status: 'completed',
-            result: result || 'Task completed successfully',
+            result: result,
             completedAt: Date.now(),
           },
           timestamp: Date.now(),
@@ -417,6 +407,7 @@ export class AmplifyEventsService {
 
       // Remove from pending events
       this.pendingEvents.delete(matchingEventId);
+      await this.savePendingEventsToStorage();
       logger.info('Task completion response sent for event:', matchingEventId);
     } catch (responseError) {
       logger.error('Failed to send task completion response:', responseError);
@@ -450,5 +441,33 @@ export class AmplifyEventsService {
     this.connectionStatus = ConnectionStatus.DISCONNECTED;
     this.config = null;
     this.pendingEvents.clear();
+  }
+
+  /**
+   * Saves the current pendingEvents map to chrome.storage.local
+   */
+  private async savePendingEventsToStorage(): Promise<void> {
+    try {
+      const eventsToStore = Array.from(this.pendingEvents.entries());
+      await chrome.storage.local.set({ pendingAppSyncEvents: eventsToStore });
+      logger.info('Saved pending events to storage.');
+    } catch (error) {
+      logger.error('Failed to save pending events to storage:', error);
+    }
+  }
+
+  /**
+   * Loads pendingEvents from chrome.storage.local
+   */
+  private async loadPendingEventsFromStorage(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get('pendingAppSyncEvents');
+      if (result.pendingAppSyncEvents && Array.isArray(result.pendingAppSyncEvents)) {
+        this.pendingEvents = new Map(result.pendingAppSyncEvents);
+        logger.info(`Loaded ${this.pendingEvents.size} pending events from storage.`);
+      }
+    } catch (error) {
+      logger.error('Failed to load pending events from storage:', error);
+    }
   }
 }
