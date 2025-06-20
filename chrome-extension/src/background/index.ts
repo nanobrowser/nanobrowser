@@ -401,71 +401,61 @@ async function subscribeToExecutorEvents(executor: Executor) {
       logger.error('Failed to send message to side panel:', error);
     }
 
-    // Store agent messages in chat history and send to active sidebar session
+    // Save message to chat history
     const chatSessionId = taskToChatSessionMap.get(event.data.taskId);
-    if (chatSessionId && event.data.details) {
-      try {
-        // Map actor from event to chat Actors enum
-        let chatActor: Actors;
-        switch (event.actor) {
-          case 'planner':
-            chatActor = Actors.PLANNER;
-            break;
-          case 'navigator':
-            chatActor = Actors.NAVIGATOR;
-            break;
-          case 'validator':
-            chatActor = Actors.VALIDATOR;
-            break;
-          case 'system':
-            chatActor = Actors.SYSTEM;
-            break;
-          default:
-            chatActor = Actors.SYSTEM;
-        }
+    if (chatSessionId) {
+      const isSystemEvent = event.actor === Actors.SYSTEM;
+      const isProgressUpdate =
+        event.actor === Actors.NAVIGATOR &&
+        event.state === ExecutionState.STEP_OK &&
+        event.data.details === 'Showing progress...';
 
-        // Store all agent messages (less restrictive filtering to capture detailed content)
-        if (event.data.details && event.data.details.trim().length > 0) {
-          // Skip very generic messages that don't add value
-          const skipMessages = ['Planning...', 'Navigating...', 'Validating...', 'Loading...'];
-          if (!skipMessages.includes(event.data.details.trim())) {
-            await chatHistoryStore.addMessage(chatSessionId, {
-              actor: chatActor,
-              content: event.data.details,
-              timestamp: event.timestamp,
-            });
+      // Don't save initial system start message or progress updates
+      const shouldSave = !(
+        (isSystemEvent && event.state === ExecutionState.TASK_START) ||
+        isProgressUpdate ||
+        (event.actor === Actors.PLANNER && event.state === ExecutionState.STEP_START)
+      );
 
-            // Notify sidebar of session update for real-time updates
-            if (currentPort) {
-              try {
-                currentPort.postMessage({
-                  type: 'session_message_added',
-                  chatSessionId: chatSessionId,
-                  message: {
-                    actor: chatActor,
-                    content: event.data.details,
-                    timestamp: event.timestamp,
-                  },
-                });
-              } catch (error) {
-                logger.error('Failed to send session update to sidebar:', error);
-              }
-            }
+      if (shouldSave) {
+        try {
+          let messageContent: string | unknown = event.data.details;
+
+          // For the final success event, extract the answer string
+          if (
+            event.actor === Actors.SYSTEM &&
+            event.state === ExecutionState.TASK_OK &&
+            typeof messageContent === 'object' &&
+            messageContent &&
+            'answer' in messageContent
+          ) {
+            messageContent = (messageContent as { answer: string }).answer;
           }
+
+          // Ensure content is always a string before saving
+          if (typeof messageContent !== 'string') {
+            messageContent = JSON.stringify(messageContent);
+          }
+
+          await chatHistoryStore.addMessage(chatSessionId, {
+            actor: event.actor,
+            content: messageContent as string,
+            timestamp: event.timestamp,
+          });
+        } catch (e) {
+          logger.error('Failed to store message in chat history:', e);
         }
-      } catch (chatError) {
-        logger.error('Failed to store message in chat history:', chatError);
       }
     }
 
-    // Handle task completion for AppSync responses
-    if (
-      event.state === ExecutionState.TASK_OK ||
-      event.state === ExecutionState.TASK_FAIL ||
-      event.state === ExecutionState.TASK_CANCEL
-    ) {
-      // Send completion status to AppSync if service is available
-      if (amplifyEventsService) {
+    // Handle AppSync completion reporting
+    if (amplifyEventsService) {
+      if (
+        event.state === ExecutionState.TASK_OK ||
+        event.state === ExecutionState.TASK_FAIL ||
+        event.state === ExecutionState.TASK_CANCEL
+      ) {
+        // Send completion status to AppSync if service is available
         const success = event.state === ExecutionState.TASK_OK;
         const finalAnswer =
           typeof event.data?.details === 'object' && event.data?.details && 'answer' in event.data.details
