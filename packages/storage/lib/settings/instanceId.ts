@@ -15,12 +15,16 @@ export type InstanceIdStorage = BaseStorage<InstanceIdConfig> & {
   getCreatedAt: () => Promise<number>;
 };
 
-// Generate a unique instance ID in the format: ext_${chrome.runtime.id}_${timestamp}_${randomHash}
+// Generate a unique instance ID in AppSync-compatible format (max 50 chars): ext-{short_runtime_id}-{short_timestamp}-{hash}
 function generateInstanceId(): string {
   const runtimeId = typeof chrome !== 'undefined' ? chrome.runtime.id : 'unknown';
-  const timestamp = Date.now();
-  const randomHash = Math.random().toString(36).substring(2, 15);
-  return `ext_${runtimeId}_${timestamp}_${randomHash}`;
+  // Take first 8 chars of runtime ID for brevity
+  const shortRuntimeId = runtimeId.substring(0, 8);
+  // Use last 6 digits of timestamp for uniqueness
+  const shortTimestamp = Date.now().toString().slice(-6);
+  // Generate 8-char random hash
+  const randomHash = Math.random().toString(36).substring(2, 10);
+  return `ext-${shortRuntimeId}-${shortTimestamp}-${randomHash}`;
 }
 
 // Default instance ID config - will be generated on first access
