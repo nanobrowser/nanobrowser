@@ -1,5 +1,6 @@
 import { AppSyncEventPayload, ActionHandlerResult, AppSyncActionType, EventValidationResult } from './types';
-import { agentModelStore } from '@extension/storage';
+import { agentModelStore, chatHistoryStore } from '@extension/storage';
+import { Actors } from '@extension/storage';
 import { createLogger } from '../../log';
 import { executorConnection } from './connection';
 
@@ -100,6 +101,19 @@ export async function handleNewSession(event: AppSyncEventPayload): Promise<Acti
       throw new Error('Executor connection not initialized');
     }
 
+    // Create chat session and store the initial user message
+    const chatSession = await chatHistoryStore.createSession(`Task: ${message.substring(0, 50)}...`);
+    await chatHistoryStore.addMessage(chatSession.id, {
+      actor: Actors.USER,
+      content: message,
+      timestamp: Date.now(),
+    });
+
+    logger.info('Created chat session:', chatSession.id);
+
+    // Register the task to chat session mapping
+    executorConnection.registerTaskChatSession(taskId, chatSession.id);
+
     const browserContext = executorConnection.getBrowserContext();
     const executor = await executorConnection.setupExecutor(taskId, message, browserContext);
     executorConnection.subscribeToExecutorEvents(executor);
@@ -112,6 +126,7 @@ export async function handleNewSession(event: AppSyncEventPayload): Promise<Acti
     return {
       sessionId: taskId,
       taskId,
+      chatSessionId: chatSession.id,
       status: 'started',
       message: 'New session created and task started',
     };

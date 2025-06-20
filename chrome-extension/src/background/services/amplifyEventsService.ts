@@ -28,6 +28,7 @@ export class AmplifyEventsService {
   private readonly maxReconnectAttempts: number = 5;
   private readonly baseReconnectDelay: number = 1000; // 1 second
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private pendingEvents: Map<string, AppSyncEventPayload> = new Map(); // Track events waiting for completion
 
   /**
    * Initialize the AmplifyEventsService
@@ -173,6 +174,15 @@ export class AmplifyEventsService {
         timestamp: Date.now(),
       });
 
+      // Store event for task completion tracking (for NEW_SESSION and similar long-running tasks)
+      if (
+        event.actionType === 'NEW_SESSION' ||
+        event.actionType === 'SEND_CHAT' ||
+        event.actionType === 'FOLLOW_UP_CHAT'
+      ) {
+        this.pendingEvents.set(event.eventId, event);
+      }
+
       // Handle the event based on action type
       const handler = actionHandlers[event.actionType];
       if (!handler) {
@@ -181,14 +191,17 @@ export class AmplifyEventsService {
 
       const result = await handler(event);
 
-      // Send success response
-      await this.sendResponse({
-        eventId: event.eventId,
-        instanceId: event.instanceId,
-        status: AppSyncResponseStatus.SUCCESS,
-        result,
-        timestamp: Date.now(),
-      });
+      // For immediate actions (SET_MODEL, STOP_CHAT), send success response immediately
+      if (event.actionType === 'SET_MODEL' || event.actionType === 'STOP_CHAT') {
+        await this.sendResponse({
+          eventId: event.eventId,
+          instanceId: event.instanceId,
+          status: AppSyncResponseStatus.SUCCESS,
+          result,
+          timestamp: Date.now(),
+        });
+      }
+      // For long-running tasks, the completion will be handled by executor event subscription
     } catch (error) {
       logger.error('Error handling incoming event:', error);
 
@@ -308,6 +321,82 @@ export class AmplifyEventsService {
   }
 
   /**
+   * Handle task completion and send final results to AppSync
+   */
+  async handleTaskCompletion(taskId: string, success: boolean, result?: any, error?: string): Promise<void> {
+    logger.info('Handling task completion:', { taskId, success, result });
+
+    // Find the pending event that corresponds to this task
+    let matchingEventId: string | null = null;
+    for (const [eventId, event] of this.pendingEvents.entries()) {
+      // Match by taskId directly or if the event created this taskId
+      if (event.taskId === taskId || (!event.taskId && eventId === matchingEventId)) {
+        matchingEventId = eventId;
+        break;
+      }
+    }
+
+    // If no direct match, try to match any pending event for NEW_SESSION (since taskId is generated)
+    if (!matchingEventId && this.pendingEvents.size > 0) {
+      for (const [eventId, event] of this.pendingEvents.entries()) {
+        if (event.actionType === 'NEW_SESSION') {
+          matchingEventId = eventId;
+          break;
+        }
+      }
+    }
+
+    if (!matchingEventId) {
+      logger.info('No pending AppSync event found for completed task:', taskId);
+      return;
+    }
+
+    const originalEvent = this.pendingEvents.get(matchingEventId);
+    if (!originalEvent) {
+      return;
+    }
+
+    try {
+      if (success) {
+        await this.sendResponse({
+          eventId: originalEvent.eventId,
+          instanceId: originalEvent.instanceId,
+          status: AppSyncResponseStatus.SUCCESS,
+          result: {
+            taskId,
+            sessionId: originalEvent.sessionId || taskId,
+            status: 'completed',
+            result: result || 'Task completed successfully',
+            completedAt: Date.now(),
+          },
+          timestamp: Date.now(),
+        });
+      } else {
+        await this.sendResponse({
+          eventId: originalEvent.eventId,
+          instanceId: originalEvent.instanceId,
+          status: AppSyncResponseStatus.ERROR,
+          error: error || 'Task execution failed',
+          timestamp: Date.now(),
+        });
+      }
+
+      // Remove from pending events
+      this.pendingEvents.delete(matchingEventId);
+      logger.info('Task completion response sent for event:', matchingEventId);
+    } catch (responseError) {
+      logger.error('Failed to send task completion response:', responseError);
+    }
+  }
+
+  /**
+   * Get pending events (for debugging)
+   */
+  getPendingEvents(): Map<string, AppSyncEventPayload> {
+    return this.pendingEvents;
+  }
+
+  /**
    * Cleanup resources
    */
   async cleanup(): Promise<void> {
@@ -326,5 +415,6 @@ export class AmplifyEventsService {
 
     this.connectionStatus = ConnectionStatus.DISCONNECTED;
     this.config = null;
+    this.pendingEvents.clear();
   }
 }

@@ -12,6 +12,7 @@ export interface ExecutorConnection {
   subscribeToExecutorEvents(executor: Executor): void;
   getBrowserContext(): BrowserContext;
   getCurrentPort(): chrome.runtime.Port | null;
+  registerTaskChatSession(taskId: string, chatSessionId: string): void;
 }
 
 /**
@@ -25,6 +26,7 @@ class ExecutorConnectionImpl implements ExecutorConnection {
     | ((taskId: string, task: string, browserContext: BrowserContext) => Promise<Executor>)
     | null = null;
   private subscribeToExecutorEventsFn: ((executor: Executor) => void) | null = null;
+  private registerTaskChatSessionFn: ((taskId: string, chatSessionId: string) => void) | null = null;
 
   /**
    * Initialize the connection with references to background script functions
@@ -33,10 +35,12 @@ class ExecutorConnectionImpl implements ExecutorConnection {
     browserContext: BrowserContext,
     setupExecutorFn: (taskId: string, task: string, browserContext: BrowserContext) => Promise<Executor>,
     subscribeToExecutorEventsFn: (executor: Executor) => void,
+    registerTaskChatSessionFn?: (taskId: string, chatSessionId: string) => void,
   ): void {
     this.browserContext = browserContext;
     this.setupExecutorFn = setupExecutorFn;
     this.subscribeToExecutorEventsFn = subscribeToExecutorEventsFn;
+    this.registerTaskChatSessionFn = registerTaskChatSessionFn || null;
   }
 
   /**
@@ -100,6 +104,15 @@ class ExecutorConnectionImpl implements ExecutorConnection {
     }
 
     return this.browserContext;
+  }
+
+  /**
+   * Register task to chat session mapping
+   */
+  registerTaskChatSession(taskId: string, chatSessionId: string): void {
+    if (this.registerTaskChatSessionFn) {
+      this.registerTaskChatSessionFn(taskId, chatSessionId);
+    }
   }
 
   /**

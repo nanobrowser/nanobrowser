@@ -6,6 +6,8 @@ import {
   generalSettingsStore,
   llmProviderStore,
   amplifyConfigStore,
+  chatHistoryStore,
+  Actors,
 } from '@extension/storage';
 import BrowserContext from './browser/context';
 import { Executor } from './agent/executor';
@@ -26,6 +28,8 @@ const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
 let amplifyEventsService: AmplifyEventsService | null = null;
+// Map to track which chat sessions correspond to which task IDs
+const taskToChatSessionMap = new Map<string, string>();
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -96,7 +100,7 @@ async function initializeAmplifyEvents() {
     await instanceIdService.initialize();
 
     // Initialize executor connection
-    executorConnection.initialize(browserContext, setupExecutor, subscribeToExecutorEvents);
+    executorConnection.initialize(browserContext, setupExecutor, subscribeToExecutorEvents, registerTaskChatSession);
 
     const config = await amplifyConfigStore.getConfig();
     if (config.enabled) {
@@ -367,7 +371,13 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   return executor;
 }
 
-// Update subscribeToExecutorEvents to use port
+// Function to register task to chat session mapping
+function registerTaskChatSession(taskId: string, chatSessionId: string): void {
+  taskToChatSessionMap.set(taskId, chatSessionId);
+  logger.info('Registered task to chat session mapping:', { taskId, chatSessionId });
+}
+
+// Update subscribeToExecutorEvents to use port and handle AppSync responses
 async function subscribeToExecutorEvents(executor: Executor) {
   // Clear previous event listeners to prevent multiple subscriptions
   executor.clearExecutionEvents();
@@ -382,11 +392,68 @@ async function subscribeToExecutorEvents(executor: Executor) {
       logger.error('Failed to send message to side panel:', error);
     }
 
+    // Store agent messages in chat history
+    const chatSessionId = taskToChatSessionMap.get(event.data.taskId);
+    if (chatSessionId && event.data.details) {
+      try {
+        // Map actor from event to chat Actors enum
+        let chatActor: Actors;
+        switch (event.actor) {
+          case 'planner':
+            chatActor = Actors.PLANNER;
+            break;
+          case 'navigator':
+            chatActor = Actors.NAVIGATOR;
+            break;
+          case 'validator':
+            chatActor = Actors.VALIDATOR;
+            break;
+          case 'system':
+            chatActor = Actors.SYSTEM;
+            break;
+          default:
+            chatActor = Actors.SYSTEM;
+        }
+
+        // Store step start messages and final results
+        if (
+          event.state === ExecutionState.STEP_START ||
+          event.state === ExecutionState.TASK_OK ||
+          event.state === ExecutionState.TASK_FAIL
+        ) {
+          await chatHistoryStore.addMessage(chatSessionId, {
+            actor: chatActor,
+            content: event.data.details,
+            timestamp: event.timestamp,
+          });
+        }
+      } catch (chatError) {
+        logger.error('Failed to store message in chat history:', chatError);
+      }
+    }
+
+    // Handle task completion for AppSync responses
     if (
       event.state === ExecutionState.TASK_OK ||
       event.state === ExecutionState.TASK_FAIL ||
       event.state === ExecutionState.TASK_CANCEL
     ) {
+      // Send completion status to AppSync if service is available
+      if (amplifyEventsService) {
+        const success = event.state === ExecutionState.TASK_OK;
+        const error =
+          event.state === ExecutionState.TASK_FAIL
+            ? event.data.details
+            : event.state === ExecutionState.TASK_CANCEL
+              ? 'Task was cancelled'
+              : undefined;
+
+        await amplifyEventsService.handleTaskCompletion(event.data.taskId, success, event.data.details, error);
+      }
+
+      // Clean up mapping when task completes
+      taskToChatSessionMap.delete(event.data.taskId);
+
       await currentExecutor?.cleanup();
     }
   });
