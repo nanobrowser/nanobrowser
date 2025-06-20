@@ -467,20 +467,26 @@ async function subscribeToExecutorEvents(executor: Executor) {
       // Send completion status to AppSync if service is available
       if (amplifyEventsService) {
         const success = event.state === ExecutionState.TASK_OK;
-        const error =
-          event.state === ExecutionState.TASK_FAIL
-            ? event.data.details
-            : event.state === ExecutionState.TASK_CANCEL
-              ? 'Task was cancelled'
-              : undefined;
+        const finalAnswer =
+          typeof event.data?.details === 'object' && event.data?.details && 'answer' in event.data.details
+            ? (event.data.details as { answer: string }).answer
+            : event.data.details;
+
+        const error = success
+          ? undefined
+          : typeof event.data?.details === 'object' && event.data?.details && 'error' in event.data.details
+            ? (event.data.details as { error: string }).error
+            : typeof event.data?.details === 'string'
+              ? event.data.details
+              : 'Task failed without a specific error message.';
 
         logger.info('Sending task completion to AppSync:', {
           taskId: event.data.taskId,
           success,
-          details: event.data.details,
+          details: finalAnswer,
           error,
         });
-        await amplifyEventsService.handleTaskCompletion(event.data.taskId, success, event.data.details, error);
+        await amplifyEventsService.handleTaskCompletion(event.data.taskId, success, finalAnswer, error);
       }
 
       // Clean up mapping when task completes

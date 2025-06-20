@@ -124,6 +124,7 @@ export class Executor {
       let step = 0;
       let validatorFailed = false;
       let webTask = undefined;
+      let validatorOutput: any;
       for (step = 0; step < allowedMaxSteps; step++) {
         context.stepInfo = {
           stepNumber: context.nSteps,
@@ -186,7 +187,7 @@ export class Executor {
 
         // validate the output
         if (done && this.context.options.validateOutput && !this.context.stopped && !this.context.paused) {
-          const validatorOutput = await this.validator.execute();
+          validatorOutput = await this.validator.execute();
           if (validatorOutput.result?.is_valid) {
             logger.info('✅ Task completed successfully');
             break;
@@ -201,7 +202,7 @@ export class Executor {
       }
 
       if (done) {
-        this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, this.context.taskId);
+        this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, validatorOutput?.result ?? this.context.taskId);
       } else if (step >= allowedMaxSteps) {
         logger.info('❌ Task failed: Max steps reached');
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, 'Task failed: Max steps reached');
