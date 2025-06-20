@@ -92,7 +92,14 @@ chrome.tabs.onRemoved.addListener(tabId => {
 });
 
 // Initialize AmplifyEventsService
+let isInitializing = false;
 async function initializeAmplifyEvents() {
+  if (isInitializing || amplifyEventsService) {
+    logger.info('AmplifyEventsService already initialized or initializing');
+    return;
+  }
+
+  isInitializing = true;
   try {
     logger.info('Initializing AmplifyEventsService...');
 
@@ -112,6 +119,8 @@ async function initializeAmplifyEvents() {
     }
   } catch (error) {
     logger.error('Failed to initialize AmplifyEventsService:', error);
+  } finally {
+    isInitializing = false;
   }
 }
 
@@ -392,7 +401,7 @@ async function subscribeToExecutorEvents(executor: Executor) {
       logger.error('Failed to send message to side panel:', error);
     }
 
-    // Store agent messages in chat history
+    // Store agent messages in chat history and send to active sidebar session
     const chatSessionId = taskToChatSessionMap.get(event.data.taskId);
     if (chatSessionId && event.data.details) {
       try {
@@ -425,6 +434,23 @@ async function subscribeToExecutorEvents(executor: Executor) {
               content: event.data.details,
               timestamp: event.timestamp,
             });
+
+            // Notify sidebar of session update for real-time updates
+            if (currentPort) {
+              try {
+                currentPort.postMessage({
+                  type: 'session_message_added',
+                  chatSessionId: chatSessionId,
+                  message: {
+                    actor: chatActor,
+                    content: event.data.details,
+                    timestamp: event.timestamp,
+                  },
+                });
+              } catch (error) {
+                logger.error('Failed to send session update to sidebar:', error);
+              }
+            }
           }
         }
       } catch (chatError) {

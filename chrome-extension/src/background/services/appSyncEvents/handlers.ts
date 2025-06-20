@@ -101,8 +101,12 @@ export async function handleNewSession(event: AppSyncEventPayload): Promise<Acti
       throw new Error('Executor connection not initialized');
     }
 
-    // Create chat session and store the initial user message
+    // Create a new chat session for this task
     const chatSession = await chatHistoryStore.createSession(`Task: ${message.substring(0, 50)}...`);
+    if (!chatSession) {
+      throw new Error('Failed to create chat session');
+    }
+
     await chatHistoryStore.addMessage(chatSession.id, {
       actor: Actors.USER,
       content: message,

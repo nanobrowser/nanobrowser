@@ -316,8 +316,18 @@ const SidePanel = () => {
           if (message.chatSessionId) {
             setCurrentSessionId(message.chatSessionId);
             sessionIdRef.current = message.chatSessionId;
-            // Load the session messages
-            handleSessionSelect(message.chatSessionId);
+            // Clear current messages and start fresh (not historical)
+            setMessages([]);
+            setIsFollowUpMode(false);
+            setIsHistoricalSession(false);
+            setShowHistory(false);
+          }
+        } else if (message && message.type === 'session_message_added') {
+          // Handle real-time message updates for any active session
+          console.log('Session message added:', message.chatSessionId, message.message);
+          if (message.chatSessionId === currentSessionId && message.message) {
+            // Add the new message to the current session in real-time
+            setMessages(prev => [...prev, message.message]);
           }
         }
       });
