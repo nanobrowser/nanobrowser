@@ -219,7 +219,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         maxTokens,
         configuration: {},
       };
-      return new ChatXAI(args) as BaseChatModel;
+      return new ChatXAI(args) as unknown as BaseChatModel;
     }
     case ProviderTypeEnum.Groq: {
       const args = {
@@ -279,7 +279,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         // TODO: configure the context window size in model config
         numCtx: 64000,
       };
-      return new ChatOllama(args);
+      return new ChatOllama(args) as unknown as BaseChatModel;
     }
     case ProviderTypeEnum.OpenRouter: {
       // Call the helper function, passing OpenRouter headers via the third argument
