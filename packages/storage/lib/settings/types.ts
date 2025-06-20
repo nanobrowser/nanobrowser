@@ -51,11 +51,7 @@ export const llmProviderModelNames = {
   ],
   [ProviderTypeEnum.Groq]: ['llama-3.3-70b-versatile'],
   [ProviderTypeEnum.Cerebras]: ['llama-3.3-70b'],
-  [ProviderTypeEnum.Bedrock]: [
-    'anthropic.claude-3-5-sonnet-20240620-v1:0',
-    'anthropic.claude-3-haiku-20240307-v1:0',
-    'amazon.titan-text-express-v1',
-  ],
+  [ProviderTypeEnum.Bedrock]: ['us.anthropic.claude-3-7-sonnet-20250219-v1:0'],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
 
