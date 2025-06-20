@@ -344,6 +344,14 @@ export class AmplifyEventsService {
    */
   async handleTaskCompletion(taskId: string, success: boolean, result?: any, error?: string): Promise<void> {
     logger.info('Handling task completion:', { taskId, success, result });
+    logger.info(
+      'Current pending events:',
+      Array.from(this.pendingEvents.entries()).map(([id, event]) => ({
+        eventId: id,
+        actionType: event.actionType,
+        taskId: event.taskId,
+      })),
+    );
 
     // Find the pending event that corresponds to this task
     let matchingEventId: string | null = null;
@@ -351,6 +359,7 @@ export class AmplifyEventsService {
       // Match by taskId directly
       if (event.taskId === taskId) {
         matchingEventId = eventId;
+        logger.info('Found direct taskId match:', { eventId, taskId });
         break;
       }
     }

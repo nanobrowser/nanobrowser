@@ -325,9 +325,13 @@ const SidePanel = () => {
         } else if (message && message.type === 'session_message_added') {
           // Handle real-time message updates for any active session
           console.log('Session message added:', message.chatSessionId, message.message);
+          console.log('Current session ID:', currentSessionId);
           if (message.chatSessionId === currentSessionId && message.message) {
+            console.log('Adding message to current session');
             // Add the new message to the current session in real-time
             setMessages(prev => [...prev, message.message]);
+          } else {
+            console.log('Message not for current session or missing message data');
           }
         }
       });

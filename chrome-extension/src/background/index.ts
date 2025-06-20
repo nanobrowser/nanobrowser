@@ -474,6 +474,12 @@ async function subscribeToExecutorEvents(executor: Executor) {
               ? 'Task was cancelled'
               : undefined;
 
+        logger.info('Sending task completion to AppSync:', {
+          taskId: event.data.taskId,
+          success,
+          details: event.data.details,
+          error,
+        });
         await amplifyEventsService.handleTaskCompletion(event.data.taskId, success, event.data.details, error);
       }
 

@@ -126,6 +126,9 @@ export async function handleNewSession(event: AppSyncEventPayload): Promise<Acti
         chatSessionId: chatSession.id,
         taskId: taskId,
       });
+      logger.info('Sent appsync_session_created message to sidebar:', { chatSessionId: chatSession.id, taskId });
+    } else {
+      logger.info('No active port connection to sidebar when trying to notify session creation');
     }
 
     const browserContext = executorConnection.getBrowserContext();
