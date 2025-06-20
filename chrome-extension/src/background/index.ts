@@ -415,17 +415,17 @@ async function subscribeToExecutorEvents(executor: Executor) {
             chatActor = Actors.SYSTEM;
         }
 
-        // Store step start messages and final results
-        if (
-          event.state === ExecutionState.STEP_START ||
-          event.state === ExecutionState.TASK_OK ||
-          event.state === ExecutionState.TASK_FAIL
-        ) {
-          await chatHistoryStore.addMessage(chatSessionId, {
-            actor: chatActor,
-            content: event.data.details,
-            timestamp: event.timestamp,
-          });
+        // Store all agent messages (less restrictive filtering to capture detailed content)
+        if (event.data.details && event.data.details.trim().length > 0) {
+          // Skip very generic messages that don't add value
+          const skipMessages = ['Planning...', 'Navigating...', 'Validating...', 'Loading...'];
+          if (!skipMessages.includes(event.data.details.trim())) {
+            await chatHistoryStore.addMessage(chatSessionId, {
+              actor: chatActor,
+              content: event.data.details,
+              timestamp: event.timestamp,
+            });
+          }
         }
       } catch (chatError) {
         logger.error('Failed to store message in chat history:', chatError);

@@ -114,6 +114,16 @@ export async function handleNewSession(event: AppSyncEventPayload): Promise<Acti
     // Register the task to chat session mapping
     executorConnection.registerTaskChatSession(taskId, chatSession.id);
 
+    // Notify the sidebar to open this chat session
+    const currentPort = executorConnection.getCurrentPort();
+    if (currentPort) {
+      currentPort.postMessage({
+        type: 'appsync_session_created',
+        chatSessionId: chatSession.id,
+        taskId: taskId,
+      });
+    }
+
     const browserContext = executorConnection.getBrowserContext();
     const executor = await executorConnection.setupExecutor(taskId, message, browserContext);
     executorConnection.subscribeToExecutorEvents(executor);

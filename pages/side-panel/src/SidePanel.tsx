@@ -310,6 +310,15 @@ const SidePanel = () => {
           setIsProcessingSpeech(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
+        } else if (message && message.type === 'appsync_session_created') {
+          // Handle AppSync-created session auto-opening
+          console.log('AppSync session created:', message.chatSessionId);
+          if (message.chatSessionId) {
+            setCurrentSessionId(message.chatSessionId);
+            sessionIdRef.current = message.chatSessionId;
+            // Load the session messages
+            handleSessionSelect(message.chatSessionId);
+          }
         }
       });
 
