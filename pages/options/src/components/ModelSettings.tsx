@@ -13,6 +13,8 @@ import {
   llmProviderStore,
   agentModelStore,
   speechToTextModelStore,
+  amplifyConfigStore,
+  instanceIdStore,
   AgentNameEnum,
   llmProviderModelNames,
   ProviderTypeEnum,
@@ -21,6 +23,7 @@ import {
   getDefaultAgentModelParams,
   type ProviderConfig,
   type SpeechToTextModelConfig,
+  type AmplifyEventsConfig,
 } from '@extension/storage';
 
 // Helper function to check if a model is an O-series model
@@ -69,6 +72,18 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   // State for model input handling
 
   const [selectedSpeechToTextModel, setSelectedSpeechToTextModel] = useState<string>('');
+
+  // Amplify Events configuration state
+  const [amplifyConfig, setAmplifyConfig] = useState<AmplifyEventsConfig>({
+    enabled: false,
+    endpoint: '',
+    region: 'us-east-1',
+    defaultAuthMode: 'apiKey',
+    apiKey: '',
+    channelNamespace: 'default',
+  });
+  const [instanceId, setInstanceId] = useState<string>('');
+  const [isAmplifyConfigModified, setIsAmplifyConfigModified] = useState<boolean>(false);
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -149,6 +164,23 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     };
 
     loadSpeechToTextModel();
+  }, []);
+
+  // Load Amplify Events configuration
+  useEffect(() => {
+    const loadAmplifyConfig = async () => {
+      try {
+        const config = await amplifyConfigStore.getConfig();
+        setAmplifyConfig(config);
+
+        const instId = await instanceIdStore.getInstanceId();
+        setInstanceId(instId);
+      } catch (error) {
+        console.error('Error loading Amplify configuration:', error);
+      }
+    };
+
+    loadAmplifyConfig();
   }, []);
 
   // Auto-focus the input field when a new provider is added
@@ -1154,6 +1186,53 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     }));
   };
 
+  // Amplify Events configuration handlers
+  const handleAmplifyFieldChange = (field: keyof AmplifyEventsConfig, value: string | boolean) => {
+    setIsAmplifyConfigModified(true);
+    setAmplifyConfig(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleAmplifyConfigSave = async () => {
+    try {
+      await amplifyConfigStore.updateConfig(amplifyConfig);
+      setIsAmplifyConfigModified(false);
+      alert('Amplify Events configuration saved successfully!');
+    } catch (error) {
+      console.error('Failed to save Amplify configuration:', error);
+      alert('Failed to save Amplify configuration. Please check your settings.');
+    }
+  };
+
+  const handleAmplifyConfigTest = async () => {
+    try {
+      const isValid = await amplifyConfigStore.validateConfig();
+      if (isValid) {
+        alert('Amplify Events configuration is valid!');
+      } else {
+        alert('Amplify Events configuration is invalid. Please check all required fields.');
+      }
+    } catch (error) {
+      console.error('Failed to test Amplify configuration:', error);
+      alert('Failed to test Amplify configuration.');
+    }
+  };
+
+  const handleAmplifyConfigReset = async () => {
+    try {
+      await amplifyConfigStore.resetToDefaults();
+      const config = await amplifyConfigStore.getConfig();
+      setAmplifyConfig(config);
+      setIsAmplifyConfigModified(false);
+      alert('Amplify Events configuration reset to defaults.');
+    } catch (error) {
+      console.error('Failed to reset Amplify configuration:', error);
+      alert('Failed to reset Amplify configuration.');
+    }
+  };
+
   return (
     <section className="space-y-6">
       {/* LLM Providers Section */}
@@ -1755,6 +1834,169 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                 ))}
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Amplify Events Configuration Section */}
+      <div
+        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          AWS AppSync Events
+        </h2>
+        <p className={`mb-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Configure real-time communication with AWS AppSync Events API. This enables remote control of the extension
+          via AppSync.
+        </p>
+
+        {/* Instance ID Display */}
+        <div
+          className={`mb-4 rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
+          <div className="flex items-center">
+            <label className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Instance ID
+            </label>
+            <input
+              type="text"
+              value={instanceId}
+              readOnly
+              className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-gray-100 text-gray-700'} px-3 py-2 cursor-not-allowed`}
+              placeholder="Loading..."
+            />
+          </div>
+          <p className={`mt-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+            Unique identifier for this extension instance (read-only)
+          </p>
+        </div>
+
+        {/* Enable/Disable Toggle */}
+        <div
+          className={`mb-4 rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
+          <div className="flex items-center">
+            <label className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Enabled
+            </label>
+            <input
+              type="checkbox"
+              checked={amplifyConfig.enabled}
+              onChange={e => handleAmplifyFieldChange('enabled', e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Configuration Fields */}
+        {amplifyConfig.enabled && (
+          <div className="space-y-4">
+            {/* Endpoint */}
+            <div
+              className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <div className="flex items-center">
+                <label className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Endpoint*
+                </label>
+                <input
+                  type="text"
+                  value={amplifyConfig.endpoint}
+                  onChange={e => handleAmplifyFieldChange('endpoint', e.target.value)}
+                  placeholder="https://xxxxx.appsync-api.us-east-1.amazonaws.com/event"
+                  className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+                />
+              </div>
+            </div>
+
+            {/* Region */}
+            <div
+              className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <div className="flex items-center">
+                <label className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Region*
+                </label>
+                <input
+                  type="text"
+                  value={amplifyConfig.region}
+                  onChange={e => handleAmplifyFieldChange('region', e.target.value)}
+                  placeholder="us-east-1"
+                  className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+                />
+              </div>
+            </div>
+
+            {/* API Key */}
+            <div
+              className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <div className="flex items-center">
+                <label className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  API Key*
+                </label>
+                <input
+                  type="password"
+                  value={amplifyConfig.apiKey}
+                  onChange={e => handleAmplifyFieldChange('apiKey', e.target.value)}
+                  placeholder="da2-xxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+                />
+              </div>
+            </div>
+
+            {/* Channel Namespace */}
+            <div
+              className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <div className="flex items-center">
+                <label className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Namespace
+                </label>
+                <input
+                  type="text"
+                  value={amplifyConfig.channelNamespace}
+                  onChange={e => handleAmplifyFieldChange('channelNamespace', e.target.value)}
+                  placeholder="default"
+                  className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mt-6 flex gap-3">
+          <Button
+            onClick={handleAmplifyConfigSave}
+            disabled={!isAmplifyConfigModified}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              isAmplifyConfigModified
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}>
+            Save Configuration
+          </Button>
+
+          <Button
+            onClick={handleAmplifyConfigTest}
+            disabled={!amplifyConfig.enabled}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              amplifyConfig.enabled
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}>
+            Test Connection
+          </Button>
+
+          <Button
+            onClick={handleAmplifyConfigReset}
+            className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700">
+            Reset to Defaults
+          </Button>
+        </div>
+
+        {/* Help Text */}
+        <div className={`mt-4 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+          <p>
+            <strong>Note:</strong> The AppSync Events endpoint should be in the format:
+            https://xxxxx.appsync-api.region.amazonaws.com/event
+          </p>
+          <p className="mt-1">
+            Channel subscription will be created at: /{amplifyConfig.channelNamespace}/{instanceId}
+          </p>
         </div>
       </div>
     </section>

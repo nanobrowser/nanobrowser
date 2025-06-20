@@ -5,6 +5,7 @@ import {
   firewallStore,
   generalSettingsStore,
   llmProviderStore,
+  amplifyConfigStore,
 } from '@extension/storage';
 import BrowserContext from './browser/context';
 import { Executor } from './agent/executor';
@@ -15,12 +16,16 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { ProviderTypeEnum } from '@extension/storage';
+import { AmplifyEventsService } from './services/amplifyEventsService';
+import { instanceIdService } from './services/instanceId';
+import { executorConnection } from './services/appSyncEvents/connection';
 
 const logger = createLogger('background');
 
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+let amplifyEventsService: AmplifyEventsService | null = null;
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -82,6 +87,44 @@ chrome.tabs.onRemoved.addListener(tabId => {
   browserContext.removeAttachedPage(tabId);
 });
 
+// Initialize AmplifyEventsService
+async function initializeAmplifyEvents() {
+  try {
+    logger.info('Initializing AmplifyEventsService...');
+
+    // Initialize instance ID service first
+    await instanceIdService.initialize();
+
+    // Initialize executor connection
+    executorConnection.initialize(browserContext, setupExecutor, subscribeToExecutorEvents);
+
+    const config = await amplifyConfigStore.getConfig();
+    if (config.enabled) {
+      amplifyEventsService = new AmplifyEventsService();
+      await amplifyEventsService.initialize();
+      logger.info('AmplifyEventsService initialized successfully');
+    } else {
+      logger.info('AmplifyEventsService is disabled');
+    }
+  } catch (error) {
+    logger.error('Failed to initialize AmplifyEventsService:', error);
+  }
+}
+
+// Initialize on startup
+chrome.runtime.onStartup.addListener(async () => {
+  await initializeAmplifyEvents();
+});
+
+chrome.runtime.onInstalled.addListener(async () => {
+  await initializeAmplifyEvents();
+});
+
+// Initialize immediately when script loads
+initializeAmplifyEvents().catch(error => {
+  logger.error('Failed to initialize AmplifyEventsService on startup:', error);
+});
+
 logger.info('background loaded');
 
 // Listen for simple messages (e.g., from options page)
@@ -95,6 +138,7 @@ chrome.runtime.onMessage.addListener(() => {
 chrome.runtime.onConnect.addListener(port => {
   if (port.name === 'side-panel-connection') {
     currentPort = port;
+    executorConnection.setCurrentPort(port);
 
     port.onMessage.addListener(async message => {
       try {
@@ -110,6 +154,7 @@ chrome.runtime.onConnect.addListener(port => {
 
             logger.info('new_task', message.tabId, message.task);
             currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
+            executorConnection.setCurrentExecutor(currentExecutor);
             subscribeToExecutorEvents(currentExecutor);
 
             const result = await currentExecutor.execute();
@@ -125,6 +170,7 @@ chrome.runtime.onConnect.addListener(port => {
             // If executor exists, add follow-up task
             if (currentExecutor) {
               currentExecutor.addFollowUpTask(message.task);
+              executorConnection.setCurrentExecutor(currentExecutor);
               // Re-subscribe to events in case the previous subscription was cleaned up
               subscribeToExecutorEvents(currentExecutor);
               const result = await currentExecutor.execute();
@@ -241,6 +287,7 @@ chrome.runtime.onConnect.addListener(port => {
       // this event is also triggered when the side panel is closed, so we need to cancel the task
       console.log('Side panel disconnected');
       currentPort = null;
+      executorConnection.setCurrentPort(null);
       currentExecutor?.cancel();
     });
   }

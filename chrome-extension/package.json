@@ -28,6 +28,7 @@
     "@langchain/openai": "0.5.12",
     "@langchain/community": "^0.3.46",
     "@langchain/xai": "^0.0.3",
+    "aws-amplify": "^6.0.0",
     "jsonrepair": "^3.12.0",
     "puppeteer-core": "24.10.1",
     "webextension-polyfill": "^0.12.0",
