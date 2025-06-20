@@ -12,24 +12,24 @@
 
 </div>
 
-## 🌐 Nanobrowser
+## 🌐 CloudCerebro
 
-Nanobrowser is an open-source AI web automation tool that runs in your browser. A free alternative to OpenAI Operator with flexible LLM options and multi-agent system.
+CloudCerebro is an open-source AI web automation tool that runs in your browser. A free alternative to OpenAI Operator with flexible LLM options and multi-agent system.
 
-⬇️ Get [Nanobrowser from Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) for free
+⬇️ Get [CloudCerebro from Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) for free
 
 👏 Join the community in [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
 
-❤️ Loving Nanobrowser? Give us a star 🌟 and help spread the word!
+❤️ Loving CloudCerebro? Give us a star 🌟 and help spread the word!
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Nanobrowser Demo GIF" />
-<p><em>Nanobrowser's multi-agent system analyzing HuggingFace in real-time, with the Planner intelligently self-correcting when encountering obstacles and dynamically instructing the Navigator to adjust its approach—all running locally in your browser.</em></p>
+<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="CloudCerebro Demo GIF" />
+<p><em>CloudCerebro's multi-agent system analyzing HuggingFace in real-time, with the Planner intelligently self-correcting when encountering obstacles and dynamically instructing the Navigator to adjust its approach—all running locally in your browser.</em></p>
 </div>
 
-## 🔥Why Nanobrowser?
+## 🔥Why CloudCerebro?
 
-Looking for a powerful AI web agent without the $200/month price tag of OpenAI Operator? **Nanobrowser** , as a chrome extension, delivers premium web automation capabilities while keeping you in complete control:
+Looking for a powerful AI web agent without the $200/month price tag of OpenAI Operator? **CloudCerebro** , as a chrome extension, delivers premium web automation capabilities while keeping you in complete control:
 
 - **100% Free** - No subscription fees or hidden costs. Just install and use your own API keys, and you only pay what you use with your own API keys.
 - **Privacy-Focused** - Everything runs in your local browser. Your credentials stay with you, never shared with any cloud service.
@@ -58,20 +58,20 @@ Looking for a powerful AI web agent without the $200/month price tag of OpenAI O
 **Not Supported:**
 - Firefox, Safari, and other Chromium variants (Opera, Arc, etc.)
 
-> **Note**: While Nanobrowser may function on other Chromium-based browsers, we recommend using Chrome or Edge for the best experience and guaranteed compatibility.
+> **Note**: While CloudCerebro may function on other Chromium-based browsers, we recommend using Chrome or Edge for the best experience and guaranteed compatibility.
 
 
 ## 🚀 Quick Start
 
 1. **Install from Chrome Web Store** (Stable Version):
-   * Visit the [Nanobrowser Chrome Web Store page](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+   * Visit the [CloudCerebro Chrome Web Store page](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
    * Click "Add to Chrome" button
    * Confirm the installation when prompted
 
 > **Important Note**: For latest features, install from ["Manually Install Latest Version"](#-manually-install-latest-version) below, as Chrome Web Store version may be delayed due to review process.
 
 2. **Configure Agent Models**:
-   * Click the Nanobrowser icon in your toolbar to open the sidebar
+   * Click the CloudCerebro icon in your toolbar to open the sidebar
    * Click the `Settings` icon (top right)
    * Add your LLM API keys
    * Choose which model to use for different agents (Navigator, Planner, Validator)
@@ -81,29 +81,29 @@ Looking for a powerful AI web agent without the $200/month price tag of OpenAI O
 To get the most recent version with all the latest features:
 
 1. **Download**
-    * Download the latest `nanobrowser.zip` file from the official Github [release page](https://github.com/nanobrowser/nanobrowser/releases).
+    * Download the latest `cloudcerebro.zip` file from the official Github [release page](https://github.com/nanobrowser/nanobrowser/releases).
 
 2. **Install**:
-    * Unzip `nanobrowser.zip`.
+    * Unzip `cloudcerebro.zip`.
     * Open `chrome://extensions/` in Chrome
     * Enable `Developer mode` (top right)
     * Click `Load unpacked` (top left)
-    * Select the unzipped `nanobrowser` folder.
+    * Select the unzipped `cloudcerebro` folder.
 
 3. **Configure Agent Models**
-    * Click the Nanobrowser icon in your toolbar to open the sidebar
+    * Click the CloudCerebro icon in your toolbar to open the sidebar
     * Click the `Settings` icon (top right).
     * Add your LLM API keys.
     * Choose which model to use for different agents (Navigator, Planner, Validator)
 
 4. **Upgrading**:
-    * Download the latest `nanobrowser.zip` file from the release page.
-    * Unzip and replace your existing Nanobrowser files with the new ones.
-    * Go to `chrome://extensions/` in Chrome and click the refresh icon on the Nanobrowser card.
+    * Download the latest `cloudcerebro.zip` file from the release page.
+    * Unzip and replace your existing CloudCerebro files with the new ones.
+    * Go to `chrome://extensions/` in Chrome and click the refresh icon on the CloudCerebro card.
 
 ## 🛠️ Build from Source
 
-If you prefer to build Nanobrowser yourself, follow these steps:
+If you prefer to build CloudCerebro yourself, follow these steps:
 
 1. **Prerequisites**:
    * [Node.js](https://nodejs.org/) (v22.12.0 or higher)
@@ -136,7 +136,7 @@ If you prefer to build Nanobrowser yourself, follow these steps:
 
 ## 🤖 Choosing Your Models
 
-Nanobrowser allows you to configure different LLM models for each agent to balance performance and cost. Here are recommended configurations:
+CloudCerebro allows you to configure different LLM models for each agent to balance performance and cost. Here are recommended configurations:
 
 ### Better Performance
 - **Planner & Validator**: Claude 3.7 Sonnet
@@ -191,19 +191,19 @@ Here are some powerful tasks you can accomplish with just a sentence:
 
 ## 🛠️ Roadmap
 
-We're actively developing Nanobrowser with exciting features on the horizon, welcome to join us! 
+We're actively developing CloudCerebro with exciting features on the horizon, welcome to join us! 
 
 Check out our detailed roadmap and upcoming features in our [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions/85). 
 
 ## 🤝 Contributing
 
-**We need your help to make Nanobrowser even better!**  Contributions of all kinds are welcome:
+**We need your help to make CloudCerebro even better!**  Contributions of all kinds are welcome:
 
 *  **Share Prompts & Use Cases** 
    * Join our [Discord server](https://discord.gg/NN3ABHggMK).
-   * share how you're using Nanobrowser.  Help us build a library of useful prompts and real-world use cases.
+   * share how you're using CloudCerebro.  Help us build a library of useful prompts and real-world use cases.
 *  **Provide Feedback** 
-   * Try Nanobrowser and give us feedback on its performance or suggest improvements in our [Discord server](https://discord.gg/NN3ABHggMK).
+   * Try CloudCerebro and give us feedback on its performance or suggest improvements in our [Discord server](https://discord.gg/NN3ABHggMK).
 * **Contribute Code**
    * Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute code to the project.
    * Submit pull requests for bug fixes, features, or documentation improvements.
@@ -218,7 +218,7 @@ If you discover a security vulnerability, please **DO NOT** disclose it publicly
 
 Instead, please create a [GitHub Security Advisory](https://github.com/nanobrowser/nanobrowser/security/advisories/new) to report the vulnerability responsibly. This allows us to address the issue before it's publicly disclosed.
 
-We appreciate your help in keeping Nanobrowser and its users safe!
+We appreciate your help in keeping CloudCerebro and its users safe!
 
 ## 💬 Community
 
@@ -230,7 +230,7 @@ Join our growing community of developers and users:
 
 ## 👏 Acknowledgments
 
-Nanobrowser builds on top of other awesome open-source projects:
+CloudCerebro builds on top of other awesome open-source projects:
 
 - [Browser Use](https://github.com/browser-use/browser-use)
 - [Puppeteer](https://github.com/EmergenceAI/Agent-E)
@@ -244,9 +244,9 @@ Huge thanks to their creators and contributors!
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-Made with ❤️ by the Nanobrowser Team. 
+Made with ❤️ by the CloudCerebro Team. 
 
-Like Nanobrowser? Give us a star 🌟 and join us in [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+Like CloudCerebro? Give us a star 🌟 and join us in [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
 
 
 

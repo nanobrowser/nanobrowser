@@ -1,6 +1,6 @@
-  What Nanobrowser Does
+  What CloudCerebro Does
 
-  Nanobrowser is an open-source AI web automation tool that runs as a Chrome extension. It's essentially a free alternative to OpenAI Operator that uses a multi-agent system to automate
+  CloudCerebro is an open-source AI web automation tool that runs as a Chrome extension. It's essentially a free alternative to OpenAI Operator that uses a multi-agent system to automate
   web tasks. Key features:
 
   - Multi-agent System: Uses specialized AI agents (Navigator, Planner, Validator) that collaborate to accomplish complex web workflows

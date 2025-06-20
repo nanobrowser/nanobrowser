@@ -11,24 +11,24 @@
 
 </div>
 
-## 🌐 Nanobrowser
+## 🌐 CloudCerebro
 
-Nanobrowser 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。它是 OpenAI Operator 的免費替代品，提供靈活的 LLM 選項和多代理系統。
+CloudCerebro 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。它是 OpenAI Operator 的免費替代品，提供靈活的 LLM 選項和多代理系統。
 
-⬇️ 免費從 [Chrome Web Store 獲取 Nanobrowser](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+⬇️ 免費從 [Chrome Web Store 獲取 CloudCerebro](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
 
 👏 加入 [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai) 社群
 
-❤️ 喜歡 Nanobrowser？給我們一個星星 🌟 並幫助傳播消息！
+❤️ 喜歡 CloudCerebro？給我們一個星星 🌟 並幫助傳播消息！
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Nanobrowser Demo GIF" />
-<p><em>Nanobrowser 的多代理系統實時分析 HuggingFace，Planner 智能地在遇到障礙時自我糾正，並動態指導 Navigator 調整其方法—全部在您的瀏覽器中本地運行。</em></p>
+<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="CloudCerebro Demo GIF" />
+<p><em>CloudCerebro 的多代理系統實時分析 HuggingFace，Planner 智能地在遇到障礙時自我糾正，並動態指導 Navigator 調整其方法—全部在您的瀏覽器中本地運行。</em></p>
 </div>
 
-## 🔥為什麼選擇 Nanobrowser？
+## 🔥為什麼選擇 CloudCerebro？
 
-想要強大的 AI 網頁代理，但不想每月支付 OpenAI Operator $200 的費用？**Nanobrowser** 作為 Chrome 擴展程式，提供高級網頁自動化功能，同時讓您完全掌控：
+想要強大的 AI 網頁代理，但不想每月支付 OpenAI Operator $200 的費用？**CloudCerebro** 作為 Chrome 擴展程式，提供高級網頁自動化功能，同時讓您完全掌控：
 
 - **100% 免費** - 沒有訂閱費或隱藏成本。只需安裝並使用您自己的 API keys，您只需支付使用自己 API keys 的費用。
 - **注重隱私** - 一切都在您的本地瀏覽器中運行。您的憑證保留在您這裡，絕不與任何雲服務共享。
@@ -51,14 +51,14 @@ Nanobrowser 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。�
 ## 🚀 快速開始
 
 1. **從 Chrome Web Store 安裝**（穩定版）：
-   * 訪問 [Nanobrowser Chrome Web Store 頁面](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+   * 訪問 [CloudCerebro Chrome Web Store 頁面](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
    * 點擊「加到 Chrome」按鈕
    * 確認安裝
 
 > **重要提示**：如需最新功能，請從下方的[「手動安裝最新版本」](#-手動安裝最新版本)安裝，因為 Chrome Web Store 版本可能會因審核流程而延遲。
 
 2. **配置代理模型**：
-   * 點擊工具欄中的 Nanobrowser 圖標打開側邊欄
+   * 點擊工具欄中的 CloudCerebro 圖標打開側邊欄
    * 點擊 `設置` 圖標（右上角）
    * 添加您的 LLM API keys
    * 選擇為不同代理（Navigator、Planner、Validator）使用的模型
@@ -68,29 +68,29 @@ Nanobrowser 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。�
 若要獲取具有所有最新功能的最新版本：
 
 1. **下載**
-    * 從官方 Github [release page](https://github.com/nanobrowser/nanobrowser/releases)下載最新的 `nanobrowser.zip` 文件。
+    * 從官方 Github [release page](https://github.com/nanobrowser/nanobrowser/releases)下載最新的 `cloudcerebro.zip` 文件。
 
 2. **安裝**：
-    * 解壓縮 `nanobrowser.zip`。
+    * 解壓縮 `cloudcerebro.zip`。
     * 在 Chrome 中打開 `chrome://extensions/`
     * 啟用 `開發人員模式`（右上角）
     * 點擊 `載入未封裝項目`（左上角）
-    * 選擇解壓縮後的 `nanobrowser` 文件夾。
+    * 選擇解壓縮後的 `cloudcerebro` 文件夾。
 
 3. **配置代理模型**
-    * 點擊工具欄中的 Nanobrowser 圖標打開側邊欄
+    * 點擊工具欄中的 CloudCerebro 圖標打開側邊欄
     * 點擊 `設置` 圖標（右上角）。
     * 添加您的 LLM API keys。
     * 選擇為不同代理（Navigator、Planner、Validator）使用的模型
 
 4. **升級**：
-    * 從 release page 下載最新的 `nanobrowser.zip` 文件。
-    * 解壓並用新文件替換您現有的 Nanobrowser 文件。
-    * 在 Chrome 中前往 `chrome://extensions/` 並點擊 Nanobrowser 卡片上的刷新圖標。
+    * 從 release page 下載最新的 `cloudcerebro.zip` 文件。
+    * 解壓並用新文件替換您現有的 CloudCerebro 文件。
+    * 在 Chrome 中前往 `chrome://extensions/` 並點擊 CloudCerebro 卡片上的刷新圖標。
 
 ## 🛠️ 從原始碼構建
 
-如果您更喜歡自己構建 Nanobrowser，請按照以下步驟操作：
+如果您更喜歡自己構建 CloudCerebro，請按照以下步驟操作：
 
 1. **先決條件**：
    * [Node.js](https://nodejs.org/)（v22.12.0 或更高版本）
@@ -123,7 +123,7 @@ Nanobrowser 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。�
 
 ## 🤖 選擇您的模型
 
-Nanobrowser 允許您為每個代理配置不同的 LLM 模型，以平衡性能和成本。以下是推薦的配置：
+CloudCerebro 允許您為每個代理配置不同的 LLM 模型，以平衡性能和成本。以下是推薦的配置：
 
 ### 更好的性能
 - **Planner 和 Validator**：Claude 3.7 Sonnet
@@ -178,19 +178,19 @@ Nanobrowser 允許您為每個代理配置不同的 LLM 模型，以平衡性能
 
 ## 🛠️ 路線圖
 
-我們正在積極開發 Nanobrowser，未來將有令人興奮的功能，歡迎加入我們！
+我們正在積極開發 CloudCerebro，未來將有令人興奮的功能，歡迎加入我們！
 
 查看我們在 [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions/85) 中的詳細路線圖和即將推出的功能。
 
 ## 🤝 貢獻
 
-**我們需要您的幫助使 Nanobrowser 變得更好！** 歡迎各種形式的貢獻：
+**我們需要您的幫助使 CloudCerebro 變得更好！** 歡迎各種形式的貢獻：
 
 *  **分享 Prompts 和使用案例** 
    * 加入我們的 [Discord](https://discord.gg/NN3ABHggMK)。
-   * 分享您如何使用 Nanobrowser。幫助我們建立有用 prompts 和真實世界的使用案例。
+   * 分享您如何使用 CloudCerebro。幫助我們建立有用 prompts 和真實世界的使用案例。
 *  **提供反饋** 
-   * 嘗試 Nanobrowser 並在我們的 [Discord](https://discord.gg/NN3ABHggMK)中提供關於其效能的反饋或建議改進。
+   * 嘗試 CloudCerebro 並在我們的 [Discord](https://discord.gg/NN3ABHggMK)中提供關於其效能的反饋或建議改進。
 * **貢獻程式碼**
    * 查看我們的 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何為項目貢獻程式碼的指南。
    * 提交 bug 修復、功能或文檔改進的 pull requests。
@@ -205,7 +205,7 @@ Nanobrowser 允許您為每個代理配置不同的 LLM 模型，以平衡性能
 
 相反，請創建 [GitHub Security Advisory](https://github.com/nanobrowser/nanobrowser/security/advisories/new) 負責任地報告漏洞。這使我們能夠在公開披露之前解決問題。
 
-感謝您幫助保持 Nanobrowser 及其用戶的安全！
+感謝您幫助保持 CloudCerebro 及其用戶的安全！
 
 ## 💬 社區
 
@@ -217,7 +217,7 @@ Nanobrowser 允許您為每個代理配置不同的 LLM 模型，以平衡性能
 
 ## 👏 致謝
 
-Nanobrowser 建立在其他優秀的開源項目之上：
+CloudCerebro 建立在其他優秀的開源項目之上：
 
 - [Browser Use](https://github.com/browser-use/browser-use)
 - [Puppeteer](https://github.com/EmergenceAI/Agent-E)
@@ -231,6 +231,6 @@ Nanobrowser 建立在其他優秀的開源項目之上：
 
 本項目採用 Apache License 2.0 許可證 - 詳情請參閱 [LICENSE](LICENSE) 文件。
 
-由 Nanobrowser 團隊用 ❤️ 製作。
+由 CloudCerebro 團隊用 ❤️ 製作。
 
-喜歡 Nanobrowser？給我們一個星星 🌟 並加入我們 [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+喜歡 CloudCerebro？給我們一個星星 🌟 並加入我們 [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
