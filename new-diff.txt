@@ -1,0 +1,560 @@
+diff --git a/README-es.md b/README-es.md
+index 0744f10..b37b9c4 100644
+--- a/README-es.md
++++ b/README-es.md
+@@ -35,7 +35,7 @@ Nanobrowser es una herramienta de automatización web con IA que se ejecuta en t
+ - **Opciones Flexibles de LLM** - Conéctate con tu proveedor de LLM preferido con la libertad de elegir diferentes modelos para diferentes agentes.
+ - **Totalmente Open Source** - Transparencia total en cómo se automatiza tu navegador. Sin procesos ocultos ni cajas negras.
+ 
+-> **Nota:** Actualmente ofrecemos soporte para OpenAI, Anthropic, Gemini, Ollama y proveedores personalizados compatibles con OpenAI, próximamente se ofrecerá soporte a más proveedores.
++> **Nota:** Actualmente ofrecemos soporte para OpenAI, Anthropic, Gemini, Ollama, Bedrock y proveedores personalizados compatibles con OpenAI, próximamente se ofrecerá soporte a más proveedores.
+ 
+ 
+ ## 📊 Funciones Clave
+diff --git a/README-zh-Hant.md b/README-zh-Hant.md
+index 269d654..5a44f00 100644
+--- a/README-zh-Hant.md
++++ b/README-zh-Hant.md
+@@ -35,7 +35,7 @@ Nanobrowser 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。
+ - **靈活的 LLM 選項** - 連接到您偏好的 LLM providers，並可為不同的代理選擇不同的模型。
+ - **完全開源** - 瀏覽器自動化過程完全透明。沒有黑盒或隱藏的處理程序。
+ 
+-> **注意：** 我們目前支持 OpenAI、Anthropic、Gemini、Ollama 和自定義 OpenAI 兼容的 providers，未來會支持更多 providers。
++> **注意：** 我們目前支持 OpenAI、Anthropic、Gemini、Ollama、Bedrock 和自定義 OpenAI 兼容的 providers，未來會支持更多 providers。
+ 
+ 
+ ## 📊 主要特點
+diff --git a/README.md b/README.md
+index f175872..28b1d6e 100644
+--- a/README.md
++++ b/README.md
+@@ -36,7 +36,7 @@ Looking for a powerful AI web agent without the $200/month price tag of OpenAI O
+ - **Flexible LLM Options** - Connect to your preferred LLM providers with the freedom to choose different models for different agents.
+ - **Fully Open Source** - Complete transparency in how your browser is automated. No black boxes or hidden processes.
+ 
+-> **Note:** We currently support OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras and custom OpenAI-Compatible providers, more providers will be supported.
++> **Note:** We currently support OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, Bedrock and custom OpenAI-Compatible providers, more providers will be supported.
+ 
+ 
+ ## 📊 Key Features
+diff --git a/chrome-extension/package.json b/chrome-extension/package.json
+index 3bd2880..33b4b8a 100644
+--- a/chrome-extension/package.json
++++ b/chrome-extension/package.json
+@@ -19,13 +19,14 @@
+     "@extension/shared": "workspace:*",
+     "@extension/storage": "workspace:*",
+     "@langchain/anthropic": "0.3.21",
+-    "@langchain/core": "0.3.57",
+-    "@langchain/cerebras": "^0.0.2",
++    "@langchain/core": "0.3.58",
++    "@langchain/cerebras": "^0.0.1",
+     "@langchain/deepseek": "^0.0.2",
+     "@langchain/google-genai": "0.2.10",
+     "@langchain/groq": "^0.2.2",
+     "@langchain/ollama": "0.2.1",
+     "@langchain/openai": "0.5.12",
++    "@langchain/community": "^0.3.46",
+     "@langchain/xai": "^0.0.3",
+     "jsonrepair": "^3.12.0",
+     "puppeteer-core": "24.10.1",
+diff --git a/chrome-extension/src/background/agent/helper.ts b/chrome-extension/src/background/agent/helper.ts
+index 0d4fcba..317d290 100644
+--- a/chrome-extension/src/background/agent/helper.ts
++++ b/chrome-extension/src/background/agent/helper.ts
+@@ -5,6 +5,7 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+ import { ChatXAI } from '@langchain/xai';
+ import { ChatGroq } from '@langchain/groq';
+ import { ChatCerebras } from '@langchain/cerebras';
++import { BedrockChat } from '@langchain/community/chat_models/bedrock/web';
+ import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+ import { ChatOllama } from '@langchain/ollama';
+ import { ChatDeepSeek } from '@langchain/deepseek';
+@@ -240,6 +241,20 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
+       };
+       return new ChatCerebras(args);
+     }
++    case ProviderTypeEnum.Bedrock: {
++      const args = {
++        model: modelConfig.modelName,
++        region: providerConfig.awsRegion ?? 'us-east-1',
++        credentials: {
++          accessKeyId: providerConfig.awsAccessKeyId ?? '',
++          secretAccessKey: providerConfig.awsSecretAccessKey ?? '',
++          sessionToken: providerConfig.awsSessionToken,
++        },
++        temperature,
++        maxTokens,
++      };
++      return new BedrockChat(args) as unknown as BaseChatModel;
++    }
+     case ProviderTypeEnum.Ollama: {
+       const args: {
+         model: string;
+diff --git a/packages/storage/lib/settings/llmProviders.ts b/packages/storage/lib/settings/llmProviders.ts
+index a954ef4..f7de3b3 100644
+--- a/packages/storage/lib/settings/llmProviders.ts
++++ b/packages/storage/lib/settings/llmProviders.ts
+@@ -14,6 +14,11 @@ export interface ProviderConfig {
+   // Azure Specific Fields:
+   azureDeploymentNames?: string[]; // Azure deployment names array
+   azureApiVersion?: string;
++  // Bedrock Specific Fields:
++  awsAccessKeyId?: string;
++  awsSecretAccessKey?: string;
++  awsSessionToken?: string;
++  awsRegion?: string;
+ }
+ 
+ // Interface for storing multiple LLM provider configurations
+@@ -65,6 +70,7 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
+     case ProviderTypeEnum.OpenRouter:
+     case ProviderTypeEnum.Groq:
+     case ProviderTypeEnum.Cerebras:
++    case ProviderTypeEnum.Bedrock:
+       return providerId;
+     default:
+       return ProviderTypeEnum.CustomOpenAI;
+@@ -95,6 +101,8 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string
+       return 'Groq';
+     case ProviderTypeEnum.Cerebras:
+       return 'Cerebras';
++    case ProviderTypeEnum.Bedrock:
++      return 'Bedrock';
+     default:
+       return providerId; // Use the provider id as display name for custom providers by default
+   }
+@@ -120,6 +128,19 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
+         createdAt: Date.now(),
+       };
+ 
++    case ProviderTypeEnum.Bedrock:
++      return {
++        apiKey: '',
++        name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.Bedrock),
++        type: ProviderTypeEnum.Bedrock,
++        modelNames: [...(llmProviderModelNames[ProviderTypeEnum.Bedrock] || [])],
++        awsAccessKeyId: '',
++        awsSecretAccessKey: '',
++        awsSessionToken: '',
++        awsRegion: 'us-east-1',
++        createdAt: Date.now(),
++      };
++
+     case ProviderTypeEnum.Ollama:
+       return {
+         apiKey: 'ollama', // Set default API key for Ollama
+@@ -202,6 +223,22 @@ function ensureBackwardCompatibility(providerId: string, config: ProviderConfig)
+     }
+   }
+ 
++  // Handle Bedrock specifics
++  if (updatedConfig.type === ProviderTypeEnum.Bedrock) {
++    if (updatedConfig.awsAccessKeyId === undefined) {
++      updatedConfig.awsAccessKeyId = '';
++    }
++    if (updatedConfig.awsSecretAccessKey === undefined) {
++      updatedConfig.awsSecretAccessKey = '';
++    }
++    if (updatedConfig.awsSessionToken === undefined) {
++      updatedConfig.awsSessionToken = '';
++    }
++    if (updatedConfig.awsRegion === undefined) {
++      updatedConfig.awsRegion = 'us-east-1';
++    }
++  }
++
+   // Ensure createdAt exists
+   if (!updatedConfig.createdAt) {
+     updatedConfig.createdAt = new Date('03/04/2025').getTime();
+@@ -238,6 +275,10 @@ export const llmProviderStore: LLMProviderStorage = {
+       if (!config.apiKey?.trim()) {
+         throw new Error('API Key is required for Azure OpenAI');
+       }
++    } else if (providerType === ProviderTypeEnum.Bedrock) {
++      if (!config.awsAccessKeyId?.trim() || !config.awsSecretAccessKey?.trim() || !config.awsRegion?.trim()) {
++        throw new Error('AWS Access Key ID, Secret Access Key, and Region are required for Bedrock');
++      }
+     } else if (providerType !== ProviderTypeEnum.CustomOpenAI && providerType !== ProviderTypeEnum.Ollama) {
+       if (!config.apiKey?.trim()) {
+         throw new Error(`API Key is required for ${getDefaultDisplayNameFromProviderId(providerId)}`);
+@@ -261,9 +302,17 @@ export const llmProviderStore: LLMProviderStorage = {
+             azureDeploymentNames: config.azureDeploymentNames || [],
+             azureApiVersion: config.azureApiVersion,
+           }
+-        : {
+-            modelNames: config.modelNames || [],
+-          }),
++        : providerType === ProviderTypeEnum.Bedrock
++          ? {
++              modelNames: config.modelNames || [],
++              awsAccessKeyId: config.awsAccessKeyId || '',
++              awsSecretAccessKey: config.awsSecretAccessKey || '',
++              awsSessionToken: config.awsSessionToken,
++              awsRegion: config.awsRegion || 'us-east-1',
++            }
++          : {
++              modelNames: config.modelNames || [],
++            }),
+     };
+ 
+     console.log(`[llmProviderStore.setProvider] Saving config for ${providerId}:`, JSON.stringify(completeConfig));
+diff --git a/packages/storage/lib/settings/types.ts b/packages/storage/lib/settings/types.ts
+index 7bb1653..b748cc8 100644
+--- a/packages/storage/lib/settings/types.ts
++++ b/packages/storage/lib/settings/types.ts
+@@ -19,6 +19,7 @@ export enum ProviderTypeEnum {
+   OpenRouter = 'openrouter',
+   Groq = 'groq',
+   Cerebras = 'cerebras',
++  Bedrock = 'bedrock',
+   CustomOpenAI = 'custom_openai',
+ }
+ 
+@@ -50,6 +51,11 @@ export const llmProviderModelNames = {
+   ],
+   [ProviderTypeEnum.Groq]: ['llama-3.3-70b-versatile'],
+   [ProviderTypeEnum.Cerebras]: ['llama-3.3-70b'],
++  [ProviderTypeEnum.Bedrock]: [
++    'anthropic.claude-3-5-sonnet-20240620-v1:0',
++    'anthropic.claude-3-haiku-20240307-v1:0',
++    'amazon.titan-text-express-v1',
++  ],
+   // Custom OpenAI providers don't have predefined models as they are user-defined
+ };
+ 
+@@ -181,4 +187,18 @@ export const llmProviderParameters = {
+       topP: 0.8,
+     },
+   },
++  [ProviderTypeEnum.Bedrock]: {
++    [AgentNameEnum.Planner]: {
++      temperature: 0.7,
++      topP: 0.9,
++    },
++    [AgentNameEnum.Navigator]: {
++      temperature: 0.3,
++      topP: 0.85,
++    },
++    [AgentNameEnum.Validator]: {
++      temperature: 0.1,
++      topP: 0.8,
++    },
++  },
+ };
+diff --git a/pages/options/src/components/ModelSettings.tsx b/pages/options/src/components/ModelSettings.tsx
+index 097e40c..e658d33 100644
+--- a/pages/options/src/components/ModelSettings.tsx
++++ b/pages/options/src/components/ModelSettings.tsx
+@@ -386,6 +386,11 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+         Boolean(config?.baseUrl?.trim()) &&
+         Boolean(config?.azureDeploymentNames?.length) &&
+         Boolean(config?.azureApiVersion?.trim());
++    } else if (providerType === ProviderTypeEnum.Bedrock) {
++      hasInput =
++        Boolean(config?.awsAccessKeyId?.trim()) &&
++        Boolean(config?.awsSecretAccessKey?.trim()) &&
++        Boolean(config?.awsRegion?.trim());
+     } else if (providerType === ProviderTypeEnum.OpenRouter) {
+       // OpenRouter needs API Key and optionally Base URL (has default)
+       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
+@@ -426,6 +431,17 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+         return;
+       }
+ 
++      if (providers[provider].type === ProviderTypeEnum.Bedrock) {
++        if (
++          !providers[provider].awsAccessKeyId?.trim() ||
++          !providers[provider].awsSecretAccessKey?.trim() ||
++          !providers[provider].awsRegion?.trim()
++        ) {
++          alert(`AWS credentials and region are required for ${getDefaultDisplayNameFromProviderId(provider)}.`);
++          return;
++        }
++      }
++
+       // Ensure modelNames is provided
+       let modelNames = providers[provider].modelNames;
+       if (!modelNames) {
+@@ -450,11 +466,17 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+         configToSave.modelNames = undefined;
+       } else {
+         // Ensure modelNames IS included for non-Azure
+-        // Use existing modelNames from state, or default if somehow missing
+         configToSave.modelNames =
+           providers[provider].modelNames || llmProviderModelNames[provider as keyof typeof llmProviderModelNames] || [];
+       }
+ 
++      if (providers[provider].type === ProviderTypeEnum.Bedrock) {
++        configToSave.awsAccessKeyId = providers[provider].awsAccessKeyId || '';
++        configToSave.awsSecretAccessKey = providers[provider].awsSecretAccessKey || '';
++        configToSave.awsSessionToken = providers[provider].awsSessionToken || '';
++        configToSave.awsRegion = providers[provider].awsRegion || 'us-east-1';
++      }
++
+       // Pass the cleaned config to setProvider
+       // Cast to ProviderConfig as we've ensured necessary fields based on type
+       await llmProviderStore.setProvider(provider, configToSave as ProviderConfig);
+@@ -550,7 +572,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+     // Store both provider and model name in the format "provider>model"
+     setSelectedModels(prev => ({
+       ...prev,
+-      [agentName]: modelValue,  // Store the full provider>model value
++      [agentName]: modelValue, // Store the full provider>model value
+     }));
+ 
+     try {
+@@ -712,7 +734,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+             id={`${agentName}-model`}
+             className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+             disabled={availableModels.length === 0}
+-            value={selectedModels[agentName] || ''}  // Use the stored provider>model value directly
++            value={selectedModels[agentName] || ''} // Use the stored provider>model value directly
+             onChange={e => handleModelChange(agentName, e.target.value)}>
+             <option key="default" value="">
+               Choose model
+@@ -1117,6 +1139,21 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+     }));
+   };
+ 
++  const handleBedrockFieldChange = (
++    provider: string,
++    field: 'awsAccessKeyId' | 'awsSecretAccessKey' | 'awsSessionToken' | 'awsRegion',
++    value: string,
++  ) => {
++    setModifiedProviders(prev => new Set(prev).add(provider));
++    setProviders(prev => ({
++      ...prev,
++      [provider]: {
++        ...prev[provider],
++        [field]: value.trim(),
++      },
++    }));
++  };
++
+   return (
+     <section className="space-y-6">
+       {/* LLM Providers Section */}
+@@ -1217,69 +1254,71 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+                     )}
+ 
+                     {/* API Key input with label */}
+-                    <div className="flex items-center">
+-                      <label
+-                        htmlFor={`${providerId}-api-key`}
+-                        className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+-                        API Key
+-                        {/* Show asterisk only if required */}
+-                        {providerConfig.type !== ProviderTypeEnum.CustomOpenAI &&
+-                        providerConfig.type !== ProviderTypeEnum.Ollama
+-                          ? '*'
+-                          : ''}
+-                      </label>
+-                      <div className="relative flex-1">
+-                        <input
+-                          id={`${providerId}-api-key`}
+-                          type="password"
+-                          placeholder={
+-                            providerConfig.type === ProviderTypeEnum.CustomOpenAI
+-                              ? `${providerConfig.name || providerId} API key (optional)`
+-                              : providerConfig.type === ProviderTypeEnum.Ollama
+-                                ? 'API Key (leave empty for Ollama)'
+-                                : `${providerConfig.name || providerId} API key (required)`
+-                          }
+-                          value={providerConfig.apiKey || ''}
+-                          onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
+-                          className={`w-full rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+-                        />
+-                        {/* Show eye button only for newly added providers */}
+-                        {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
+-                          <button
+-                            type="button"
+-                            className={`absolute right-2 top-1/2 -translate-y-1/2 ${
+-                              isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+-                            }`}
+-                            onClick={() => toggleApiKeyVisibility(providerId)}
+-                            aria-label={visibleApiKeys[providerId] ? 'Hide API key' : 'Show API key'}>
+-                            <svg
+-                              xmlns="http://www.w3.org/2000/svg"
+-                              viewBox="0 0 24 24"
+-                              fill="none"
+-                              stroke="currentColor"
+-                              strokeWidth="2"
+-                              strokeLinecap="round"
+-                              strokeLinejoin="round"
+-                              className="size-5"
+-                              aria-hidden="true">
+-                              <title>{visibleApiKeys[providerId] ? 'Hide API key' : 'Show API key'}</title>
+-                              {visibleApiKeys[providerId] ? (
+-                                <>
+-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+-                                  <circle cx="12" cy="12" r="3" />
+-                                  <line x1="2" y1="22" x2="22" y2="2" />
+-                                </>
+-                              ) : (
+-                                <>
+-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+-                                  <circle cx="12" cy="12" r="3" />
+-                                </>
+-                              )}
+-                            </svg>
+-                          </button>
+-                        )}
++                    {providerConfig.type !== ProviderTypeEnum.Bedrock && (
++                      <div className="flex items-center">
++                        <label
++                          htmlFor={`${providerId}-api-key`}
++                          className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
++                          API Key
++                          {/* Show asterisk only if required */}
++                          {providerConfig.type !== ProviderTypeEnum.CustomOpenAI &&
++                          providerConfig.type !== ProviderTypeEnum.Ollama
++                            ? '*'
++                            : ''}
++                        </label>
++                        <div className="relative flex-1">
++                          <input
++                            id={`${providerId}-api-key`}
++                            type="password"
++                            placeholder={
++                              providerConfig.type === ProviderTypeEnum.CustomOpenAI
++                                ? `${providerConfig.name || providerId} API key (optional)`
++                                : providerConfig.type === ProviderTypeEnum.Ollama
++                                  ? 'API Key (leave empty for Ollama)'
++                                  : `${providerConfig.name || providerId} API key (required)`
++                            }
++                            value={providerConfig.apiKey || ''}
++                            onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
++                            className={`w-full rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
++                          />
++                          {/* Show eye button only for newly added providers */}
++                          {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
++                            <button
++                              type="button"
++                              className={`absolute right-2 top-1/2 -translate-y-1/2 ${
++                                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
++                              }`}
++                              onClick={() => toggleApiKeyVisibility(providerId)}
++                              aria-label={visibleApiKeys[providerId] ? 'Hide API key' : 'Show API key'}>
++                              <svg
++                                xmlns="http://www.w3.org/2000/svg"
++                                viewBox="0 0 24 24"
++                                fill="none"
++                                stroke="currentColor"
++                                strokeWidth="2"
++                                strokeLinecap="round"
++                                strokeLinejoin="round"
++                                className="size-5"
++                                aria-hidden="true">
++                                <title>{visibleApiKeys[providerId] ? 'Hide API key' : 'Show API key'}</title>
++                                {visibleApiKeys[providerId] ? (
++                                  <>
++                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
++                                    <circle cx="12" cy="12" r="3" />
++                                    <line x1="2" y1="22" x2="22" y2="2" />
++                                  </>
++                                ) : (
++                                  <>
++                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
++                                    <circle cx="12" cy="12" r="3" />
++                                  </>
++                                )}
++                              </svg>
++                            </button>
++                          )}
++                        </div>
+                       </div>
+-                    </div>
++                    )}
+ 
+                     {/* Display API key for newly added providers only when visible */}
+                     {modifiedProviders.has(providerId) &&
+@@ -1334,6 +1373,72 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
+                       </div>
+                     )}
+ 
++                    {/* Bedrock credentials */}
++                    {providerConfig.type === ProviderTypeEnum.Bedrock && (
++                      <div className="space-y-2">
++                        <div className="flex items-center">
++                          <label
++                            htmlFor={`${providerId}-aws-access-key`}
++                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
++                            Access Key*
++                          </label>
++                          <input
++                            id={`${providerId}-aws-access-key`}
++                            type="text"
++                            placeholder="AWS Access Key ID"
++                            value={providerConfig.awsAccessKeyId || ''}
++                            onChange={e => handleBedrockFieldChange(providerId, 'awsAccessKeyId', e.target.value)}
++                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
++                          />
++                        </div>
++                        <div className="flex items-center">
++                          <label
++                            htmlFor={`${providerId}-aws-secret-key`}
++                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
++                            Secret Key*
++                          </label>
++                          <input
++                            id={`${providerId}-aws-secret-key`}
++                            type="password"
++                            placeholder="AWS Secret Access Key"
++                            value={providerConfig.awsSecretAccessKey || ''}
++                            onChange={e => handleBedrockFieldChange(providerId, 'awsSecretAccessKey', e.target.value)}
++                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
++                          />
++                        </div>
++                        <div className="flex items-center">
++                          <label
++                            htmlFor={`${providerId}-aws-session-token`}
++                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
++                            Session
++                          </label>
++                          <input
++                            id={`${providerId}-aws-session-token`}
++                            type="text"
++                            placeholder="AWS Session Token (optional)"
++                            value={providerConfig.awsSessionToken || ''}
++                            onChange={e => handleBedrockFieldChange(providerId, 'awsSessionToken', e.target.value)}
++                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
++                          />
++                        </div>
++                        <div className="flex items-center">
++                          <label
++                            htmlFor={`${providerId}-aws-region`}
++                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
++                            Region*
++                          </label>
++                          <input
++                            id={`${providerId}-aws-region`}
++                            type="text"
++                            placeholder="us-east-1"
++                            value={providerConfig.awsRegion || ''}
++                            onChange={e => handleBedrockFieldChange(providerId, 'awsRegion', e.target.value)}
++                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} p-2 outline-none`}
++                          />
++                        </div>
++                      </div>
++                    )}
++
+                     {/* Azure Deployment Name input as tags/chips like OpenRouter models */}
+                     {(providerConfig.type as ProviderTypeEnum) === ProviderTypeEnum.AzureOpenAI && (
+                       <div className="flex items-start">
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 068bf8b..a6db4ca 100644
+Binary files a/pnpm-lock.yaml and b/pnpm-lock.yaml differ
+diff --git a/structure.md b/structure.md
+index 3989c0e..7d7532b 100644
+--- a/structure.md
++++ b/structure.md
+@@ -6,7 +6,7 @@
+   - Multi-agent System: Uses specialized AI agents (Navigator, Planner, Validator) that collaborate to accomplish complex web workflows
+   - AI Web Automation: Automates repetitive web tasks across websites using natural language commands
+   - Privacy-Focused: Everything runs locally in your browser - no data sent to external services
+-  - Flexible LLM Support: Supports OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, and custom OpenAI-compatible providers
++  - Flexible LLM Support: Supports OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, Bedrock, and custom OpenAI-compatible providers
+   - Interactive Side Panel: Chat interface for interacting with the AI agents
+ 
+   How the Chrome Extension is Built

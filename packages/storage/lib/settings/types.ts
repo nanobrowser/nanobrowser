@@ -19,6 +19,7 @@ export enum ProviderTypeEnum {
   OpenRouter = 'openrouter',
   Groq = 'groq',
   Cerebras = 'cerebras',
+  Bedrock = 'bedrock',
   CustomOpenAI = 'custom_openai',
 }
 
@@ -50,6 +51,11 @@ export const llmProviderModelNames = {
   ],
   [ProviderTypeEnum.Groq]: ['llama-3.3-70b-versatile'],
   [ProviderTypeEnum.Cerebras]: ['llama-3.3-70b'],
+  [ProviderTypeEnum.Bedrock]: [
+    'anthropic.claude-3-5-sonnet-20240620-v1:0',
+    'anthropic.claude-3-haiku-20240307-v1:0',
+    'amazon.titan-text-express-v1',
+  ],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
 
@@ -168,6 +174,20 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Cerebras]: {
+    [AgentNameEnum.Planner]: {
+      temperature: 0.7,
+      topP: 0.9,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.3,
+      topP: 0.85,
+    },
+    [AgentNameEnum.Validator]: {
+      temperature: 0.1,
+      topP: 0.8,
+    },
+  },
+  [ProviderTypeEnum.Bedrock]: {
     [AgentNameEnum.Planner]: {
       temperature: 0.7,
       topP: 0.9,

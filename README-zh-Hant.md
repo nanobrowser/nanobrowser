@@ -35,7 +35,7 @@ CloudCerebro 是一個在瀏覽器中運行的開源 AI 網頁自動化工具。
 - **靈活的 LLM 選項** - 連接到您偏好的 LLM providers，並可為不同的代理選擇不同的模型。
 - **完全開源** - 瀏覽器自動化過程完全透明。沒有黑盒或隱藏的處理程序。
 
-> **注意：** 我們目前支持 OpenAI、Anthropic、Gemini、Ollama 和自定義 OpenAI 兼容的 providers，未來會支持更多 providers。
+> **注意：** 我們目前支持 OpenAI、Anthropic、Gemini、Ollama、Bedrock 和自定義 OpenAI 兼容的 providers，未來會支持更多 providers。
 
 
 ## 📊 主要特點

@@ -5,6 +5,7 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
 import { ChatGroq } from '@langchain/groq';
 import { ChatCerebras } from '@langchain/cerebras';
+import { BedrockChat } from '@langchain/community/chat_models/bedrock/web';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatDeepSeek } from '@langchain/deepseek';
@@ -239,6 +240,20 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         maxTokens,
       };
       return new ChatCerebras(args);
+    }
+    case ProviderTypeEnum.Bedrock: {
+      const args = {
+        model: modelConfig.modelName,
+        region: providerConfig.awsRegion ?? 'us-east-1',
+        credentials: {
+          accessKeyId: providerConfig.awsAccessKeyId ?? '',
+          secretAccessKey: providerConfig.awsSecretAccessKey ?? '',
+          sessionToken: providerConfig.awsSessionToken,
+        },
+        temperature,
+        maxTokens,
+      };
+      return new BedrockChat(args) as unknown as BaseChatModel;
     }
     case ProviderTypeEnum.Ollama: {
       const args: {

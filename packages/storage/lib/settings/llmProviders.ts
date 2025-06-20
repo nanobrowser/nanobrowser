@@ -14,6 +14,11 @@ export interface ProviderConfig {
   // Azure Specific Fields:
   azureDeploymentNames?: string[]; // Azure deployment names array
   azureApiVersion?: string;
+  // Bedrock Specific Fields:
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
+  awsRegion?: string;
 }
 
 // Interface for storing multiple LLM provider configurations
@@ -65,6 +70,7 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.OpenRouter:
     case ProviderTypeEnum.Groq:
     case ProviderTypeEnum.Cerebras:
+    case ProviderTypeEnum.Bedrock:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -95,6 +101,8 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Groq';
     case ProviderTypeEnum.Cerebras:
       return 'Cerebras';
+    case ProviderTypeEnum.Bedrock:
+      return 'Bedrock';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
@@ -117,6 +125,19 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
         type: providerId,
         baseUrl: providerId === ProviderTypeEnum.OpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
+        createdAt: Date.now(),
+      };
+
+    case ProviderTypeEnum.Bedrock:
+      return {
+        apiKey: '',
+        name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.Bedrock),
+        type: ProviderTypeEnum.Bedrock,
+        modelNames: [...(llmProviderModelNames[ProviderTypeEnum.Bedrock] || [])],
+        awsAccessKeyId: '',
+        awsSecretAccessKey: '',
+        awsSessionToken: '',
+        awsRegion: 'us-east-1',
         createdAt: Date.now(),
       };
 
@@ -202,6 +223,22 @@ function ensureBackwardCompatibility(providerId: string, config: ProviderConfig)
     }
   }
 
+  // Handle Bedrock specifics
+  if (updatedConfig.type === ProviderTypeEnum.Bedrock) {
+    if (updatedConfig.awsAccessKeyId === undefined) {
+      updatedConfig.awsAccessKeyId = '';
+    }
+    if (updatedConfig.awsSecretAccessKey === undefined) {
+      updatedConfig.awsSecretAccessKey = '';
+    }
+    if (updatedConfig.awsSessionToken === undefined) {
+      updatedConfig.awsSessionToken = '';
+    }
+    if (updatedConfig.awsRegion === undefined) {
+      updatedConfig.awsRegion = 'us-east-1';
+    }
+  }
+
   // Ensure createdAt exists
   if (!updatedConfig.createdAt) {
     updatedConfig.createdAt = new Date('03/04/2025').getTime();
@@ -238,6 +275,10 @@ export const llmProviderStore: LLMProviderStorage = {
       if (!config.apiKey?.trim()) {
         throw new Error('API Key is required for Azure OpenAI');
       }
+    } else if (providerType === ProviderTypeEnum.Bedrock) {
+      if (!config.awsAccessKeyId?.trim() || !config.awsSecretAccessKey?.trim() || !config.awsRegion?.trim()) {
+        throw new Error('AWS Access Key ID, Secret Access Key, and Region are required for Bedrock');
+      }
     } else if (providerType !== ProviderTypeEnum.CustomOpenAI && providerType !== ProviderTypeEnum.Ollama) {
       if (!config.apiKey?.trim()) {
         throw new Error(`API Key is required for ${getDefaultDisplayNameFromProviderId(providerId)}`);
@@ -261,9 +302,17 @@ export const llmProviderStore: LLMProviderStorage = {
             azureDeploymentNames: config.azureDeploymentNames || [],
             azureApiVersion: config.azureApiVersion,
           }
-        : {
-            modelNames: config.modelNames || [],
-          }),
+        : providerType === ProviderTypeEnum.Bedrock
+          ? {
+              modelNames: config.modelNames || [],
+              awsAccessKeyId: config.awsAccessKeyId || '',
+              awsSecretAccessKey: config.awsSecretAccessKey || '',
+              awsSessionToken: config.awsSessionToken,
+              awsRegion: config.awsRegion || 'us-east-1',
+            }
+          : {
+              modelNames: config.modelNames || [],
+            }),
     };
 
     console.log(`[llmProviderStore.setProvider] Saving config for ${providerId}:`, JSON.stringify(completeConfig));
