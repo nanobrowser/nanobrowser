@@ -38,6 +38,11 @@ export class AmplifyEventsService {
     try {
       // Get Amplify configuration
       const amplifyConfig = await amplifyConfigStore.getConfig();
+      logger.info('Retrieved Amplify config:', {
+        enabled: amplifyConfig.enabled,
+        endpoint: amplifyConfig.endpoint,
+        region: amplifyConfig.region,
+      });
 
       if (!amplifyConfig.enabled) {
         logger.info('Amplify Events is disabled');
@@ -46,12 +51,14 @@ export class AmplifyEventsService {
 
       // Validate configuration
       const isValidConfig = await amplifyConfigStore.validateConfig();
+      logger.info('Config validation result:', isValidConfig);
       if (!isValidConfig) {
         throw new Error('Invalid Amplify configuration');
       }
 
       // Get instance ID
       this.instanceId = await instanceIdService.getInstanceId();
+      logger.info('Using instance ID:', this.instanceId);
 
       // Set up service configuration
       this.config = {
@@ -100,15 +107,25 @@ export class AmplifyEventsService {
       // Connect to instance-specific channel
       const channelPath = `/${this.config.channelNamespace}/${this.instanceId}`;
       logger.info('Connecting to channel:', channelPath);
+      logger.info('Full channel path being used:', channelPath);
 
       this.channel = await events.connect(channelPath);
+      logger.info('events.connect() completed successfully');
 
       // Subscribe to events
       this.channel.subscribe({
-        next: (data: any) => this.handleIncomingEvent(data),
-        error: (error: any) => this.handleConnectionError(error),
-        complete: () => logger.info('Channel subscription completed'),
+        next: (data: any) => {
+          logger.info('🔥 RECEIVED EVENT from AppSync:', data);
+          this.handleIncomingEvent(data);
+        },
+        error: (error: any) => {
+          logger.error('❌ Channel subscription error:', error);
+          this.handleConnectionError(error);
+        },
+        complete: () => logger.info('✅ Channel subscription completed'),
       });
+
+      logger.info('Channel subscription setup completed');
 
       this.connectionStatus = ConnectionStatus.CONNECTED;
       this.reconnectAttempts = 0;
@@ -130,7 +147,8 @@ export class AmplifyEventsService {
     logger.info('Received AppSync event:', data);
 
     try {
-      const event: AppSyncEventPayload = data;
+      // Extract the actual event payload from the nested structure
+      const event: AppSyncEventPayload = data.event || data;
 
       // Validate the event payload
       const validation = validateEventPayload(event);
