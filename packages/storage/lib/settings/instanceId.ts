@@ -9,10 +9,12 @@ export interface InstanceIdConfig {
 }
 
 export type InstanceIdStorage = BaseStorage<InstanceIdConfig> & {
-  getInstanceId: () => Promise<string>;
+  getOrCreateInstanceId: () => Promise<string>;
+  getInstanceId: () => Promise<string | null>;
   generateNewInstanceId: () => Promise<string>;
   getChannelName: () => Promise<string>;
-  getCreatedAt: () => Promise<number>;
+  getCreatedAt: () => Promise<number | null>;
+  awaitInstanceId: (timeout?: number, interval?: number) => Promise<string>;
 };
 
 // Generate a unique instance ID in AppSync-compatible format (max 50 chars): ext-{short_runtime_id}-{short_timestamp}-{hash}
@@ -33,7 +35,7 @@ const getDefaultInstanceIdConfig = (): InstanceIdConfig => ({
   createdAt: Date.now(),
 });
 
-const storage = createStorage<InstanceIdConfig>('instance-id', getDefaultInstanceIdConfig(), {
+const storage = createStorage<InstanceIdConfig>('instance-id', {} as InstanceIdConfig, {
   storageEnum: StorageEnum.Local,
   liveUpdate: false, // Instance ID shouldn't change during runtime
 });
@@ -41,7 +43,7 @@ const storage = createStorage<InstanceIdConfig>('instance-id', getDefaultInstanc
 export const instanceIdStore: InstanceIdStorage = {
   ...storage,
 
-  async getInstanceId(): Promise<string> {
+  async getOrCreateInstanceId(): Promise<string> {
     const config = await this.get();
     if (!config || !config.instanceId) {
       // Generate new instance ID if none exists
@@ -52,6 +54,11 @@ export const instanceIdStore: InstanceIdStorage = {
     return config.instanceId;
   },
 
+  async getInstanceId(): Promise<string | null> {
+    const config = await this.get();
+    return config?.instanceId ?? null;
+  },
+
   async generateNewInstanceId(): Promise<string> {
     const newConfig = getDefaultInstanceIdConfig();
     await this.set(newConfig);
@@ -60,16 +67,26 @@ export const instanceIdStore: InstanceIdStorage = {
 
   async getChannelName(): Promise<string> {
     const instanceId = await this.getInstanceId();
+    if (!instanceId) {
+      throw new Error('Cannot get channel name, instance ID not yet created.');
+    }
     return `/default/${instanceId}`;
   },
 
-  async getCreatedAt(): Promise<number> {
-    const config = await this.get();
-    if (!config || !config.createdAt) {
-      const newConfig = getDefaultInstanceIdConfig();
-      await this.set(newConfig);
-      return newConfig.createdAt;
+  async awaitInstanceId(timeout = 5000, interval = 100): Promise<string> {
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+      const id = await this.getInstanceId(); // Use the new read-only method
+      if (id) {
+        return id;
+      }
+      await new Promise(resolve => setTimeout(resolve, interval));
     }
-    return config.createdAt;
+    throw new Error('Timed out waiting for instance ID to become available.');
+  },
+
+  async getCreatedAt(): Promise<number | null> {
+    const config = await this.get();
+    return config?.createdAt ?? null;
   },
 };

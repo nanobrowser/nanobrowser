@@ -27,7 +27,7 @@ class InstanceIdServiceImpl implements InstanceIdService {
     }
 
     try {
-      this.cachedInstanceId = await instanceIdStore.getInstanceId();
+      this.cachedInstanceId = await instanceIdStore.getOrCreateInstanceId();
       logger.info('Retrieved instance ID:', this.cachedInstanceId);
       return this.cachedInstanceId;
     } catch (error) {
@@ -73,7 +73,11 @@ class InstanceIdServiceImpl implements InstanceIdService {
    */
   async getCreatedAt(): Promise<number> {
     try {
-      return await instanceIdStore.getCreatedAt();
+      const createdAt = await instanceIdStore.getCreatedAt();
+      if (createdAt === null) {
+        throw new Error('Instance ID not created yet, cannot get creation time.');
+      }
+      return createdAt;
     } catch (error) {
       logger.error('Failed to get instance creation time:', error);
       throw new Error('Failed to retrieve instance creation time');

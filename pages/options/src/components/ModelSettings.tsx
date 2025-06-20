@@ -173,7 +173,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         const config = await amplifyConfigStore.getConfig();
         setAmplifyConfig(config);
 
-        const instId = await instanceIdStore.getInstanceId();
+        // Use the new await method to wait for the ID from the background script
+        const instId = await instanceIdStore.awaitInstanceId();
         setInstanceId(instId);
       } catch (error) {
         console.error('Error loading Amplify configuration:', error);
@@ -181,6 +182,21 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     };
 
     loadAmplifyConfig();
+
+    const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
+      if (areaName === 'local' && changes['instance-id']) {
+        const newConfig = changes['instance-id'].newValue;
+        if (newConfig && newConfig.instanceId) {
+          setInstanceId(newConfig.instanceId);
+        }
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   // Auto-focus the input field when a new provider is added
