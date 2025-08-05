@@ -61,7 +61,7 @@ const manifest = withOperaSidebar(
     version: packageJson.version,
     description: '__MSG_extensionDescription__',
     host_permissions: ['<all_urls>'],
-    permissions: ['storage', 'scripting', 'tabs', 'activeTab', 'debugger', 'unlimitedStorage'],
+    permissions: ['storage', 'scripting', 'tabs', 'activeTab', 'debugger', 'unlimitedStorage', 'webNavigation'],
     options_page: 'options/index.html',
     background: {
       service_worker: 'background.iife.js',
@@ -76,6 +76,7 @@ const manifest = withOperaSidebar(
     content_scripts: [
       {
         matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+        "all_frames": true,
         js: ['content/index.iife.js'],
       },
     ],
