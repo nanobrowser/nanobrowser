@@ -4,13 +4,15 @@ window.buildDomTree = (
     focusHighlightIndex: -1,
     viewportExpansion: 0,
     debugMode: false,
+    startId: 0,
+    startHighlightIndex: 0,
   },
 ) => {
-  const { showHighlightElements, focusHighlightIndex, viewportExpansion, debugMode } = args;
+  const { showHighlightElements, focusHighlightIndex, viewportExpansion, startHighlightIndex, startId, debugMode } = args;
   // Make sure to do highlight elements always, but we can hide the highlights if needed
   const doHighlightElements = true;
 
-  let highlightIndex = 0; // Reset highlight index
+  let highlightIndex = startHighlightIndex; // Reset highlight index
 
   // Add timing stack to handle recursion
   const TIMING_STACK = {
@@ -215,7 +217,7 @@ window.buildDomTree = (
    */
   const DOM_HASH_MAP = {};
 
-  const ID = { current: 0 };
+  const ID = { current: startId };
 
   const HIGHLIGHT_CONTAINER_ID = 'playwright-highlight-container';
 
@@ -1404,6 +1406,9 @@ window.buildDomTree = (
 
       // Handle iframes
       if (tagName === 'iframe') {
+        const rect = getCachedBoundingRect(node);
+        nodeData.attributes['computedHeight'] = String(Math.ceil(rect.height));
+        nodeData.attributes['computedWidth'] = String(Math.ceil(rect.width));
         try {
           const iframeDoc = node.contentDocument || node.contentWindow?.document;
           if (iframeDoc) {
@@ -1413,6 +1418,7 @@ window.buildDomTree = (
             }
           }
         } catch (e) {
+          nodeData.attributes['error'] = e.message;
           console.warn('Unable to access iframe:', e);
         }
       }

@@ -14,6 +14,7 @@ import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
+import { injectBuildDomTreeScripts } from './browser/dom/service';
 
 const logger = createLogger('background');
 
@@ -24,43 +25,9 @@ let currentPort: chrome.runtime.Port | null = null;
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
 
-// Function to check if script is already injected
-async function isScriptInjected(tabId: number): Promise<boolean> {
-  try {
-    const results = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => Object.prototype.hasOwnProperty.call(window, 'buildDomTree'),
-    });
-    return results[0]?.result || false;
-  } catch (err) {
-    console.error('Failed to check script injection status:', err);
-    return false;
-  }
-}
-
-// // Function to inject the buildDomTree script
-async function injectBuildDomTree(tabId: number) {
-  try {
-    // Check if already injected
-    const alreadyInjected = await isScriptInjected(tabId);
-    if (alreadyInjected) {
-      console.log('Scripts already injected, skipping...');
-      return;
-    }
-
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['buildDomTree.js'],
-    });
-    console.log('Scripts successfully injected');
-  } catch (err) {
-    console.error('Failed to inject scripts:', err);
-  }
-}
-
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (tabId && changeInfo.status === 'complete' && tab.url?.startsWith('http')) {
-    await injectBuildDomTree(tabId);
+    await injectBuildDomTreeScripts(tabId);
   }
 });
 
@@ -115,6 +82,7 @@ chrome.runtime.onConnect.addListener(port => {
             logger.info('new_task execution result', message.tabId, result);
             break;
           }
+
           case 'follow_up_task': {
             if (!message.task) return port.postMessage({ type: 'error', error: 'No follow up task provided' });
             if (!message.tabId) return port.postMessage({ type: 'error', error: 'No tab ID provided' });
