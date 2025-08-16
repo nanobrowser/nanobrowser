@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { FaMicrophone } from 'react-icons/fa';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { t } from '@extension/i18n';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
@@ -94,7 +95,7 @@ export default function ChatInput({
     <form
       onSubmit={handleSubmit}
       className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
-      aria-label="Chat input form">
+      aria-label={t('accessibilityChatInputForm')}>
       <div className="flex flex-col">
         <textarea
           ref={textareaRef}
@@ -113,8 +114,8 @@ export default function ChatInput({
                 ? 'bg-slate-800 text-gray-200'
                 : 'bg-white'
           }`}
-          placeholder="What can I help you with?"
-          aria-label="Message input"
+          placeholder={t('inputPlaceholder')}
+          aria-label={t('accessibilityMessageInput')}
         />
 
         <div
@@ -128,7 +129,11 @@ export default function ChatInput({
                 onClick={onMicClick}
                 disabled={disabled || isProcessingSpeech}
                 aria-label={
-                  isProcessingSpeech ? 'Processing speech...' : isRecording ? 'Stop recording' : 'Start voice input'
+                  isProcessingSpeech
+                    ? t('voiceProcessingSpeech')
+                    : isRecording
+                      ? t('voiceStopRecording')
+                      : t('voiceStartVoiceInput')
                 }
                 className={`rounded-md p-1.5 transition-colors ${
                   disabled || isProcessingSpeech
@@ -153,7 +158,7 @@ export default function ChatInput({
               type="button"
               onClick={onStopTask}
               className="rounded-md bg-red-500 px-3 py-1 text-white transition-colors hover:bg-red-600">
-              Stop
+              {t('buttonsStop')}
             </button>
           ) : historicalSessionId ? (
             <button
@@ -162,7 +167,7 @@ export default function ChatInput({
               disabled={!historicalSessionId}
               aria-disabled={!historicalSessionId}
               className={`rounded-md bg-green-500 px-3 py-1 text-white transition-colors hover:enabled:bg-green-600 ${!historicalSessionId ? 'cursor-not-allowed opacity-50' : ''}`}>
-              Replay
+              {t('buttonsReplay')}
             </button>
           ) : (
             <button
@@ -170,7 +175,7 @@ export default function ChatInput({
               disabled={isSendButtonDisabled}
               aria-disabled={isSendButtonDisabled}
               className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:enabled:bg-[#0073DC] ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-              Send
+              {t('buttonsSend')}
             </button>
           )}
         </div>

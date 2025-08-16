@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { FaTrash } from 'react-icons/fa';
 import { BsBookmark } from 'react-icons/bs';
+import { t } from '@extension/i18n';
 
 interface ChatSession {
   id: string;
@@ -34,11 +35,13 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
 
   return (
     <div className="h-full overflow-y-auto p-4">
-      <h2 className={`mb-4 text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Chat History</h2>
+      <h2 className={`mb-4 text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        {t('historyTitle')}
+      </h2>
       {sessions.length === 0 ? (
         <div
           className={`rounded-lg ${isDarkMode ? 'bg-slate-800 text-gray-400' : 'bg-white/30 text-gray-500'} p-4 text-center backdrop-blur-sm`}>
-          No chat history available
+          {t('historyEmptyState')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -69,7 +72,7 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                       ? 'bg-slate-700 text-sky-400 hover:bg-slate-600'
                       : 'bg-white text-sky-500 hover:bg-gray-100'
                   }`}
-                  aria-label="Bookmark session"
+                  aria-label={t('accessibilityBookmarkSession')}
                   type="button">
                   <BsBookmark size={14} />
                 </button>
@@ -86,7 +89,7 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                     ? 'bg-slate-700 text-gray-400 hover:bg-slate-600'
                     : 'bg-white text-gray-500 hover:bg-gray-100'
                 }`}
-                aria-label="Delete session"
+                aria-label={t('accessibilityDeleteSession')}
                 type="button">
                 <FaTrash size={14} />
               </button>

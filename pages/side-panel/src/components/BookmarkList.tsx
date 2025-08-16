@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useState, useRef, useEffect } from 'react';
 import { FaTrash, FaPen, FaCheck, FaTimes } from 'react-icons/fa';
+import { t } from '@extension/i18n';
 
 interface Bookmark {
   id: number;
@@ -81,7 +82,9 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
 
   return (
     <div className="p-2">
-      <h3 className={`mb-3 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Quick Start</h3>
+      <h3 className={`mb-3 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+        {t('bookmarksTitle')}
+      </h3>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {bookmarks.map(bookmark => (
           <div
@@ -112,7 +115,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
                       ? 'bg-slate-700 text-green-400 hover:bg-slate-600'
                       : 'bg-white text-green-500 hover:bg-gray-100'
                   }`}
-                  aria-label="Save edit"
+                  aria-label={t('accessibilitySaveEdit')}
                   type="button">
                   <FaCheck size={14} />
                 </button>
@@ -123,7 +126,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
                       ? 'bg-slate-700 text-red-400 hover:bg-slate-600'
                       : 'bg-white text-red-500 hover:bg-gray-100'
                   }`}
-                  aria-label="Cancel edit"
+                  aria-label={t('accessibilityCancelEdit')}
                   type="button">
                   <FaTimes size={14} />
                 </button>
@@ -162,7 +165,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
                       ? 'bg-slate-700 text-sky-400 hover:bg-slate-600'
                       : 'bg-white text-sky-500 hover:bg-gray-100'
                   }`}
-                  aria-label="Edit bookmark"
+                  aria-label={t('accessibilityEditBookmark')}
                   type="button">
                   <FaPen size={14} />
                 </button>
@@ -180,7 +183,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
                       ? 'bg-slate-700 text-gray-400 hover:bg-slate-600'
                       : 'bg-white text-gray-500 hover:bg-gray-100'
                   }`}
-                  aria-label="Delete bookmark"
+                  aria-label={t('accessibilityDeleteBookmark')}
                   type="button">
                   <FaTrash size={14} />
                 </button>

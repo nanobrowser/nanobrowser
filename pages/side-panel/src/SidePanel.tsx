@@ -6,6 +6,7 @@ import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
 import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
+import { t } from '@extension/i18n';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
@@ -125,11 +126,11 @@ const SidePanel = () => {
 
   const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
     // Don't save progress messages
-    const isProgressMessage = newMessage.content === 'Showing progress...';
+    const isProgressMessage = newMessage.content === t('progressShowing');
 
     setMessages(prev => {
       const filteredMessages = prev.filter(
-        (msg, idx) => !(msg.content === 'Showing progress...' && idx === prev.length - 1),
+        (msg, idx) => !(msg.content === t('progressShowing') && idx === prev.length - 1),
       );
       return [...filteredMessages, newMessage];
     });
@@ -275,7 +276,7 @@ const SidePanel = () => {
       if (displayProgress) {
         appendMessage({
           actor,
-          content: 'Showing progress...',
+          content: t('progressShowing'),
           timestamp: timestamp,
         });
       }
@@ -314,7 +315,7 @@ const SidePanel = () => {
           // Handle error messages from service worker
           appendMessage({
             actor: Actors.SYSTEM,
-            content: message.error || 'Unknown error occurred',
+            content: message.error || t('errorsUnknownError'),
             timestamp: Date.now(),
           });
           setInputEnabled(true);
@@ -329,7 +330,7 @@ const SidePanel = () => {
           // Handle speech-to-text error
           appendMessage({
             actor: Actors.SYSTEM,
-            content: message.error || 'Speech recognition failed',
+            content: message.error || t('errorsSpeechRecognitionFailed'),
             timestamp: Date.now(),
           });
           setIsProcessingSpeech(false);
@@ -371,7 +372,7 @@ const SidePanel = () => {
       console.error('Failed to establish connection:', error);
       appendMessage({
         actor: Actors.SYSTEM,
-        content: 'Failed to connect to service worker',
+        content: t('errorsServiceWorkerConnectionFailed'),
         timestamp: Date.now(),
       });
       // Clear any references since connection failed
@@ -404,8 +405,7 @@ const SidePanel = () => {
       if (!replayEnabled) {
         appendMessage({
           actor: Actors.SYSTEM,
-          content:
-            'Replay is disabled in general settings. Please enable "Replay Historical Tasks" in the extension settings to use this feature.',
+          content: t('replayDisabledMessage'),
           timestamp: Date.now(),
         });
         return;
@@ -416,7 +416,7 @@ const SidePanel = () => {
       if (!historyData) {
         appendMessage({
           actor: Actors.SYSTEM,
-          content: `No action history found for session "${historySessionId.substring(0, 20)}...". This session may not contain replayable actions. \n\nIt's a replay session itself (replay sessions cannot be replayed again), or it was created before the replay feature was available.`,
+          content: t('replayNoHistoryMessage', historySessionId.substring(0, 20)),
           timestamp: Date.now(),
         });
         return;
@@ -476,7 +476,7 @@ const SidePanel = () => {
 
       appendMessage({
         actor: Actors.SYSTEM,
-        content: `Starting replay of task:\n\n"${historyData.task}"`,
+        content: t('replayStartingMessage', historyData.task),
         timestamp: Date.now(),
       });
       setIsReplaying(true);
@@ -484,7 +484,7 @@ const SidePanel = () => {
       const errorMessage = err instanceof Error ? err.message : String(err);
       appendMessage({
         actor: Actors.SYSTEM,
-        content: `Replay failed: ${errorMessage}`,
+        content: t('replayFailedMessage', errorMessage),
         timestamp: Date.now(),
       });
     }
@@ -520,7 +520,7 @@ const SidePanel = () => {
         if (parts.length !== 2) {
           appendMessage({
             actor: Actors.SYSTEM,
-            content: 'Invalid replay command format. Usage: /replay <historySessionId>',
+            content: t('commandsInvalidFormat'),
             timestamp: Date.now(),
           });
           return true;
@@ -534,7 +534,7 @@ const SidePanel = () => {
       // Unsupported command
       appendMessage({
         actor: Actors.SYSTEM,
-        content: `Unsupported command: ${command}. \n\nAvailable commands: /state, /nohighlight, /replay <historySessionId>`,
+        content: t('commandsUnsupportedCommand', command),
         timestamp: Date.now(),
       });
       return true;
@@ -856,7 +856,7 @@ const SidePanel = () => {
       if (permissionStatus.state === 'denied') {
         appendMessage({
           actor: Actors.SYSTEM,
-          content: 'Microphone access denied. Please enable microphone permissions in Chrome settings.',
+          content: t('microphonePermissionDenied'),
           timestamp: Date.now(),
         });
         return;
@@ -950,7 +950,7 @@ const SidePanel = () => {
               console.error('Failed to send audio for speech-to-text:', error);
               appendMessage({
                 actor: Actors.SYSTEM,
-                content: 'Failed to process speech recording',
+                content: t('speechProcessingFailed'),
                 timestamp: Date.now(),
               });
               setIsRecording(false);
@@ -978,12 +978,12 @@ const SidePanel = () => {
     } catch (error) {
       console.error('Error accessing microphone:', error);
 
-      let errorMessage = 'Failed to access microphone. ';
+      let errorMessage = t('microphoneAccessFailed');
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          errorMessage += 'Please grant microphone permission.';
+          errorMessage += t('microphoneGrantPermission');
         } else if (error.name === 'NotFoundError') {
-          errorMessage += 'No microphone found.';
+          errorMessage += t('microphoneNotFound');
         } else {
           errorMessage += error.message;
         }
@@ -1009,8 +1009,8 @@ const SidePanel = () => {
                 type="button"
                 onClick={() => handleBackToChat(false)}
                 className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
-                aria-label="Back to chat">
-                ← Back
+                aria-label={t('accessibilityBackToChat')}>
+                {t('navigationBack')}
               </button>
             ) : (
               <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
@@ -1024,7 +1024,7 @@ const SidePanel = () => {
                   onClick={handleNewChat}
                   onKeyDown={e => e.key === 'Enter' && handleNewChat()}
                   className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
-                  aria-label="New Chat"
+                  aria-label={t('accessibilityNewChat')}
                   tabIndex={0}>
                   <PiPlusBold size={20} />
                 </button>
@@ -1033,7 +1033,7 @@ const SidePanel = () => {
                   onClick={handleLoadHistory}
                   onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
                   className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
-                  aria-label="Load History"
+                  aria-label={t('accessibilityLoadHistory')}
                   tabIndex={0}>
                   <GrHistory size={20} />
                 </button>
@@ -1051,7 +1051,7 @@ const SidePanel = () => {
               onClick={() => chrome.runtime.openOptionsPage()}
               onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
               className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
-              aria-label="Settings"
+              aria-label={t('accessibilitySettings')}
               tabIndex={0}>
               <FiSettings size={20} />
             </button>
@@ -1076,7 +1076,7 @@ const SidePanel = () => {
                 className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
                 <div className="text-center">
                   <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent"></div>
-                  <p>Checking configuration...</p>
+                  <p>{t('statusCheckingConfiguration')}</p>
                 </div>
               </div>
             )}
@@ -1088,15 +1088,15 @@ const SidePanel = () => {
                 <div className="max-w-md text-center">
                   <img src="/icon-128.png" alt="Nanobrowser Logo" className="mx-auto mb-4 size-12" />
                   <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-sky-200' : 'text-sky-700'}`}>
-                    Welcome to Nanobrowser!
+                    {t('welcomeTitle')}
                   </h3>
-                  <p className="mb-4">To get started, please configure your API keys in the settings page.</p>
+                  <p className="mb-4">{t('welcomeSetupInstruction')}</p>
                   <button
                     onClick={() => chrome.runtime.openOptionsPage()}
                     className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${
                       isDarkMode ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-sky-500 text-white hover:bg-sky-600'
                     }`}>
-                    Open Settings
+                    {t('buttonsOpenSettings')}
                   </button>
                   <div className="mt-4 text-sm opacity-75">
                     <a
@@ -1104,7 +1104,7 @@ const SidePanel = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
-                      Quick Start Guide
+                      {t('linksQuickStartGuide')}
                     </a>
                     <span className="mx-2">•</span>
                     <a
@@ -1112,7 +1112,7 @@ const SidePanel = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
-                      Join Our Community
+                      {t('linksJoinCommunity')}
                     </a>
                   </div>
                 </div>

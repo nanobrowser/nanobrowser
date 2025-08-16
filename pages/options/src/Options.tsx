@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import '@src/Options.css';
 import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
+import { t } from '@extension/i18n';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
@@ -9,10 +10,10 @@ import { FirewallSettings } from './components/FirewallSettings';
 type TabTypes = 'general' | 'models' | 'firewall' | 'help';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
-  { id: 'general', icon: '⚙️', label: 'General' },
-  { id: 'models', icon: '📊', label: 'Models' },
-  { id: 'firewall', icon: '🔒', label: 'Firewall' },
-  { id: 'help', icon: '📚', label: 'Help' },
+  { id: 'general', icon: '⚙️', label: t('tabsGeneral') },
+  { id: 'models', icon: '📊', label: t('tabsModels') },
+  { id: 'firewall', icon: '🔒', label: t('tabsFirewall') },
+  { id: 'help', icon: '📚', label: t('tabsHelp') },
 ];
 
 const Options = () => {
@@ -60,7 +61,9 @@ const Options = () => {
       <nav
         className={`w-48 border-r ${isDarkMode ? 'border-slate-700 bg-slate-800/80' : 'border-white/20 bg-[#0EA5E9]/10'} backdrop-blur-sm`}>
         <div className="p-4">
-          <h1 className={`mb-6 text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Settings</h1>
+          <h1 className={`mb-6 text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+            {t('settingsTitle')}
+          </h1>
           <ul className="space-y-2">
             {TABS.map(item => (
               <li key={item.id}>
