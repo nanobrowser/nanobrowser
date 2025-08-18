@@ -1,0 +1,4 @@
+{
+  "serverUrl": "http://localhost:3000/nano_instructions.json",
+  "pollingInterval": 5000
+}

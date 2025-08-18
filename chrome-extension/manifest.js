@@ -49,52 +49,60 @@ function withOperaSidebar(manifest) {
  * After changing, please reload the extension at `chrome://extensions`
  * @type {chrome.runtime.ManifestV3}
  */
-const manifest = withOperaSidebar(
-  withSidePanel({
-    manifest_version: 3,
-    default_locale: 'en',
-    /**
-     * if you want to support multiple languages, you can use the following reference
-     * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Internationalization
-     */
-    name: '__MSG_extensionName__',
-    version: packageJson.version,
-    description: '__MSG_extensionDescription__',
-    host_permissions: ['<all_urls>'],
-    permissions: ['storage', 'scripting', 'tabs', 'activeTab', 'debugger', 'unlimitedStorage', 'webNavigation'],
-    options_page: 'options/index.html',
-    background: {
-      service_worker: 'background.iife.js',
-      type: 'module',
+const manifest = withOperaSidebar({
+  manifest_version: 3,
+  default_locale: 'en',
+  /**
+   * if you want to support multiple languages, you can use the following reference
+   * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Internationalization
+   */
+  name: '__MSG_extensionName__',
+  version: packageJson.version,
+  description: '__MSG_extensionDescription__',
+  host_permissions: ['<all_urls>', 'http://localhost:3000/*'],
+  permissions: [
+    'storage',
+    'scripting',
+    'tabs',
+    'activeTab',
+    'debugger',
+    'unlimitedStorage',
+    'webNavigation',
+    // 'sidePanel', // Permission for side panel is not needed anymore
+  ],
+  options_page: 'options/index.html',
+  background: {
+    service_worker: 'background.iife.js',
+    type: 'module',
+  },
+  action: {
+    default_icon: 'icon-32.png',
+  },
+  icons: {
+    128: 'icon-128.png',
+  },
+  content_scripts: [
+    {
+      matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+      all_frames: true,
+      js: ['content/index.iife.js'],
     },
-    action: {
-      default_icon: 'icon-32.png',
+  ],
+  web_accessible_resources: [
+    {
+      resources: [
+        '*.js',
+        '*.css',
+        '*.svg',
+        'icon-128.png',
+        'icon-32.png',
+        'permission/index.html',
+        'permission/permission.js',
+        'config.json', // Add config.json to web accessible resources
+      ],
+      matches: ['*://*/*'],
     },
-    icons: {
-      128: 'icon-128.png',
-    },
-    content_scripts: [
-      {
-        matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-        all_frames: true,
-        js: ['content/index.iife.js'],
-      },
-    ],
-    web_accessible_resources: [
-      {
-        resources: [
-          '*.js',
-          '*.css',
-          '*.svg',
-          'icon-128.png',
-          'icon-32.png',
-          'permission/index.html',
-          'permission/permission.js',
-        ],
-        matches: ['*://*/*'],
-      },
-    ],
-  }),
-);
+  ],
+});
 
 export default manifest;
