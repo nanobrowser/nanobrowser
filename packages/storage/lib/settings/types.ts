@@ -24,7 +24,7 @@ export enum ProviderTypeEnum {
 
 // Default supported models for each built-in provider
 export const llmProviderModelNames = {
-  [ProviderTypeEnum.OpenAI]: ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4o', 'gpt-4o-mini'],
+  [ProviderTypeEnum.OpenAI]: ['gpt-5', 'gpt-5-mini', 'gpt-5-chat-latest', 'gpt-4.1', 'gpt-4o', 'gpt-4o-mini'],
   [ProviderTypeEnum.Anthropic]: [
     'claude-opus-4-1',
     'claude-sonnet-4-0',
