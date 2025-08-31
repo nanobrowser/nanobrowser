@@ -373,6 +373,15 @@
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "Ollama 基礎 URL"
   },
+  "options_models_providers_placeholders_baseUrl_qwen": {
+    "message": "Qwen API 基礎 URL (預設為 https://dashscope.aliyuncs.com/compatible-mode/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_qwen_code": {
+    "message": "Qwen Code API 基礎 URL (預設為 https://api.qwen.com/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_claude_code": {
+    "message": "Claude Code API 基礎 URL (預設為 https://api.anthropic.com/v1)"
+  },
   "options_models_providers_placeholders_azureDeployment": {
     "message": "請輸入 Azure 模型的部署名稱 (例如 gpt-4o, gpt-4o-mini)"
   },

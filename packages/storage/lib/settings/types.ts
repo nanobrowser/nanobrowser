@@ -19,6 +19,9 @@ export enum ProviderTypeEnum {
   Groq = 'groq',
   Cerebras = 'cerebras',
   Llama = 'llama',
+  Qwen = 'qwen',
+  QwenCode = 'qwen_code',
+  ClaudeCode = 'claude_code',
   CustomOpenAI = 'custom_openai',
 }
 
@@ -49,6 +52,30 @@ export const llmProviderModelNames = {
     'Llama-3.3-8B-Instruct',
     'Llama-4-Maverick-17B-128E-Instruct-FP8',
     'Llama-4-Scout-17B-16E-Instruct-FP8',
+  ],
+  [ProviderTypeEnum.Qwen]: [
+    'qwen-max',
+    'qwen-plus',
+    'qwen-turbo',
+    'qwen2.5-72b-instruct',
+    'qwen2.5-32b-instruct',
+    'qwen2.5-14b-instruct',
+    'qwen2.5-7b-instruct',
+  ],
+  [ProviderTypeEnum.QwenCode]: [
+    'qwen2.5-coder-32b-instruct',
+    'qwen2.5-coder-14b-instruct',
+    'qwen2.5-coder-7b-instruct',
+    'qwen2.5-coder-1.5b-instruct',
+    'qwen-coder-turbo',
+    'qwen-coder-plus',
+  ],
+  [ProviderTypeEnum.ClaudeCode]: [
+    'claude-3-5-sonnet-20241022',
+    'claude-3-5-haiku-20241022',
+    'claude-3-opus-20240229',
+    'claude-3-sonnet-20240229',
+    'claude-3-haiku-20240307',
   ],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
@@ -153,6 +180,36 @@ export const llmProviderParameters = {
     [AgentNameEnum.Navigator]: {
       temperature: 0.3,
       topP: 0.85,
+    },
+  },
+  [ProviderTypeEnum.Qwen]: {
+    [AgentNameEnum.Planner]: {
+      temperature: 0.7,
+      topP: 0.8,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.3,
+      topP: 0.7,
+    },
+  },
+  [ProviderTypeEnum.QwenCode]: {
+    [AgentNameEnum.Planner]: {
+      temperature: 0.5,
+      topP: 0.8,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.2,
+      topP: 0.7,
+    },
+  },
+  [ProviderTypeEnum.ClaudeCode]: {
+    [AgentNameEnum.Planner]: {
+      temperature: 0.3,
+      topP: 0.6,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.2,
+      topP: 0.5,
     },
   },
 };

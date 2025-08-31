@@ -378,6 +378,15 @@
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "Ollama base URL"
   },
+  "options_models_providers_placeholders_baseUrl_qwen": {
+    "message": "Qwen API Base URL (defaults to https://dashscope.aliyuncs.com/compatible-mode/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_qwen_code": {
+    "message": "Qwen Code API Base URL (defaults to https://api.qwen.com/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_claude_code": {
+    "message": "Claude Code API Base URL (defaults to https://api.anthropic.com/v1)"
+  },
   "options_models_providers_placeholders_azureDeployment": {
     "message": "Enter Azure model name (e.g. gpt-4o, gpt-4o-mini)"
   },
