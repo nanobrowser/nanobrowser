@@ -1309,12 +1309,15 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         </div>
                       )}
 
-                    {/* Base URL input (for custom_openai, ollama, azure_openai, openrouter, and llama) */}
+                    {/* Base URL input (for custom_openai, ollama, azure_openai, openrouter, llama, qwen, qwen_code, and claude_code) */}
                     {(providerConfig.type === ProviderTypeEnum.CustomOpenAI ||
                       providerConfig.type === ProviderTypeEnum.Ollama ||
                       providerConfig.type === ProviderTypeEnum.AzureOpenAI ||
                       providerConfig.type === ProviderTypeEnum.OpenRouter ||
-                      providerConfig.type === ProviderTypeEnum.Llama) && (
+                      providerConfig.type === ProviderTypeEnum.Llama ||
+                      providerConfig.type === ProviderTypeEnum.Qwen ||
+                      providerConfig.type === ProviderTypeEnum.QwenCode ||
+                      providerConfig.type === ProviderTypeEnum.ClaudeCode) && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
                           <label
@@ -1343,7 +1346,13 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                                     ? t('options_models_providers_placeholders_baseUrl_openrouter')
                                     : providerConfig.type === ProviderTypeEnum.Llama
                                       ? t('options_models_providers_placeholders_baseUrl_llama')
-                                      : t('options_models_providers_placeholders_baseUrl_ollama')
+                                      : providerConfig.type === ProviderTypeEnum.Qwen
+                                        ? t('options_models_providers_placeholders_baseUrl_qwen')
+                                        : providerConfig.type === ProviderTypeEnum.QwenCode
+                                          ? t('options_models_providers_placeholders_baseUrl_qwen_code')
+                                          : providerConfig.type === ProviderTypeEnum.ClaudeCode
+                                            ? t('options_models_providers_placeholders_baseUrl_claude_code')
+                                            : t('options_models_providers_placeholders_baseUrl_ollama')
                             }
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}

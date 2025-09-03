@@ -375,6 +375,35 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
 
       return new ChatLlama(args);
     }
+    case ProviderTypeEnum.Qwen:
+    case ProviderTypeEnum.QwenCode: {
+      // Qwen uses OpenAI-compatible API
+      return createOpenAIChatModel(providerConfig, modelConfig, undefined);
+    }
+    case ProviderTypeEnum.ClaudeCode: {
+      // Claude Code uses Anthropic API with custom base URL
+      const args = isAnthropicOpusModel(modelConfig.modelName)
+        ? {
+            model: modelConfig.modelName,
+            apiKey: providerConfig.apiKey,
+            maxTokens,
+            temperature,
+            clientOptions: {
+              baseURL: providerConfig.baseUrl || 'https://api.anthropic.com/v1',
+            },
+          }
+        : {
+            model: modelConfig.modelName,
+            apiKey: providerConfig.apiKey,
+            maxTokens,
+            temperature,
+            topP,
+            clientOptions: {
+              baseURL: providerConfig.baseUrl || 'https://api.anthropic.com/v1',
+            },
+          };
+      return new ChatAnthropic(args);
+    }
     default: {
       // by default, we think it's a openai-compatible provider
       // Pass undefined for extraFetchOptions for default/custom cases

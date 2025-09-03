@@ -65,6 +65,10 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.OpenRouter:
     case ProviderTypeEnum.Groq:
     case ProviderTypeEnum.Cerebras:
+    case ProviderTypeEnum.Llama:
+    case ProviderTypeEnum.Qwen:
+    case ProviderTypeEnum.QwenCode:
+    case ProviderTypeEnum.ClaudeCode:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -97,6 +101,12 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Cerebras';
     case ProviderTypeEnum.Llama:
       return 'Llama';
+    case ProviderTypeEnum.Qwen:
+      return 'Qwen';
+    case ProviderTypeEnum.QwenCode:
+      return 'Qwen Code';
+    case ProviderTypeEnum.ClaudeCode:
+      return 'Claude Code';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
@@ -114,6 +124,9 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
     case ProviderTypeEnum.Groq: // Groq uses modelNames
     case ProviderTypeEnum.Cerebras: // Cerebras uses modelNames
     case ProviderTypeEnum.Llama: // Llama uses modelNames
+    case ProviderTypeEnum.Qwen: // Qwen uses modelNames
+    case ProviderTypeEnum.QwenCode: // QwenCode uses modelNames
+    case ProviderTypeEnum.ClaudeCode: // ClaudeCode uses modelNames
       return {
         apiKey: '',
         name: getDefaultDisplayNameFromProviderId(providerId),
@@ -123,7 +136,13 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
             ? 'https://openrouter.ai/api/v1'
             : providerId === ProviderTypeEnum.Llama
               ? 'https://api.llama.com/v1'
-              : undefined,
+              : providerId === ProviderTypeEnum.Qwen
+                ? 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+                : providerId === ProviderTypeEnum.QwenCode
+                  ? 'https://api.qwen.com/v1'
+                  : providerId === ProviderTypeEnum.ClaudeCode
+                    ? 'https://api.anthropic.com/v1'
+                    : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
         createdAt: Date.now(),
       };
