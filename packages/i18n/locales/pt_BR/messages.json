@@ -1,0 +1,980 @@
+{
+  "app_metadata_description": {
+    "description": "Descrição da extensão",
+    "message": "Automatize tarefas da web com IA! NanoBrowser é uma extensão de código aberto para o Chrome que permite extrair dados, preencher formulários e muito mais."
+  },
+  "app_metadata_name": {
+    "description": "Nome da extensão",
+    "message": "Nanobrowser: Agente Web de IA e Automação"
+  },
+  "errors_unknown": {
+    "message": "Ocorreu um erro desconhecido"
+  },
+  "errors_conn_serviceWorker": {
+    "message": "Falha ao conectar ao service worker"
+  },
+  "errors_cmd_unknown": {
+    "message": "Comando não suportado: $COMMAND$.\n\nComandos disponíveis: /state, /nohighlight, /replay <historySessionId>",
+    "placeholders": {
+      "command": {
+        "content": "$1",
+        "example": "/desconhecido"
+      }
+    }
+  },
+  "nav_newChat_a11y": {
+    "message": "Novo Chat"
+  },
+  "nav_loadHistory_a11y": {
+    "message": "Carregar Histórico"
+  },
+  "nav_settings_a11y": {
+    "message": "Configurações"
+  },
+  "nav_back": {
+    "message": "← Voltar"
+  },
+  "nav_back_a11y": {
+    "message": "Voltar para o chat"
+  },
+  "welcome_title": {
+    "message": "Bem-vindo ao Nanobrowser!"
+  },
+  "welcome_instruction": {
+    "message": "Para começar, por favor, configure suas chaves de API na página de configurações."
+  },
+  "welcome_openSettings": {
+    "message": "Abrir Configurações"
+  },
+  "welcome_quickStart": {
+    "message": "Guia de Início Rápido"
+  },
+  "welcome_joinCommunity": {
+    "message": "Junte-se à Nossa Comunidade"
+  },
+  "status_checkingConfig": {
+    "message": "Verificando configuração..."
+  },
+  "chat_buttons_stop": {
+    "message": "Parar"
+  },
+  "chat_buttons_replay": {
+    "message": "Repetir"
+  },
+  "chat_buttons_send": {
+    "message": "Enviar"
+  },
+  "chat_input_placeholder": {
+    "message": "Como posso ajudar?"
+  },
+  "chat_input_form": {
+    "message": "Formulário de entrada de chat"
+  },
+  "chat_input_editor": {
+    "message": "Entrada de mensagem"
+  },
+  "chat_history_title": {
+    "message": "Histórico de Chat"
+  },
+  "chat_history_empty": {
+    "message": "Nenhum histórico de chat disponível"
+  },
+  "chat_history_bookmark": {
+    "message": "Marcar sessão como favorita"
+  },
+  "chat_history_delete": {
+    "message": "Deletar sessão"
+  },
+  "chat_bookmarks_header": {
+    "message": "Início Rápido"
+  },
+  "chat_bookmarks_saveEdit": {
+    "message": "Salvar alterações"
+  },
+  "chat_bookmarks_cancelEdit": {
+    "message": "Cancelar alterações"
+  },
+  "chat_bookmarks_edit": {
+    "message": "Editar título do favorito"
+  },
+  "chat_bookmarks_delete": {
+    "message": "Deletar favorito"
+  },
+  "chat_replay_starting": {
+    "message": "Iniciando repetição da tarefa:\n\n\"$TASK$\"",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Navegar para example.com"
+      }
+    }
+  },
+  "chat_replay_failed": {
+    "message": "Repetição falhou: $ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Tempo de conexão esgotado"
+      }
+    }
+  },
+  "chat_replay_invalidArgs": {
+    "message": "Argumentos inválidos. Por favor, use o formato: /replay <historySessionId>"
+  },
+  "chat_replay_disabled": {
+    "message": "A repetição está desativada nas configurações gerais. Por favor, ative \"Repetir Tarefas Históricas\" nas configurações da extensão para usar este recurso."
+  },
+  "chat_replay_noHistory": {
+    "message": "Nenhum histórico de ação encontrado para a sessão \"$SESSION_ID$தல்.\n\nÉ uma sessão de repetição (sessões de repetição não podem ser repetidas novamente), ou foi criada antes do recurso de repetição estar disponível.",
+    "placeholders": {
+      "session_id": {
+        "content": "$1",
+        "example": "abc123def456789"
+      }
+    }
+  },
+  "chat_stt_processing": {
+    "message": "Processando fala..."
+  },
+  "chat_stt_recording_stop": {
+    "message": "Parar gravação"
+  },
+  "chat_stt_input_start": {
+    "message": "Iniciar entrada de voz"
+  },
+  "chat_stt_processingFailed": {
+    "message": "Falha ao processar gravação de fala"
+  },
+  "chat_stt_model_notFound": {
+    "message": "Nenhum modelo de conversão de fala para texto configurado ou não é um modelo Gemini. Por favor, configure um modelo Gemini nas configurações."
+  },
+  "chat_stt_recognitionFailed": {
+    "message": "Reconhecimento de fala falhou"
+  },
+  "chat_stt_microphone_permissionDenied": {
+    "message": "Acesso ao microfone negado. Por favor, ative as permissões de microfone nas configurações do Chrome."
+  },
+  "chat_stt_microphone_accessFailed": {
+    "message": "Falha ao acessar o microfone. "
+  },
+  "chat_stt_microphone_grantPermission": {
+    "message": "Por favor, conceda permissão ao microfone."
+  },
+  "chat_stt_microphone_notFound": {
+    "message": "Nenhum microfone encontrado."
+  },
+  "permissions_microphone_title": {
+    "message": "Ativar Entrada de Voz"
+  },
+  "permissions_microphone_description": {
+    "message": "O Nanobrowser precisa de acesso ao microfone para converter sua fala em texto."
+  },
+  "permissions_microphone_grantButton": {
+    "message": "Conceder Permissão ao Microfone"
+  },
+  "permissions_microphone_requesting": {
+    "message": "Solicitando permissão de microfone..."
+  },
+  "permissions_microphone_grantedSuccess": {
+    "message": "✅ Permissão de microfone concedida! Agora você pode usar a entrada de voz."
+  },
+  "permissions_microphone_grantedButton": {
+    "message": "Permissão Concedida"
+  },
+  "permissions_microphone_denied": {
+    "message": "Permissão negada. "
+  },
+  "permissions_microphone_allowHelp": {
+    "message": "Por favor, clique em \"Permitir\" quando solicitado o acesso ao microfone."
+  },
+  "permissions_microphone_notFound": {
+    "message": "Nenhum microfone encontrado. Por favor, verifique seus dispositivos de áudio."
+  },
+  "permissions_microphone_alreadyGranted": {
+    "message": "✅ Permissão de microfone já concedida!"
+  },
+  "permissions_microphone_alreadyGrantedButton": {
+    "message": "Permissão Já Concedida"
+  },
+  "options_nav_header": {
+    "message": "Configurações"
+  },
+  "options_tabs_general": {
+    "message": "Geral"
+  },
+  "options_tabs_models": {
+    "message": "Modelos"
+  },
+  "options_tabs_firewall": {
+    "message": "Firewall"
+  },
+  "options_tabs_help": {
+    "message": "Ajuda"
+  },
+  "options_general_header": {
+    "message": "Geral"
+  },
+  "options_general_maxSteps": {
+    "message": "Máximo de Passos por Tarefa"
+  },
+  "options_general_maxSteps_desc": {
+    "message": "Limite de passos por tarefa"
+  },
+  "options_general_maxActions": {
+    "message": "Máximo de Ações por Passo"
+  },
+  "options_general_maxActions_desc": {
+    "message": "Limite de ações por passo"
+  },
+  "options_general_maxFailures": {
+    "message": "Tolerância a Falhas"
+  },
+  "options_general_maxFailures_desc": {
+    "message": "Quantas falhas consecutivas antes de parar"
+  },
+  "options_general_enableVision": {
+    "message": "Ativar Visão"
+  },
+  "options_general_enableVision_desc": {
+    "message": "Usar capacidade de visão dos LLMs (consome mais tokens para melhores resultados)"
+  },
+  "options_general_displayHighlights": {
+    "message": "Exibir Destaques"
+  },
+  "options_general_displayHighlights_desc": {
+    "message": "Mostrar destaques visuais em elementos interativos (ex: botões, links, etc.)"
+  },
+  "options_general_planningInterval": {
+    "message": "Frequência de Replanejamento"
+  },
+  "options_general_planningInterval_desc": {
+    "message": "Reconsiderar e atualizar o plano a cada [Número] passos"
+  },
+  "options_general_minWaitPageLoad": {
+    "message": "Tempo de Espera de Carregamento da Página"
+  },
+  "options_general_minWaitPageLoad_desc": {
+    "message": "Tempo mínimo de espera após o carregamento da página (250-5000ms)"
+  },
+  "options_general_replayHistoricalTasks": {
+    "message": "Repetir Tarefas Históricas (experimental)"
+  },
+  "options_general_replayHistoricalTasks_desc": {
+    "message": "Ativar o armazenamento e a repetição do histórico de passos do agente (experimental, pode ter problemas)"
+  },
+  "options_general_language": {
+    "message": "Idioma"
+  },
+  "options_general_language_desc": {
+    "message": "Selecione o idioma de exibição da interface"
+  },
+  "options_general_language_reload_message": {
+    "message": "Por favor, recarregue a extensão para que a mudança de idioma tenha efeito."
+  },
+
+  "options_models_providers_header": {
+    "message": "Provedores de LLM"
+  },
+  "options_models_providers_notConfigured": {
+    "message": "Nenhum provedor configurado ainda. Adicione um provedor para começar."
+  },
+  "options_models_providers_btnCancel": {
+    "message": "Cancelar"
+  },
+  "options_models_providers_btnSave": {
+    "message": "Salvar"
+  },
+  "options_models_providers_btnDelete": {
+    "message": "Deletar"
+  },
+  "options_models_providers_setupInstructions": {
+    "message": "Insira sua chave de API e clique em Salvar para configurá-la."
+  },
+  "options_models_providers_custom_name": {
+    "message": "Nome"
+  },
+  "options_models_providers_custom_name_desc": {
+    "message": "Nome do provedor (espaços não são permitidos ao salvar)"
+  },
+  "options_models_providers_custom_name_placeholder": {
+    "message": "Nome do provedor"
+  },
+
+  "options_models_providers_apiKey": {
+    "message": "Chave de API"
+  },
+  "options_models_providers_apiKey_placeholder_optional": {
+    "message": "Chave de API (opcional)"
+  },
+  "options_models_providers_apiKey_placeholder_required": {
+    "message": "Chave de API (obrigatório)"
+  },
+  "options_models_providers_apiKey_placeholder_ollama": {
+    "message": "Chave de API (deixe em branco para Ollama)"
+  },
+  "options_models_providers_apiKey_hide": {
+    "message": "Ocultar chave de API"
+  },
+  "options_models_providers_apiKey_show": {
+    "message": "Mostrar chave de API"
+  },
+
+  "options_models_selection_header": {
+    "message": "Seleção de Modelo"
+  },
+  "options_models_speechToText_header": {
+    "message": "Modelo de Fala para Texto"
+  },
+
+  "options_models_agents_navigator": {
+    "message": "Navega em sites e executa ações"
+  },
+  "options_models_agents_planner": {
+    "message": "Desenvolve e refina estratégias para completar tarefas"
+  },
+
+  "options_models_labels_model": {
+    "message": "Modelo"
+  },
+  "options_models_labels_temperature": {
+    "message": "Temperatura"
+  },
+  "options_models_labels_topP": {
+    "message": "Top P"
+  },
+  "options_models_labels_reasoning": {
+    "message": "Raciocínio"
+  },
+  "options_models_stt_desc": {
+    "message": "Configure o modelo Gemini usado para converter fala em texto ao usar o recurso de microfone."
+  },
+  "options_models_chooseModel": {
+    "message": "Escolher Modelo"
+  },
+  "options_models_addNewProvider": {
+    "message": "Adicionar Novo Provedor"
+  },
+  "options_models_providers_openaiCompatible": {
+    "message": "Provedor de API compatível com OpenAI"
+  },
+  "options_models_providers_baseUrl": {
+    "message": "URL Base"
+  },
+  "options_models_providers_endpoint": {
+    "message": "Endpoint"
+  },
+  "options_models_providers_deployment": {
+    "message": "Implantação"
+  },
+  "options_models_providers_apiVersion": {
+    "message": "Versão da API"
+  },
+  "options_models_providers_models": {
+    "message": "Modelos"
+  },
+  "options_models_providers_placeholders_baseUrl_custom": {
+    "message": "Endpoint de API compatível com OpenAI obrigatório"
+  },
+  "options_models_providers_placeholders_baseUrl_azure": {
+    "message": "https://SEU_NOME_DE_RECURSO.openai.azure.com/"
+  },
+  "options_models_providers_placeholders_baseUrl_openrouter": {
+    "message": "URL Base do OpenRouter (opcional, padrão para https://openrouter.ai/api/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_llama": {
+    "message": "URL Base da API Llama (padrão para https://api.llama.com/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_ollama": {
+    "message": "URL base do Ollama"
+  },
+  "options_models_providers_placeholders_azureDeployment": {
+    "message": "Insira o nome do modelo Azure (ex: gpt-4o, gpt-4o-mini)"
+  },
+  "options_models_providers_placeholders_azureApiVersion": {
+    "message": "ex: 2024-02-15-preview"
+  },
+  "options_models_providers_deployment_desc": {
+    "message": "Digite o nome do modelo e pressione Enter ou Espaço para definir. O nome da implantação deve corresponder ao nome do modelo OpenAI (ex: gpt-4o) para melhor compatibilidade."
+  },
+  "options_models_providers_models_instructions": {
+    "message": "Digite e pressione Enter ou Espaço para adicionar."
+  },
+  "options_models_providers_models_openrouter_empty": {
+    "message": "Nenhum modelo selecionado. Adicione nomes de modelos manualmente, se necessário."
+  },
+  "options_models_providers_ollama_reminder": {
+    "message": "a variável de ambiente DEVE ser definida para o servidor Ollama."
+  },
+  "options_models_providers_ollama_learnMore": {
+    "message": "Saiba mais"
+  },
+  "options_models_providers_errors_spacesNotAllowed": {
+    "message": "Espaços não são permitidos em nomes de provedores. Por favor, use sublinhados ou outros caracteres."
+  },
+  "options_models_providers_errors_baseUrlRequired": {
+    "message": "A URL Base é obrigatória para $PROVIDER$. Por favor, insira-a.",
+    "placeholders": {
+      "provider": {
+        "content": "$1",
+        "example": "Custom OpenAI"
+      }
+    }
+  },
+
+  "options_firewall_header": {
+    "message": "Firewall"
+  },
+  "options_firewall_enableToggle": {
+    "message": "Ativar Firewall"
+  },
+  "options_firewall_toggleFirewall_a11y": {
+    "message": "Ativar/Desativar Firewall"
+  },
+  "options_firewall_allowList_header": {
+    "message": "Lista de Permissões"
+  },
+  "options_firewall_allowList_empty": {
+    "message": "Nenhum domínio na lista de permissões. Uma lista de permissões vazia significa que todos os domínios não negados são permitidos."
+  },
+  "options_firewall_denyList_header": {
+    "message": "Lista de Negações"
+  },
+  "options_firewall_denyList_empty": {
+    "message": "Nenhum domínio na lista de negações"
+  },
+  "options_firewall_placeholders_domainUrl": {
+    "message": "Insira domínio ou URL (ex: example.com, localhost, 127.0.0.1)"
+  },
+  "options_firewall_btnAdd": {
+    "message": "Adicionar"
+  },
+  "options_firewall_btnRemove": {
+    "message": "Remover"
+  },
+  "options_firewall_howItWorks_header": {
+    "message": "Como o Firewall Funciona"
+  },
+  "options_firewall_howItWorks": {
+    "message": "O firewall contém uma lista de negações e uma lista de permissões.\nSe ambas as listas estiverem vazias, todos os URLs são permitidos\nA lista de negações tem prioridade - se um URL corresponder a qualquer entrada da lista de negações, ele será bloqueado\nQuando a lista de permissões está vazia, todos os URLs não negados são permitidos\nQuando a lista de permissões não está vazia, apenas os URLs correspondentes são permitidos\nCuringas ainda NÃO são suportados\nA lista de permissões é preferível à lista de negações"
+  },
+
+  "bg_errors_noTabId": {
+    "message": "Nenhum ID de aba fornecido"
+  },
+  "bg_errors_noTaskId": {
+    "message": "Nenhum ID de tarefa fornecido"
+  },
+  "bg_errors_noRunningTask": {
+    "message": "Nenhuma tarefa em execução"
+  },
+  "bg_cmd_newTask_noTask": {
+    "message": "Nenhuma tarefa fornecida"
+  },
+  "bg_cmd_followUpTask_noTask": {
+    "message": "Nenhuma tarefa de acompanhamento fornecida"
+  },
+  "bg_cmd_followUpTask_cleaned": {
+    "message": "O executor foi limpo, não é possível adicionar tarefa de acompanhamento"
+  },
+  "bg_cmd_resumeTask_noTask": {
+    "message": "Nenhuma tarefa para resumir"
+  },
+  "bg_cmd_state_printed": {
+    "message": "Estado impresso no console"
+  },
+  "bg_cmd_state_failed": {
+    "message": "Falha ao obter o estado"
+  },
+  "bg_cmd_nohighlight_ok": {
+    "message": "destaque removido"
+  },
+  "bg_cmd_stt_noAudioData": {
+    "message": "Nenhum dado de áudio fornecido"
+  },
+  "bg_cmd_stt_failed": {
+    "message": "Reconhecimento de fala falhou"
+  },
+  "bg_cmd_replay_noHistory": {
+    "message": "Nenhum ID de sessão de histórico fornecido"
+  },
+  "bg_cmd_replay_failed": {
+    "message": "Repetição falhou"
+  },
+  "bg_setup_noApiKeys": {
+    "message": "Por favor, configure as chaves de API nas configurações primeiro"
+  },
+  "bg_setup_noProvider": {
+    "message": "Provedor $PROVIDER$ não encontrado nas configurações",
+    "placeholders": {
+      "provider": {
+        "content": "$1",
+        "example": "openai"
+      }
+    }
+  },
+  "bg_setup_noNavigatorModel": {
+    "message": "Por favor, escolha um modelo para o navegador nas configurações primeiro"
+  },
+  "exec_errors_maxStepsReached": {
+    "message": "Máximo de passos atingido"
+  },
+  "exec_errors_maxFailuresReached": {
+    "message": "Máximo de falhas atingido"
+  },
+  "exec_task_cancel": {
+    "message": "Tarefa cancelada"
+  },
+  "exec_task_pause": {
+    "message": "Tarefa pausada"
+  },
+  "exec_task_fail": {
+    "message": "Tarefa falhou: \n\n$ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Tempo de conexão esgotado"
+      }
+    }
+  },
+  "exec_replay_cancel": {
+    "message": "Repetição cancelada"
+  },
+  "exec_replay_ok": {
+    "message": "Repetição concluída"
+  },
+  "exec_replay_fail": {
+    "message": "Repetição falhou: \n\n$ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Erro de rede"
+      }
+    }
+  },
+  "exec_replay_historyNotFound": {
+    "message": "Histórico não encontrado"
+  },
+  "exec_replay_historyEmpty": {
+    "message": "O histórico está vazio"
+  },
+
+  "act_searchGoogle_start": {
+    "message": "Procurando por \"$QUERY$\" no Google",
+    "placeholders": {
+      "query": {
+        "content": "$1",
+        "example": "clima hoje"
+      }
+    }
+  },
+  "act_searchGoogle_ok": {
+    "message": "Procurado por \"$QUERY$\" no Google",
+    "placeholders": {
+      "query": {
+        "content": "$1",
+        "example": "clima hoje"
+      }
+    }
+  },
+  "act_goToUrl_start": {
+    "message": "Navegando para $URL$",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_goToUrl_ok": {
+    "message": "Navegado para $URL$",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_goBack_start": {
+    "message": "Navegando para trás"
+  },
+  "act_goBack_ok": {
+    "message": "Navegado para trás"
+  },
+  "act_wait_start": {
+    "message": "Aguardando $SECONDS$ segundos",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_wait_ok": {
+    "message": "$SECONDS$ segundos se passaram",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_click_start": {
+    "message": "Clicar no elemento com índice $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_elementNotExist": {
+    "message": "Elemento com índice $INDEX$ não existe - tente novamente ou use ações alternativas",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_elementNoLongerAvailable": {
+    "message": "Elemento não está mais disponível com o índice $INDEX$ - muito provavelmente a página mudou",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_click_fileUploader": {
+    "message": "Índice $INDEX$ - possui um elemento que abre o diálogo de upload de arquivo. Para fazer upload de arquivos, use uma função específica para upload de arquivos",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_click_ok": {
+    "message": "Botão clicado com índice $INDEX$: $TEXT$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      },
+      "text": {
+        "content": "$2",
+        "example": "Botão de Envio"
+      }
+    }
+  },
+  "act_click_newTabOpened": {
+    "message": "Nova aba aberta - mudando para ela"
+  },
+  "act_inputText_start": {
+    "message": "Inserir texto no índice $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_inputText_ok": {
+    "message": "Inserir $TEXT$ no índice $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Olá Mundo"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_switchTab_start": {
+    "message": "Mudando para a aba $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_switchTab_ok": {
+    "message": "Mudou para a aba $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_openTab_start": {
+    "message": "Abrindo $URL$ em nova aba",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_openTab_ok": {
+    "message": "Abriu $URL$ em nova aba",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_closeTab_start": {
+    "message": "Fechando aba $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_closeTab_ok": {
+    "message": "Fechou aba $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_cache_start": {
+    "message": "Armazenando em cache os resultados: $CONTENT$",
+    "placeholders": {
+      "content": {
+        "content": "$1",
+        "example": "Preferências do usuário salvas"
+      }
+    }
+  },
+  "act_cache_ok": {
+    "message": "Resultados armazenados em cache: $CONTENT$",
+    "placeholders": {
+      "content": {
+        "content": "$1",
+        "example": "Preferências do usuário salvas"
+      }
+    }
+  },
+  "act_scrollToPercent_start": {
+    "message": "Rolar para a porcentagem: $PERCENT$",
+    "placeholders": {
+      "percent": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "act_scrollToPercent_ok": {
+    "message": "Rolado para a porcentagem: $PERCENT$",
+    "placeholders": {
+      "percent": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "act_scrollToTop_start": {
+    "message": "Rolar para o topo"
+  },
+  "act_scrollToTop_ok": {
+    "message": "Rolado para o topo"
+  },
+  "act_scrollToBottom_start": {
+    "message": "Rolar para o final"
+  },
+  "act_scrollToBottom_ok": {
+    "message": "Rolado para o final"
+  },
+  "act_previousPage_start": {
+    "message": "Rolar para a página anterior"
+  },
+  "act_previousPage_ok": {
+    "message": "Rolado para a página anterior"
+  },
+  "act_nextPage_start": {
+    "message": "Rolar para a próxima página"
+  },
+  "act_nextPage_ok": {
+    "message": "Rolado para a próxima página"
+  },
+  "act_errors_alreadyAtTop": {
+    "message": "O elemento com índice $INDEX$ já está no topo, não é possível rolar para a página anterior",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_pageAlreadyAtTop": {
+    "message": "Já está no topo da página, não é possível rolar para a página anterior"
+  },
+  "act_errors_alreadyAtBottom": {
+    "message": "O elemento com índice $INDEX$ já está no final, não é possível rolar para a próxima página",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_pageAlreadyAtBottom": {
+    "message": "Já está no final da página, não é possível rolar para a próxima página"
+  },
+  "act_scrollToText_start": {
+    "message": "Rolar para o texto: $TEXT$, ocorrência $OCCURRENCE$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Fale Conosco"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_ok": {
+    "message": "Rolado para o texto: $TEXT$, ocorrência $OCCURRENCE$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Fale Conosco"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_notFound": {
+    "message": "Texto '$TEXT$' (ocorrência $OCCURRENCE$) não encontrado ou não visível",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Fale Conosco"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_failed": {
+    "message": "Falha ao rolar para o texto: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Elemento não encontrado"
+      }
+    }
+  },
+  "act_sendKeys_start": {
+    "message": "Enviar teclas: $KEYS$",
+    "placeholders": {
+      "keys": {
+        "content": "$1",
+        "example": "Enter"
+      }
+    }
+  },
+  "act_sendKeys_ok": {
+    "message": "Teclas enviadas: $KEYS$",
+    "placeholders": {
+      "keys": {
+        "content": "$1",
+        "example": "Enter"
+      }
+    }
+  },
+  "act_getDropdownOptions_start": {
+    "message": "Obtendo opções do menu suspenso com índice $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_getDropdownOptions_useExactText": {
+    "message": "Use a string de texto exata em select_dropdown_option"
+  },
+  "act_getDropdownOptions_ok": {
+    "message": "Obtidas $COUNT$ opções do menu suspenso",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_getDropdownOptions_noOptions": {
+    "message": "Nenhuma opção encontrada no menu suspenso"
+  },
+  "act_getDropdownOptions_failed": {
+    "message": "Falha ao obter opções do menu suspenso: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Elemento não encontrado"
+      }
+    }
+  },
+  "act_selectDropdownOption_start": {
+    "message": "Selecionar opção \"$TEXT$\" do menu suspenso com índice $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Opção 1"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_selectDropdownOption_ok": {
+    "message": "Opção selecionada \"$TEXT$\" do menu suspenso com índice $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Opção 1"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_selectDropdownOption_notSelect": {
+    "message": "Não é possível selecionar a opção: O elemento com índice $INDEX$ é um $TAG_NAME$, não um SELECT",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tag_name": {
+        "content": "$2",
+        "example": "DIV"
+      }
+    }
+  },
+  "act_selectDropdownOption_failed": {
+    "message": "Falha ao selecionar a opção: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Opção não encontrada"
+      }
+    }
+  }
+}
