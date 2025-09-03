@@ -4,7 +4,6 @@ import type { BaseStorage } from '../base/types';
 
 // Interface for general settings configuration
 export interface GeneralSettingsConfig {
-  language: string;
   maxSteps: number;
   maxActionsPerStep: number;
   maxFailures: number;
@@ -24,7 +23,6 @@ export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
 
 // Default settings
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
-  language: 'en',
   maxSteps: 100,
   maxActionsPerStep: 5,
   maxFailures: 3,

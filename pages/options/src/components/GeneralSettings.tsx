@@ -8,7 +8,6 @@ interface GeneralSettingsProps {
 
 export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) => {
   const [settings, setSettings] = useState<GeneralSettingsConfig>(DEFAULT_GENERAL_SETTINGS);
-  const [showReloadMessage, setShowReloadMessage] = useState(false);
 
   useEffect(() => {
     // Load initial settings
@@ -21,10 +20,6 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
 
     // Call the store to update the setting
     await generalSettingsStore.updateSettings({ [key]: value } as Partial<GeneralSettingsConfig>);
-
-    if (key === 'language') {
-      setShowReloadMessage(true);
-    }
 
     // After the store update (which might have side effects, e.g., useVision affecting displayHighlights),
     // fetch the latest settings from the store and update the local state again to ensure UI consistency.
@@ -233,33 +228,6 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
               </label>
             </div>
           </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                {t('options_general_language')}
-              </h3>
-              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {t('options_general_language_desc')}
-              </p>
-            </div>
-            <label htmlFor="language" className="sr-only">
-              {t('options_general_language')}
-            </label>
-            <select
-              id="language"
-              value={settings.language}
-              onChange={e => updateSetting('language', e.target.value)}
-              className={`w-36 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}>
-              <option value="en">English</option>
-              <option value="pt_BR">Portuguese (Br)</option>
-            </select>
-          </div>
-          {showReloadMessage && (
-            <div className="mt-4 rounded-md bg-blue-100 p-4 text-blue-700">
-              <p>{t('options_general_language_reload_message')}</p>
-            </div>
-          )}
         </div>
       </div>
     </section>
