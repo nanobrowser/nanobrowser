@@ -61,7 +61,12 @@ const SUPPORTED_LANGUAGES = {
   zh_TW: 'Chinese (Taiwan)',
 };
 
-const locales = fs.readdirSync('locales');
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const locales = fs.readdirSync(path.join(__dirname, 'locales'));
 
 locales.forEach(locale => {
   if (!(locale in SUPPORTED_LANGUAGES)) {
@@ -84,12 +89,12 @@ export type MessageKey = ${locales.map(locale => `keyof typeof ${locale}Message`
 export type DevLocale = ${locales.map(locale => `'${locale}'`).join(' | ')};
 `;
 
-  fs.writeFileSync('lib/type.ts', typeFile);
+  fs.writeFileSync(path.join(__dirname, 'lib/type.ts'), typeFile);
 }
 
 function makeGetMessageFromLocaleFile(locales) {
   const defaultLocaleCode = `(() => {
-  const locales = ${JSON.stringify(locales).replace(/"/g, "'").replace(/,/g, ', ')};
+  const locales = ${JSON.stringify(locales).replace(/"/g, "'" ).replace(/,/g, ', ' )};
   const firstLocale = locales[0];
   const defaultLocale = Intl.DateTimeFormat().resolvedOptions().locale.replace('-', '_');
   if (locales.includes(defaultLocale)) {
@@ -123,5 +128,5 @@ ${locales
 
 export const defaultLocale = ${defaultLocaleCode};
 `;
-  fs.writeFileSync('lib/getMessageFromLocale.ts', getMessageFromLocaleFile);
+  fs.writeFileSync(path.join(__dirname, 'lib/getMessageFromLocale.ts'), getMessageFromLocaleFile);
 }

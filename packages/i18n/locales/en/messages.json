@@ -262,6 +262,15 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
   },
+  "options_general_language": {
+    "message": "Language"
+  },
+  "options_general_language_desc": {
+    "message": "Select the display language for the UI"
+  },
+  "options_general_language_reload_message": {
+    "message": "Please reload the extension for the language change to take effect."
+  },
 
   "options_models_providers_header": {
     "message": "LLM Providers"
