@@ -167,6 +167,163 @@ chrome.runtime.onConnect.addListener(port => {
             return port.postMessage({ type: 'success', msg: t('bg_cmd_nohighlight_ok') });
           }
 
+          case 'get_subjects': {
+            try {
+              const response = await fetch('https://jar-v-is.ru/api/subjects');
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const subjects = await response.json();
+              port.postMessage({ type: 'subjects_list', subjects });
+            } catch (error) {
+              logger.error('Failed to fetch subjects:', error);
+              port.postMessage({ type: 'error', error: 'Failed to fetch subjects.' });
+            }
+            break;
+          }
+
+          case 'process_page_questions': {
+            logger.info('process_page_questions received', { tabId: message.tabId, subject: message.subject });
+
+            if (!message.tabId || !message.subject) {
+              port.postMessage({ type: 'error', error: 'Missing tabId or subject for process_page_questions' });
+              break;
+            }
+
+            try {
+              const page = await browserContext.switchTab(message.tabId);
+              port.postMessage({ type: 'info', message: 'Анализирую страницу...' });
+
+              const domState = await page.getClickableElements(false, -1);
+              if (!domState || !domState.elementTree) {
+                throw new Error('Could not get DOM state from page.');
+              }
+
+              // 1. Extract all visible text from the DOM
+              const allText: string[] = [];
+              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+              function extractText(node: any) {
+                // Using 'any' for simplicity with the dynamic node structure
+                if (node.type === 'TEXT_NODE' && node.isVisible && node.text) {
+                  allText.push(node.text.trim());
+                }
+                if (node.children) {
+                  for (const child of node.children) {
+                    extractText(child);
+                  }
+                }
+              }
+              extractText(domState.elementTree);
+
+              const pageText = allText.join('\n');
+
+              // Simple heuristic to find questions from the text
+              const potentialQuestions = pageText
+                .split('\n')
+                .filter(line => line.trim().length > 15 && line.trim().endsWith('?'));
+              const questions = potentialQuestions.map(q => ({ question: q }));
+
+              if (questions.length === 0) {
+                port.postMessage({ type: 'info', message: 'Не удалось найти вопросы на странице.' });
+                // since we are done, we should re-enable the input
+                port.postMessage({ type: 'task_complete' });
+                break;
+              }
+
+              port.postMessage({ type: 'info', message: `Найдено ${questions.length} вопросов. Ищу ответы в базе данных...` });
+
+              // 2. Search for answers in the database
+              const searchResponse = await fetch('https://jar-v-is.ru/api/search-batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  subject: message.subject,
+                  questions: questions,
+                }),
+              });
+
+              if (!searchResponse.ok) {
+                throw new Error(`Database search failed with status: ${searchResponse.status}`);
+              }
+
+              const searchResult = await searchResponse.json();
+              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+              const foundAnswers: { [key: string]: any } = searchResult.found || {};
+              const unfoundQuestions: string[] = [];
+
+              // Display found answers and collect unfound questions
+              for (const q of questions) {
+                const questionText = q.question;
+                if (foundAnswers[questionText]) {
+                  const answer = foundAnswers[questionText].answer;
+                  port.postMessage({
+                    type: EventType.EXECUTION,
+                    actor: Actors.SYSTEM,
+                    state: ExecutionState.STEP_OK,
+                    data: { details: `Найден ответ в базе:\n\n**Вопрос:** ${questionText}\n**Ответ:** ${answer}` },
+                  });
+                } else {
+                  unfoundQuestions.push(questionText);
+                }
+              }
+
+              // 3. Generate answers for unfound questions
+              if (unfoundQuestions.length > 0) {
+                port.postMessage({
+                  type: 'info',
+                  message: `Генерирую ответы для ${unfoundQuestions.length} вопросов...`,
+                });
+
+                for (const questionText of unfoundQuestions) {
+                  try {
+                    const generateResponse = await fetch('https://jar-v-is.ru/api/generate', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        subject: message.subject,
+                        content: questionText,
+                      }),
+                    });
+
+                    if (!generateResponse.ok) {
+                      throw new Error(
+                        `Generation failed for question "${questionText}" with status: ${generateResponse.status}`,
+                      );
+                    }
+
+                    const generateResult = await generateResponse.json();
+                    const generatedAnswer = generateResult.response;
+
+                    port.postMessage({
+                      type: EventType.EXECUTION,
+                      actor: Actors.SYSTEM,
+                      state: ExecutionState.STEP_OK,
+                      data: {
+                        details: `Сгенерирован ответ:\n\n**Вопрос:** ${questionText}\n**Ответ:** ${generatedAnswer}`,
+                      },
+                    });
+                  } catch (genError) {
+                    logger.error(`Failed to generate answer for question: ${questionText}`, genError);
+                    port.postMessage({
+                      type: EventType.EXECUTION,
+                      actor: Actors.SYSTEM,
+                      state: ExecutionState.STEP_FAIL,
+                      data: { details: `Не удалось сгенерировать ответ для вопроса: ${questionText}` },
+                    });
+                  }
+                }
+              }
+
+              port.postMessage({ type: 'info', message: 'Обработка завершена.' });
+            } catch (error) {
+              logger.error('Failed to process page questions:', error);
+              port.postMessage({ type: 'error', error: `Ошибка при обработке страницы: ${error.message}` });
+            } finally {
+              port.postMessage({ type: 'task_complete' }); // Re-enable input
+            }
+            break;
+          }
+
           case 'speech_to_text': {
             try {
               if (!message.audio) {

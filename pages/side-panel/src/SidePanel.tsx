@@ -24,6 +24,8 @@ declare global {
 const SidePanel = () => {
   const progressMessage = 'Showing progress...';
   const [messages, setMessages] = useState<Message[]>([]);
+  const [subjectGroups, setSubjectGroups] = useState<Array<{ category: string; subjects: string[] }>>([]);
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -116,6 +118,28 @@ const SidePanel = () => {
       window.removeEventListener('focus', handleFocus);
     };
   }, [checkModelConfiguration, loadGeneralSettings]);
+
+  // Fetch subjects on mount
+  useEffect(() => {
+    // We need a connection to the background script to fetch subjects.
+    // The connection is established lazily, so we ensure it's up.
+    if (!portRef.current) {
+      setupConnection();
+    }
+
+    // A small delay might be needed to ensure the port is ready before posting a message.
+    const timer = setTimeout(() => {
+      try {
+        if (portRef.current) {
+          sendMessage({ type: 'get_subjects' });
+        }
+      } catch (e) {
+        console.error('Could not request subjects', e);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [setupConnection, sendMessage]);
 
   useEffect(() => {
     sessionIdRef.current = currentSessionId;
@@ -310,6 +334,10 @@ const SidePanel = () => {
         // Add type checking for message
         if (message && message.type === EventType.EXECUTION) {
           handleTaskState(message);
+        } else if (message && message.type === 'subjects_list') {
+          if (message.subjects) {
+            setSubjectGroups(message.subjects);
+          }
         } else if (message && message.type === 'error') {
           // Handle error messages from service worker
           appendMessage({
@@ -325,6 +353,9 @@ const SidePanel = () => {
             setInputTextRef.current(message.text);
           }
           setIsProcessingSpeech(false);
+        } else if (message && message.type === 'task_complete') {
+          setInputEnabled(true);
+          setShowStopButton(false);
         } else if (message && message.type === 'speech_to_text_error') {
           // Handle speech-to-text error
           appendMessage({
@@ -509,6 +540,40 @@ const SidePanel = () => {
         portRef.current?.postMessage({
           type: 'nohighlight',
         });
+        return true;
+      }
+
+      if (command.startsWith('/exam')) {
+        if (!selectedSubject) {
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: t('subjects_select_required', 'Пожалуйста, выберите предмет перед запуском.'),
+            timestamp: Date.now(),
+          });
+          return true;
+        }
+
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tabId = tabs[0]?.id;
+        if (!tabId) {
+          throw new Error('No active tab found');
+        }
+
+        // We have a subject, so let's process the page
+        setInputEnabled(false);
+        setShowStopButton(true);
+
+        // Setup connection if not exists
+        if (!portRef.current) {
+          setupConnection();
+        }
+
+        await sendMessage({
+          type: 'process_page_questions',
+          subject: selectedSubject,
+          tabId: tabId,
+        });
+
         return true;
       }
 
@@ -1056,6 +1121,31 @@ const SidePanel = () => {
             </button>
           </div>
         </header>
+        {/* Subject Selector */}
+        {!showHistory && hasConfiguredModels && (
+          <div className={`p-2 border-b ${isDarkMode ? 'border-sky-900' : 'border-sky-100'}`}>
+            <select
+              value={selectedSubject}
+              onChange={e => setSelectedSubject(e.target.value)}
+              className={`w-full p-2 rounded-md text-sm ${
+                isDarkMode
+                  ? 'bg-slate-800 text-white border border-slate-700 focus:ring-sky-500 focus:border-sky-500'
+                  : 'bg-white text-black border border-gray-300 focus:ring-sky-500 focus:border-sky-500'
+              }`}
+              aria-label={t('subjects_select_a11y', 'Select a subject')}>
+              <option value="">{t('subjects_select_placeholder', 'Выберите предмет...')}</option>
+              {subjectGroups.map(group => (
+                <optgroup label={group.category} key={group.category}>
+                  {group.subjects.map(subject => (
+                    <option value={subject} key={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+        )}
         {showHistory ? (
           <div className="flex-1 overflow-hidden">
             <ChatHistoryList
