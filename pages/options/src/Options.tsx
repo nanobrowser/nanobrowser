@@ -7,13 +7,15 @@ import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
 import { AnalyticsSettings } from './components/AnalyticsSettings';
+import { WebSocketSettings } from './components/WebSocketSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'websocket' | 'analytics' | 'help';
 
 const TABS: { id: TabTypes; icon: string; label: string }[] = [
   { id: 'general', icon: '⚙️', label: t('options_tabs_general') },
   { id: 'models', icon: '📊', label: t('options_tabs_models') },
   { id: 'firewall', icon: '🔒', label: t('options_tabs_firewall') },
+  { id: 'websocket', icon: '🌐', label: t('options_tabs_websocket') },
   { id: 'analytics', icon: '📈', label: 'Analytics' },
   { id: 'help', icon: '📚', label: t('options_tabs_help') },
 ];
@@ -51,6 +53,8 @@ const Options = () => {
         return <ModelSettings isDarkMode={isDarkMode} />;
       case 'firewall':
         return <FirewallSettings isDarkMode={isDarkMode} />;
+      case 'websocket':
+        return <WebSocketSettings isDarkMode={isDarkMode} />;
       case 'analytics':
         return <AnalyticsSettings isDarkMode={isDarkMode} />;
       default:

@@ -6,6 +6,7 @@ import {
   generalSettingsStore,
   llmProviderStore,
   analyticsSettingsStore,
+  websocketServerStore,
 } from '@extension/storage';
 import { t } from '@extension/i18n';
 import BrowserContext from './browser/context';
@@ -18,12 +19,14 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import { WebSocketClient } from './services/websocketClient';
 
 const logger = createLogger('background');
 
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+let websocketClient: WebSocketClient | null = null;
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -234,6 +237,53 @@ chrome.runtime.onConnect.addListener(port => {
             break;
           }
 
+          case 'websocket_connect': {
+            try {
+              if (!websocketClient) {
+                return port.postMessage({ type: 'error', error: 'WebSocket client not initialized' });
+              }
+              
+              await websocketClient.connect();
+              return port.postMessage({ type: 'success', msg: 'WebSocket connection initiated' });
+            } catch (error) {
+              logger.error('WebSocket connection failed:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'WebSocket connection failed',
+              });
+            }
+          }
+
+          case 'websocket_disconnect': {
+            try {
+              if (websocketClient) {
+                websocketClient.disconnect();
+              }
+              return port.postMessage({ type: 'success', msg: 'WebSocket disconnected' });
+            } catch (error) {
+              logger.error('WebSocket disconnect failed:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'WebSocket disconnect failed',
+              });
+            }
+          }
+
+          case 'websocket_status': {
+            const isConnected = websocketClient?.isConnected() ?? false;
+            const settings = await websocketServerStore.getSettings();
+            
+            return port.postMessage({
+              type: 'success',
+              data: {
+                connected: isConnected,
+                enabled: settings.enabled,
+                serverUrl: settings.serverUrl,
+                autoConnect: settings.autoConnect,
+              }
+            });
+          }
+
           default:
             return port.postMessage({ type: 'error', error: t('errors_cmd_unknown', [message.type]) });
         }
@@ -340,6 +390,28 @@ async function subscribeToExecutorEvents(executor: Executor) {
       logger.error('Failed to send message to side panel:', error);
     }
 
+    // Also send updates to WebSocket server if connected
+    if (websocketClient?.isConnected() && event.taskId) {
+      try {
+        switch (event.state) {
+          case ExecutionState.STEP_START:
+          case ExecutionState.STEP_OK:
+          case ExecutionState.ACT_START:
+          case ExecutionState.ACT_OK:
+            websocketClient.sendTaskProgress(event.taskId, event.message || 'Task in progress');
+            break;
+          case ExecutionState.TASK_OK:
+            websocketClient.sendTaskCompleted(event.taskId, { message: event.message, screenshot: event.screenshot });
+            break;
+          case ExecutionState.TASK_FAIL:
+            websocketClient.sendTaskFailed(event.taskId, event.message || 'Task failed');
+            break;
+        }
+      } catch (error) {
+        logger.error('Failed to send WebSocket update:', error);
+      }
+    }
+
     if (
       event.state === ExecutionState.TASK_OK ||
       event.state === ExecutionState.TASK_FAIL ||
@@ -349,3 +421,78 @@ async function subscribeToExecutorEvents(executor: Executor) {
     }
   });
 }
+
+// WebSocket initialization and management
+async function initializeWebSocket(): Promise<void> {
+  try {
+    const settings = await websocketServerStore.getSettings();
+    
+    if (settings.enabled) {
+      websocketClient = new WebSocketClient(settings);
+      
+      // Set task handler
+      websocketClient.setTaskHandler(async (taskId: string, task: string, options?: Record<string, any>) => {
+        logger.info(`WebSocket task received: ${taskId} - ${task}`);
+        
+        try {
+          // Create a new executor for the WebSocket task
+          currentExecutor = await setupExecutor(taskId, task, browserContext);
+          subscribeToExecutorEvents(currentExecutor);
+          
+          // Execute the task
+          const result = await currentExecutor.execute();
+          logger.info(`WebSocket task completed: ${taskId}`, result);
+          
+        } catch (error) {
+          logger.error(`WebSocket task failed: ${taskId}`, error);
+          throw error;
+        }
+      });
+      
+      if (settings.autoConnect) {
+        await websocketClient.connect();
+      }
+      
+      logger.info('WebSocket client initialized');
+    }
+  } catch (error) {
+    logger.error('Failed to initialize WebSocket client:', error);
+  }
+}
+
+// Listen for WebSocket settings changes
+websocketServerStore.subscribe(async () => {
+  try {
+    const settings = await websocketServerStore.getSettings();
+    
+    if (settings.enabled) {
+      if (!websocketClient) {
+        // Initialize WebSocket client if it doesn't exist
+        await initializeWebSocket();
+      } else {
+        // Update existing client settings
+        websocketClient.updateSettings(settings);
+        
+        if (settings.autoConnect && !websocketClient.isConnected()) {
+          await websocketClient.connect();
+        } else if (!settings.autoConnect && websocketClient.isConnected()) {
+          websocketClient.disconnect();
+        }
+      }
+    } else {
+      // Disable WebSocket connection
+      if (websocketClient) {
+        websocketClient.disconnect();
+        websocketClient = null;
+        logger.info('WebSocket client disabled');
+      }
+    }
+  } catch (error) {
+    logger.error('Error handling WebSocket settings change:', error);
+  }
+});
+
+// Initialize WebSocket on startup
+initializeWebSocket().catch(error => {
+  logger.error('Failed to initialize WebSocket on startup:', error);
+});

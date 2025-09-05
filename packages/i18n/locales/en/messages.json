@@ -211,6 +211,9 @@
   "options_tabs_help": {
     "message": "Help"
   },
+  "options_tabs_websocket": {
+    "message": "WebSocket Server"
+  },
   "options_general_header": {
     "message": "General"
   },

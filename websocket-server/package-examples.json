@@ -1,0 +1,18 @@
+{
+  "name": "nanobrowser-examples",
+  "version": "1.0.0",
+  "description": "Example clients for Nanobrowser WebSocket Server",
+  "scripts": {
+    "example-js": "node example-client.js",
+    "example-py": "python3 example-client.py"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "aiohttp": "^3.8.0"
+  },
+  "keywords": ["nanobrowser", "websocket", "automation", "examples"],
+  "author": "Nanobrowser Team",
+  "license": "Apache-2.0"
+}

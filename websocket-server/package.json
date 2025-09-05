@@ -1,0 +1,29 @@
+{
+  "name": "nanobrowser-websocket-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for remote control of Nanobrowser extension",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "pm2": "^6.0.10",
+    "uuid": "^9.0.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "nanobrowser",
+    "websocket",
+    "automation",
+    "remote-control"
+  ],
+  "author": "Nanobrowser Team",
+  "license": "Apache-2.0"
+}

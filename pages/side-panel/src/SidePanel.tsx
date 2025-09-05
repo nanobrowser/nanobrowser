@@ -11,6 +11,7 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
+import { WebSocketStatus } from './components/WebSocketStatus';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -1045,6 +1046,7 @@ const SidePanel = () => {
               className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
               <RxDiscordLogo size={20} />
             </a>
+            <WebSocketStatus isDarkMode={isDarkMode} />
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
