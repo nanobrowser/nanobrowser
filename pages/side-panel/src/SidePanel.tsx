@@ -4,7 +4,15 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
+import {
+  type Message,
+  Actors,
+  chatHistoryStore,
+  agentModelStore,
+  generalSettingsStore,
+  accessibilityStore,
+  type AccessibilityReport,
+} from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
 import MessageList from './components/MessageList';
@@ -13,6 +21,7 @@ import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
+import AccessibilityAnalyzer from './components/AccessibiltyAnalyzer';
 
 // Declare chrome API types
 declare global {
@@ -28,6 +37,26 @@ const SidePanel = () => {
   const [showStopButton, setShowStopButton] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showAccessibilityAnalyzer, setShowAccessibilityAnalyzer] = useState(false);
+  const [currentPageData, setCurrentPageData] = useState<{ id: string; url: string; createdAt: number } | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Function to update current page data
+  const updateCurrentPageData = useCallback(async () => {
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const currentTab = tabs[0];
+      if (currentTab?.url) {
+        setCurrentPageData({
+          id: currentTab.id?.toString() || crypto.randomUUID(),
+          url: currentTab.url,
+          createdAt: Date.now(),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to get current tab:', error);
+    }
+  }, []);
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
@@ -90,7 +119,29 @@ const SidePanel = () => {
   useEffect(() => {
     checkModelConfiguration();
     loadGeneralSettings();
-  }, [checkModelConfiguration, loadGeneralSettings]);
+    updateCurrentPageData(); // Load initial page data
+  }, [checkModelConfiguration, loadGeneralSettings, updateCurrentPageData]);
+
+  // Listen for tab changes to update current page data
+  useEffect(() => {
+    const handleTabActivated = () => {
+      updateCurrentPageData();
+    };
+
+    const handleTabUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+      if (changeInfo.url) {
+        updateCurrentPageData();
+      }
+    };
+
+    chrome.tabs.onActivated.addListener(handleTabActivated);
+    chrome.tabs.onUpdated.addListener(handleTabUpdated);
+
+    return () => {
+      chrome.tabs.onActivated.removeListener(handleTabActivated);
+      chrome.tabs.onUpdated.removeListener(handleTabUpdated);
+    };
+  }, [updateCurrentPageData]);
 
   // Re-check model configuration when the side panel becomes visible again
   useEffect(() => {
@@ -668,9 +719,15 @@ const SidePanel = () => {
     setShowStopButton(false);
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
+    setShowAccessibilityAnalyzer(false);
 
     // Disconnect any existing connection
     stopConnection();
+  };
+
+  const handleShowAnalyzeAccessibility = async () => {
+    await updateCurrentPageData();
+    setShowAccessibilityAnalyzer(true);
   };
 
   const loadChatSessions = useCallback(async () => {
@@ -997,6 +1054,110 @@ const SidePanel = () => {
     }
   };
 
+  const handleBasicAccessibilityAnalysis = async (): Promise<void> => {
+    if (!currentPageData) return;
+
+    setIsAnalyzing(true);
+    try {
+      // Check if we already have a report for this URL
+      const existingReport = await accessibilityStore.getAccessibilityReport(currentPageData.url);
+      if (existingReport) {
+        console.log('Using existing accessibility report:', existingReport);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Get current tab content
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      // Check if scripting API is available
+      if (!chrome.scripting) {
+        throw new Error('Chrome scripting API not available');
+      }
+
+      // Inject content script to get page content and images
+      const results = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+          // Get page text content
+          const content = document.body.innerText || document.body.textContent || '';
+
+          // Get all images with their URLs and alt texts
+          const images = Array.from(document.querySelectorAll('img')).map(img => ({
+            imageUrl: img.src,
+            currentAlt: img.alt || '',
+          }));
+
+          return { content, images };
+        },
+      });
+
+      if (!results || results.length === 0) {
+        throw new Error('Failed to execute script on page');
+      }
+
+      const { content, images } = results[0].result || { content: '', images: [] };
+
+      // Call summarize API
+      const summaryResponse = await fetch('http://localhost:5432/api/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!summaryResponse.ok) {
+        throw new Error('Failed to get page summary');
+      }
+
+      const { summary } = await summaryResponse.json();
+
+      // Call image analysis API
+      const imageUrls = images.map((img: { imageUrl: string; currentAlt: string }) => img.imageUrl);
+      const imageAnalysisResponse = await fetch('http://localhost:5432/api/image-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrls,
+          pageSummary: summary,
+        }),
+      });
+
+      if (!imageAnalysisResponse.ok) {
+        throw new Error('Failed to analyze images');
+      }
+
+      const { imageAnalysis } = await imageAnalysisResponse.json();
+
+      // Create and save accessibility report
+      const report: AccessibilityReport = {
+        pageUrl: currentPageData.url,
+        pageSummary: summary,
+        imageAnalysis: images.map((img: { imageUrl: string; currentAlt: string }, index: number) => ({
+          imageUrl: img.imageUrl,
+          currentAlt: img.currentAlt,
+          generatedAlt: imageAnalysis[index]?.generatedAlt || '',
+        })),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      await accessibilityStore.saveAccessibilityReport(report);
+      console.log('Accessibility analysis completed:', report);
+    } catch (error) {
+      console.error('Failed to perform accessibility analysis:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div>
       <div
@@ -1016,6 +1177,15 @@ const SidePanel = () => {
             )}
           </div>
           <div className="header-icons">
+            <button
+              type="button"
+              onClick={handleShowAnalyzeAccessibility}
+              onKeyDown={e => e.key === 'Enter' && handleNewChat()}
+              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              aria-label="Analisar acessibilidade"
+              tabIndex={0}>
+              Analisar acessibilidade
+            </button>
             {!showHistory && (
               <>
                 <button
@@ -1115,6 +1285,19 @@ const SidePanel = () => {
                     </a>
                   </div>
                 </div>
+              </div>
+            )}
+            {/* Show accessibility analyzer when activated */}
+            {showAccessibilityAnalyzer && (
+              <div className="flex-1 overflow-hidden">
+                <AccessibilityAnalyzer
+                  isDarkMode={isDarkMode}
+                  onClose={() => setShowAccessibilityAnalyzer(false)}
+                  onHandleStarBasicAnalysis={handleBasicAccessibilityAnalysis}
+                  visible={true}
+                  currentPageData={currentPageData!}
+                  isAnalyzing={isAnalyzing}
+                />
               </div>
             )}
 
