@@ -587,29 +587,49 @@ async function scriptInjectedFrames(tabId: number): Promise<Map<number, boolean>
     });
     return new Map(results.map(result => [result.frameId, result.result || false]));
   } catch (err) {
-    console.error('Failed to check script injection status:', err);
+    // Silently handle the error - this often happens with cross-origin frames or frames that no longer exist
+    // Just return an empty map to indicate no frames were checked
     return new Map();
   }
 }
 
-// // Function to inject the buildDomTree script
+// Function to inject the buildDomTree script
 export async function injectBuildDomTreeScripts(tabId: number) {
   try {
     // Check if already injected
     const injectedFrames = await scriptInjectedFrames(tabId);
-    if (injectedFrames.values().every(injected => injected)) {
+
+    // If we couldn't check any frames or all are already injected, try to inject in main frame only
+    if (injectedFrames.size === 0) {
+      // Couldn't check frames, so just try to inject in the main frame
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['buildDomTree.js'],
+        });
+      } catch (injectionErr) {
+        // Silently ignore - script might already be injected or frame might be inaccessible
+      }
       return;
     }
 
-    await chrome.scripting.executeScript({
-      target: {
-        tabId,
-        frameIds: Array.from(injectedFrames.keys()).filter(id => !injectedFrames.get(id)),
-      },
-      files: ['buildDomTree.js'],
-    });
-    console.log('Scripts successfully injected');
+    // Check if all frames already have the script
+    if (Array.from(injectedFrames.values()).every(injected => injected)) {
+      return;
+    }
+
+    // Inject only in frames that don't have the script
+    const frameIdsToInject = Array.from(injectedFrames.keys()).filter(id => !injectedFrames.get(id));
+    if (frameIdsToInject.length > 0) {
+      await chrome.scripting.executeScript({
+        target: {
+          tabId,
+          frameIds: frameIdsToInject,
+        },
+        files: ['buildDomTree.js'],
+      });
+    }
   } catch (err) {
-    console.error('Failed to inject scripts:', err);
+    // Silently handle injection errors - these are common with dynamic frames
   }
 }

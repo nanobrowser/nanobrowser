@@ -2,6 +2,9 @@ import { StorageEnum } from '../base/enums';
 import { createStorage } from '../base/base';
 import type { BaseStorage } from '../base/types';
 
+// Version for default prompts - increment this to force reload
+const PROMPTS_VERSION = 3;
+
 // Template data
 const defaultFavoritePrompts = [
   {
@@ -31,6 +34,7 @@ export interface FavoritePrompt {
 export interface FavoritesStorage {
   nextId: number;
   prompts: FavoritePrompt[];
+  version?: number;
 }
 
 // Define the interface for favorite prompts storage operations
@@ -148,14 +152,30 @@ export function createFavoritesStorage(): FavoritePromptsStorage {
       const currentState = await favoritesStorage.get();
       let prompts = currentState.prompts;
 
-      // Check if storage is in initial state (empty prompts array and nextId=1)
-      if (currentState.prompts.length === 0 && currentState.nextId === 1) {
-        // Initialize with default prompts
+      // Check if we need to reset with new default prompts
+      const needsReset =
+        (currentState.prompts.length === 0 && currentState.nextId === 1) || // Initial state
+        !currentState.version ||
+        currentState.version < PROMPTS_VERSION; // Outdated version
+
+      if (needsReset) {
+        // Clear existing prompts and initialize with default prompts
+        await favoritesStorage.set(() => ({
+          nextId: 1,
+          prompts: [],
+          version: PROMPTS_VERSION,
+        }));
+
+        // Add default prompts
         for (const prompt of defaultFavoritePrompts) {
           await favoritesStorage.set(prev => {
             const id = prev.nextId;
             const newPrompt: FavoritePrompt = { id, title: prompt.title, content: prompt.content };
-            return { nextId: id + 1, prompts: [newPrompt, ...prev.prompts] };
+            return {
+              nextId: id + 1,
+              prompts: [newPrompt, ...prev.prompts],
+              version: PROMPTS_VERSION,
+            };
           });
         }
         const newState = await favoritesStorage.get();

@@ -18,6 +18,13 @@ interface ChatInputProps {
   onReplay?: (sessionId: string) => void;
 }
 
+// File attachment interface
+interface AttachedFile {
+  name: string;
+  content: string;
+  type: string;
+}
+
 export default function ChatInput({
   onSendMessage,
   onStopTask,
@@ -32,8 +39,13 @@ export default function ChatInput({
   onReplay,
 }: ChatInputProps) {
   const [text, setText] = useState('');
-  const isSendButtonDisabled = useMemo(() => disabled || text.trim() === '', [disabled, text]);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const isSendButtonDisabled = useMemo(
+    () => disabled || (text.trim() === '' && attachedFiles.length === 0),
+    [disabled, text, attachedFiles],
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle text changes and resize textarea
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -67,12 +79,23 @@ export default function ChatInput({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (text.trim()) {
-        onSendMessage(text);
+      if (text.trim() || attachedFiles.length > 0) {
+        let messageContent = text;
+
+        // Append file contents to the message
+        if (attachedFiles.length > 0) {
+          const fileContents = attachedFiles
+            .map(file => `\n\n--- File: ${file.name} ---\n${file.content}\n--- End of ${file.name} ---`)
+            .join('\n');
+          messageContent = text + fileContents;
+        }
+
+        onSendMessage(messageContent);
         setText('');
+        setAttachedFiles([]);
       }
     },
-    [text, onSendMessage],
+    [text, attachedFiles, onSendMessage],
   );
 
   const handleKeyDown = useCallback(
@@ -91,12 +114,93 @@ export default function ChatInput({
     }
   }, [historicalSessionId, onReplay]);
 
+  const handleFileSelect = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles: AttachedFile[] = [];
+    const allowedTypes = ['.txt', '.md', '.markdown', '.json', '.csv', '.log', '.xml', '.yaml', '.yml'];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileExt = '.' + file.name.split('.').pop()?.toLowerCase();
+
+      // Check if file type is allowed
+      if (!allowedTypes.includes(fileExt)) {
+        console.warn(`File type ${fileExt} not supported. Only text-based files are allowed.`);
+        continue;
+      }
+
+      // Check file size (limit to 1MB)
+      if (file.size > 1024 * 1024) {
+        console.warn(`File ${file.name} is too large. Maximum size is 1MB.`);
+        continue;
+      }
+
+      try {
+        const content = await file.text();
+        newFiles.push({
+          name: file.name,
+          content,
+          type: file.type || 'text/plain',
+        });
+      } catch (error) {
+        console.error(`Error reading file ${file.name}:`, error);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  const handleRemoveFile = useCallback((index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   return (
     <form
       onSubmit={handleSubmit}
       className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
       aria-label={t('chat_input_form')}>
       <div className="flex flex-col">
+        {/* File attachments display */}
+        {attachedFiles.length > 0 && (
+          <div
+            className={`flex flex-wrap gap-2 border-b p-2 ${
+              isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'
+            }`}>
+            {attachedFiles.map((file, index) => (
+              <div
+                key={index}
+                className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs ${
+                  isDarkMode ? 'bg-slate-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                }`}>
+                <span className="text-xs">📎</span>
+                <span className="max-w-[150px] truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFile(index)}
+                  className={`ml-1 rounded-sm transition-colors ${
+                    isDarkMode ? 'hover:bg-slate-600' : 'hover:bg-gray-300'
+                  }`}
+                  aria-label={`Remove ${file.name}`}>
+                  <span className="text-xs">✕</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <textarea
           ref={textareaRef}
           value={text}
@@ -114,7 +218,7 @@ export default function ChatInput({
                 ? 'bg-slate-800 text-gray-200'
                 : 'bg-white'
           }`}
-          placeholder={t('chat_input_placeholder')}
+          placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : t('chat_input_placeholder')}
           aria-label={t('chat_input_editor')}
         />
 
@@ -123,6 +227,34 @@ export default function ChatInput({
             disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-100') : isDarkMode ? 'bg-slate-800' : 'bg-white'
           }`}>
           <div className="flex gap-2 text-gray-500">
+            {/* File attachment button */}
+            <button
+              type="button"
+              onClick={handleFileSelect}
+              disabled={disabled}
+              aria-label="Attach files"
+              title="Attach text files (txt, md, json, csv, etc.)"
+              className={`rounded-md p-1.5 transition-colors ${
+                disabled
+                  ? 'cursor-not-allowed opacity-50'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+              }`}>
+              <span className="text-lg">📎</span>
+            </button>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".txt,.md,.markdown,.json,.csv,.log,.xml,.yaml,.yml"
+              onChange={handleFileChange}
+              className="hidden"
+              aria-hidden="true"
+            />
+
             {onMicClick && (
               <button
                 type="button"
