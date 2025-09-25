@@ -4,7 +4,15 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
+import {
+  type AccessibilityReport,
+  type Message,
+  Actors,
+  chatHistoryStore,
+  agentModelStore,
+  generalSettingsStore,
+  accessibilityStore,
+} from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
 import MessageList from './components/MessageList';
@@ -13,12 +21,18 @@ import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
+import AccessibilityAnalyzer from './components/AccessibiltyAnalyzer';
 
-// Declare chrome API types
-declare global {
-  interface Window {
-    chrome: typeof chrome;
-  }
+interface CurrentPageDataProps {
+  id: string;
+  url: string;
+  summary: string;
+  imageAnalysis?: {
+    imageUrl: string;
+    currentAlt: string;
+    generatedAlt?: string;
+  }[];
+  createdAt: number;
 }
 
 const SidePanel = () => {
@@ -28,6 +42,31 @@ const SidePanel = () => {
   const [showStopButton, setShowStopButton] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showAccessibilityAnalyzer, setShowAccessibilityAnalyzer] = useState(false);
+  const [currentPageData, setCurrentPageData] = useState<CurrentPageDataProps | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  // const [accessibilityResult, setAccessibilityResult] = useState<string | null>(null);
+
+  // Function to update current page data
+  const updateCurrentPageData = useCallback(async () => {
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const currentTab = tabs[0];
+      if (currentTab?.url) {
+        const loadedSummary = await accessibilityStore.getAccessibilityReport(currentTab.url);
+
+        setCurrentPageData({
+          id: currentTab.id?.toString() || crypto.randomUUID(),
+          url: currentTab.url,
+          summary: loadedSummary?.pageSummary || '',
+          imageAnalysis: loadedSummary?.imageAnalysis || [],
+          createdAt: Date.now(),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to get current tab:', error);
+    }
+  }, []);
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
@@ -90,7 +129,29 @@ const SidePanel = () => {
   useEffect(() => {
     checkModelConfiguration();
     loadGeneralSettings();
-  }, [checkModelConfiguration, loadGeneralSettings]);
+    updateCurrentPageData(); // Load initial page data
+  }, [checkModelConfiguration, loadGeneralSettings, updateCurrentPageData]);
+
+  // Listen for tab changes to update current page data
+  useEffect(() => {
+    const handleTabActivated = () => {
+      updateCurrentPageData();
+    };
+
+    const handleTabUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+      if (changeInfo.url) {
+        updateCurrentPageData();
+      }
+    };
+
+    chrome.tabs.onActivated.addListener(handleTabActivated);
+    chrome.tabs.onUpdated.addListener(handleTabUpdated);
+
+    return () => {
+      chrome.tabs.onActivated.removeListener(handleTabActivated);
+      chrome.tabs.onUpdated.removeListener(handleTabUpdated);
+    };
+  }, [updateCurrentPageData]);
 
   // Re-check model configuration when the side panel becomes visible again
   useEffect(() => {
@@ -335,6 +396,37 @@ const SidePanel = () => {
           setIsProcessingSpeech(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
+        } else if (message && message.type === 'accessibility_analysis_complete') {
+          // Handle accessibility analysis completion
+          console.log('Accessibility analysis completed:', message.report);
+          setIsAnalyzing(false);
+
+          const report: AccessibilityReport = {
+            pageSummary: message.report?.response || 'Analysis completed',
+            pageUrl: currentPageData?.url || 'unknown',
+            imageAnalysis: message.imageAnalysis || [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+
+          setCurrentPageData(prev =>
+            prev ? { ...prev, summary: message.report?.response || 'Analysis completed' } : prev,
+          );
+
+          // Save the report to storage if we have page data
+          if (message.report) {
+            accessibilityStore
+              .saveAccessibilityReport(report)
+              .catch(err => console.error('Failed to save accessibility report:', err));
+          }
+        } else if (message && message.type === 'accessibility_analysis_error') {
+          // Handle accessibility analysis error
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: `Accessibility analysis error: ${message.error || 'Unknown error'}`,
+            timestamp: Date.now(),
+          });
+          setIsAnalyzing(false);
         }
       });
 
@@ -377,7 +469,7 @@ const SidePanel = () => {
       // Clear any references since connection failed
       portRef.current = null;
     }
-  }, [handleTaskState, appendMessage, stopConnection]);
+  }, [handleTaskState, appendMessage, stopConnection, currentPageData?.url]);
 
   // Add safety check for message sending
   const sendMessage = useCallback(
@@ -668,9 +760,16 @@ const SidePanel = () => {
     setShowStopButton(false);
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
+    setShowAccessibilityAnalyzer(false);
+    // setAccessibilityResult(null);
 
     // Disconnect any existing connection
     stopConnection();
+  };
+
+  const handleShowAnalyzeAccessibility = async () => {
+    await updateCurrentPageData();
+    setShowAccessibilityAnalyzer(true);
   };
 
   const loadChatSessions = useCallback(async () => {
@@ -997,6 +1096,50 @@ const SidePanel = () => {
     }
   };
 
+  const handleBasicAccessibilityAnalysis = async (): Promise<void> => {
+    if (!currentPageData) return;
+
+    setIsAnalyzing(true);
+    try {
+      console.log('Starting accessibility analysis for', currentPageData.url);
+
+      // Check if we already have a report for this URL
+      const existingReport = await accessibilityStore.getAccessibilityReport(currentPageData.url);
+      if (existingReport) {
+        console.log('Using existing accessibility report:', existingReport);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Get current tab ID
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      // Setup connection if not exists
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      // Send message to background script to start accessibility analysis
+      sendMessage({
+        type: 'start_accessibility_analysis',
+        url: currentPageData.url,
+        tabId: tabId,
+      });
+    } catch (error) {
+      console.error('Error starting accessibility analysis:', error);
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: `Error starting accessibility analysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+      });
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div>
       <div
@@ -1016,6 +1159,15 @@ const SidePanel = () => {
             )}
           </div>
           <div className="header-icons">
+            <button
+              type="button"
+              onClick={handleShowAnalyzeAccessibility}
+              onKeyDown={e => e.key === 'Enter' && handleNewChat()}
+              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              aria-label="Analyze accessibility of current page"
+              tabIndex={0}>
+              Analyze Accessibility
+            </button>
             {!showHistory && (
               <>
                 <button
@@ -1115,6 +1267,20 @@ const SidePanel = () => {
                     </a>
                   </div>
                 </div>
+              </div>
+            )}
+            {/* Show accessibility analyzer when activated */}
+            {showAccessibilityAnalyzer && (
+              <div className="flex-1 overflow-hidden">
+                <AccessibilityAnalyzer
+                  isDarkMode={isDarkMode}
+                  onClose={() => setShowAccessibilityAnalyzer(false)}
+                  onHandleStarBasicAnalysis={handleBasicAccessibilityAnalysis}
+                  visible={true}
+                  currentPageData={currentPageData!}
+                  isAnalyzing={isAnalyzing}
+                  // accessibilityResult={accessibilityResult}
+                />
               </div>
             )}
 
