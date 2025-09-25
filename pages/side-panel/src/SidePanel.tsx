@@ -5,13 +5,13 @@ import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
 import {
+  type AccessibilityReport,
   type Message,
   Actors,
   chatHistoryStore,
   agentModelStore,
   generalSettingsStore,
   accessibilityStore,
-  type AccessibilityReport,
 } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
@@ -23,11 +23,16 @@ import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 import AccessibilityAnalyzer from './components/AccessibiltyAnalyzer';
 
-// Declare chrome API types
-declare global {
-  interface Window {
-    chrome: typeof chrome;
-  }
+interface CurrentPageDataProps {
+  id: string;
+  url: string;
+  summary: string;
+  imageAnalysis?: {
+    imageUrl: string;
+    currentAlt: string;
+    generatedAlt?: string;
+  }[];
+  createdAt: number;
 }
 
 const SidePanel = () => {
@@ -38,8 +43,9 @@ const SidePanel = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showAccessibilityAnalyzer, setShowAccessibilityAnalyzer] = useState(false);
-  const [currentPageData, setCurrentPageData] = useState<{ id: string; url: string; createdAt: number } | null>(null);
+  const [currentPageData, setCurrentPageData] = useState<CurrentPageDataProps | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  // const [accessibilityResult, setAccessibilityResult] = useState<string | null>(null);
 
   // Function to update current page data
   const updateCurrentPageData = useCallback(async () => {
@@ -47,9 +53,13 @@ const SidePanel = () => {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const currentTab = tabs[0];
       if (currentTab?.url) {
+        const loadedSummary = await accessibilityStore.getAccessibilityReport(currentTab.url);
+
         setCurrentPageData({
           id: currentTab.id?.toString() || crypto.randomUUID(),
           url: currentTab.url,
+          summary: loadedSummary?.pageSummary || '',
+          imageAnalysis: loadedSummary?.imageAnalysis || [],
           createdAt: Date.now(),
         });
       }
@@ -386,6 +396,37 @@ const SidePanel = () => {
           setIsProcessingSpeech(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
+        } else if (message && message.type === 'accessibility_analysis_complete') {
+          // Handle accessibility analysis completion
+          console.log('Accessibility analysis completed:', message.report);
+          setIsAnalyzing(false);
+
+          const report: AccessibilityReport = {
+            pageSummary: message.report?.response || 'Analysis completed',
+            pageUrl: currentPageData?.url || 'unknown',
+            imageAnalysis: message.imageAnalysis || [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+
+          setCurrentPageData(prev =>
+            prev ? { ...prev, summary: message.report?.response || 'Analysis completed' } : prev,
+          );
+
+          // Save the report to storage if we have page data
+          if (message.report) {
+            accessibilityStore
+              .saveAccessibilityReport(report)
+              .catch(err => console.error('Failed to save accessibility report:', err));
+          }
+        } else if (message && message.type === 'accessibility_analysis_error') {
+          // Handle accessibility analysis error
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: `Accessibility analysis error: ${message.error || 'Unknown error'}`,
+            timestamp: Date.now(),
+          });
+          setIsAnalyzing(false);
         }
       });
 
@@ -428,7 +469,7 @@ const SidePanel = () => {
       // Clear any references since connection failed
       portRef.current = null;
     }
-  }, [handleTaskState, appendMessage, stopConnection]);
+  }, [handleTaskState, appendMessage, stopConnection, currentPageData?.url]);
 
   // Add safety check for message sending
   const sendMessage = useCallback(
@@ -720,6 +761,7 @@ const SidePanel = () => {
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
     setShowAccessibilityAnalyzer(false);
+    // setAccessibilityResult(null);
 
     // Disconnect any existing connection
     stopConnection();
@@ -1059,6 +1101,8 @@ const SidePanel = () => {
 
     setIsAnalyzing(true);
     try {
+      console.log('Starting accessibility analysis for', currentPageData.url);
+
       // Check if we already have a report for this URL
       const existingReport = await accessibilityStore.getAccessibilityReport(currentPageData.url);
       if (existingReport) {
@@ -1067,93 +1111,31 @@ const SidePanel = () => {
         return;
       }
 
-      // Get current tab content
+      // Get current tab ID
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tabId = tabs[0]?.id;
       if (!tabId) {
         throw new Error('No active tab found');
       }
 
-      // Check if scripting API is available
-      if (!chrome.scripting) {
-        throw new Error('Chrome scripting API not available');
+      // Setup connection if not exists
+      if (!portRef.current) {
+        setupConnection();
       }
 
-      // Inject content script to get page content and images
-      const results = await chrome.scripting.executeScript({
-        target: { tabId },
-        func: () => {
-          // Get page text content
-          const content = document.body.innerText || document.body.textContent || '';
-
-          // Get all images with their URLs and alt texts
-          const images = Array.from(document.querySelectorAll('img')).map(img => ({
-            imageUrl: img.src,
-            currentAlt: img.alt || '',
-          }));
-
-          return { content, images };
-        },
+      // Send message to background script to start accessibility analysis
+      sendMessage({
+        type: 'start_accessibility_analysis',
+        url: currentPageData.url,
+        tabId: tabId,
       });
-
-      if (!results || results.length === 0) {
-        throw new Error('Failed to execute script on page');
-      }
-
-      const { content, images } = results[0].result || { content: '', images: [] };
-
-      // Call summarize API
-      const summaryResponse = await fetch('http://localhost:5432/api/summarize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content }),
-      });
-
-      if (!summaryResponse.ok) {
-        throw new Error('Failed to get page summary');
-      }
-
-      const { summary } = await summaryResponse.json();
-
-      // Call image analysis API
-      const imageUrls = images.map((img: { imageUrl: string; currentAlt: string }) => img.imageUrl);
-      const imageAnalysisResponse = await fetch('http://localhost:5432/api/image-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageUrls,
-          pageSummary: summary,
-        }),
-      });
-
-      if (!imageAnalysisResponse.ok) {
-        throw new Error('Failed to analyze images');
-      }
-
-      const { imageAnalysis } = await imageAnalysisResponse.json();
-
-      // Create and save accessibility report
-      const report: AccessibilityReport = {
-        pageUrl: currentPageData.url,
-        pageSummary: summary,
-        imageAnalysis: images.map((img: { imageUrl: string; currentAlt: string }, index: number) => ({
-          imageUrl: img.imageUrl,
-          currentAlt: img.currentAlt,
-          generatedAlt: imageAnalysis[index]?.generatedAlt || '',
-        })),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-
-      await accessibilityStore.saveAccessibilityReport(report);
-      console.log('Accessibility analysis completed:', report);
     } catch (error) {
-      console.error('Failed to perform accessibility analysis:', error);
-    } finally {
+      console.error('Error starting accessibility analysis:', error);
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: `Error starting accessibility analysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+      });
       setIsAnalyzing(false);
     }
   };
@@ -1182,9 +1164,9 @@ const SidePanel = () => {
               onClick={handleShowAnalyzeAccessibility}
               onKeyDown={e => e.key === 'Enter' && handleNewChat()}
               className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
-              aria-label="Analisar acessibilidade"
+              aria-label="Analyze accessibility of current page"
               tabIndex={0}>
-              Analisar acessibilidade
+              Analyze Accessibility
             </button>
             {!showHistory && (
               <>
@@ -1297,6 +1279,7 @@ const SidePanel = () => {
                   visible={true}
                   currentPageData={currentPageData!}
                   isAnalyzing={isAnalyzing}
+                  // accessibilityResult={accessibilityResult}
                 />
               </div>
             )}

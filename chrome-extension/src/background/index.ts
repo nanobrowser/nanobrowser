@@ -234,6 +234,61 @@ chrome.runtime.onConnect.addListener(port => {
             break;
           }
 
+          case 'start_accessibility_analysis': {
+            try {
+              if (!message.tabId) {
+                return port.postMessage({
+                  type: 'accessibility_analysis_error',
+                  error: 'No tab ID provided',
+                });
+              }
+
+              console.log('Starting accessibility analysis for tab:', message.tabId, 'URL:', message.url);
+
+              const results = await chrome.scripting.executeScript({
+                target: { tabId: message.tabId },
+                func: () => {
+                  const images = Array.from(document.querySelectorAll('img')).map(img => ({
+                    imageUrl: img.src,
+                    currentAlt: img.alt || '',
+                  }));
+                  return { images };
+                },
+              });
+
+              const { images } = results[0]?.result || { images: [] };
+              // Call backend API for accessibility analysis
+              const response = await fetch('http://localhost:5002/api/analyze_with_docling', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  url: message.url,
+                  images,
+                }),
+              });
+
+              if (!response.ok) {
+                throw new Error(`Backend API failed with status: ${response.status}`);
+              }
+
+              const analysisResult = await response.json();
+
+              return port.postMessage({
+                type: 'accessibility_analysis_complete',
+                report: analysisResult,
+                imageAnalysis: images,
+              });
+            } catch (error) {
+              console.error('Accessibility analysis failed:', error);
+              return port.postMessage({
+                type: 'accessibility_analysis_error',
+                error: error instanceof Error ? error.message : 'Failed to perform accessibility analysis',
+              });
+            }
+          }
+
           default:
             return port.postMessage({ type: 'error', error: t('errors_cmd_unknown', [message.type]) });
         }

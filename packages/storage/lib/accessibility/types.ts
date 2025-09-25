@@ -1,7 +1,7 @@
 export interface AccessibilityReport {
   pageUrl: string;
   pageSummary: string;
-  imageAnalysis: {
+  imageAnalysis?: {
     imageUrl: string;
     currentAlt: string;
     generatedAlt?: string;
