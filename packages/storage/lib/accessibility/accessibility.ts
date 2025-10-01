@@ -43,6 +43,10 @@ export function createAccessibilityStorage(): AccessibilityReportStorage {
         return remainingReports;
       });
     },
+
+    deleteAllReports: async (): Promise<void> => {
+      await accessibilityReportsStorage.set({});
+    },
   };
 }
 

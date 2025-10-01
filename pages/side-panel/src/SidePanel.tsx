@@ -23,16 +23,17 @@ import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 import AccessibilityAnalyzer from './components/AccessibiltyAnalyzer';
 
-interface CurrentPageDataProps {
+export interface CurrentPageDataProps {
   id: string;
-  url: string;
-  summary: string;
+  pageUrl: string;
+  pageSummary: string;
   imageAnalysis?: {
     imageUrl: string;
     currentAlt: string;
     generatedAlt?: string;
   }[];
   createdAt: number;
+  updatedAt: number;
 }
 
 const SidePanel = () => {
@@ -57,10 +58,11 @@ const SidePanel = () => {
 
         setCurrentPageData({
           id: currentTab.id?.toString() || crypto.randomUUID(),
-          url: currentTab.url,
-          summary: loadedSummary?.pageSummary || '',
+          pageUrl: currentTab.url,
+          pageSummary: loadedSummary?.pageSummary || '',
           imageAnalysis: loadedSummary?.imageAnalysis || [],
-          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          createdAt: loadedSummary?.createdAt || Date.now(),
         });
       }
     } catch (error) {
@@ -401,24 +403,45 @@ const SidePanel = () => {
           console.log('Accessibility analysis completed:', message.report);
           setIsAnalyzing(false);
 
-          const report: AccessibilityReport = {
-            pageSummary: message.report?.response || 'Analysis completed',
-            pageUrl: currentPageData?.url || 'unknown',
-            imageAnalysis: message.imageAnalysis || [],
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
+          // Get current tab URL to ensure we use the correct URL
+          const getCurrentTabUrl = async (): Promise<string> => {
+            try {
+              const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+              return tabs[0]?.url || 'unknown';
+            } catch (error) {
+              console.error('Failed to get current tab URL:', error);
+              return currentPageData?.pageUrl || 'unknown';
+            }
           };
 
-          setCurrentPageData(prev =>
-            prev ? { ...prev, summary: message.report?.response || 'Analysis completed' } : prev,
-          );
+          getCurrentTabUrl().then(currentUrl => {
+            const report: AccessibilityReport = {
+              pageSummary: message.report?.pageSummary || 'Analysis completed',
+              pageUrl: currentUrl,
+              imageAnalysis: message.imageAnalysis || [],
+              createdAt: currentPageData?.createdAt || Date.now(),
+              updatedAt: Date.now(),
+            };
 
-          // Save the report to storage if we have page data
-          if (message.report) {
-            accessibilityStore
-              .saveAccessibilityReport(report)
-              .catch(err => console.error('Failed to save accessibility report:', err));
-          }
+            setCurrentPageData(prev =>
+              prev
+                ? {
+                    ...prev,
+                    pageUrl: currentUrl,
+                    pageSummary: message.report?.pageSummary || 'Analysis completed',
+                    imageAnalysis: message.imageAnalysis || [],
+                    updatedAt: report.updatedAt,
+                  }
+                : prev,
+            );
+
+            // Save the report to storage if we have page data
+            if (message.report) {
+              accessibilityStore
+                .saveAccessibilityReport(report)
+                .catch(err => console.error('Failed to save accessibility report:', err));
+            }
+          });
         } else if (message && message.type === 'accessibility_analysis_error') {
           // Handle accessibility analysis error
           appendMessage({
@@ -469,7 +492,7 @@ const SidePanel = () => {
       // Clear any references since connection failed
       portRef.current = null;
     }
-  }, [handleTaskState, appendMessage, stopConnection, currentPageData?.url]);
+  }, [handleTaskState, appendMessage, stopConnection, currentPageData?.pageUrl]);
 
   // Add safety check for message sending
   const sendMessage = useCallback(
@@ -1101,17 +1124,8 @@ const SidePanel = () => {
 
     setIsAnalyzing(true);
     try {
-      console.log('Starting accessibility analysis for', currentPageData.url);
+      console.log('Starting accessibility analysis for', currentPageData.pageUrl);
 
-      // Check if we already have a report for this URL
-      const existingReport = await accessibilityStore.getAccessibilityReport(currentPageData.url);
-      if (existingReport) {
-        console.log('Using existing accessibility report:', existingReport);
-        setIsAnalyzing(false);
-        return;
-      }
-
-      // Get current tab ID
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tabId = tabs[0]?.id;
       if (!tabId) {
@@ -1126,7 +1140,7 @@ const SidePanel = () => {
       // Send message to background script to start accessibility analysis
       sendMessage({
         type: 'start_accessibility_analysis',
-        url: currentPageData.url,
+        url: currentPageData.pageUrl,
         tabId: tabId,
       });
     } catch (error) {

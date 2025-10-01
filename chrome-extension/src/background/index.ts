@@ -18,12 +18,14 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import { AccessibilityService } from './services/accessibility';
 
 const logger = createLogger('background');
 
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+const accessibilityService = new AccessibilityService(browserContext);
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -243,45 +245,20 @@ chrome.runtime.onConnect.addListener(port => {
                 });
               }
 
-              console.log('Starting accessibility analysis for tab:', message.tabId, 'URL:', message.url);
+              logger.info('Starting accessibility analysis for tab:', message.tabId, 'URL:', message.url);
 
-              const results = await chrome.scripting.executeScript({
-                target: { tabId: message.tabId },
-                func: () => {
-                  const images = Array.from(document.querySelectorAll('img')).map(img => ({
-                    imageUrl: img.src,
-                    currentAlt: img.alt || '',
-                  }));
-                  return { images };
-                },
-              });
-
-              const { images } = results[0]?.result || { images: [] };
-              // Call backend API for accessibility analysis
-              const response = await fetch('http://localhost:5002/api/analyze_with_docling', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  url: message.url,
-                  images,
-                }),
-              });
-
-              if (!response.ok) {
-                throw new Error(`Backend API failed with status: ${response.status}`);
-              }
-
-              const analysisResult = await response.json();
+              // Use local accessibility service instead of backend
+              const analysisResult = await accessibilityService.analyzeAccessibility(message.tabId, message.url);
 
               return port.postMessage({
                 type: 'accessibility_analysis_complete',
-                report: analysisResult,
-                imageAnalysis: images,
+                report: {
+                  pageSummary: analysisResult.pageSummary,
+                },
+                imageAnalysis: analysisResult.imageAnalysis,
               });
             } catch (error) {
-              console.error('Accessibility analysis failed:', error);
+              logger.error('Accessibility analysis failed:', error);
               return port.postMessage({
                 type: 'accessibility_analysis_error',
                 error: error instanceof Error ? error.message : 'Failed to perform accessibility analysis',

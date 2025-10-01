@@ -14,4 +14,5 @@ export interface AccessibilityReportStorage {
   getAccessibilityReport: (pageUrl: string) => Promise<AccessibilityReport | null>;
   saveAccessibilityReport: (report: AccessibilityReport) => Promise<void>;
   deleteAccessibilityReport: (pageUrl: string) => Promise<void>;
+  deleteAllReports: () => Promise<void>;
 }

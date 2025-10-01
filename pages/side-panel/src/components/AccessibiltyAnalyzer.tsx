@@ -2,14 +2,15 @@
 import React from 'react';
 interface PageData {
   id: string;
-  url: string;
-  summary: string;
-  images: {
+  pageUrl: string;
+  pageSummary: string;
+  imageAnalysis?: {
     imageUrl: string;
     currentAlt: string;
     generatedAlt?: string;
   }[];
   createdAt: number;
+  updatedAt: number;
 }
 
 interface AccessibilityAnalyzerProps {
@@ -53,9 +54,14 @@ const AccessibilityAnalyzer: React.FC<AccessibilityAnalyzerProps> = ({
       {/* Current Page URL */}
       <div className={`rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-white/50'} mb-4 p-4 backdrop-blur-sm`}>
         <h3 className={`mb-2 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Current Page</h3>
-        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} break-all`}>{currentPageData.url}</p>
+        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} break-all`}>
+          {currentPageData.pageUrl}
+        </p>
         <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-          {formatDate(currentPageData.createdAt)}
+          created at: {formatDate(currentPageData.createdAt)}
+        </p>
+        <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+          update at: {formatDate(currentPageData.updatedAt)}
         </p>
       </div>
 
@@ -74,24 +80,24 @@ const AccessibilityAnalyzer: React.FC<AccessibilityAnalyzerProps> = ({
       </div>
 
       {/* Live Analysis Result */}
-      {currentPageData.summary && (
+      {currentPageData.pageSummary && (
         <div className={`rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-white/50'} mb-4 p-4 backdrop-blur-sm`}>
           <h3 className={`mb-2 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
             VisibleAi Summary
           </h3>
           <div
             className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
-            {currentPageData.summary || 'No summary available.'}
+            {currentPageData.pageSummary || 'No summary available.'}
           </div>
         </div>
       )}
-      {currentPageData.images && currentPageData.images.length > 0 && (
+      {currentPageData.imageAnalysis && currentPageData.imageAnalysis.length > 0 && (
         <div className={`rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-white/50'} p-4 backdrop-blur-sm`}>
           <h3 className={`mb-3 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-            Image Analysis ({currentPageData.images.length} images)
+            Image Analysis ({currentPageData.imageAnalysis.length} images)
           </h3>
           <div className="space-y-3">
-            {currentPageData.images.map((image, index) => (
+            {currentPageData.imageAnalysis.map((image, index) => (
               <div
                 key={index}
                 className={`rounded-lg border p-3 ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
