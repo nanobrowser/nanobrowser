@@ -1244,7 +1244,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                               ? t('options_models_providers_apiKey_placeholder_optional')
                               : providerConfig.type === ProviderTypeEnum.Ollama
                                 ? t('options_models_providers_apiKey_placeholder_ollama')
-                                : t('options_models_providers_apiKey_placeholder_required')
+                                : providerConfig.type === ProviderTypeEnum.TongyiQwen
+                                  ? t('options_models_providers_apiKey_placeholder_tongyi_qwen')
+                                  : t('options_models_providers_apiKey_placeholder_required')
                           }
                           value={providerConfig.apiKey || ''}
                           onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
@@ -1309,12 +1311,13 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         </div>
                       )}
 
-                    {/* Base URL input (for custom_openai, ollama, azure_openai, openrouter, and llama) */}
+                    {/* Base URL input (for custom_openai, ollama, azure_openai, openrouter, llama, and tongyi_qwen) */}
                     {(providerConfig.type === ProviderTypeEnum.CustomOpenAI ||
                       providerConfig.type === ProviderTypeEnum.Ollama ||
                       providerConfig.type === ProviderTypeEnum.AzureOpenAI ||
                       providerConfig.type === ProviderTypeEnum.OpenRouter ||
-                      providerConfig.type === ProviderTypeEnum.Llama) && (
+                      providerConfig.type === ProviderTypeEnum.Llama ||
+                      providerConfig.type === ProviderTypeEnum.TongyiQwen) && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
                           <label
@@ -1343,7 +1346,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                                     ? t('options_models_providers_placeholders_baseUrl_openrouter')
                                     : providerConfig.type === ProviderTypeEnum.Llama
                                       ? t('options_models_providers_placeholders_baseUrl_llama')
-                                      : t('options_models_providers_placeholders_baseUrl_ollama')
+                                      : providerConfig.type === ProviderTypeEnum.TongyiQwen
+                                        ? t('options_models_providers_placeholders_baseUrl_tongyi_qwen')
+                                        : t('options_models_providers_placeholders_baseUrl_ollama')
                             }
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}

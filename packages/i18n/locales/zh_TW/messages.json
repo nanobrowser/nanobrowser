@@ -301,6 +301,9 @@
   "options_models_providers_apiKey_placeholder_ollama": {
     "message": "API 金鑰 (Ollama 可留空)"
   },
+  "options_models_providers_apiKey_placeholder_tongyi_qwen": {
+    "message": "DashScope API 金鑰 (通義千問必需)"
+  },
   "options_models_providers_apiKey_hide": {
     "message": "隱藏 API 金鑰"
   },
@@ -369,6 +372,9 @@
   },
   "options_models_providers_placeholders_baseUrl_llama": {
     "message": "Llama API 基礎 URL (預設為 https://api.llama.com/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_tongyi_qwen": {
+    "message": "通義千問 API 基礎 URL (預設為 https://dashscope.aliyuncs.com/compatible-mode/v1)"
   },
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "Ollama 基礎 URL"

@@ -5,6 +5,7 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
 import { ChatGroq } from '@langchain/groq';
 import { ChatCerebras } from '@langchain/cerebras';
+import { ChatAlibabaTongyi } from '@langchain/alibaba';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatDeepSeek } from '@langchain/deepseek';
@@ -374,6 +375,17 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       args.configuration = configuration;
 
       return new ChatLlama(args);
+    }
+    case ProviderTypeEnum.TongyiQwen: {
+      const args = {
+        model: modelConfig.modelName,
+        alibabaApiKey: providerConfig.apiKey,
+        temperature,
+        topP,
+        maxTokens,
+        baseURL: providerConfig.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      };
+      return new ChatAlibabaTongyi(args);
     }
     default: {
       // by default, we think it's a openai-compatible provider
