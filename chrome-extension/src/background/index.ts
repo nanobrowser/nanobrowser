@@ -18,12 +18,17 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import { createDemonstrationRecorder, createMemoryBuilder } from './memory';
+import type { DemonstrationRecorder, MemoryBuilder } from './memory';
+import { proceduralMemoryStore } from '@extension/storage';
 
 const logger = createLogger('background');
 
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+let demonstrationRecorder: DemonstrationRecorder | null = null;
+let memoryBuilder: MemoryBuilder | null = null;
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -232,6 +237,201 @@ chrome.runtime.onConnect.addListener(port => {
               });
             }
             break;
+          }
+
+          // ===== Procedural Memory & Demonstration Recording =====
+
+          case 'start_recording': {
+            if (!message.title) {
+              return port.postMessage({ type: 'error', error: 'Recording title is required' });
+            }
+
+            try {
+              // Initialize recorder if not exists
+              if (!demonstrationRecorder) {
+                demonstrationRecorder = createDemonstrationRecorder(browserContext);
+              }
+
+              await demonstrationRecorder.startRecording(message.title, message.description);
+              logger.info('Started demonstration recording:', message.title);
+
+              return port.postMessage({
+                type: 'recording_started',
+                title: message.title,
+              });
+            } catch (error) {
+              logger.error('Failed to start recording:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to start recording',
+              });
+            }
+          }
+
+          case 'stop_recording': {
+            if (!demonstrationRecorder) {
+              return port.postMessage({ type: 'error', error: 'No active recording' });
+            }
+
+            try {
+              const recordingId = await demonstrationRecorder.stopRecording();
+              logger.info('Stopped demonstration recording:', recordingId);
+
+              return port.postMessage({
+                type: 'recording_stopped',
+                recordingId,
+              });
+            } catch (error) {
+              logger.error('Failed to stop recording:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to stop recording',
+              });
+            }
+          }
+
+          case 'pause_recording': {
+            if (!demonstrationRecorder) {
+              return port.postMessage({ type: 'error', error: 'No active recording' });
+            }
+
+            try {
+              demonstrationRecorder.pauseRecording();
+              return port.postMessage({ type: 'recording_paused' });
+            } catch (error) {
+              logger.error('Failed to pause recording:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to pause recording',
+              });
+            }
+          }
+
+          case 'resume_recording': {
+            if (!demonstrationRecorder) {
+              return port.postMessage({ type: 'error', error: 'No active recording' });
+            }
+
+            try {
+              demonstrationRecorder.resumeRecording();
+              return port.postMessage({ type: 'recording_resumed' });
+            } catch (error) {
+              logger.error('Failed to resume recording:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to resume recording',
+              });
+            }
+          }
+
+          case 'build_memory': {
+            if (!message.recordingId) {
+              return port.postMessage({ type: 'error', error: 'Recording ID is required' });
+            }
+
+            try {
+              // Initialize memory builder if not exists
+              if (!memoryBuilder) {
+                // Get LLM for abstract generation (reuse navigator LLM)
+                const providers = await llmProviderStore.getAllProviders();
+                const agentModels = await agentModelStore.getAllAgentModels();
+                const navigatorModel = agentModels[AgentNameEnum.Navigator];
+
+                if (navigatorModel && providers[navigatorModel.provider]) {
+                  const llm = createChatModel(providers[navigatorModel.provider], navigatorModel);
+                  memoryBuilder = createMemoryBuilder(llm);
+                } else {
+                  memoryBuilder = createMemoryBuilder(); // Without LLM
+                }
+              }
+
+              const result = await memoryBuilder.buildFromRecording({
+                recordingId: message.recordingId,
+                title: message.title,
+                tags: message.tags,
+                useLLM: message.useLLM ?? true,
+              });
+
+              logger.info('Built procedural memory:', result.memory.id);
+
+              return port.postMessage({
+                type: 'memory_built',
+                memoryId: result.memory.id,
+                warnings: result.warnings,
+              });
+            } catch (error) {
+              logger.error('Failed to build memory:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to build memory',
+              });
+            }
+          }
+
+          case 'get_recordings': {
+            try {
+              const recordings = await proceduralMemoryStore.getAllRecordings();
+              return port.postMessage({
+                type: 'recordings_list',
+                recordings,
+              });
+            } catch (error) {
+              logger.error('Failed to get recordings:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to get recordings',
+              });
+            }
+          }
+
+          case 'get_memories': {
+            try {
+              const memories = await proceduralMemoryStore.getMemoriesMetadata();
+              return port.postMessage({
+                type: 'memories_list',
+                memories,
+              });
+            } catch (error) {
+              logger.error('Failed to get memories:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to get memories',
+              });
+            }
+          }
+
+          case 'delete_recording': {
+            if (!message.recordingId) {
+              return port.postMessage({ type: 'error', error: 'Recording ID is required' });
+            }
+
+            try {
+              await proceduralMemoryStore.deleteRecording(message.recordingId);
+              return port.postMessage({ type: 'recording_deleted', recordingId: message.recordingId });
+            } catch (error) {
+              logger.error('Failed to delete recording:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to delete recording',
+              });
+            }
+          }
+
+          case 'delete_memory': {
+            if (!message.memoryId) {
+              return port.postMessage({ type: 'error', error: 'Memory ID is required' });
+            }
+
+            try {
+              await proceduralMemoryStore.deleteMemory(message.memoryId);
+              return port.postMessage({ type: 'memory_deleted', memoryId: message.memoryId });
+            } catch (error) {
+              logger.error('Failed to delete memory:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Failed to delete memory',
+              });
+            }
           }
 
           default:
