@@ -94,7 +94,7 @@ export type DevLocale = ${locales.map(locale => `'${locale}'`).join(' | ')};
 
 function makeGetMessageFromLocaleFile(locales) {
   const defaultLocaleCode = `(() => {
-  const locales = ${JSON.stringify(locales).replace(/"/g, "'" ).replace(/,/g, ', ' )};
+  const locales = ${JSON.stringify(locales).replace(/"/g, "'").replace(/,/g, ', ')};
   const firstLocale = locales[0];
   const defaultLocale = Intl.DateTimeFormat().resolvedOptions().locale.replace('-', '_');
   if (locales.includes(defaultLocale)) {

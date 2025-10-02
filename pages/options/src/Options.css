@@ -31,15 +31,15 @@ code {
     background: rgba(30, 58, 138, 0.4);
     color: #7dd3fc;
   }
-  
+
   .dark-mode-text {
     color: #e2e8f0 !important; /* slate-200 */
   }
-  
+
   .dark-mode-bg {
     background-color: #1e293b !important; /* slate-800 */
   }
-  
+
   .dark-mode-border {
     border-color: #475569 !important; /* slate-600 */
   }
