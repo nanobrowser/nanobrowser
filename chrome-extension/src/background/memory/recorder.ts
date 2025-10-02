@@ -43,6 +43,11 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
     onClicked?: (info: chrome.action.UserSettings) => void;
     onUpdated?: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
     onActivated?: (activeInfo: chrome.tabs.TabActiveInfo) => void;
+    onMessage?: (
+      message: unknown,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void,
+    ) => void;
   } = {};
 
   constructor(browserContext: BrowserContext, config?: Partial<RecorderConfig>) {
@@ -67,6 +72,9 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
     // Attach browser event listeners
     this.attachEventListeners();
 
+    // Inject recording listener into all tabs
+    await this.injectRecordingListener();
+
     this.emitEvent({ type: 'recording_started', data: { title, description } });
   }
 
@@ -77,6 +85,9 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
 
     logger.info(`Stopping demonstration recording: ${this.currentTitle}`);
     this.status = 'processing';
+
+    // Stop recording in all tabs
+    await this.stopRecordingInTabs();
 
     // Detach event listeners
     this.detachEventListeners();
@@ -212,13 +223,14 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
    * Attach Chrome API event listeners to capture browser interactions
    */
   private attachEventListeners(): void {
-    // Note: We'll need to use Chrome's debugger API or content scripts to capture actual DOM interactions
-    // For now, we'll capture high-level browser events
-
     // Listen for tab navigation
     this.chromeListeners.onUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
       if (changeInfo.status === 'complete' && tab.url) {
         void this.recordStep('go_to_url', { url: tab.url }, `Navigated to ${tab.title || tab.url}`);
+        // Re-inject recording listener when page loads
+        if (this.status === 'recording') {
+          void this.injectRecordingListenerInTab(tabId);
+        }
       }
     };
     chrome.tabs.onUpdated.addListener(this.chromeListeners.onUpdated);
@@ -233,6 +245,28 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
     };
     chrome.tabs.onActivated.addListener(this.chromeListeners.onActivated);
 
+    // Listen for messages from content scripts
+    this.chromeListeners.onMessage = (
+      message: unknown,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void,
+    ) => {
+      const msg = message as { type: string; data?: unknown };
+
+      if (msg.type === 'recording_interaction') {
+        // Handle interaction from content script
+        void this.handleContentScriptInteraction(msg.data);
+        sendResponse({ success: true });
+      } else if (msg.type === 'recording_listener_ready') {
+        // Content script loaded, start recording
+        if (this.status === 'recording' && sender.tab?.id) {
+          void chrome.tabs.sendMessage(sender.tab.id, { type: 'start_recording_listener' });
+        }
+        sendResponse({ success: true });
+      }
+    };
+    chrome.runtime.onMessage.addListener(this.chromeListeners.onMessage);
+
     logger.info('Event listeners attached');
   }
 
@@ -245,6 +279,9 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
     }
     if (this.chromeListeners.onActivated) {
       chrome.tabs.onActivated.removeListener(this.chromeListeners.onActivated);
+    }
+    if (this.chromeListeners.onMessage) {
+      chrome.runtime.onMessage.removeListener(this.chromeListeners.onMessage);
     }
     this.chromeListeners = {};
     logger.info('Event listeners detached');
@@ -300,6 +337,129 @@ export class DemonstrationRecorderImpl implements DemonstrationRecorder {
     element?: DOMElementNode,
   ): Promise<void> {
     await this.recordStep(action, parameters, description, element);
+  }
+
+  /**
+   * Inject recording listener script into a specific tab
+   */
+  private async injectRecordingListenerInTab(tabId: number): Promise<void> {
+    try {
+      // Check if tab is valid
+      const tab = await chrome.tabs.get(tabId);
+      if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+        // Can't inject into chrome:// or extension pages
+        return;
+      }
+
+      // Inject the recording listener script
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['recordingListener.js'],
+      });
+
+      logger.debug(`Injected recording listener into tab ${tabId}`);
+    } catch (error) {
+      logger.error(`Failed to inject recording listener into tab ${tabId}:`, error);
+    }
+  }
+
+  /**
+   * Inject recording listener into all open tabs
+   */
+  private async injectRecordingListener(): Promise<void> {
+    try {
+      const tabs = await chrome.tabs.query({});
+
+      for (const tab of tabs) {
+        if (tab.id && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
+          await this.injectRecordingListenerInTab(tab.id);
+        }
+      }
+
+      logger.info('Recording listener injected into all tabs');
+    } catch (error) {
+      logger.error('Failed to inject recording listener:', error);
+    }
+  }
+
+  /**
+   * Stop recording in all tabs
+   */
+  private async stopRecordingInTabs(): Promise<void> {
+    try {
+      const tabs = await chrome.tabs.query({});
+
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: 'stop_recording_listener' });
+          } catch (error) {
+            // Ignore errors for tabs where the script wasn't injected
+          }
+        }
+      }
+
+      logger.info('Stopped recording in all tabs');
+    } catch (error) {
+      logger.error('Failed to stop recording in tabs:', error);
+    }
+  }
+
+  /**
+   * Handle interaction event from content script
+   */
+  private async handleContentScriptInteraction(data: unknown): Promise<void> {
+    if (this.status !== 'recording') {
+      return;
+    }
+
+    const interaction = data as {
+      action: string;
+      parameters: Record<string, unknown>;
+      description: string;
+      element?: {
+        tagName: string;
+        xpath: string;
+        attributes: Record<string, string>;
+        textContent?: string;
+      };
+      url: string;
+      pageTitle: string;
+      timestamp: number;
+    };
+
+    // Check if enough time has passed since last step
+    const now = interaction.timestamp;
+    if (now - this.lastStepTimestamp < this.config.minStepInterval) {
+      logger.debug('Skipping content script interaction due to minStepInterval');
+      return;
+    }
+
+    try {
+      const step: RecordedStep = {
+        action: interaction.action,
+        parameters: interaction.parameters,
+        description: interaction.description,
+        url: interaction.url,
+        pageTitle: interaction.pageTitle,
+        timestamp: now,
+      };
+
+      if (interaction.element) {
+        step.element = interaction.element;
+      }
+
+      this.recordedSteps.push(step);
+      this.lastStepTimestamp = now;
+
+      logger.debug(
+        `Recorded content script step ${this.recordedSteps.length}: ${interaction.action}`,
+        interaction.parameters,
+      );
+      this.emitEvent({ type: 'step_recorded', data: step });
+    } catch (error) {
+      logger.error('Failed to handle content script interaction:', error);
+    }
   }
 }
 

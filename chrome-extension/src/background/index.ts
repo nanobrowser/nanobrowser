@@ -386,7 +386,7 @@ chrome.runtime.onConnect.addListener(port => {
 
           case 'get_memories': {
             try {
-              const memories = await proceduralMemoryStore.getMemoriesMetadata();
+              const memories = await proceduralMemoryStore.getAllMemories();
               return port.postMessage({
                 type: 'memories_list',
                 memories,

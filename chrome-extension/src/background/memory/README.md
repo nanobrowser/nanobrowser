@@ -1,22 +1,30 @@
-# Procedural Memory System - BUILD Phase
+# Procedural Memory System - BUILD & RETRIEVE Phases
 
-This module implements the BUILD phase of the MEMP (Memory-Enhanced Multi-Agent Planning) framework for Nanobrowser. It enables the agent to learn from human demonstrations and store them as reusable procedural memories.
+This module implements the BUILD and RETRIEVE phases of the MEMP (Memory-Enhanced Multi-Agent Planning) framework for Nanobrowser. It enables the agent to learn from human demonstrations and retrieve relevant procedures when executing similar tasks.
 
 ## Overview
 
 Based on the MEMP paper (arxiv.org/abs/2508.06433), this system allows:
 
-1. **Recording human demonstrations** in the web browser
-2. **Distilling demonstrations** into both fine-grained and abstract representations
-3. **Storing procedural memories** for future retrieval and execution
+1. **BUILD Phase**: Recording and distilling human demonstrations into procedural memories
+   - Record human actions in the web browser
+   - Distill into both fine-grained steps and abstract representations
+   - Store in persistent memory with metadata
+
+2. **RETRIEVE Phase**: Finding and using relevant procedures during task execution
+   - Semantic matching of task descriptions with stored procedures
+   - Context verification (domain matching, prerequisites)
+   - Relevance scoring and ranking
+   - Injection as context for the planner and navigator
 
 ## Architecture
 
 ```
 chrome-extension/src/background/memory/
 ├── types.ts           # Type definitions
-├── recorder.ts        # Demonstration recording
-├── builder.ts         # Memory building and distillation
+├── recorder.ts        # Demonstration recording (BUILD)
+├── builder.ts         # Memory building and distillation (BUILD)
+├── retriever.ts       # Memory retrieval and matching (RETRIEVE)
 ├── index.ts           # Module exports
 └── README.md          # This file
 
@@ -58,7 +66,32 @@ Converts raw recordings into structured procedural memories:
 - More accurate parameterization
 - Falls back to heuristics if LLM fails
 
-### 3. Storage Layer (`packages/storage/lib/memory/`)
+### 3. Procedural Memory Retriever (`retriever.ts`)
+
+Finds relevant procedural memories for the current task:
+
+**Semantic Matching:**
+- Compares task descriptions with stored procedure goals
+- Uses keyword-based similarity (Jaccard index)
+- Can be enhanced with embeddings for better matching
+
+**Context Verification:**
+- Checks if current webpage matches procedure domains
+- Verifies parameters are available
+- Assesses if prerequisites are met
+
+**Relevance Scoring:**
+- Goal similarity (40%): How well the task matches the procedure goal
+- Domain match (30%): Whether on the correct website
+- Confidence (20%): Success rate from past executions
+- Parameter match (10%): Availability of required parameters
+
+**Integration:**
+- Automatically retrieves procedures at task start
+- Injects top matches as context for planner/navigator
+- Non-blocking: continues execution even if retrieval fails
+
+### 4. Storage Layer (`packages/storage/lib/memory/`)
 
 Persistent storage for procedural memories:
 
@@ -192,32 +225,76 @@ port.postMessage({
 
 ## Integration with Agent System
 
-The BUILD phase is now complete. The next phases will integrate this system with the agent:
+Both BUILD and RETRIEVE phases are now implemented and integrated with the agent system.
 
-### Phase 2: RETRIEVE (To Be Implemented)
+### RETRIEVE Phase Integration
 
-When the agent receives a task:
+The retrieval happens automatically in the `Executor` when a task starts:
 
-1. **Semantic search** for relevant procedural memories
-2. **Match task description** with memory goals
-3. **Verify prerequisites** (correct domain, logged in, etc.)
-4. **Inject memory** as context for planner and navigator
-
-Example integration point in `executor.ts`:
+**Implementation in `executor.ts`:**
 
 ```typescript
 async execute(): Promise<void> {
-  // NEW: Retrieve relevant procedures before planning
-  const relevantProcedures = await this.retrieveProcedures(this.tasks);
-  
-  if (relevantProcedures.length > 0) {
-    // Inject as context for planner
-    this.context.messageManager.addProcedureContext(relevantProcedures);
-  }
+  // NEW: Retrieve relevant procedures before execution
+  await this.retrieveAndInjectProceduralMemories();
   
   // Existing execution loop...
 }
+
+private async retrieveAndInjectProceduralMemories(): Promise<void> {
+  // 1. Build retrieval context
+  const retrievalContext: RetrievalContext = {
+    task: this.tasks[this.tasks.length - 1],
+    currentUrl: await getCurrentPageUrl(),
+    currentPageTitle: await getCurrentPageTitle(),
+  };
+  
+  // 2. Retrieve relevant procedures
+  const relevantProcedures = await proceduralMemoryRetriever.retrieve(retrievalContext);
+  
+  // 3. Inject as context if found
+  if (relevantProcedures.length > 0) {
+    this.context.messageManager.addProceduralMemoryContext(relevantProcedures);
+  }
+}
 ```
+
+**What the Agent Sees:**
+
+When procedures are found, they're injected into the message history wrapped in `<procedural_memory>` tags:
+
+```xml
+<procedural_memory>
+The following procedures from your memory are relevant to this task:
+
+## Procedure 1: Create Linear Issue
+Relevance: 85% (similar goal: "Create issue in Linear"; matches current domain (linear.app))
+
+**Goal**: Create issue in Linear with title, description, and metadata
+
+**Prerequisites**: User must be logged into linear.app
+
+**Required Parameters**: title, description, assignee
+
+**High-level Flow**:
+1. Navigate to Linear workspace
+2. Open new issue form
+3. Fill in basic details
+4. Set metadata (assignee, project, milestone)
+5. Submit the form
+
+**Detailed Steps** (11 steps):
+1. Navigate to Linear workspace
+   Action: go_to_url({"url":"https://linear.app"})
+2. Click "New Issue" button
+   Action: click_element({"index":5})
+...
+
+You can adapt these procedures to the current task.
+</procedural_memory>
+```
+
+The planner and navigator can now use this as guidance.
 
 ### Phase 3: UPDATE (To Be Implemented)
 
@@ -243,24 +320,27 @@ if (usedProceduralMemory) {
 
 ## Current Limitations
 
-### Recording Limitations
+### Recording Capabilities
 
 The current recorder captures:
 - ✅ Navigation events (URL changes)
 - ✅ Tab switches
+- ✅ Click events (via injected content script)
+- ✅ Text input events (via injected content script with debouncing)
+- ✅ Form submissions (via injected content script)
 - ⚠️ Manual step recording via `recordDOMInteraction()` method
 
 **Not yet captured automatically:**
-- ❌ Click events
-- ❌ Text input events
-- ❌ Form submissions
-- ❌ Dropdown selections
+- ❌ Dropdown selections (complex selects)
+- ❌ Drag-and-drop interactions
+- ❌ Hover events
+- ❌ Scroll actions
 
-**Reason:** Chrome extensions have limited access to page-level events. To capture these, we need:
-
-1. **Content scripts** that inject into web pages and listen to DOM events
-2. **Chrome Debugger API** for deeper inspection
-3. **Integration with agent actions** so actions record themselves
+**Implementation:** 
+- DOM events are captured via `recordingListener.js` content script
+- The script is injected into all tabs when recording starts
+- Events are debounced to avoid duplicate captures
+- XPath and element attributes are captured for each interaction
 
 ### Recommended Enhancement
 
@@ -325,18 +405,32 @@ System processes recording:
 → Stores as procedural memory
 ```
 
-### 3. Agent Retrieval (Future)
+### 3. Agent Retrieval (Now Implemented)
 
 ```
 User asks agent: "Create a Linear issue for the new feature request"
 
-Agent retrieves procedural memory:
-→ Matches goal "Create issue in Linear"
-→ Verifies domain: ✓ on linear.app
-→ Checks prerequisites: ✓ user logged in
-→ Uses abstract flow for planning
-→ Uses fine-grained steps for navigation
-→ Adapts parameters to new task
+Agent execution starts:
+→ Retrieves procedural memories for task
+→ Finds "Create Linear Issue" (85% relevance)
+   - Goal similarity: High (matches "create issue")
+   - Domain match: 100% (on linear.app)
+   - Confidence: 70% (7 successes, 3 failures)
+→ Injects procedure as context
+→ Planner uses high-level flow for strategy
+→ Navigator uses fine-grained steps for actions
+→ Adapts parameters to "new feature request"
+→ Executes efficiently with prior knowledge
+```
+
+**Retrieval Logs:**
+```
+[Executor] 🔍 Checking procedural memory for relevant procedures...
+[ProceduralMemoryRetriever] Found 3 candidate memories
+[ProceduralMemoryRetriever] Retrieved 1 relevant memories
+  1. "Create Linear Issue" (score: 0.85, confidence: 0.70)
+[Executor] ✅ Found 1 relevant procedural memory
+[MessageManager] Added 1 procedural memories to context
 ```
 
 ## Testing
@@ -386,16 +480,68 @@ To test the BUILD phase:
    });
    ```
 
-## Next Steps
+## Testing the RETRIEVE Phase
 
-To complete the full MEMP implementation:
+To test memory retrieval:
 
-1. **Enhance recording** by integrating with action execution
-2. **Build UI** for managing recordings and memories
-3. **Implement RETRIEVE** phase for semantic search
-4. **Implement UPDATE** phase for memory refinement
-5. **Add vector embeddings** for better semantic matching
-6. **Test with real workflows** (Linear, GitHub, Notion, etc.)
+1. **Create a procedural memory** (use UI or manually via storage)
+2. **Start a similar task:**
+   ```
+   User: "Create a Linear issue for bug XYZ"
+   ```
+3. **Check logs in background console:**
+   ```
+   [Executor] 🔍 Checking procedural memory...
+   [ProceduralMemoryRetriever] Retrieved 1 relevant memories
+   [Executor] ✅ Found 1 relevant procedural memory
+   ```
+4. **Observe agent behavior:**
+   - Should follow the procedure's flow
+   - Completes task more efficiently
+   - Fewer exploratory steps
+
+## Current State
+
+✅ **Implemented:**
+- BUILD Phase: Recording, building, storing procedural memories
+- RETRIEVE Phase: Semantic search, context verification, relevance scoring
+- Integration: Automatic retrieval in executor, context injection
+
+🔄 **In Progress:**
+- UI for managing recordings and memories (see `pages/side-panel/src/components/MemoryPanel.tsx`)
+
+📋 **Next Steps:**
+
+1. **Enhance semantic matching:**
+   - Add vector embeddings (OpenAI embeddings API)
+   - Improve similarity calculation with sentence transformers
+   - Support multi-language matching
+
+2. **Implement UPDATE phase:**
+   - Track success/failure of memory-guided executions
+   - Update confidence scores automatically
+   - Identify and fix failing steps
+   - Deprecate outdated procedures when UI changes
+   - Merge variations from multiple demonstrations
+
+3. **Improve retrieval:**
+   - Add query expansion (synonyms, related terms)
+   - Support negative examples (what NOT to do)
+   - Cache frequently used procedures
+   - A/B test different retrieval strategies
+
+4. **Enhance recording:**
+   - Auto-detect and record all agent actions
+   - Support more interaction types (drag-drop, hover)
+   - Better parameterization detection
+   - Multi-session recording and stitching
+
+5. **Test with real workflows:**
+   - Linear issue management
+   - GitHub PR creation
+   - Notion page creation
+   - E-commerce checkout flows
+   - Email composition and sending
 
 ## References
 

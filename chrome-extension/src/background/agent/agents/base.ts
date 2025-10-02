@@ -119,6 +119,11 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
   }
 
   async invoke(inputMessages: BaseMessage[]): Promise<this['ModelOutput']> {
+    // Log the full prompt including procedural memory (if not already logged by subclass)
+    if (this.id !== 'navigator') {
+      this.logMessagesWithProceduralMemory(inputMessages);
+    }
+
     // Use structured output
     if (this.withStructuredOutput) {
       logger.debug(`[${this.modelName}] Preparing structured output call with schema:`, {
@@ -196,6 +201,49 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
 
   // Execute the agent and return the result
   abstract execute(): Promise<AgentOutput<M>>;
+
+  /**
+   * Log the full message history including procedural memory content
+   * This helps debug what context the LLM receives
+   */
+  protected logMessagesWithProceduralMemory(inputMessages: BaseMessage[]): void {
+    logger.info('='.repeat(80));
+    logger.info(`📨 FULL PROMPT SENT TO LLM (${this.id})`);
+    logger.info('='.repeat(80));
+
+    inputMessages.forEach((msg, index) => {
+      const msgType = msg.constructor.name;
+      const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+
+      // Check if this message contains procedural memory
+      const hasProceduralMemory = content.includes('<procedural_memory>');
+
+      if (hasProceduralMemory) {
+        logger.info(`\n[Message ${index + 1}/${inputMessages.length}] ${msgType} 🧠 CONTAINS PROCEDURAL MEMORY`);
+        logger.info('-'.repeat(80));
+
+        // Extract and highlight the procedural memory section
+        const memoryStart = content.indexOf('<procedural_memory>');
+        const memoryEnd = content.indexOf('</procedural_memory>') + '</procedural_memory>'.length;
+
+        if (memoryStart !== -1 && memoryEnd !== -1) {
+          const memoryContent = content.substring(memoryStart, memoryEnd);
+          logger.info('🧠 PROCEDURAL MEMORY CONTENT:');
+          logger.info(memoryContent);
+        }
+        logger.info('-'.repeat(80));
+      } else {
+        // For non-procedural-memory messages, just show a summary
+        const preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
+        logger.info(`\n[Message ${index + 1}/${inputMessages.length}] ${msgType}`);
+        logger.info(`Preview: ${preview}`);
+      }
+    });
+
+    logger.info('\n' + '='.repeat(80));
+    logger.info(`Total messages: ${inputMessages.length}`);
+    logger.info('='.repeat(80) + '\n');
+  }
 
   // Helper method to validate metadata
   protected validateModelOutput(data: unknown): this['ModelOutput'] | undefined {

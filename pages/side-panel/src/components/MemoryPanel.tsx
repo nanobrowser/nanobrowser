@@ -16,6 +16,7 @@ const MemoryPanel = ({ isDarkMode, portRef }: MemoryPanelProps) => {
   const [isPaused, setIsPaused] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBuildingMemory, setIsBuildingMemory] = useState(false);
   const recordingTimerRef = useRef<number | null>(null);
 
   // Load initial data
@@ -90,6 +91,7 @@ const MemoryPanel = ({ isDarkMode, portRef }: MemoryPanelProps) => {
 
         case 'memory_built':
           // Reload both recordings and memories
+          setIsBuildingMemory(false);
           setTimeout(() => loadData(), 500);
           break;
 
@@ -116,6 +118,7 @@ const MemoryPanel = ({ isDarkMode, portRef }: MemoryPanelProps) => {
           alert(`Error: ${message.error}`);
           setIsRecording(false);
           setIsPaused(false);
+          setIsBuildingMemory(false);
           break;
       }
     };
@@ -184,18 +187,17 @@ const MemoryPanel = ({ isDarkMode, portRef }: MemoryPanelProps) => {
     if (!recording) return;
 
     try {
+      setIsBuildingMemory(true);
       portRef.current.postMessage({
         type: 'build_memory',
         recordingId,
         title: recording.title,
         useLLM: false, // Can be made configurable
       });
-
-      // Show loading feedback
-      alert('Building procedural memory... This may take a moment.');
     } catch (error) {
       console.error('Failed to build memory:', error);
       alert('Failed to build memory. Please try again.');
+      setIsBuildingMemory(false);
     }
   };
 
@@ -239,8 +241,28 @@ const MemoryPanel = ({ isDarkMode, portRef }: MemoryPanelProps) => {
     );
   }
 
+  // Building memory overlay
+  const buildingOverlay = isBuildingMemory && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div
+        className={`rounded-lg p-6 shadow-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-sky-200'} border`}>
+        <div className="text-center">
+          <div
+            className={`mx-auto mb-4 size-12 animate-spin rounded-full border-4 ${
+              isDarkMode ? 'border-sky-400 border-t-transparent' : 'border-sky-500 border-t-transparent'
+            }`}></div>
+          <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+            Building procedural memory...
+          </p>
+          <p className={`mt-2 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>This may take a moment</p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-full flex-col">
+      {buildingOverlay}
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {/* Recording Control */}
         <RecordingControl

@@ -411,4 +411,83 @@ export default class MessageManager {
     const msg = new ToolMessage({ content, tool_call_id: String(id) });
     this.addMessageWithTokens(msg, messageType);
   }
+
+  /**
+   * Adds procedural memory context to the message history
+   * This injects retrieved procedures as context for the planner/navigator
+   *
+   * @param procedures - Array of retrieval results with procedural memories
+   */
+  public addProceduralMemoryContext(
+    procedures: Array<{
+      memory: {
+        title: string;
+        abstract: {
+          goal: string;
+          flow: string[];
+          parameters: string[];
+          prerequisites: string[];
+        };
+        steps: Array<{
+          action: string;
+          parameters: Record<string, unknown>;
+          description: string;
+        }>;
+      };
+      relevanceScore: number;
+      reason: string;
+    }>,
+  ): void {
+    if (procedures.length === 0) return;
+
+    // Format procedural memories as context
+    let content = '<procedural_memory>\n';
+    content += '🧠 PROCEDURAL MEMORY RETRIEVED\n';
+    content += 'The following procedures from your memory are relevant to this task.\n';
+    content +=
+      'IMPORTANT: Acknowledge this in your FIRST response by mentioning the procedure in the "memory" field.\n\n';
+
+    for (let i = 0; i < procedures.length; i++) {
+      const { memory, relevanceScore, reason } = procedures[i];
+
+      content += `## Procedure ${i + 1}: ${memory.title}\n`;
+      content += `Relevance: ${(relevanceScore * 100).toFixed(0)}% (${reason})\n\n`;
+
+      content += `**Goal**: ${memory.abstract.goal}\n\n`;
+
+      if (memory.abstract.prerequisites.length > 0) {
+        content += `**Prerequisites**: ${memory.abstract.prerequisites.join('; ')}\n\n`;
+      }
+
+      if (memory.abstract.parameters.length > 0) {
+        content += `**Required Parameters**: ${memory.abstract.parameters.join(', ')}\n\n`;
+      }
+
+      content += `**High-level Flow**:\n`;
+      memory.abstract.flow.forEach((step, idx) => {
+        content += `${idx + 1}. ${step}\n`;
+      });
+      content += '\n';
+
+      content += `**Detailed Steps** (${memory.steps.length} steps):\n`;
+      memory.steps.forEach((step, idx) => {
+        content += `${idx + 1}. ${step.description}\n`;
+        content += `   Action: ${step.action}(${JSON.stringify(step.parameters)})\n`;
+      });
+      content += '\n';
+    }
+
+    content += '📋 INSTRUCTIONS:\n';
+    content += '1. Acknowledge this procedural memory in your FIRST response\n';
+    content += '2. Mention which procedure you\'re using in the "memory" field\n';
+    content += '3. Follow the high-level flow for your approach\n';
+    content += '4. Use detailed steps as guidance for actions\n';
+    content += '5. Adapt as needed if your task differs slightly\n';
+    content += '</procedural_memory>\n';
+
+    const msg = new HumanMessage({ content });
+    this.addMessageWithTokens(msg, 'procedural_memory');
+
+    logger.info(`Added ${procedures.length} procedural memories to context`);
+  }
 }
