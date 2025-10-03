@@ -130,7 +130,65 @@ const SidePanel = () => {
     const isProgressMessage = newMessage.content === progressMessage;
 
     setMessages(prev => {
+      // Remove trailing progress indicator if present
       const filteredMessages = prev.filter((msg, idx) => !(msg.content === progressMessage && idx === prev.length - 1));
+
+      // If this is a Planner final message (non-progress), collapse prior Planner/Navigator outputs
+      // that occurred after the last user message into this new planner message.
+      if (newMessage.actor === Actors.PLANNER && !isProgressMessage) {
+        // find last user message index
+        let lastUserIdx = -1;
+        for (let i = filteredMessages.length - 1; i >= 0; i--) {
+          if (filteredMessages[i].actor === Actors.USER) {
+            lastUserIdx = i;
+            break;
+          }
+        }
+
+        const startCollapseIdx = lastUserIdx + 1;
+        // messages to consider collapsing (planner or navigator)
+        const rawCandidates = filteredMessages
+          .slice(startCollapseIdx)
+          .filter(m => m.actor === Actors.PLANNER || m.actor === Actors.NAVIGATOR);
+
+        // Filter out evidently irrelevant outputs: very short lines, cache/debug notes, or JSON blobs
+        const toCollapse = rawCandidates.filter(m => {
+          const c = (m.content || '').trim();
+          if (!c) return false;
+          if (c.length < 20) return false; // too short to be useful
+          if (/\bcache\b|\bcached\b|\bdebug\b|internal/i.test(c)) return false;
+          if (/^\s*[{[]/.test(c)) return false; // likely JSON/array
+          if (/^\s*(ok|done|no results|result:?)\b/i.test(c)) return false;
+          // avoid including text that is already part of the final planner message
+          if (newMessage.content && newMessage.content.includes(c)) return false;
+          return true;
+        });
+
+        if (toCollapse.length > 0) {
+          // join their relevant contents
+
+          // Insert explicit markers so the UI can detect the collapsed section
+          const COLLAPSE_START = '<!--COLLAPSED_START-->';
+          const COLLAPSE_END = '<!--COLLAPSED_END-->';
+
+          // Build collapsed content with actor markers so it can be parsed and restored
+          const parts = toCollapse.map(m => `[[ACTOR:${m.actor}]]\n${m.content}`).join('\n\n');
+
+          // Place collapsed parts above the planner's final message (per UX request)
+          const mergedContent = `${COLLAPSE_START}\n${parts}\n${COLLAPSE_END}\n\n${newMessage.content}`;
+
+          const collapsedMessage: Message = {
+            ...newMessage,
+            content: mergedContent,
+          };
+
+          // Keep messages before startCollapseIdx, remove collapsed ones, and append collapsedMessage
+          const remaining = filteredMessages.slice(0, startCollapseIdx).filter(m => m.content !== progressMessage);
+
+          return [...remaining, collapsedMessage];
+        }
+      }
+
       return [...filteredMessages, newMessage];
     });
 
@@ -999,8 +1057,7 @@ const SidePanel = () => {
 
   return (
     <div>
-      <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
+      <div className="h-screen w-full flex flex-col overflow-hidden sb-panel rounded-2xl">
         <header className="header relative">
           <div className="header-logo">
             {showHistory ? (
@@ -1042,6 +1099,7 @@ const SidePanel = () => {
               href="https://discord.gg/NN3ABHggMK"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Open Discord (opens in a new tab)"
               className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
               <RxDiscordLogo size={20} />
             </a>
@@ -1136,7 +1194,6 @@ const SidePanel = () => {
                         setContent={setter => {
                           setInputTextRef.current = setter;
                         }}
-                        isDarkMode={isDarkMode}
                         historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                         onReplay={handleReplay}
                       />
@@ -1148,14 +1205,13 @@ const SidePanel = () => {
                         onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
                         onBookmarkDelete={handleBookmarkDelete}
                         onBookmarkReorder={handleBookmarkReorder}
-                        isDarkMode={isDarkMode}
                       />
                     </div>
                   </>
                 )}
                 {messages.length > 0 && (
                   <div
-                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
+                    className={`flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
                     <MessageList messages={messages} isDarkMode={isDarkMode} />
                     <div ref={messagesEndRef} />
                   </div>
@@ -1174,7 +1230,6 @@ const SidePanel = () => {
                       setContent={setter => {
                         setInputTextRef.current = setter;
                       }}
-                      isDarkMode={isDarkMode}
                       historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                       onReplay={handleReplay}
                     />

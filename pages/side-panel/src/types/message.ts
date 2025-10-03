@@ -2,7 +2,8 @@ export const ACTOR_PROFILES = {
   user: {
     name: 'User',
     icon: 'icons/user.svg',
-    iconBackground: '#4CAF50',
+    // Semi-transparent Material blue per request
+    iconBackground: 'rgb(59 130 246 / .5)',
   },
   system: {
     name: 'System',
@@ -12,12 +13,13 @@ export const ACTOR_PROFILES = {
   planner: {
     name: 'Planner',
     icon: 'icons/planner.svg',
-    iconBackground: '#FF9800',
+    // Semi-transparent Material blue per request
+    iconBackground: 'rgb(59 130 246 / .5)',
   },
   navigator: {
     name: 'Navigator',
     icon: 'icons/navigator.svg',
-    iconBackground: '#40A9FF',
+    iconBackground: 'rgb(59 130 246 / .5)',
   },
   validator: {
     name: 'Validator',

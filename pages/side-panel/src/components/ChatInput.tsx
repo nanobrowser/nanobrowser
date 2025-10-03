@@ -12,7 +12,6 @@ interface ChatInputProps {
   disabled: boolean;
   showStopButton: boolean;
   setContent?: (setter: (text: string) => void) => void;
-  isDarkMode?: boolean;
   // Historical session ID - if provided, shows replay button instead of send button
   historicalSessionId?: string | null;
   onReplay?: (sessionId: string) => void;
@@ -27,7 +26,6 @@ export default function ChatInput({
   disabled,
   showStopButton,
   setContent,
-  isDarkMode = false,
   historicalSessionId,
   onReplay,
 }: ChatInputProps) {
@@ -94,7 +92,7 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
+      className={`transition-theme input-area ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
       aria-label={t('chat_input_form')}>
       <div className="flex flex-col">
         <textarea
@@ -103,26 +101,17 @@ export default function ChatInput({
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          aria-disabled={disabled}
           rows={5}
-          className={`w-full resize-none border-none p-2 focus:outline-none ${
-            disabled
-              ? isDarkMode
-                ? 'cursor-not-allowed bg-slate-800 text-gray-400'
-                : 'cursor-not-allowed bg-gray-100 text-gray-500'
-              : isDarkMode
-                ? 'bg-slate-800 text-gray-200'
-                : 'bg-white'
-          }`}
+          className={
+            'w-full resize-none p-3 text-sm transition-theme focus:outline-none ' +
+            (disabled ? 'cursor-not-allowed bg-slate-900 text-gray-400' : 'bg-transparent text-[var(--text)]')
+          }
           placeholder={t('chat_input_placeholder')}
           aria-label={t('chat_input_editor')}
         />
 
-        <div
-          className={`flex items-center justify-between px-2 py-1.5 ${
-            disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-100') : isDarkMode ? 'bg-slate-800' : 'bg-white'
-          }`}>
-          <div className="flex gap-2 text-gray-500">
+        <div className={`input-row flex items-center justify-between p-2`}>
+          <div className={`muted flex gap-2`}>
             {onMicClick && (
               <button
                 type="button"
@@ -135,15 +124,14 @@ export default function ChatInput({
                       ? t('chat_stt_recording_stop')
                       : t('chat_stt_input_start')
                 }
-                className={`rounded-md p-1.5 transition-colors ${
-                  disabled || isProcessingSpeech
+                className={
+                  'rounded-lg p-2 transition-theme ' +
+                  (disabled || isProcessingSpeech
                     ? 'cursor-not-allowed opacity-50'
                     : isRecording
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : isDarkMode
-                        ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}>
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:bg-[rgba(255,255,255,0.02)]')
+                }>
                 {isProcessingSpeech ? (
                   <AiOutlineLoading3Quarters className="size-4 animate-spin" />
                 ) : (
@@ -165,16 +153,19 @@ export default function ChatInput({
               type="button"
               onClick={handleReplay}
               disabled={!historicalSessionId}
-              aria-disabled={!historicalSessionId}
-              className={`rounded-md bg-green-500 px-3 py-1 text-white transition-colors hover:enabled:bg-green-600 ${!historicalSessionId ? 'cursor-not-allowed opacity-50' : ''}`}>
+              className={`rounded-md bg-green-500 px-3 py-1 text-white transition-colors hover:bg-green-600 ${!historicalSessionId ? 'cursor-not-allowed opacity-50' : ''}`}>
               {t('chat_buttons_replay')}
             </button>
           ) : (
             <button
               type="submit"
               disabled={isSendButtonDisabled}
-              aria-disabled={isSendButtonDisabled}
-              className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:enabled:bg-[#0073DC] ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+              className={
+                'rounded-lg px-4 py-1 shadow-md transition-transform text-white ' +
+                (isSendButtonDisabled
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-80'
+                  : 'bg-blue-600 hover:bg-blue-700 active:scale-95')
+              }>
               {t('chat_buttons_send')}
             </button>
           )}
