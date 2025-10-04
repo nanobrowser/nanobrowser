@@ -4,6 +4,7 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
+import { FaBrain } from 'react-icons/fa';
 import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
@@ -11,6 +12,7 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
+import MemoryPanel from './components/MemoryPanel';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -28,6 +30,7 @@ const SidePanel = () => {
   const [showStopButton, setShowStopButton] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showMemory, setShowMemory] = useState(false);
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
@@ -689,6 +692,7 @@ const SidePanel = () => {
 
   const handleBackToChat = (reset = false) => {
     setShowHistory(false);
+    setShowMemory(false);
     if (reset) {
       setCurrentSessionId(null);
       setMessages([]);
@@ -696,6 +700,15 @@ const SidePanel = () => {
       setIsHistoricalSession(false);
     }
   };
+
+  const handleShowMemory = useCallback(() => {
+    // Setup connection if not exists to enable recording features
+    if (!portRef.current) {
+      setupConnection();
+    }
+    setShowMemory(true);
+    setShowHistory(false);
+  }, [setupConnection]);
 
   const handleSessionSelect = async (sessionId: string) => {
     try {
@@ -1003,7 +1016,7 @@ const SidePanel = () => {
         className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
         <header className="header relative">
           <div className="header-logo">
-            {showHistory ? (
+            {showHistory || showMemory ? (
               <button
                 type="button"
                 onClick={() => handleBackToChat(false)}
@@ -1016,8 +1029,21 @@ const SidePanel = () => {
             )}
           </div>
           <div className="header-icons">
-            {!showHistory && (
+            {!showHistory && !showMemory && (
               <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      if (!portRef.current) setupConnection();
+                      portRef.current?.postMessage({ type: 'linear_create_issue_demo', url: 'https://linear.app' });
+                    } catch (e) {
+                      console.error('Failed to open Linear:', e);
+                    }
+                  }}
+                  className="px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100">
+                  Create Issue
+                </button>
                 <button
                   type="button"
                   onClick={handleNewChat}
@@ -1026,6 +1052,15 @@ const SidePanel = () => {
                   aria-label={t('nav_newChat_a11y')}
                   tabIndex={0}>
                   <PiPlusBold size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShowMemory}
+                  onKeyDown={e => e.key === 'Enter' && handleShowMemory()}
+                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  aria-label="Open Procedural Memory"
+                  tabIndex={0}>
+                  <FaBrain size={20} />
                 </button>
                 <button
                   type="button"
@@ -1066,6 +1101,10 @@ const SidePanel = () => {
               visible={true}
               isDarkMode={isDarkMode}
             />
+          </div>
+        ) : showMemory ? (
+          <div className="flex-1 overflow-hidden">
+            <MemoryPanel isDarkMode={isDarkMode} portRef={portRef} />
           </div>
         ) : (
           <>

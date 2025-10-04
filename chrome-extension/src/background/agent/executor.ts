@@ -25,6 +25,7 @@ import { chatHistoryStore } from '@extension/storage/lib/chat';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
+import { proceduralMemoryRetriever, type RetrievalContext } from '../memory/retriever';
 
 const logger = createLogger('Executor');
 
@@ -137,6 +138,9 @@ export class Executor {
 
       // Track task start
       void analytics.trackTaskStart(this.context.taskId);
+
+      // NEW: Retrieve relevant procedural memories before execution
+      await this.retrieveAndInjectProceduralMemories();
 
       let step = 0;
       let latestPlanOutput: AgentOutput<PlannerOutput> | null = null;
@@ -356,6 +360,71 @@ export class Executor {
 
   async getCurrentTaskId(): Promise<string> {
     return this.context.taskId;
+  }
+
+  /**
+   * Retrieve relevant procedural memories and inject them as context
+   * This implements the RETRIEVAL phase from the MemP paper
+   */
+  private async retrieveAndInjectProceduralMemories(): Promise<void> {
+    try {
+      logger.info('🔍 Checking procedural memory for relevant procedures...');
+
+      // Get current context
+      const task = this.tasks[this.tasks.length - 1];
+      let currentUrl: string | undefined;
+      let currentPageTitle: string | undefined;
+
+      try {
+        const currentPage = await this.context.browserContext.getCurrentPage();
+        const state = await currentPage.getState();
+        currentUrl = state.url;
+        currentPageTitle = state.title;
+        logger.debug(`Current context: ${currentUrl} - "${currentPageTitle}"`);
+      } catch (error) {
+        logger.debug('Could not get current page context:', error);
+        // Continue without URL context
+      }
+
+      // Build retrieval context
+      const retrievalContext: RetrievalContext = {
+        task,
+        currentUrl,
+        currentPageTitle,
+        // Could add availableParameters from context if needed
+      };
+
+      // Retrieve relevant procedures
+      const relevantProcedures = await proceduralMemoryRetriever.retrieve(retrievalContext);
+
+      if (relevantProcedures.length > 0) {
+        logger.info(
+          `✅ Found ${relevantProcedures.length} relevant procedural ${relevantProcedures.length === 1 ? 'memory' : 'memories'}`,
+        );
+
+        // Emit event to show in UI
+        const topProcedure = relevantProcedures[0];
+        const procedureInfo = `Retrieved: "${topProcedure.memory.title}" (${Math.round(topProcedure.relevanceScore * 100)}% match)`;
+        this.context.emitEvent(Actors.SYSTEM, ExecutionState.STEP_START, `🧠 ${procedureInfo}`);
+
+        // Inject procedures as context for planner/navigator
+        this.context.messageManager.addProceduralMemoryContext(relevantProcedures);
+
+        // Optionally verify context for the top result
+        const verification = await proceduralMemoryRetriever.verifyContext(topProcedure.memory, retrievalContext);
+
+        if (!verification.applicable) {
+          logger.warning(`Top procedure may not be applicable: ${verification.reason}`);
+        } else {
+          logger.debug(`Top procedure context verified: ${verification.reason}`);
+        }
+      } else {
+        logger.info('No relevant procedural memories found for this task');
+      }
+    } catch (error) {
+      // Don't fail the entire execution if retrieval fails
+      logger.error('Failed to retrieve procedural memories:', error);
+    }
   }
 
   /**

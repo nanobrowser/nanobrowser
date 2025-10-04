@@ -128,5 +128,15 @@ Common action sequences:
 - Plan is a json string wrapped by the <plan> tag
 - If a plan is provided, follow the instructions in the next_steps exactly first
 - If no plan is provided, just continue with the task
+
+13. Procedural Memory:
+
+- If you receive a <procedural_memory> tag with retrieved procedures, you have access to prior knowledge about similar tasks
+- In your FIRST response after receiving procedural memory, acknowledge it in the "memory" field
+- Example: "Retrieved procedure: 'Create Linear Issue' (85% relevance). Following its flow: Navigate → Open form → Fill details → Submit."
+- Use the high-level flow for planning your approach
+- Use the detailed steps as guidance for specific actions
+- Adapt the procedure to the current task's specific parameters
+- If the procedure doesn't match exactly, deviate as needed and note it in memory
 </system_instructions>
 `;
