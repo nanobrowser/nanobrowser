@@ -1,7 +1,6 @@
 /**
  * Recording Listener - Content script to capture DOM interactions
- * This script is injected into web pages during demonstration recording
- * to capture clicks, text inputs, and form submissions.
+ * Enhanced to capture semantic information for procedural memory
  */
 
 (() => {
@@ -15,16 +14,134 @@
 
   let isRecording = false;
   let lastInputTime = {};
-  const INPUT_DEBOUNCE = 500; // ms - delay before recording input to avoid recording every keystroke
+  let lastInputValues = {}; // Track last recorded value to avoid duplicates
+  const INPUT_DEBOUNCE = 500;
 
   /**
-   * Generate XPath for an element
+   * Find the nearest semantic parent element (button, link, input, etc.)
+   */
+  function findSemanticElement(element) {
+    const semanticTags = ['button', 'a', 'input', 'textarea', 'select'];
+    const semanticRoles = ['button', 'link', 'menuitem', 'tab', 'option', 'textbox'];
+
+    let current = element;
+    let depth = 0;
+    const maxDepth = 5; // Don't traverse too far up
+
+    while (current && depth < maxDepth) {
+      const tagName = current.tagName?.toLowerCase();
+      const role = current.getAttribute('role');
+
+      // Check if this is a semantic element
+      if (semanticTags.includes(tagName) || semanticRoles.includes(role)) {
+        return current;
+      }
+
+      // Check for clickable indicators
+      if (
+        current.onclick ||
+        current.getAttribute('onclick') ||
+        current.style?.cursor === 'pointer' ||
+        role === 'button'
+      ) {
+        return current;
+      }
+
+      current = current.parentElement;
+      depth++;
+    }
+
+    return element; // Return original if no semantic parent found
+  }
+
+  /**
+   * Get semantic label for an element
+   */
+  function getSemanticLabel(element) {
+    // Priority order for getting meaningful labels
+    const sources = [
+      element.getAttribute('aria-label'),
+      element.getAttribute('aria-labelledby') &&
+        document.getElementById(element.getAttribute('aria-labelledby'))?.textContent,
+      element.getAttribute('title'),
+      element.getAttribute('placeholder'),
+      element.getAttribute('name'),
+      element.getAttribute('data-label'),
+      element.textContent?.trim(),
+      element.value,
+      element.getAttribute('alt'),
+    ];
+
+    for (const source of sources) {
+      if (source && typeof source === 'string' && source.trim().length > 0) {
+        return source.trim().slice(0, 100);
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Get field label for input elements
+   */
+  function getInputLabel(element) {
+    // Check for associated label
+    if (element.id) {
+      const label = document.querySelector(`label[for="${element.id}"]`);
+      if (label?.textContent) {
+        return label.textContent.trim();
+      }
+    }
+
+    // Check for wrapping label
+    const parentLabel = element.closest('label');
+    if (parentLabel?.textContent) {
+      return parentLabel.textContent.trim();
+    }
+
+    // Check for aria-label or placeholder
+    return getSemanticLabel(element);
+  }
+
+  /**
+   * Extract semantic role/purpose from element
+   */
+  function getElementRole(element) {
+    const role = element.getAttribute('role');
+    if (role) return role;
+
+    const tagName = element.tagName.toLowerCase();
+
+    // Map common tags to roles
+    const roleMap = {
+      button: 'button',
+      a: 'link',
+      input: 'input',
+      textarea: 'input',
+      select: 'select',
+      form: 'form',
+    };
+
+    return roleMap[tagName] || tagName;
+  }
+
+  /**
+   * Generate XPath for an element (improved)
    */
   function getXPath(element) {
     if (!element) return '';
 
+    // Prefer ID if available
     if (element.id) {
       return `//*[@id="${element.id}"]`;
+    }
+
+    // Try to use data attributes for more stable paths
+    if (element.getAttribute('data-testid')) {
+      return `//*[@data-testid="${element.getAttribute('data-testid')}"]`;
+    }
+    if (element.getAttribute('data-id')) {
+      return `//*[@data-id="${element.getAttribute('data-id')}"]`;
     }
 
     const parts = [];
@@ -52,37 +169,83 @@
   }
 
   /**
-   * Get element attributes
+   * Get element attributes (filtered for relevant ones)
    */
   function getElementAttributes(element) {
     const attrs = {};
+    const relevantAttrs = [
+      'id',
+      'name',
+      'class',
+      'type',
+      'role',
+      'aria-label',
+      'placeholder',
+      'title',
+      'data-testid',
+      'data-id',
+      'data-label',
+      'href',
+      'value',
+    ];
+
     if (element.attributes) {
       for (let i = 0; i < element.attributes.length; i++) {
         const attr = element.attributes[i];
-        attrs[attr.name] = attr.value;
+        // Only include relevant attributes
+        if (relevantAttrs.includes(attr.name) || attr.name.startsWith('data-')) {
+          attrs[attr.name] = attr.value;
+        }
       }
     }
     return attrs;
   }
 
   /**
-   * Get text content from element
+   * Generate semantic description for the action
    */
-  function getElementText(element) {
-    if (!element) return '';
+  function generateDescription(action, element, semanticLabel, role, extraParams = {}) {
+    let description = '';
 
-    // Get text from various sources
-    const text =
-      element.textContent?.trim() ||
-      element.innerText?.trim() ||
-      element.value ||
-      element.getAttribute('aria-label') ||
-      element.getAttribute('placeholder') ||
-      element.getAttribute('title') ||
-      element.getAttribute('alt') ||
-      '';
+    switch (action) {
+      case 'click': {
+        if (role === 'button' || role === 'link') {
+          if (semanticLabel) {
+            description = `Clicked ${role} "${semanticLabel}"`;
+          } else {
+            const tagName = element.tagName.toLowerCase();
+            description = `Clicked ${tagName}`;
+          }
+        } else if (role === 'option' || role === 'menuitem') {
+          description = `Selected "${semanticLabel || 'option'}"`;
+        } else {
+          description = semanticLabel ? `Clicked "${semanticLabel}"` : `Clicked ${element.tagName.toLowerCase()}`;
+        }
+        break;
+      }
 
-    return text.slice(0, 200); // Limit length
+      case 'input': {
+        const label = extraParams.fieldLabel || semanticLabel;
+        const value = extraParams.value || '';
+
+        if (label) {
+          description = `Entered "${value}" in "${label}" field`;
+        } else {
+          description = `Entered text: "${value}"`;
+        }
+        break;
+      }
+
+      case 'submit': {
+        description = semanticLabel ? `Submitted form "${semanticLabel}"` : 'Submitted form';
+        break;
+      }
+
+      default:
+        description = `Performed ${action}`;
+    }
+
+    return description;
   }
 
   /**
@@ -94,27 +257,24 @@
     try {
       const xpath = getXPath(element);
       const attributes = getElementAttributes(element);
-      const textContent = getElementText(element);
-      const tagName = element.tagName.toLowerCase();
+      const semanticLabel = getSemanticLabel(element);
+      const role = getElementRole(element);
 
-      // Build description
-      let description = '';
-      switch (action) {
-        case 'click':
-          description = `Clicked ${tagName}`;
-          if (textContent) {
-            description += ` "${textContent.slice(0, 50)}"`;
-          }
-          break;
-        case 'input':
-          description = `Entered text into ${tagName}`;
-          if (attributes.placeholder) {
-            description += ` (${attributes.placeholder})`;
-          }
-          break;
-        case 'submit':
-          description = `Submitted form`;
-          break;
+      // Generate semantic description
+      const description = generateDescription(action, element, semanticLabel, role, extraParams);
+
+      // Build semantic metadata
+      const semanticData = {
+        role,
+        label: semanticLabel,
+        interactionType: action,
+      };
+
+      // Add field-specific metadata for inputs
+      if (action === 'input') {
+        semanticData.fieldName = attributes.name || attributes.id || semanticLabel;
+        semanticData.fieldLabel = extraParams.fieldLabel;
+        semanticData.inputType = extraParams.inputType;
       }
 
       // Send message to background script
@@ -125,15 +285,16 @@
             action,
             parameters: {
               xpath,
-              tagName,
+              tagName: element.tagName.toLowerCase(),
               ...extraParams,
             },
             description,
             element: {
-              tagName,
+              tagName: element.tagName.toLowerCase(),
               xpath,
               attributes,
-              textContent,
+              textContent: semanticLabel,
+              semantic: semanticData, // Add semantic metadata
             },
             url: window.location.href,
             pageTitle: document.title,
@@ -141,7 +302,6 @@
           },
         })
         .catch(err => {
-          // Ignore errors if background is not connected
           console.debug('[Recording Listener] Failed to send message:', err);
         });
     } catch (error) {
@@ -155,11 +315,18 @@
   function handleClick(event) {
     if (!isRecording) return;
 
-    const element = event.target;
-    if (!element) return;
+    // Find the semantic element (traverse up from clicked element)
+    const semanticElement = findSemanticElement(event.target);
+    if (!semanticElement) return;
 
-    // Record the click
-    recordInteraction('click', element, {
+    // Skip if we're clicking on an input (handled by input events)
+    const tagName = semanticElement.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea') {
+      return;
+    }
+
+    // Record the click with semantic element
+    recordInteraction('click', semanticElement, {
       clientX: event.clientX,
       clientY: event.clientY,
       button: event.button,
@@ -167,7 +334,7 @@
   }
 
   /**
-   * Handle input events (debounced to avoid recording every keystroke)
+   * Handle input events (debounced)
    */
   function handleInput(event) {
     if (!isRecording) return;
@@ -182,6 +349,9 @@
       return;
     }
 
+    // Get the current value
+    const currentValue = element.value || element.textContent || '';
+
     // Debounce: only record after user stops typing
     const elementId = getXPath(element);
     if (lastInputTime[elementId]) {
@@ -191,16 +361,29 @@
     lastInputTime[elementId] = setTimeout(() => {
       const value = element.value || element.textContent || '';
 
-      // Don't record empty values or very long values
+      // Don't record if empty or unchanged
       if (!value || value.length > 1000) {
+        delete lastInputTime[elementId];
         return;
       }
 
+      // Don't record if value hasn't changed since last recording
+      if (lastInputValues[elementId] === value) {
+        delete lastInputTime[elementId];
+        return;
+      }
+
+      // Get field label for better description
+      const fieldLabel = getInputLabel(element);
+
       recordInteraction('input', element, {
-        value: value.slice(0, 200), // Limit value length
+        value: value.slice(0, 200),
         inputType: element.type || 'text',
+        fieldLabel,
       });
 
+      // Remember this value to avoid duplicates
+      lastInputValues[elementId] = value;
       delete lastInputTime[elementId];
     }, INPUT_DEBOUNCE);
   }
@@ -229,6 +412,7 @@
 
     console.log('[Recording Listener] Starting to capture interactions');
     isRecording = true;
+    lastInputValues = {}; // Reset
 
     // Attach event listeners
     document.addEventListener('click', handleClick, true);
@@ -255,6 +439,7 @@
       clearTimeout(timeoutId);
     }
     lastInputTime = {};
+    lastInputValues = {};
   }
 
   /**

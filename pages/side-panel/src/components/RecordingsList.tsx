@@ -83,17 +83,16 @@ const RecordingsList = ({ recordings, isDarkMode, onBuildMemory, onDeleteRecordi
             </span>
           </div>
 
-          {/* Show first few steps preview */}
+          {/* Show all steps in scrollable preview */}
           {recording.steps.length > 0 && (
             <details className={`mb-3 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              <summary className="cursor-pointer hover:underline">View steps</summary>
-              <div className="mt-2 space-y-1 rounded bg-slate-900/20 p-2">
-                {recording.steps.slice(0, 5).map((step, idx) => (
+              <summary className="cursor-pointer hover:underline">View steps ({recording.steps.length})</summary>
+              <div className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded bg-slate-900/20 p-2">
+                {recording.steps.map((step, idx) => (
                   <div key={idx} className="font-mono">
                     {idx + 1}. {step.action}: {step.description}
                   </div>
                 ))}
-                {recording.steps.length > 5 && <div className="italic">... and {recording.steps.length - 5} more</div>}
               </div>
             </details>
           )}

@@ -93,61 +93,37 @@ export class MemoryBuilderImpl implements MemoryBuilder {
    * Generate abstract representation using heuristics (rule-based)
    */
   private generateAbstractHeuristic(steps: ProceduralStep[]): ProceduralMemory['abstract'] {
-    // Extract high-level flow
+    // Extract high-level flow with semantic information
     const flow: string[] = [];
-    const seenDescriptions = new Set<string>();
+    const seenActions = new Set<string>();
 
     for (const step of steps) {
-      // Simplify description for flow
-      const flowItem = this.simplifyDescription(step.description);
-      if (!seenDescriptions.has(flowItem)) {
+      // Create semantic flow item from step
+      const flowItem = this.extractSemanticAction(step);
+
+      // Avoid duplicate consecutive actions
+      if (flowItem && !seenActions.has(flowItem)) {
         flow.push(flowItem);
-        seenDescriptions.add(flowItem);
+        seenActions.add(flowItem);
       }
     }
 
-    // Identify parameters from common patterns
-    const parameters: string[] = [];
-    const parameterPatterns = [
-      /title/i,
-      /description/i,
-      /name/i,
-      /email/i,
-      /assignee/i,
-      /project/i,
-      /milestone/i,
-      /priority/i,
-      /status/i,
-      /label/i,
-      /tag/i,
-    ];
+    // Extract parameters from semantic data
+    const parameters = this.extractParameters(steps);
+    console.log('parameters from extractParameters', parameters);
 
-    for (const step of steps) {
-      const desc = step.description.toLowerCase();
-      for (const pattern of parameterPatterns) {
-        if (pattern.test(desc)) {
-          const match = desc.match(pattern);
-          if (match && !parameters.includes(match[0])) {
-            parameters.push(match[0]);
-          }
-        }
-      }
-    }
-
-    // Extract goal from first and last steps
-    const firstStep = steps[0];
-    const lastStep = steps[steps.length - 1];
-    const goal = this.inferGoal(firstStep, lastStep, steps);
+    // Extract goal from semantic flow
+    const goal = this.inferGoalFromSemantics(steps);
 
     // Infer prerequisites
     const prerequisites = this.inferPrerequisites(steps);
 
-    // Auto-generate tags
-    const tags = this.autoGenerateTags(steps);
+    // Auto-generate tags from semantic information
+    const tags = this.autoGenerateTagsFromSemantics(steps);
 
     return {
       goal,
-      parameters: Array.from(new Set(parameters)), // Remove duplicates
+      parameters: Array.from(new Set(parameters)),
       prerequisites,
       flow,
       domains: [], // Will be filled by caller
@@ -367,6 +343,157 @@ Return ONLY a valid JSON object with the structure: {"goal": "...", "parameters"
     if (desc.includes('milestone')) return 'milestone';
 
     return 'value';
+  }
+
+  /**
+   * Extract semantic action from step
+   */
+  private extractSemanticAction(step: ProceduralStep): string {
+    // Use semantic metadata if available
+    const semantic = (step.element as any)?.semantic;
+
+    if (semantic?.label) {
+      switch (semantic.role) {
+        case 'button':
+          return `Click "${semantic.label}"`;
+        case 'input':
+          return `Enter ${semantic.fieldLabel || semantic.label}`;
+        case 'link':
+          return `Navigate via "${semantic.label}"`;
+        default:
+          return semantic.label;
+      }
+    }
+
+    // Fallback to description simplification
+    return this.simplifyDescription(step.description);
+  }
+
+  /**
+   * Extract parameters from steps using semantic information
+   */
+  private extractParameters(steps: ProceduralStep[]): string[] {
+    const parameters: string[] = [];
+    const parameterSet = new Set<string>();
+
+    for (const step of steps) {
+      // Check for input actions with semantic field names
+      if (step.action === 'input' || step.action === 'input_text') {
+        const semantic = (step.element as any)?.semantic;
+        const fieldName = semantic?.fieldName || semantic?.fieldLabel;
+
+        if (fieldName) {
+          const paramName = this.normalizeParameterName(fieldName);
+          if (paramName && !parameterSet.has(paramName)) {
+            parameters.push(paramName);
+            parameterSet.add(paramName);
+          }
+        } else {
+          // Fallback to description-based extraction
+          const desc = step.description.toLowerCase();
+          const match = desc.match(/enter (?:text |")?(.+?)(?:"|in| field)/i);
+          if (match && match[1]) {
+            const paramName = this.normalizeParameterName(match[1]);
+            if (!parameterSet.has(paramName)) {
+              parameters.push(paramName);
+              parameterSet.add(paramName);
+            }
+          }
+        }
+      }
+    }
+
+    return parameters;
+  }
+
+  /**
+   * Normalize parameter name (e.g., "Issue Title" -> "title")
+   */
+  private normalizeParameterName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/^(issue|task|item)\s+/i, '') // Remove prefixes
+      .replace(/\s+field$/i, '') // Remove "field" suffix
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .trim();
+  }
+
+  /**
+   * Infer goal from semantic information
+   */
+  private inferGoalFromSemantics(steps: ProceduralStep[]): string {
+    if (steps.length === 0) return 'Perform task';
+
+    const domain = new URL(steps[0].url).hostname.replace('www.', '').split('.')[0];
+
+    // Look for create/submit actions
+    const hasCreate = steps.some(s => {
+      const semantic = (s.element as any)?.semantic;
+      return s.description.toLowerCase().includes('create') || semantic?.label?.toLowerCase().includes('create');
+    });
+
+    const hasSubmit = steps.some(s => {
+      const semantic = (s.element as any)?.semantic;
+      return s.action === 'submit' || semantic?.label?.toLowerCase().includes('submit');
+    });
+
+    // Look for what's being created
+    const descriptions = steps.map(s => s.description.toLowerCase()).join(' ');
+
+    if (hasCreate || hasSubmit) {
+      if (descriptions.includes('issue')) return `Create issue in ${domain}`;
+      if (descriptions.includes('task')) return `Create task in ${domain}`;
+      if (descriptions.includes('project')) return `Create project in ${domain}`;
+      if (descriptions.includes('ticket')) return `Create ticket in ${domain}`;
+      return `Create item in ${domain}`;
+    }
+
+    if (descriptions.includes('edit') || descriptions.includes('update')) {
+      return `Edit item in ${domain}`;
+    }
+
+    if (descriptions.includes('search') || descriptions.includes('find')) {
+      return `Search in ${domain}`;
+    }
+
+    return `Perform workflow in ${domain}`;
+  }
+
+  /**
+   * Auto-generate tags from semantic information
+   */
+  private autoGenerateTagsFromSemantics(steps: ProceduralStep[]): string[] {
+    const tags = new Set<string>();
+
+    // Domain-based tags
+    const url = new URL(steps[0].url);
+    if (url.hostname.includes('linear')) tags.add('project_management');
+    if (url.hostname.includes('github')) tags.add('code_repository');
+    if (url.hostname.includes('jira')) tags.add('issue_tracking');
+    if (url.hostname.includes('notion')) tags.add('documentation');
+
+    // Action-based tags from semantic labels
+    for (const step of steps) {
+      const semantic = (step.element as any)?.semantic;
+      const label = semantic?.label?.toLowerCase() || '';
+      const desc = step.description.toLowerCase();
+      const combined = label + ' ' + desc;
+
+      if (combined.includes('issue')) tags.add('issue_tracking');
+      if (combined.includes('task')) tags.add('task_management');
+      if (combined.includes('create')) tags.add('creation');
+      if (combined.includes('edit') || combined.includes('update')) tags.add('modification');
+      if (combined.includes('search')) tags.add('search');
+      if (combined.includes('form') || combined.includes('submit')) tags.add('form_filling');
+
+      // Field-specific tags
+      if (combined.includes('assignee') || combined.includes('assign')) tags.add('assignment');
+      if (combined.includes('priority')) tags.add('prioritization');
+      if (combined.includes('status')) tags.add('status_management');
+      if (combined.includes('milestone') || combined.includes('deadline')) tags.add('planning');
+    }
+
+    return Array.from(tags);
   }
 }
 

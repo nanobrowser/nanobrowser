@@ -18,6 +18,7 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import type { DOMElementNode } from './browser/dom/views';
 import { createDemonstrationRecorder, createMemoryBuilder } from './memory';
 import type { DemonstrationRecorder, MemoryBuilder } from './memory';
 import { proceduralMemoryStore } from '@extension/storage';
@@ -85,6 +86,144 @@ chrome.runtime.onConnect.addListener(port => {
     port.onMessage.addListener(async message => {
       try {
         switch (message.type) {
+          case 'open_url': {
+            try {
+              const url: string = message.url;
+              if (!url) return port.postMessage({ type: 'error', error: t('bg_cmd_state_failed') });
+              await browserContext.navigateTo(url);
+              return port.postMessage({ type: 'success' });
+            } catch (error) {
+              logger.error('Open URL failed:', error);
+              return port.postMessage({ type: 'error', error: t('bg_cmd_state_failed') });
+            }
+          }
+
+          case 'linear_create_issue_demo': {
+            // Hardcoded demo: create a Linear issue with specific fields
+            const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+            const getState = async () => await browserContext.getState(true);
+            const getPage = async () => await browserContext.getCurrentPage();
+
+            const findByText = async (needle: string, retries = 8, delayMs = 400): Promise<DOMElementNode | null> => {
+              const target = needle.trim().toLowerCase();
+              for (let i = 0; i < retries; i++) {
+                const state = await getState();
+                for (const el of state.selectorMap.values()) {
+                  try {
+                    const text = el.getAllTextTillNextClickableElement().toLowerCase();
+                    const a11y = `${el.attributes['aria-label'] || ''} ${el.attributes['placeholder'] || ''}`
+                      .toLowerCase()
+                      .trim();
+                    if (text.includes(target) || a11y.includes(target)) {
+                      return el;
+                    }
+                  } catch (e) {
+                    // ignore
+                  }
+                }
+                await wait(delayMs);
+              }
+              return null;
+            };
+
+            const clickByText = async (label: string): Promise<void> => {
+              const el = await findByText(label);
+              if (!el) throw new Error(`Element not found: ${label}`);
+              const page = await getPage();
+              await page.clickElementNode(true, el);
+              await wait(350);
+            };
+
+            const inputByText = async (label: string, value: string): Promise<void> => {
+              const el = await findByText(label);
+              if (!el) throw new Error(`Input not found: ${label}`);
+              const page = await getPage();
+              await page.inputTextElementNode(true, el, value);
+              await wait(350);
+            };
+
+            type ScriptStep = { action: string; args?: unknown[] };
+
+            const runScript = async (steps: ScriptStep[]): Promise<void> => {
+              for (const step of steps) {
+                const action = step.action.toLowerCase();
+                const args = step.args ?? [];
+                switch (action) {
+                  case 'navigate': {
+                    const url = String(args[0] ?? '');
+                    if (!url) throw new Error('navigate: missing URL');
+                    await browserContext.navigateTo(url);
+                    await wait(1200);
+                    break;
+                  }
+                  case 'sendkeys': {
+                    const keys = String(args[0] ?? '');
+                    if (!keys) throw new Error('sendKeys: missing keys');
+                    await (await getPage()).sendKeys(keys);
+                    await wait(500);
+                    break;
+                  }
+                  case 'clickbytext': {
+                    const label = String(args[0] ?? '');
+                    await clickByText(label);
+                    break;
+                  }
+                  case 'inputbytext': {
+                    const label = String(args[0] ?? '');
+                    const value = String(args[1] ?? '');
+                    await inputByText(label, value);
+                    break;
+                  }
+                  case 'wait': {
+                    const ms = Number(args[0] ?? 300);
+                    await wait(ms);
+                    break;
+                  }
+                  default:
+                    throw new Error(`Unknown action: ${step.action}`);
+                }
+              }
+            };
+
+            try {
+              const defaultScript: ScriptStep[] = [
+                { action: 'navigate', args: ['https://linear.app'] },
+                { action: 'wait', args: [1500] },
+                { action: 'sendKeys', args: ['c'] },
+                { action: 'wait', args: [700] },
+                { action: 'inputByText', args: ['Issue title', 'This is a sample title.'] },
+                {
+                  action: 'inputByText',
+                  args: ['Issue description', "This is a sample issue for the 'Create Linear Issue' demo."],
+                },
+                { action: 'clickByText', args: ['Change status'] },
+                { action: 'clickByText', args: ['Todo'] },
+                { action: 'clickByText', args: ['priority'] },
+                { action: 'clickByText', args: ['Low'] },
+                { action: 'clickByText', args: ['Assignee'] },
+                { action: 'clickByText', args: ['Serena Yan'] },
+                { action: 'clickByText', args: ['project'] },
+                { action: 'clickByText', args: ['Memory Agent'] },
+                { action: 'clickByText', args: ['Choose milestone'] },
+                { action: 'clickByText', args: ['MVP'] },
+                { action: 'clickByText', args: ['labels'] },
+                { action: 'clickByText', args: ['feature'] },
+                { action: 'clickByText', args: ['More actions'] },
+                { action: 'clickByText', args: ['set due date'] },
+                { action: 'clickByText', args: ['Tomorrow'] },
+                { action: 'clickByText', args: ['Create issue'] },
+              ];
+
+              const steps: ScriptStep[] = Array.isArray(message.script) ? message.script : defaultScript;
+              await runScript(steps);
+
+              return port.postMessage({ type: 'success' });
+            } catch (error) {
+              logger.error('Linear demo failed:', error);
+              return port.postMessage({ type: 'error', error: (error as Error).message });
+            }
+          }
           case 'heartbeat':
             // Acknowledge heartbeat
             port.postMessage({ type: 'heartbeat_ack' });

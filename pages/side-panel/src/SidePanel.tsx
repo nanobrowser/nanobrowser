@@ -1033,6 +1033,19 @@ const SidePanel = () => {
               <>
                 <button
                   type="button"
+                  onClick={() => {
+                    try {
+                      if (!portRef.current) setupConnection();
+                      portRef.current?.postMessage({ type: 'linear_create_issue_demo', url: 'https://linear.app' });
+                    } catch (e) {
+                      console.error('Failed to open Linear:', e);
+                    }
+                  }}
+                  className="px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100">
+                  Create Issue
+                </button>
+                <button
+                  type="button"
                   onClick={handleNewChat}
                   onKeyDown={e => e.key === 'Enter' && handleNewChat()}
                   className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}

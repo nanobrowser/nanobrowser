@@ -239,8 +239,8 @@ const MemoriesList = ({ memories, isDarkMode, onDeleteMemory }: MemoriesListProp
                   <h5 className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                     Steps ({memory.steps.length})
                   </h5>
-                  <div className="space-y-1 text-xs">
-                    {memory.steps.slice(0, 5).map((step, idx) => (
+                  <div className="max-h-64 space-y-1 overflow-y-auto text-xs">
+                    {memory.steps.map((step, idx) => (
                       <div
                         key={idx}
                         className={`rounded p-2 font-mono ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
@@ -250,11 +250,6 @@ const MemoriesList = ({ memories, isDarkMode, onDeleteMemory }: MemoriesListProp
                         <span className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>{step.description}</span>
                       </div>
                     ))}
-                    {memory.steps.length > 5 && (
-                      <p className={`italic ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        ... and {memory.steps.length - 5} more steps
-                      </p>
-                    )}
                   </div>
                 </div>
 
