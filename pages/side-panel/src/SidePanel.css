@@ -194,6 +194,43 @@
     background-color: #795548;
 }
 
+/* Muted/less-important step style for collapsed actor parts (gray, italic, smaller) */
+[data-muted="true"] .whitespace-pre-wrap {
+    color: rgba(0, 0, 0, 0.45);
+    font-style: italic;
+    font-size: 0.91em;
+    /* slightly smaller */
+}
+
+/* Force planner and navigator message text to appear gray and italic */
+.message-row[data-actor="planner"] .whitespace-pre-wrap,
+.message-row[data-actor="navigator"] .whitespace-pre-wrap,
+.message-row[data-actor="planner"] [data-md="1"],
+.message-row[data-actor="navigator"] [data-md="1"] {
+    color: rgba(0, 0, 0, 0.48);
+    font-style: italic;
+}
+
+[data-collapsed-summary] button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+[data-collapsed-summary] {
+    margin-bottom: 6px;
+}
+
+
+/* Smaller processing indicator for planner/navigator */
+[data-processing][data-small="true"] {
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.55);
+}
+
 .message-bubble {
     /* removed bubble visuals - kept for backward compat */
     padding: 0;
