@@ -1,11 +1,21 @@
 import { createStorage } from '../base/base';
 import { StorageEnum } from '../base/enums';
-import type { AccessibilityReport, AccessibilityReportStorage } from './types';
+import type { AccessibilityReport, AccessibilityReportStorage, ActionAccessibilityAnalysisResult } from './types';
 
 const ACCESSIBILITY_REPORTS_KEY = 'accessibility_reports';
+const ACTION_ANALYSIS_KEY = 'action_accessibility_analysis';
 
 const accessibilityReportsStorage = createStorage<Record<string, AccessibilityReport>>(
   ACCESSIBILITY_REPORTS_KEY,
+  {},
+  {
+    storageEnum: StorageEnum.Local,
+    liveUpdate: true,
+  },
+);
+
+const actionAnalysisStorage = createStorage<Record<string, ActionAccessibilityAnalysisResult>>(
+  ACTION_ANALYSIS_KEY,
   {},
   {
     storageEnum: StorageEnum.Local,
@@ -46,6 +56,27 @@ export function createAccessibilityStorage(): AccessibilityReportStorage {
 
     deleteAllReports: async (): Promise<void> => {
       await accessibilityReportsStorage.set({});
+    },
+
+    // Action accessibility methods
+    getActionAnalysis: async (pageUrl: string): Promise<ActionAccessibilityAnalysisResult | null> => {
+      const analyses = await actionAnalysisStorage.get();
+      return analyses[pageUrl] || null;
+    },
+
+    saveActionAnalysis: async (result: ActionAccessibilityAnalysisResult): Promise<void> => {
+      await actionAnalysisStorage.set(prevAnalyses => ({
+        ...prevAnalyses,
+        [result.pageUrl]: result,
+      }));
+    },
+
+    deleteActionAnalysis: async (pageUrl: string): Promise<void> => {
+      await actionAnalysisStorage.set(prevAnalyses => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [pageUrl]: _, ...remainingAnalyses } = prevAnalyses;
+        return remainingAnalyses;
+      });
     },
   };
 }

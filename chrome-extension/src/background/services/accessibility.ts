@@ -7,9 +7,18 @@ import { ReadabilityService } from './readability';
 import { DOMContextEnricher } from './domContextEnricher';
 import { VisionContextValidator } from './visionContextValidator';
 import { HybridImageScorer } from './hybridImageScorer';
+import { ActionElementExtractor } from './actionElementExtractor';
+import { AccessibilityStateAnalyzer } from './accessibilityStateAnalyzer';
+import { ActionVisionValidator } from './actionVisionValidator';
 import { t } from '@extension/i18n';
-import type { ContextualizedImageInfo, AnalysisQualityMetrics } from '@extension/storage/lib/accessibility/types';
-import { SemanticArea } from '@extension/storage/lib/accessibility/types';
+import type {
+  ContextualizedImageInfo,
+  AnalysisQualityMetrics,
+  ContextualizedActionInfo,
+  ActionAccessibilityAnalysisResult,
+  ActionType,
+} from '@extension/storage/lib/accessibility/types';
+import { SemanticArea, AccessibilityIssueSeverity } from '@extension/storage/lib/accessibility/types';
 
 const logger = createLogger('AccessibilityService');
 
@@ -648,5 +657,219 @@ Task:
 
 Return only the JSON response as specified in the system message.
 `;
+  }
+
+  /**
+   * Analyzes action elements (buttons, links, inputs) for accessibility issues
+   *
+   * @param tabId - Chrome tab ID
+   * @param url - Page URL
+   * @returns Complete action accessibility analysis result
+   *
+   * @example
+   * const result = await accessibilityService.analyzeActionAccessibility(tabId, url);
+   * console.log(`Found ${result.totalIssues} issues across ${result.totalActionsFound} actions`);
+   */
+  async analyzeActionAccessibility(tabId: number, url: string): Promise<ActionAccessibilityAnalysisResult> {
+    const startTime = Date.now();
+
+    try {
+      logger.info('Starting action accessibility analysis', { tabId, url });
+      // Step 1: Extract all interactive action elements
+      const extractor = new ActionElementExtractor();
+      const actions = await extractor.extractActionElements(tabId, url);
+
+      if (actions.length === 0) {
+        logger.info('No interactive actions found on page');
+        return this.createEmptyActionResult(url);
+      }
+
+      logger.info(`Extracted ${actions.length} interactive actions`);
+
+      // Step 2: Analyze accessibility state and identify issues
+      const analyzer = new AccessibilityStateAnalyzer();
+      const analyzedActions = analyzer.analyzeActions(actions);
+
+      logger.info('Accessibility state analysis completed');
+
+      // Step 3: Enhance with Vision AI (if enabled)
+      // const generalSettings = await generalSettingsStore.getSettings();
+      // const useVision = generalSettings.useVision;
+
+      // let enhancedActions = analyzedActions;
+      // Analyze if it makes sense to use vision here
+      // For now, we skip vision for action analysis to save costs and complexity
+      // We can revisit this later if we find significant value
+      // if (useVision) {
+      //   try {
+      //     // Extract page title for context
+      //     const readabilityResult = await this.readabilityService.extractContent(tabId);
+      //     const pageTitle = readabilityResult.article?.title || 'Unknown Page';
+
+      // const visionValidator = new ActionVisionValidator(this.browserContext);
+      // enhancedActions = await visionValidator.validateActionContext(tabId, url, pageTitle, analyzedActions);
+
+      //     // Apply vision suggestions to improvements
+      //     enhancedActions = this.applyVisionSuggestionsToActions(enhancedActions);
+
+      //     logger.info('Vision validation completed for actions');
+      //   } catch (error) {
+      //     logger.warning('Vision validation failed, continuing with basic analysis', error);
+      //   }
+      // } else {
+      //   logger.info('Vision validation skipped for actions (useVision=false)');
+      // }
+
+      // Step 4: Calculate statistics and create result
+      const result = this.buildActionAnalysisResult(url, analyzedActions);
+
+      logger.info('Action accessibility analysis completed', {
+        totalActions: result.totalActionsFound,
+        totalIssues: result.totalIssues,
+        criticalIssues: result.criticalIssues,
+        averageScore: result.averageAccessibilityScore.toFixed(1),
+        processingTime: result.analyzedAt - startTime,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Action accessibility analysis failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Applies vision AI suggestions to action improvements
+   */
+  private applyVisionSuggestionsToActions(actions: ContextualizedActionInfo[]): ContextualizedActionInfo[] {
+    return actions.map(action => {
+      if (!action.visionContext) {
+        return action;
+      }
+
+      // Update improvements with vision-generated aria-label
+      const visionImprovement = {
+        attribute: 'aria-label',
+        suggestedValue: action.visionContext.suggestedAriaLabel,
+        reasoning: `AI-generated from visual context: ${action.visionContext.visualDescription}`,
+        priority: 10, // Highest priority
+      };
+
+      // Replace or prepend vision improvement
+      const existingAriaLabelIndex = action.improvements.findIndex(imp => imp.attribute === 'aria-label');
+
+      let updatedImprovements = [...action.improvements];
+      if (existingAriaLabelIndex >= 0) {
+        // Replace existing aria-label suggestion with vision one
+        updatedImprovements[existingAriaLabelIndex] = visionImprovement;
+      } else {
+        // Add vision improvement at the beginning
+        updatedImprovements = [visionImprovement, ...updatedImprovements];
+      }
+
+      return {
+        ...action,
+        improvements: updatedImprovements,
+      };
+    });
+  }
+
+  /**
+   * Builds the complete action analysis result with statistics
+   */
+  private buildActionAnalysisResult(
+    url: string,
+    actions: ContextualizedActionInfo[],
+  ): ActionAccessibilityAnalysisResult {
+    // Calculate totals
+    const totalActionsFound = actions.length;
+    const totalIssues = actions.reduce((sum, action) => sum + action.issues.length, 0);
+    const criticalIssues = actions.reduce(
+      (sum, action) =>
+        sum + action.issues.filter(issue => issue.severity === AccessibilityIssueSeverity.CRITICAL).length,
+      0,
+    );
+    const averageAccessibilityScore =
+      totalActionsFound > 0
+        ? actions.reduce((sum, action) => sum + action.accessibilityScore, 0) / totalActionsFound
+        : 100;
+
+    // Group by action type
+    const summaryByType: Partial<Record<ActionType, { count: number; averageScore: number; issuesCount: number }>> = {};
+
+    for (const action of actions) {
+      if (!summaryByType[action.actionType]) {
+        summaryByType[action.actionType] = {
+          count: 0,
+          averageScore: 0,
+          issuesCount: 0,
+        };
+      }
+
+      const summary = summaryByType[action.actionType];
+      if (summary) {
+        summary.count++;
+        summary.averageScore += action.accessibilityScore;
+        summary.issuesCount += action.issues.length;
+      }
+    }
+
+    // Calculate averages for each type
+    for (const type in summaryByType) {
+      const summary = summaryByType[type as ActionType];
+      if (summary) {
+        summary.averageScore = summary.count > 0 ? summary.averageScore / summary.count : 0;
+      }
+    }
+
+    // Group by severity
+    const summaryBySeverity: Record<AccessibilityIssueSeverity, number> = {
+      [AccessibilityIssueSeverity.CRITICAL]: 0,
+      [AccessibilityIssueSeverity.HIGH]: 0,
+      [AccessibilityIssueSeverity.MEDIUM]: 0,
+      [AccessibilityIssueSeverity.LOW]: 0,
+      [AccessibilityIssueSeverity.INFO]: 0,
+    };
+
+    for (const action of actions) {
+      for (const issue of action.issues) {
+        summaryBySeverity[issue.severity]++;
+      }
+    }
+
+    return {
+      pageUrl: url,
+      analyzedAt: Date.now(),
+      totalActionsFound,
+      totalIssues,
+      criticalIssues,
+      averageAccessibilityScore,
+      actions,
+      summaryByType: summaryByType as Record<ActionType, { count: number; averageScore: number; issuesCount: number }>,
+      summaryBySeverity,
+    };
+  }
+
+  /**
+   * Creates an empty action result (when no actions found)
+   */
+  private createEmptyActionResult(url: string): ActionAccessibilityAnalysisResult {
+    return {
+      pageUrl: url,
+      analyzedAt: Date.now(),
+      totalActionsFound: 0,
+      totalIssues: 0,
+      criticalIssues: 0,
+      averageAccessibilityScore: 100,
+      actions: [],
+      summaryByType: {} as Record<ActionType, { count: number; averageScore: number; issuesCount: number }>,
+      summaryBySeverity: {
+        [AccessibilityIssueSeverity.CRITICAL]: 0,
+        [AccessibilityIssueSeverity.HIGH]: 0,
+        [AccessibilityIssueSeverity.MEDIUM]: 0,
+        [AccessibilityIssueSeverity.LOW]: 0,
+        [AccessibilityIssueSeverity.INFO]: 0,
+      },
+    };
   }
 }

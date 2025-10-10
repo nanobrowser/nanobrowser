@@ -6,6 +6,7 @@ import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
 import {
   type AccessibilityReport,
+  type ActionAccessibilityAnalysisResult,
   type Message,
   Actors,
   chatHistoryStore,
@@ -22,6 +23,9 @@ import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 import AccessibilityAnalyzer from './components/AccessibiltyAnalyzer';
+import ActionAccessibilityAnalyzer from './components/ActionAccessibilityAnalyzer';
+import Toast from './components/Toast';
+import { useToast } from './hooks/useToast';
 
 export interface CurrentPageDataProps {
   id: string;
@@ -44,8 +48,13 @@ const SidePanel = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showAccessibilityAnalyzer, setShowAccessibilityAnalyzer] = useState(false);
+  const [showActionAnalyzer, setShowActionAnalyzer] = useState(false);
   const [currentPageData, setCurrentPageData] = useState<CurrentPageDataProps | null>(null);
+  const [actionAnalysisResult, setActionAnalysisResult] = useState<ActionAccessibilityAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAnalyzingActions, setIsAnalyzingActions] = useState(false);
+  const [isApplyingImprovements, setIsApplyingImprovements] = useState(false);
+  const { toasts, removeToast, success, error, info } = useToast();
   // const [accessibilityResult, setAccessibilityResult] = useState<string | null>(null);
 
   // Function to update current page data
@@ -450,6 +459,50 @@ const SidePanel = () => {
             timestamp: Date.now(),
           });
           setIsAnalyzing(false);
+        } else if (message && message.type === 'action_accessibility_complete') {
+          // Handle action accessibility analysis completion
+          console.log('Action accessibility analysis completed:', message.result);
+          setIsAnalyzingActions(false);
+
+          if (message.result) {
+            setActionAnalysisResult(message.result);
+            // Save to storage
+            accessibilityStore
+              .saveActionAnalysis(message.result)
+              .catch(err => console.error('Failed to save action analysis:', err));
+          }
+        } else if (message && message.type === 'action_accessibility_error') {
+          // Handle action accessibility analysis error
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: `Action accessibility analysis error: ${message.error || 'Unknown error'}`,
+            timestamp: Date.now(),
+          });
+          setIsAnalyzingActions(false);
+        } else if (message && message.type === 'accessibility_improvements_applied') {
+          // Handle accessibility improvements application success
+          setIsApplyingImprovements(false);
+
+          if (message.result?.success) {
+            const batch = message.result.batch;
+            success(
+              `${batch.successCount} improvement(s) applied successfully${batch.failureCount > 0 ? ` (${batch.failureCount} failed)` : ''}`,
+              4000,
+            );
+          } else {
+            error(message.result?.message || 'Failed to apply improvements', 4000);
+          }
+        } else if (message && message.type === 'accessibility_improvements_error') {
+          // Handle accessibility improvements application error
+          setIsApplyingImprovements(false);
+          error(`Failed to apply improvements: ${message.error || 'Unknown error'}`, 4000);
+        } else if (message && message.type === 'accessibility_improvements_undone') {
+          // Handle undo operation
+          if (message.success) {
+            info('Improvements undone successfully', 3000);
+          } else {
+            error('Failed to undo improvements', 3000);
+          }
         }
       });
 
@@ -1154,6 +1207,236 @@ const SidePanel = () => {
     }
   };
 
+  const handleActionAccessibilityAnalysis = async (): Promise<void> => {
+    if (!currentPageData) return;
+
+    setIsAnalyzingActions(true);
+    try {
+      console.log('Starting action accessibility analysis for', currentPageData.pageUrl);
+
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      // Setup connection if not exists
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      sendMessage({
+        type: 'analyze_action_accessibility',
+        url: currentPageData.pageUrl,
+        tabId: tabId,
+      });
+    } catch (error) {
+      console.error('Error starting action accessibility analysis:', error);
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: `Error analyzing actions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+      });
+      setIsAnalyzingActions(false);
+    }
+  };
+
+  /**
+   * Applies generated alt text to a single image
+   */
+  const handleApplyImageAlt = async (image: {
+    imageUrl: string;
+    currentAlt: string;
+    generatedAlt?: string;
+  }): Promise<void> => {
+    if (!currentPageData || !image.generatedAlt || isApplyingImprovements) return;
+
+    setIsApplyingImprovements(true);
+    info('Applying alt text...', 2000);
+
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      const request = {
+        pageUrl: currentPageData.pageUrl,
+        tabId: tabId,
+        imageImprovements: [
+          {
+            imageUrl: image.imageUrl,
+            selector: `img[src="${image.imageUrl}"]`,
+            altText: image.generatedAlt,
+            isBackground: false,
+          },
+        ],
+      };
+
+      sendMessage({
+        type: 'apply_accessibility_improvements',
+        request,
+      });
+
+      console.log('Applying alt text to image:', image.imageUrl);
+    } catch (err) {
+      console.error('Error applying image alt:', err);
+      setIsApplyingImprovements(false);
+      error(`Error applying alt text: ${err instanceof Error ? err.message : 'Unknown error'}`, 4000);
+    }
+  };
+
+  /**
+   * Applies alt text to all images with generated alt
+   */
+  const handleApplyAllImageAlts = async (): Promise<void> => {
+    if (!currentPageData?.imageAnalysis || isApplyingImprovements) return;
+
+    setIsApplyingImprovements(true);
+    info('Applying all alt texts...', 2000);
+
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      const imageImprovements = currentPageData.imageAnalysis
+        .filter(img => img.generatedAlt)
+        .map(img => ({
+          imageUrl: img.imageUrl,
+          selector: `img[src="${img.imageUrl}"]`,
+          altText: img.generatedAlt!,
+          isBackground: false,
+        }));
+
+      if (imageImprovements.length === 0) {
+        setIsApplyingImprovements(false);
+        error('No images with generated alt text to apply', 3000);
+        return;
+      }
+
+      const request = {
+        pageUrl: currentPageData.pageUrl,
+        tabId: tabId,
+        imageImprovements,
+      };
+
+      sendMessage({
+        type: 'apply_accessibility_improvements',
+        request,
+      });
+
+      console.log(`Applying alt text to ${imageImprovements.length} images`);
+    } catch (err) {
+      console.error('Error applying all image alts:', err);
+      setIsApplyingImprovements(false);
+      error(`Error applying alt texts: ${err instanceof Error ? err.message : 'Unknown error'}`, 4000);
+    }
+  };
+
+  /**
+   * Applies a single improvement to an action element
+   */
+  const handleApplyImprovement = async (action: any, improvement: any): Promise<void> => {
+    if (!currentPageData || isApplyingImprovements) return;
+
+    setIsApplyingImprovements(true);
+    info('Applying improvement...', 2000);
+
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      const request = {
+        pageUrl: currentPageData.pageUrl,
+        tabId: tabId,
+        actionImprovements: [
+          {
+            actionId: action.actionId,
+            selector: action.selector,
+            xpath: action.xpath,
+            improvements: [improvement],
+          },
+        ],
+      };
+
+      sendMessage({
+        type: 'apply_accessibility_improvements',
+        request,
+      });
+
+      console.log('Applying improvement to action:', action.actionId, improvement.attribute);
+    } catch (err) {
+      console.error('Error applying improvement:', err);
+      setIsApplyingImprovements(false);
+      error(`Error applying improvement: ${err instanceof Error ? err.message : 'Unknown error'}`, 4000);
+    }
+  };
+
+  /**
+   * Applies all improvements to an action element
+   */
+  const handleApplyAllImprovements = async (action: any): Promise<void> => {
+    if (!currentPageData || !action.improvements?.length || isApplyingImprovements) return;
+
+    setIsApplyingImprovements(true);
+    info(`Applying ${action.improvements.length} improvements...`, 2000);
+
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      const request = {
+        pageUrl: currentPageData.pageUrl,
+        tabId: tabId,
+        actionImprovements: [
+          {
+            actionId: action.actionId,
+            selector: action.selector,
+            xpath: action.xpath,
+            improvements: action.improvements,
+          },
+        ],
+      };
+
+      sendMessage({
+        type: 'apply_accessibility_improvements',
+        request,
+      });
+
+      console.log(`Applying ${action.improvements.length} improvements to action:`, action.actionId);
+    } catch (err) {
+      console.error('Error applying all improvements:', err);
+      setIsApplyingImprovements(false);
+      error(`Error applying improvements: ${err instanceof Error ? err.message : 'Unknown error'}`, 4000);
+    }
+  };
+
   return (
     <div>
       <div
@@ -1180,7 +1463,15 @@ const SidePanel = () => {
               className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
               aria-label="Analyze accessibility of current page"
               tabIndex={0}>
-              Analyze Accessibility
+              Analyze Images
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowActionAnalyzer(true)}
+              className={`header-icon ${isDarkMode ? 'text-purple-400 hover:text-purple-300' : 'text-purple-400 hover:text-purple-500'} cursor-pointer`}
+              aria-label="Analyze action accessibility"
+              tabIndex={0}>
+              Analyze Actions
             </button>
             {!showHistory && (
               <>
@@ -1293,7 +1584,27 @@ const SidePanel = () => {
                   visible={true}
                   currentPageData={currentPageData!}
                   isAnalyzing={isAnalyzing}
+                  onApplyImageAlt={handleApplyImageAlt}
+                  onApplyAllImageAlts={handleApplyAllImageAlts}
+                  isApplying={isApplyingImprovements}
                   // accessibilityResult={accessibilityResult}
+                />
+              </div>
+            )}
+
+            {/* Show action accessibility analyzer when activated */}
+            {showActionAnalyzer && (
+              <div className="flex-1 overflow-hidden">
+                <ActionAccessibilityAnalyzer
+                  isDarkMode={isDarkMode}
+                  onClose={() => setShowActionAnalyzer(false)}
+                  onAnalyze={handleActionAccessibilityAnalysis}
+                  visible={true}
+                  analysisResult={actionAnalysisResult}
+                  isAnalyzing={isAnalyzingActions}
+                  onApplyImprovement={handleApplyImprovement}
+                  onApplyAllImprovements={handleApplyAllImprovements}
+                  isApplying={isApplyingImprovements}
                 />
               </div>
             )}
@@ -1365,6 +1676,17 @@ const SidePanel = () => {
           </>
         )}
       </div>
+
+      {/* Toast Notifications */}
+      {toasts.map(toast => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </div>
   );
 };

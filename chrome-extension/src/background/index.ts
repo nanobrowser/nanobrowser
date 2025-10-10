@@ -19,6 +19,7 @@ import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
 import { AccessibilityService } from './services/accessibility';
+import { DomAccessibilityApplier } from './services/domAccessibilityApplier';
 
 const logger = createLogger('background');
 
@@ -26,6 +27,7 @@ const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
 const accessibilityService = new AccessibilityService(browserContext);
+const domAccessibilityApplier = new DomAccessibilityApplier();
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -262,6 +264,100 @@ chrome.runtime.onConnect.addListener(port => {
               return port.postMessage({
                 type: 'accessibility_analysis_error',
                 error: error instanceof Error ? error.message : 'Failed to perform accessibility analysis',
+              });
+            }
+          }
+
+          case 'analyze_action_accessibility': {
+            try {
+              if (!message.tabId) {
+                return port.postMessage({
+                  type: 'action_accessibility_error',
+                  error: 'No tab ID provided',
+                });
+              }
+
+              logger.info('Starting action accessibility analysis for tab:', message.tabId, 'URL:', message.url);
+
+              const analysisResult = await accessibilityService.analyzeActionAccessibility(message.tabId, message.url);
+
+              return port.postMessage({
+                type: 'action_accessibility_complete',
+                result: analysisResult,
+              });
+            } catch (error) {
+              logger.error('Action accessibility analysis failed:', error);
+              return port.postMessage({
+                type: 'action_accessibility_error',
+                error: error instanceof Error ? error.message : 'Failed to perform action accessibility analysis',
+              });
+            }
+          }
+
+          case 'apply_accessibility_improvements': {
+            try {
+              if (!message.request) {
+                return port.postMessage({
+                  type: 'accessibility_improvements_error',
+                  error: 'No application request provided',
+                });
+              }
+
+              logger.info('Applying accessibility improvements', {
+                pageUrl: message.request.pageUrl,
+                tabId: message.request.tabId,
+                imageCount: message.request.imageImprovements?.length || 0,
+                actionCount: message.request.actionImprovements?.length || 0,
+              });
+
+              const result = await domAccessibilityApplier.applyImprovements(message.request);
+
+              return port.postMessage({
+                type: 'accessibility_improvements_applied',
+                result,
+              });
+            } catch (error) {
+              logger.error('Failed to apply accessibility improvements:', error);
+              return port.postMessage({
+                type: 'accessibility_improvements_error',
+                error: error instanceof Error ? error.message : 'Failed to apply accessibility improvements',
+              });
+            }
+          }
+
+          case 'undo_accessibility_improvements': {
+            try {
+              if (!message.batchId) {
+                return port.postMessage({
+                  type: 'accessibility_improvements_error',
+                  error: 'No batchId provided',
+                });
+              }
+
+              if (!message.tabId) {
+                return port.postMessage({
+                  type: 'accessibility_improvements_error',
+                  error: 'No tabId provided',
+                });
+              }
+
+              logger.info('Undoing accessibility improvements', {
+                batchId: message.batchId,
+                tabId: message.tabId,
+              });
+
+              const success = await domAccessibilityApplier.undoModifications(message.tabId, message.batchId);
+
+              return port.postMessage({
+                type: 'accessibility_improvements_undone',
+                success,
+                batchId: message.batchId,
+              });
+            } catch (error) {
+              logger.error('Failed to undo accessibility improvements:', error);
+              return port.postMessage({
+                type: 'accessibility_improvements_error',
+                error: error instanceof Error ? error.message : 'Failed to undo accessibility improvements',
               });
             }
           }

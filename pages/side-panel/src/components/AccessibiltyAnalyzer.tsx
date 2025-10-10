@@ -20,6 +20,9 @@ interface AccessibilityAnalyzerProps {
   visible: boolean;
   isDarkMode?: boolean;
   isAnalyzing?: boolean;
+  onApplyImageAlt?: (image: { imageUrl: string; currentAlt: string; generatedAlt?: string }) => void;
+  onApplyAllImageAlts?: () => void;
+  isApplying?: boolean;
   // accessibilityResult?: string | null;
 }
 
@@ -30,6 +33,9 @@ const AccessibilityAnalyzer: React.FC<AccessibilityAnalyzerProps> = ({
   visible,
   isDarkMode = false,
   isAnalyzing = false,
+  onApplyImageAlt,
+  onApplyAllImageAlts,
+  isApplying = false,
 }) => {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -118,20 +124,48 @@ const AccessibilityAnalyzer: React.FC<AccessibilityAnalyzerProps> = ({
                       {image.currentAlt || 'No alt text'}
                     </p>
                     {image.generatedAlt && (
-                      <div>
-                        <span className={`text-xs font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                          Generated alt:
-                        </span>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                          {image.generatedAlt}
-                        </p>
-                      </div>
+                      <>
+                        <div>
+                          <span className={`text-xs font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                            Generated alt:
+                          </span>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {image.generatedAlt}
+                          </p>
+                        </div>
+                        {onApplyImageAlt && (
+                          <button
+                            onClick={() => onApplyImageAlt(image)}
+                            disabled={isApplying}
+                            className={`mt-2 w-full rounded px-3 py-2 text-xs font-medium transition-colors ${
+                              isDarkMode
+                                ? 'bg-green-600 text-white hover:bg-green-500 disabled:bg-green-800'
+                                : 'bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300'
+                            } disabled:cursor-not-allowed disabled:opacity-50`}>
+                            {isApplying ? 'Applying...' : 'Apply Alt Text'}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          {onApplyAllImageAlts && currentPageData.imageAnalysis.some(img => img.generatedAlt) && (
+            <button
+              onClick={onApplyAllImageAlts}
+              disabled={isApplying}
+              className={`mt-4 w-full rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-green-600 text-white hover:bg-green-500 disabled:bg-green-800'
+                  : 'bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300'
+              } disabled:cursor-not-allowed disabled:opacity-50`}>
+              {isApplying
+                ? 'Applying...'
+                : `Apply All Alt Texts (${currentPageData.imageAnalysis.filter(img => img.generatedAlt).length})`}
+            </button>
+          )}
         </div>
       )}
 

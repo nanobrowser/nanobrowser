@@ -152,7 +152,6 @@ async function _buildDomTree(
       },
     ],
   });
-
   // First cast to unknown, then to BuildDomTreeResult
   let mainFramePage = mainFrameResult[0]?.result as unknown as BuildDomTreeResult;
   if (!mainFramePage || !mainFramePage.map || !mainFramePage.rootId) {
@@ -597,7 +596,7 @@ export async function injectBuildDomTreeScripts(tabId: number) {
     if (injectedFrames.values().every(injected => injected)) {
       return;
     }
-
+    debugger;
     await chrome.scripting.executeScript({
       target: {
         tabId,
