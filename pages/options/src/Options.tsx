@@ -3,19 +3,21 @@ import '@src/Options.css';
 import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { t } from '@extension/i18n';
-import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle } from 'react-icons/fi';
+import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle, FiWifi } from 'react-icons/fi';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
 import { AnalyticsSettings } from './components/AnalyticsSettings';
+import { WebSocketSettings } from './components/WebSocketSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'websocket' | 'help';
 
 const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
   { id: 'general', icon: FiSettings, label: t('options_tabs_general') },
   { id: 'models', icon: FiCpu, label: t('options_tabs_models') },
   { id: 'firewall', icon: FiShield, label: t('options_tabs_firewall') },
   { id: 'analytics', icon: FiTrendingUp, label: 'Analytics' },
+  { id: 'websocket', icon: FiWifi, label: 'WebSocket' },
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
@@ -54,6 +56,8 @@ const Options = () => {
         return <FirewallSettings isDarkMode={isDarkMode} />;
       case 'analytics':
         return <AnalyticsSettings isDarkMode={isDarkMode} />;
+      case 'websocket':
+        return <WebSocketSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }
@@ -80,7 +84,7 @@ const Options = () => {
                         ? `${isDarkMode ? 'bg-slate-700/70 text-gray-300 hover:text-white' : 'bg-[#0EA5E9]/15 font-medium text-gray-700 hover:text-white'} backdrop-blur-sm`
                         : `${isDarkMode ? 'bg-sky-800/50' : ''} text-white backdrop-blur-sm`
                     }`}>
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="size-4" />
                   <span>{item.label}</span>
                 </Button>
               </li>

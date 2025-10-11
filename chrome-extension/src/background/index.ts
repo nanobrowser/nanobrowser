@@ -18,6 +18,13 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import {
+  webSocketService,
+  ServiceEvent,
+  WebSocketMessageInterpreter,
+  isExecuteTaskMessage,
+  isPingMessage,
+} from './services/websocket';
 
 const logger = createLogger('background');
 
@@ -63,6 +70,61 @@ analyticsSettingsStore.subscribe(() => {
   analytics.updateSettings().catch(error => {
     logger.error('Failed to update analytics settings:', error);
   });
+});
+
+// Initialize WebSocket service
+webSocketService.initialize().catch(error => {
+  logger.error('Failed to initialize WebSocket service:', error);
+  // Continue operation even if WebSocket fails - core extension functionality should not be affected
+});
+
+// Setup WebSocket event listeners with error boundaries
+webSocketService.addEventListener(ServiceEvent.MESSAGE_RECEIVED, async event => {
+  try {
+    if (!event.message) {
+      logger.warning('Received MESSAGE_RECEIVED event with no message');
+      return;
+    }
+
+    logger.debug('Processing WebSocket message:', event.message.type);
+
+    // Handle different message types
+    if (isExecuteTaskMessage(event.message)) {
+      await handleWebSocketTaskExecution(event.message);
+    } else if (isPingMessage(event.message)) {
+      // Respond to ping with pong
+      try {
+        const pongMessage = WebSocketMessageInterpreter.createPong();
+        webSocketService.sendMessage(pongMessage);
+        logger.debug('Pong sent in response to ping');
+      } catch (pongError) {
+        logger.error('Failed to send pong response:', pongError);
+        // Don't throw - pong failure should not crash the extension
+      }
+    }
+  } catch (error) {
+    logger.error('Error handling WebSocket message:', error);
+    // Log but don't throw - continue processing other messages
+  }
+});
+
+webSocketService.addEventListener(ServiceEvent.CONNECTION_CHANGE, event => {
+  try {
+    logger.info('WebSocket connection state changed:', event.state);
+  } catch (error) {
+    logger.error('Error handling connection state change:', error);
+  }
+});
+
+webSocketService.addEventListener(ServiceEvent.ERROR, event => {
+  try {
+    if (event.error) {
+      logger.error('WebSocket error:', event.error);
+    }
+  } catch (error) {
+    // Double error - log to console directly to avoid infinite loop
+    console.error('Error in WebSocket error handler:', error);
+  }
 });
 
 // Listen for simple messages (e.g., from options page)
@@ -325,7 +387,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   return executor;
 }
 
-// Update subscribeToExecutorEvents to use port
+// Update subscribeToExecutorEvents to use port and WebSocket
 async function subscribeToExecutorEvents(executor: Executor) {
   // Clear previous event listeners to prevent multiple subscriptions
   executor.clearExecutionEvents();
@@ -333,8 +395,22 @@ async function subscribeToExecutorEvents(executor: Executor) {
   // Subscribe to new events
   executor.subscribeExecutionEvents(async event => {
     try {
+      // Send to side panel if connected
       if (currentPort) {
         currentPort.postMessage(event);
+      }
+
+      // Send to WebSocket if connected (with error boundary)
+      try {
+        if (webSocketService.isConnected()) {
+          const taskId = await executor.getCurrentTaskId();
+          const eventMessage = WebSocketMessageInterpreter.createExecutionEvent(taskId, event);
+          webSocketService.sendMessage(eventMessage);
+          logger.debug('Execution event sent to WebSocket:', event.state);
+        }
+      } catch (error) {
+        logger.error('Failed to send event to WebSocket:', error);
+        // Don't throw - WebSocket failure should not stop side panel updates
       }
     } catch (error) {
       logger.error('Failed to send message to side panel:', error);
@@ -348,4 +424,93 @@ async function subscribeToExecutorEvents(executor: Executor) {
       await currentExecutor?.cleanup();
     }
   });
+}
+
+/**
+ * Handle incoming task execution requests from WebSocket server.
+ * Wrapped in error boundaries to prevent WebSocket issues from crashing the extension.
+ */
+async function handleWebSocketTaskExecution(message: { taskId: string; prompt: string; metadata?: unknown }) {
+  logger.info('WebSocket task execution requested', {
+    taskId: message.taskId,
+    promptLength: message.prompt?.length,
+    hasMetadata: !!message.metadata,
+  });
+
+  try {
+    // Validate message
+    if (!message.taskId || typeof message.taskId !== 'string') {
+      throw new Error('Invalid taskId: must be a non-empty string');
+    }
+
+    if (!message.prompt || typeof message.prompt !== 'string') {
+      throw new Error('Invalid prompt: must be a non-empty string');
+    }
+
+    // Check if a task is already running
+    if (currentExecutor) {
+      try {
+        const currentTaskId = await currentExecutor.getCurrentTaskId();
+        logger.warning('Task execution rejected: already executing task', currentTaskId);
+
+        const rejectionMessage = WebSocketMessageInterpreter.createTaskRejected(
+          message.taskId,
+          'Already executing a task',
+        );
+        webSocketService.sendMessage(rejectionMessage);
+      } catch (rejectionError) {
+        logger.error('Failed to send rejection message for concurrent task:', rejectionError);
+      }
+      return;
+    }
+
+    // Send task accepted response
+    try {
+      const acceptedMessage = WebSocketMessageInterpreter.createTaskAccepted(message.taskId);
+      webSocketService.sendMessage(acceptedMessage);
+      logger.debug('Task accepted message sent');
+    } catch (acceptError) {
+      logger.error('Failed to send task accepted message:', acceptError);
+      // Continue anyway - task can still be executed
+    }
+
+    // Get the current active tab
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const activeTab = tabs[0];
+
+    if (!activeTab?.id) {
+      throw new Error('No active tab found');
+    }
+
+    logger.debug('Switching to active tab:', activeTab.id);
+    // Switch to the active tab
+    await browserContext.switchTab(activeTab.id);
+
+    // Setup and execute the task
+    logger.debug('Setting up executor for task:', message.taskId);
+    currentExecutor = await setupExecutor(message.taskId, message.prompt, browserContext);
+    subscribeToExecutorEvents(currentExecutor);
+
+    logger.info('Executing task:', message.taskId);
+    await currentExecutor.execute();
+    logger.info('WebSocket task execution completed', {
+      taskId: message.taskId,
+    });
+  } catch (error) {
+    logger.error('WebSocket task execution failed:', error);
+
+    // Send rejection message
+    try {
+      const rejectionMessage = WebSocketMessageInterpreter.createTaskRejected(
+        message.taskId,
+        error instanceof Error ? error.message : 'Task execution failed',
+      );
+      webSocketService.sendMessage(rejectionMessage);
+      logger.debug('Task rejection message sent');
+    } catch (sendError) {
+      logger.error('Failed to send rejection message:', sendError);
+      // Last resort - log to console
+      console.error('Critical: Unable to notify WebSocket server of task failure');
+    }
+  }
 }
