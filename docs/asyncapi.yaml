@@ -1,0 +1,517 @@
+asyncapi: 3.0.0
+
+info:
+  title: Nanobrowser WebSocket API
+  version: 1.0.0
+  description: |
+    WebSocket API for bidirectional communication between external servers and the Nanobrowser Chrome extension.
+    
+    This API enables remote task execution and real-time event streaming for AI-powered browser automation.
+    
+    ## Overview
+    
+    - **Task Execution**: Send web automation tasks to Nanobrowser
+    - **Event Streaming**: Receive real-time execution progress updates
+    - **Health Checks**: Ping/pong heartbeat mechanism
+    
+    ## Connection
+    
+    Default WebSocket URL: `ws://localhost:8080`
+    
+    The extension can be configured to connect to any WebSocket server through the extension options page.
+    
+    ## Message Format
+    
+    All messages are JSON-encoded strings with a `type` field that discriminates the message type.
+    
+    ## Message Flow
+    
+    1. Server sends `ExecuteTaskMessage` to request task execution
+    2. Extension responds with `TaskAcceptedMessage` or `TaskRejectedMessage`
+    3. Extension streams `ExecutionEventMessage` updates during task execution
+    4. Server can send `PingMessage` for health checks, extension responds with `PongMessage`
+    
+  contact:
+    name: Nanobrowser API Support
+    url: https://github.com/qusiypydev/nanobrowser-websocket-host
+  license:
+    name: MIT
+    url: https://github.com/qusiypydev/nanobrowser-websocket-host/blob/master/LICENSE
+
+servers:
+  production:
+    host: localhost:8080
+    protocol: ws
+    description: Default local WebSocket server
+    protocolVersion: '13'
+    tags:
+      - name: environment
+        description: Local development server
+
+channels:
+  taskExecution:
+    address: /
+    description: |
+      Main channel for task execution and event streaming.
+      
+      ## Server → Extension (Publish)
+      - `ExecuteTaskMessage`: Request task execution
+      - `PingMessage`: Health check request
+      
+      ## Extension → Server (Subscribe)
+      - `TaskAcceptedMessage`: Task accepted for execution
+      - `TaskRejectedMessage`: Task rejected (with reason)
+      - `ExecutionEventMessage`: Real-time execution progress
+      - `PongMessage`: Health check response
+    messages:
+      executeTask:
+        $ref: '#/components/messages/ExecuteTaskMessage'
+      taskAccepted:
+        $ref: '#/components/messages/TaskAcceptedMessage'
+      taskRejected:
+        $ref: '#/components/messages/TaskRejectedMessage'
+      executionEvent:
+        $ref: '#/components/messages/ExecutionEventMessage'
+      ping:
+        $ref: '#/components/messages/PingMessage'
+      pong:
+        $ref: '#/components/messages/PongMessage'
+
+operations:
+  sendTaskExecution:
+    action: send
+    channel:
+      $ref: '#/channels/taskExecution'
+    summary: Send a task execution request to the extension
+    description: |
+      Request the Nanobrowser extension to execute a web automation task.
+      
+      The extension will respond with either a `TaskAcceptedMessage` or `TaskRejectedMessage`.
+      
+      If accepted, the extension will stream `ExecutionEventMessage` updates during task execution.
+    messages:
+      - $ref: '#/channels/taskExecution/messages/executeTask'
+
+  receiveTaskResponse:
+    action: receive
+    channel:
+      $ref: '#/channels/taskExecution'
+    summary: Receive task acceptance or rejection response
+    description: |
+      After sending an `ExecuteTaskMessage`, the server will receive either:
+      - `TaskAcceptedMessage`: Task accepted and will be executed
+      - `TaskRejectedMessage`: Task rejected with reason (e.g., already executing, invalid request)
+    messages:
+      - $ref: '#/channels/taskExecution/messages/taskAccepted'
+      - $ref: '#/channels/taskExecution/messages/taskRejected'
+
+  receiveExecutionEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/taskExecution'
+    summary: Receive real-time task execution progress updates
+    description: |
+      During task execution, the extension streams progress updates as `ExecutionEventMessage`.
+      
+      Events include:
+      - Task lifecycle (start, ok, fail, cancel)
+      - Step progress (start, ok, fail)
+      - Action execution (start, ok, fail)
+      
+      Each event includes the actor (system, user, planner, navigator) and detailed data.
+    messages:
+      - $ref: '#/channels/taskExecution/messages/executionEvent'
+
+  sendPing:
+    action: send
+    channel:
+      $ref: '#/channels/taskExecution'
+    summary: Send a ping heartbeat message
+    description: |
+      Send a ping message to check if the extension is alive and responsive.
+      
+      The extension will respond with a `PongMessage`.
+    messages:
+      - $ref: '#/channels/taskExecution/messages/ping'
+
+  receivePong:
+    action: receive
+    channel:
+      $ref: '#/channels/taskExecution'
+    summary: Receive pong response to ping
+    description: |
+      Receive a pong response confirming the extension is alive and responsive.
+    messages:
+      - $ref: '#/channels/taskExecution/messages/pong'
+
+components:
+  messages:
+    ExecuteTaskMessage:
+      name: ExecuteTaskMessage
+      title: Execute Task Request
+      summary: Request to execute a web automation task
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExecuteTaskPayload'
+      examples:
+        - name: basicTask
+          summary: Basic task execution
+          payload:
+            type: execute_task
+            taskId: task-12345
+            prompt: Navigate to example.com and click the login button
+        - name: taskWithMetadata
+          summary: Task with priority metadata
+          payload:
+            type: execute_task
+            taskId: task-67890
+            prompt: Fill out the registration form with test data
+            metadata:
+              priority: 1
+              timeout: 30000
+
+    TaskAcceptedMessage:
+      name: TaskAcceptedMessage
+      title: Task Accepted Response
+      summary: Confirmation that task was accepted for execution
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskAcceptedPayload'
+      examples:
+        - name: accepted
+          summary: Task accepted
+          payload:
+            type: task_accepted
+            taskId: task-12345
+            timestamp: 1697097600000
+
+    TaskRejectedMessage:
+      name: TaskRejectedMessage
+      title: Task Rejected Response
+      summary: Task was rejected with a reason
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskRejectedPayload'
+      examples:
+        - name: alreadyExecuting
+          summary: Rejected due to concurrent execution
+          payload:
+            type: task_rejected
+            taskId: task-12345
+            reason: Already executing a task
+            timestamp: 1697097600000
+        - name: invalidRequest
+          summary: Rejected due to validation failure
+          payload:
+            type: task_rejected
+            taskId: task-67890
+            reason: Invalid prompt - must be a non-empty string
+            timestamp: 1697097600000
+
+    ExecutionEventMessage:
+      name: ExecutionEventMessage
+      title: Execution Event Update
+      summary: Real-time task execution progress update
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExecutionEventPayload'
+      examples:
+        - name: taskStart
+          summary: Task execution started
+          payload:
+            type: execution_event
+            taskId: task-12345
+            timestamp: 1697097601000
+            event:
+              actor: system
+              state: task.start
+              type: execution
+              timestamp: 1697097601000
+              data:
+                taskId: task-12345
+                step: 0
+                maxSteps: 5
+                details: Starting task execution
+        - name: navigationAction
+          summary: Navigator performing action
+          payload:
+            type: execution_event
+            taskId: task-12345
+            timestamp: 1697097602000
+            event:
+              actor: navigator
+              state: act.start
+              type: execution
+              timestamp: 1697097602000
+              data:
+                taskId: task-12345
+                step: 1
+                maxSteps: 5
+                details: 'Navigating to: https://example.com'
+        - name: taskComplete
+          summary: Task completed successfully
+          payload:
+            type: execution_event
+            taskId: task-12345
+            timestamp: 1697097610000
+            event:
+              actor: system
+              state: task.ok
+              type: execution
+              timestamp: 1697097610000
+              data:
+                taskId: task-12345
+                step: 5
+                maxSteps: 5
+                details: Task completed successfully
+
+    PingMessage:
+      name: PingMessage
+      title: Ping Heartbeat
+      summary: Health check request
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PingPayload'
+      examples:
+        - name: ping
+          summary: Heartbeat ping
+          payload:
+            type: ping
+            timestamp: 1697097600000
+
+    PongMessage:
+      name: PongMessage
+      title: Pong Response
+      summary: Health check response
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PongPayload'
+      examples:
+        - name: pong
+          summary: Heartbeat pong
+          payload:
+            type: pong
+            timestamp: 1697097600000
+
+  schemas:
+    ExecuteTaskPayload:
+      type: object
+      description: Payload for requesting task execution
+      required:
+        - type
+        - taskId
+        - prompt
+      properties:
+        type:
+          type: string
+          const: execute_task
+          description: Message type discriminator
+        taskId:
+          type: string
+          description: Unique identifier for the task
+          maxLength: 1000
+          example: task-12345
+        prompt:
+          type: string
+          description: Natural language description of the task to execute
+          maxLength: 100000
+          example: Navigate to example.com and click the login button
+        metadata:
+          type: object
+          description: Optional metadata for task context
+          properties:
+            priority:
+              type: number
+              description: Task priority (higher = more important)
+              example: 1
+            timeout:
+              type: number
+              description: Task timeout in milliseconds
+              example: 30000
+          additionalProperties: true
+
+    TaskAcceptedPayload:
+      type: object
+      description: Payload confirming task acceptance
+      required:
+        - type
+        - taskId
+        - timestamp
+      properties:
+        type:
+          type: string
+          const: task_accepted
+          description: Message type discriminator
+        taskId:
+          type: string
+          description: ID of the accepted task
+          example: task-12345
+        timestamp:
+          type: number
+          description: Unix timestamp when task was accepted
+          example: 1697097600000
+
+    TaskRejectedPayload:
+      type: object
+      description: Payload indicating task rejection
+      required:
+        - type
+        - taskId
+        - reason
+        - timestamp
+      properties:
+        type:
+          type: string
+          const: task_rejected
+          description: Message type discriminator
+        taskId:
+          type: string
+          description: ID of the rejected task
+          example: task-12345
+        reason:
+          type: string
+          description: Human-readable reason for rejection
+          enum:
+            - Already executing a task
+            - Invalid taskId - must be a non-empty string
+            - Invalid prompt - must be a non-empty string
+            - No active tab found
+            - Task execution failed
+          example: Already executing a task
+        timestamp:
+          type: number
+          description: Unix timestamp when task was rejected
+          example: 1697097600000
+
+    ExecutionEventPayload:
+      type: object
+      description: Payload containing execution progress update
+      required:
+        - type
+        - taskId
+        - event
+        - timestamp
+      properties:
+        type:
+          type: string
+          const: execution_event
+          description: Message type discriminator
+        taskId:
+          type: string
+          description: ID of the executing task
+          example: task-12345
+        event:
+          $ref: '#/components/schemas/AgentEvent'
+        timestamp:
+          type: number
+          description: Unix timestamp when event was sent
+          example: 1697097601000
+
+    AgentEvent:
+      type: object
+      description: Event representing a state change in task execution
+      required:
+        - actor
+        - state
+        - data
+        - timestamp
+        - type
+      properties:
+        actor:
+          type: string
+          description: The component that triggered this event
+          enum:
+            - system
+            - user
+            - planner
+            - navigator
+          example: navigator
+        state:
+          type: string
+          description: The execution state that changed
+          enum:
+            - task.start
+            - task.ok
+            - task.fail
+            - task.pause
+            - task.resume
+            - task.cancel
+            - step.start
+            - step.ok
+            - step.fail
+            - step.cancel
+            - act.start
+            - act.ok
+            - act.fail
+          example: act.start
+        type:
+          type: string
+          const: execution
+          description: Event type (currently only execution events are supported)
+        timestamp:
+          type: number
+          description: Unix timestamp when event occurred
+          example: 1697097601000
+        data:
+          $ref: '#/components/schemas/EventData'
+
+    EventData:
+      type: object
+      description: Data associated with an execution event
+      required:
+        - taskId
+        - step
+        - maxSteps
+        - details
+      properties:
+        taskId:
+          type: string
+          description: ID of the task being executed
+          example: task-12345
+        step:
+          type: number
+          description: Current step number (0-based)
+          minimum: 0
+          example: 1
+        maxSteps:
+          type: number
+          description: Maximum number of steps in the task
+          minimum: 1
+          example: 5
+        details:
+          type: string
+          description: Human-readable description of what happened
+          example: 'Navigating to: https://example.com'
+
+    PingPayload:
+      type: object
+      description: Payload for heartbeat ping
+      required:
+        - type
+        - timestamp
+      properties:
+        type:
+          type: string
+          const: ping
+          description: Message type discriminator
+        timestamp:
+          type: number
+          description: Unix timestamp when ping was sent
+          example: 1697097600000
+
+    PongPayload:
+      type: object
+      description: Payload for heartbeat pong response
+      required:
+        - type
+        - timestamp
+      properties:
+        type:
+          type: string
+          const: pong
+          description: Message type discriminator
+        timestamp:
+          type: number
+          description: Unix timestamp when pong was sent
+          example: 1697097600000
+
