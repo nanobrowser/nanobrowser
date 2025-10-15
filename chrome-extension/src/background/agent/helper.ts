@@ -8,57 +8,56 @@ import { ChatCerebras } from '@langchain/cerebras';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatDeepSeek } from '@langchain/deepseek';
-import { AIMessage } from '@langchain/core/messages';
-import type { BaseMessage } from '@langchain/core/messages';
 
 const maxTokens = 1024 * 4;
 
 // Custom ChatLlama class to handle Llama API response format
 class ChatLlama extends ChatOpenAI {
-  constructor(args: any) {
+  constructor(args: ConstructorParameters<typeof ChatOpenAI>[0]) {
     super(args);
   }
 
+  // TODO: Fix this method - completionWithRetry might not exist in current langchain version
   // Override the completionWithRetry method to intercept and transform the response
-  async completionWithRetry(request: any, options?: any): Promise<any> {
-    try {
-      // Make the request using the parent's implementation
-      const response = await super.completionWithRetry(request, options);
+  // async completionWithRetry(request: any, options?: any): Promise<any> {
+  //   try {
+  //     // Make the request using the parent's implementation
+  //     const response = await super.completionWithRetry(request, options);
 
-      // Check if this is a Llama API response format
-      if (response?.completion_message?.content?.text) {
-        // Transform Llama API response to OpenAI format
-        const transformedResponse = {
-          id: response.id || 'llama-response',
-          object: 'chat.completion',
-          created: Date.now(),
-          model: request.model,
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: response.completion_message.content.text,
-              },
-              finish_reason: response.completion_message.stop_reason || 'stop',
-            },
-          ],
-          usage: {
-            prompt_tokens: response.metrics?.find((m: any) => m.metric === 'num_prompt_tokens')?.value || 0,
-            completion_tokens: response.metrics?.find((m: any) => m.metric === 'num_completion_tokens')?.value || 0,
-            total_tokens: response.metrics?.find((m: any) => m.metric === 'num_total_tokens')?.value || 0,
-          },
-        };
+  //     // Check if this is a Llama API response format
+  //     if (response?.completion_message?.content?.text) {
+  //       // Transform Llama API response to OpenAI format
+  //       const transformedResponse = {
+  //         id: response.id || 'llama-response',
+  //         object: 'chat.completion',
+  //         created: Date.now(),
+  //         model: request.model,
+  //         choices: [
+  //           {
+  //             index: 0,
+  //             message: {
+  //               role: 'assistant',
+  //               content: response.completion_message.content.text,
+  //             },
+  //             finish_reason: response.completion_message.stop_reason || 'stop',
+  //           },
+  //         ],
+  //         usage: {
+  //           prompt_tokens: response.metrics?.find((m: any) => m.metric === 'num_prompt_tokens')?.value || 0,
+  //           completion_tokens: response.metrics?.find((m: any) => m.metric === 'num_completion_tokens')?.value || 0,
+  //           total_tokens: response.metrics?.find((m: any) => m.metric === 'num_total_tokens')?.value || 0,
+  //         },
+  //       };
 
-        return transformedResponse;
-      }
+  //       return transformedResponse;
+  //     }
 
-      return response;
-    } catch (error: any) {
-      console.error(`[ChatLlama] Error during API call:`, error);
-      throw error;
-    }
-  }
+  //     return response;
+  //   } catch (error: any) {
+  //     console.error(`[ChatLlama] Error during API call:`, error);
+  //     throw error;
+  //   }
+  // }
 }
 
 // O series models or GPT-5 models that support reasoning
