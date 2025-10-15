@@ -22,8 +22,6 @@ import {
 } from './agents/errors';
 import { URLNotAllowedError } from '../browser/views';
 import { chatHistoryStore } from '@extension/storage/lib/chat';
-import { fetchRagAugmentation } from '@src/background/services/rag';
-import { HumanMessage } from '@langchain/core/messages';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
@@ -135,18 +133,6 @@ export class Executor {
     const allowedMaxSteps = this.context.options.maxSteps;
 
     try {
-      // Attempt RAG augmentation for the user's task input before planner runs
-      try {
-        const ragResult = await fetchRagAugmentation(this.tasks[this.tasks.length - 1]);
-        if (ragResult && ragResult.trim().length > 0) {
-          // Append augmentation as a human message so planner receives it in context
-          const augmentMsg = new HumanMessage({ content: ragResult });
-          this.context.messageManager.addMessageWithTokens(augmentMsg);
-          logger.info('RAG augmentation appended to planner input');
-        }
-      } catch (e) {
-        logger.error('RAG augmentation failed, continuing without augmentation', e);
-      }
       this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_START, this.context.taskId);
 
       // Track task start

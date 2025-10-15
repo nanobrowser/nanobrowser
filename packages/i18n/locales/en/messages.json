@@ -382,7 +382,7 @@
     "message": "Enter Azure model name (e.g. gpt-4o, gpt-4o-mini)"
   },
   "options_models_providers_placeholders_azureApiVersion": {
-    "message": "e.g., 2024-02-15-preview"
+    "message": "e.g., 2025-04-01-preview"
   },
   "options_models_providers_deployment_desc": {
     "message": "Type model name and press Enter or Space to set. Deployment name should match OpenAI model name (e.g., gpt-4o) for best compatibility."

@@ -8,16 +8,14 @@ import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
 import { AnalyticsSettings } from './components/AnalyticsSettings';
-import RagSettings from './components/RagSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'rag' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'help';
 
 const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
   { id: 'general', icon: FiSettings, label: t('options_tabs_general') },
   { id: 'models', icon: FiCpu, label: t('options_tabs_models') },
   { id: 'firewall', icon: FiShield, label: t('options_tabs_firewall') },
   { id: 'analytics', icon: FiTrendingUp, label: 'Analytics' },
-  { id: 'rag', icon: FiTrendingUp, label: 'RAG' },
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
@@ -56,8 +54,6 @@ const Options = () => {
         return <FirewallSettings isDarkMode={isDarkMode} />;
       case 'analytics':
         return <AnalyticsSettings isDarkMode={isDarkMode} />;
-      case 'rag':
-        return <RagSettings />;
       default:
         return null;
     }
@@ -84,7 +80,7 @@ const Options = () => {
                         ? `${isDarkMode ? 'bg-slate-700/70 text-gray-300 hover:text-white' : 'bg-[#0EA5E9]/15 font-medium text-gray-700 hover:text-white'} backdrop-blur-sm`
                         : `${isDarkMode ? 'bg-sky-800/50' : ''} text-white backdrop-blur-sm`
                     }`}>
-                  <item.icon className="size-4" />
+                  <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </Button>
               </li>

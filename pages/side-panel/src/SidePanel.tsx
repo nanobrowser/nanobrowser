@@ -1,21 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Box,
-  CircularProgress,
-  Button,
-  List,
-  ListItem,
-  createTheme,
-  ThemeProvider,
-  CssBaseline,
-  Paper,
-} from '@mui/material';
-import { Settings, Add, History, ArrowBack, Mic, Stop, QuestionMark } from '@mui/icons-material';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { RxDiscordLogo } from 'react-icons/rx';
+import { FiSettings } from 'react-icons/fi';
+import { PiPlusBold } from 'react-icons/pi';
+import { GrHistory } from 'react-icons/gr';
 import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
@@ -24,6 +12,7 @@ import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
+import './SidePanel.css';
 
 // Declare chrome API types
 declare global {
@@ -71,15 +60,6 @@ const SidePanel = () => {
     darkModeMediaQuery.addEventListener('change', handleChange);
     return () => darkModeMediaQuery.removeEventListener('change', handleChange);
   }, []);
-
-  const theme = createTheme({
-    palette: {
-      mode: isDarkMode ? 'dark' : 'light',
-      primary: {
-        main: '#0ea5e9',
-      },
-    },
-  });
 
   // Check if models are configured
   const checkModelConfiguration = useCallback(async () => {
@@ -150,65 +130,7 @@ const SidePanel = () => {
     const isProgressMessage = newMessage.content === progressMessage;
 
     setMessages(prev => {
-      // Remove trailing progress indicator if present
       const filteredMessages = prev.filter((msg, idx) => !(msg.content === progressMessage && idx === prev.length - 1));
-
-      // If this is a Planner final message (non-progress), collapse prior Planner/Navigator outputs
-      // that occurred after the last user message into this new planner message.
-      if (newMessage.actor === Actors.PLANNER && !isProgressMessage) {
-        // find last user message index
-        let lastUserIdx = -1;
-        for (let i = filteredMessages.length - 1; i >= 0; i--) {
-          if (filteredMessages[i].actor === Actors.USER) {
-            lastUserIdx = i;
-            break;
-          }
-        }
-
-        const startCollapseIdx = lastUserIdx + 1;
-        // messages to consider collapsing (planner or navigator)
-        const rawCandidates = filteredMessages
-          .slice(startCollapseIdx)
-          .filter(m => m.actor === Actors.PLANNER || m.actor === Actors.NAVIGATOR);
-
-        // Filter out evidently irrelevant outputs: very short lines, cache/debug notes, or JSON blobs
-        const toCollapse = rawCandidates.filter(m => {
-          const c = (m.content || '').trim();
-          if (!c) return false;
-          if (c.length < 20) return false; // too short to be useful
-          if (/cache|cached|debug|internal/i.test(c)) return false;
-          if (/^\s*[{[]/.test(c)) return false; // likely JSON/array
-          if (/^\s*(ok|done|no results|result:?)\b/i.test(c)) return false;
-          // avoid including text that is already part of the final planner message
-          if (newMessage.content && newMessage.content.includes(c)) return false;
-          return true;
-        });
-
-        if (toCollapse.length > 0) {
-          // join their relevant contents
-
-          // Insert explicit markers so the UI can detect the collapsed section
-          const COLLAPSE_START = '<!--COLLAPSED_START-->';
-          const COLLAPSE_END = '<!--COLLAPSED_END-->';
-
-          // Build collapsed content with actor markers so it can be parsed and restored
-          const parts = toCollapse.map(m => `[[ACTOR:${m.actor}]]\n${m.content}`).join('\n\n');
-
-          // Place collapsed parts above the planner's final message (per UX request)
-          const mergedContent = `${COLLAPSE_START}\n${parts}\n${COLLAPSE_END}\n\n${newMessage.content}`;
-
-          const collapsedMessage: Message = {
-            ...newMessage,
-            content: mergedContent,
-          };
-
-          // Keep messages before startCollapseIdx, remove collapsed ones, and append collapsedMessage
-          const remaining = filteredMessages.slice(0, startCollapseIdx).filter(m => m.content !== progressMessage);
-
-          return [...remaining, collapsedMessage];
-        }
-      }
-
       return [...filteredMessages, newMessage];
     });
 
@@ -627,7 +549,7 @@ const SidePanel = () => {
     }
   };
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string, displayText?: string) => {
     console.log('handleSendMessage', text);
 
     // Trim the input text first
@@ -660,8 +582,10 @@ const SidePanel = () => {
 
       // Create a new chat session for this task if not in follow-up mode
       if (!isFollowUpMode) {
+        // Use display text for session title if available, otherwise use full text
+        const titleText = displayText || text;
         const newSession = await chatHistoryStore.createSession(
-          text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+          titleText.substring(0, 50) + (titleText.length > 50 ? '...' : ''),
         );
         console.log('newSession', newSession);
 
@@ -673,7 +597,7 @@ const SidePanel = () => {
 
       const userMessage = {
         actor: Actors.USER,
-        content: text,
+        content: displayText || text, // Use display text for chat UI, full text for background service
         timestamp: Date.now(),
       };
 
@@ -801,6 +725,34 @@ const SidePanel = () => {
       }
     } catch (error) {
       console.error('Failed to delete session:', error);
+    }
+  };
+
+  const handleSessionBookmark = async (sessionId: string) => {
+    try {
+      const fullSession = await chatHistoryStore.getSession(sessionId);
+
+      if (fullSession && fullSession.messages.length > 0) {
+        // Get the session title
+        const sessionTitle = fullSession.title;
+        // Get the first 8 words of the title
+        const title = sessionTitle.split(' ').slice(0, 8).join(' ');
+
+        // Get the first message content (the task)
+        const taskContent = fullSession.messages[0]?.content || '';
+
+        // Add to favorites storage
+        await favoritesStorage.addPrompt(title, taskContent);
+
+        // Update favorites in the UI
+        const prompts = await favoritesStorage.getAllPrompts();
+        setFavoritePrompts(prompts);
+
+        // Return to chat view after pinning
+        handleBackToChat(true);
+      }
+    } catch (error) {
+      console.error('Failed to pin session to favorites:', error);
     }
   };
 
@@ -1048,60 +1000,66 @@ const SidePanel = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          borderRadius: '16px',
-          backgroundColor: 'white',
-        }}>
-        <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Toolbar variant="dense">
+    <div>
+      <div
+        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
+        <header className="header relative">
+          <div className="header-logo">
             {showHistory ? (
-              <IconButton edge="start" color="inherit" aria-label="back" onClick={() => handleBackToChat(false)}>
-                <ArrowBack />
-              </IconButton>
+              <button
+                type="button"
+                onClick={() => handleBackToChat(false)}
+                className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                aria-label={t('nav_back_a11y')}>
+                {t('nav_back')}
+              </button>
             ) : (
-              <img src="/icon-128.png" alt="Extension Logo" style={{ width: 28, height: 28, marginRight: 8 }} />
+              <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
             )}
-            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-              {showHistory ? t('nav_history') : 'NanoBrowser'}
-            </Typography>
-            <Box>
-              {!showHistory && (
-                <>
-                  <IconButton color="inherit" onClick={handleNewChat} aria-label={t('nav_newChat_a11y')}>
-                    <Add />
-                  </IconButton>
-                  <IconButton color="inherit" onClick={handleLoadHistory} aria-label={t('nav_loadHistory_a11y')}>
-                    <History />
-                  </IconButton>
-                </>
-              )}
-              <IconButton
-                color="inherit"
-                component="a"
-                href="https://discord.gg/NN3ABHggMK"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open Discord (opens in a new tab)">
-                <QuestionMark />
-              </IconButton>
-              <IconButton
-                color="inherit"
-                onClick={() => chrome.runtime.openOptionsPage()}
-                aria-label={t('nav_settings_a11y')}>
-                <Settings />
-              </IconButton>
-            </Box>
-          </Toolbar>
-        </AppBar>
+          </div>
+          <div className="header-icons">
+            {!showHistory && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleNewChat}
+                  onKeyDown={e => e.key === 'Enter' && handleNewChat()}
+                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  aria-label={t('nav_newChat_a11y')}
+                  tabIndex={0}>
+                  <PiPlusBold size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLoadHistory}
+                  onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
+                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  aria-label={t('nav_loadHistory_a11y')}
+                  tabIndex={0}>
+                  <GrHistory size={20} />
+                </button>
+              </>
+            )}
+            <a
+              href="https://discord.gg/NN3ABHggMK"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
+              <RxDiscordLogo size={20} />
+            </a>
+            <button
+              type="button"
+              onClick={() => chrome.runtime.openOptionsPage()}
+              onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
+              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              aria-label={t('nav_settings_a11y')}
+              tabIndex={0}>
+              <FiSettings size={20} />
+            </button>
+          </div>
+        </header>
         {showHistory ? (
-          <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <div className="flex-1 overflow-hidden">
             <ChatHistoryList
               sessions={chatSessions}
               onSessionSelect={handleSessionSelect}
@@ -1110,47 +1068,56 @@ const SidePanel = () => {
               visible={true}
               isDarkMode={isDarkMode}
             />
-          </Box>
+          </div>
         ) : (
           <>
             {/* Show loading state while checking model configuration */}
             {hasConfiguredModels === null && (
-              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <CircularProgress sx={{ mb: 2 }} />
-                  <Typography>{t('status_checkingConfig')}</Typography>
-                </Box>
-              </Box>
+              <div
+                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+                <div className="text-center">
+                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent"></div>
+                  <p>{t('status_checkingConfig')}</p>
+                </div>
+              </div>
             )}
 
             {/* Show setup message when no models are configured */}
             {hasConfiguredModels === false && (
-              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-                <Paper
-                  sx={{
-                    p: 4,
-                    borderRadius: 2,
-                    textAlign: 'center',
-                    backdropFilter: 'blur(10px)',
-                    backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                  }}>
-                  <img
-                    src="/icon-128.png"
-                    alt="Nanobrowser Logo"
-                    style={{ width: 48, height: 48, margin: '0 auto 16px' }}
-                  />
-                  <Typography variant="h5" component="h3" sx={{ mb: 2, fontWeight: 'bold' }}>
+              <div
+                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+                <div className="max-w-md text-center">
+                  <img src="/icon-128.png" alt="Nanobrowser Logo" className="mx-auto mb-4 size-12" />
+                  <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-sky-200' : 'text-sky-700'}`}>
                     {t('welcome_title')}
-                  </Typography>
-                  <Typography sx={{ mb: 2 }}>{t('welcome_instruction')}</Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" onClick={() => chrome.runtime.openOptionsPage()} sx={{ my: 2 }}>
-                      {t('welcome_openSettings')}
-                    </Button>
-                  </Box>
-                  <Box sx={{ mt: 4 }} />
-                </Paper>
-              </Box>
+                  </h3>
+                  <p className="mb-4">{t('welcome_instruction')}</p>
+                  <button
+                    onClick={() => chrome.runtime.openOptionsPage()}
+                    className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${
+                      isDarkMode ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-sky-500 text-white hover:bg-sky-600'
+                    }`}>
+                    {t('welcome_openSettings')}
+                  </button>
+                  <div className="mt-4 text-sm opacity-75">
+                    <a
+                      href="https://github.com/nanobrowser/nanobrowser?tab=readme-ov-file#-quick-start"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
+                      {t('welcome_quickStart')}
+                    </a>
+                    <span className="mx-2">•</span>
+                    <a
+                      href="https://discord.gg/NN3ABHggMK"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
+                      {t('welcome_joinCommunity')}
+                    </a>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Show normal chat interface when models are configured */}
@@ -1158,7 +1125,8 @@ const SidePanel = () => {
               <>
                 {messages.length === 0 && (
                   <>
-                    <Paper elevation={1} sx={{ p: 1, backdropFilter: 'blur(10px)', backgroundColor: 'transparent' }}>
+                    <div
+                      className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
@@ -1170,29 +1138,33 @@ const SidePanel = () => {
                         setContent={setter => {
                           setInputTextRef.current = setter;
                         }}
+                        isDarkMode={isDarkMode}
                         historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                         onReplay={handleReplay}
                       />
-                    </Paper>
-                    <Box sx={{ flex: 1, overflowY: 'auto' }}>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
                       <BookmarkList
                         bookmarks={favoritePrompts}
                         onBookmarkSelect={handleBookmarkSelect}
                         onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
                         onBookmarkDelete={handleBookmarkDelete}
                         onBookmarkReorder={handleBookmarkReorder}
+                        isDarkMode={isDarkMode}
                       />
-                    </Box>
+                    </div>
                   </>
                 )}
                 {messages.length > 0 && (
-                  <Box sx={{ flex: 1, overflowX: 'hidden', overflowY: 'auto', p: 1, backgroundColor: 'white' }}>
+                  <div
+                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
                     <MessageList messages={messages} isDarkMode={isDarkMode} />
                     <div ref={messagesEndRef} />
-                  </Box>
+                  </div>
                 )}
                 {messages.length > 0 && (
-                  <Paper elevation={3} sx={{ p: 1, backgroundColor: 'white' }}>
+                  <div
+                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onStopTask={handleStopTask}
@@ -1204,17 +1176,18 @@ const SidePanel = () => {
                       setContent={setter => {
                         setInputTextRef.current = setter;
                       }}
+                      isDarkMode={isDarkMode}
                       historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                       onReplay={handleReplay}
                     />
-                  </Paper>
+                  </div>
                 )}
               </>
             )}
           </>
         )}
-      </Box>
-    </ThemeProvider>
+      </div>
+    </div>
   );
 };
 

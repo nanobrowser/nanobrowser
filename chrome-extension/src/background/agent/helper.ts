@@ -23,9 +23,7 @@ class ChatLlama extends ChatOpenAI {
   async completionWithRetry(request: any, options?: any): Promise<any> {
     try {
       // Make the request using the parent's implementation
-      // ChatOpenAI typing does not expose completionWithRetry, call the implementation via prototype to satisfy TS
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await (ChatOpenAI.prototype as any).completionWithRetry.call(this, request, options);
+      const response = await super.completionWithRetry(request, options);
 
       // Check if this is a Llama API response format
       if (response?.completion_message?.content?.text) {
@@ -109,75 +107,9 @@ function createOpenAIChatModel(
   };
 
   const configuration: Record<string, unknown> = {};
-
-  // Handle base URL with custom query parameters
-  // NOTE: LangChain ChatOpenAI automatically appends "/chat/completions" which causes issues with query params
-  // We need a special approach for deployment URLs with query parameters
   if (providerConfig.baseUrl) {
-    let fullUrl = providerConfig.baseUrl;
-
-    // Check if we have query parameters that need special handling
-    if (providerConfig.customQuery && Object.keys(providerConfig.customQuery).length > 0) {
-      // For deployment URLs with query parameters, we need to use a custom fetch function
-      // to override LangChain's URL construction
-
-      // Create the correct final URL manually
-      let correctUrl = providerConfig.baseUrl;
-
-      // Add REST endpoint if provided
-      if (providerConfig.restEndpoint) {
-        const baseEndsWithSlash = correctUrl.endsWith('/');
-        const endpointStartsWithSlash = providerConfig.restEndpoint.startsWith('/');
-
-        if (baseEndsWithSlash && endpointStartsWithSlash) {
-          correctUrl = correctUrl + providerConfig.restEndpoint.substring(1);
-        } else if (!baseEndsWithSlash && !endpointStartsWithSlash) {
-          correctUrl = correctUrl + '/' + providerConfig.restEndpoint;
-        } else {
-          correctUrl = correctUrl + providerConfig.restEndpoint;
-        }
-      }
-
-      // Add query parameters
-      const url = new URL(correctUrl);
-      Object.entries(providerConfig.customQuery).forEach(([key, value]) => {
-        url.searchParams.set(key, value);
-      });
-      correctUrl = url.toString();
-
-      console.log('[createOpenAIChatModel] Using custom fetch to override URL construction:', {
-        baseUrl: providerConfig.baseUrl,
-        restEndpoint: providerConfig.restEndpoint,
-        queryParams: providerConfig.customQuery,
-        correctUrl: correctUrl,
-      });
-
-      // Override the fetch function to use our correct URL
-      configuration.fetch = async (url: string, init?: RequestInit) => {
-        // Replace LangChain's constructed URL with our correct URL
-        console.log('[CustomFetch] LangChain wanted to use:', url);
-        console.log('[CustomFetch] Using instead:', correctUrl);
-        return fetch(correctUrl, init);
-      };
-
-      // Set baseURL to just the base part (LangChain will append /chat/completions, but our fetch will override it)
-      configuration.baseURL = providerConfig.baseUrl;
-    } else {
-      // No query parameters, use the simpler approach
-      const url = new URL(fullUrl);
-      fullUrl = url.toString();
-      configuration.baseURL = fullUrl;
-    }
-
-    console.log('[createOpenAIChatModel] Final URL configuration:', {
-      baseUrl: providerConfig.baseUrl,
-      restEndpoint: providerConfig.restEndpoint,
-      queryParams: providerConfig.customQuery,
-      finalUrl: configuration.baseURL,
-      usingCustomFetch: !!configuration.fetch,
-    });
+    configuration.baseURL = providerConfig.baseUrl;
   }
-
   if (extraFetchOptions?.headers) {
     configuration.defaultHeaders = extraFetchOptions.headers;
   }
@@ -203,12 +135,6 @@ function createOpenAIChatModel(
     args.temperature = (modelConfig.parameters?.temperature ?? 0.1) as number;
     args.maxTokens = maxTokens;
   }
-  console.log('[createOpenAIChatModel] About to create ChatOpenAI with configuration:', {
-    model: args.model,
-    baseURL: configuration.baseURL,
-    headers: configuration.defaultHeaders,
-    fullArgs: args,
-  });
   return new ChatOpenAI(args);
 }
 
@@ -306,14 +232,6 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
   const temperature = (modelConfig.parameters?.temperature ?? 0.1) as number;
   const topP = (modelConfig.parameters?.topP ?? 0.1) as number;
 
-  // Debug logging to help identify the issue
-  console.log('[createChatModel] Configuration:', {
-    provider: modelConfig.provider,
-    modelName: modelConfig.modelName,
-    providerType: providerConfig.type,
-    baseUrl: providerConfig.baseUrl,
-  });
-
   // Check if the provider is an Azure provider with a custom ID (e.g. azure_openai_2)
   const isAzure = isAzureProvider(modelConfig.provider);
 
@@ -324,9 +242,8 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
 
   switch (modelConfig.provider) {
     case ProviderTypeEnum.OpenAI: {
-      // Call helper with custom headers if available
-      const extraHeaders = providerConfig.customHeaders ? { headers: providerConfig.customHeaders } : undefined;
-      return createOpenAIChatModel(providerConfig, modelConfig, extraHeaders);
+      // Call helper without extra options
+      return createOpenAIChatModel(providerConfig, modelConfig, undefined);
     }
     case ProviderTypeEnum.Anthropic: {
       // For Opus models, only include temperature, not topP
@@ -336,9 +253,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
             apiKey: providerConfig.apiKey,
             maxTokens,
             temperature,
-            clientOptions: {
-              ...(providerConfig.customHeaders && { defaultHeaders: providerConfig.customHeaders }),
-            },
+            clientOptions: {},
           }
         : {
             model: modelConfig.modelName,
@@ -346,9 +261,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
             maxTokens,
             temperature,
             topP,
-            clientOptions: {
-              ...(providerConfig.customHeaders && { defaultHeaders: providerConfig.customHeaders }),
-            },
+            clientOptions: {},
           };
       return new ChatAnthropic(args);
     }
@@ -377,9 +290,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         temperature,
         topP,
         maxTokens,
-        configuration: {
-          ...(providerConfig.customHeaders && { defaultHeaders: providerConfig.customHeaders }),
-        },
+        configuration: {},
       };
       return new ChatXAI(args) as BaseChatModel;
     }
@@ -432,14 +343,11 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
     case ProviderTypeEnum.OpenRouter: {
       // Call the helper function, passing OpenRouter headers via the third argument
       console.log('[createChatModel] Calling createOpenAIChatModel for OpenRouter');
-      const openRouterHeaders = {
-        'HTTP-Referer': 'https://nanobrowser.ai',
-        'X-Title': 'Nanobrowser',
-        // Merge with custom headers if provided
-        ...providerConfig.customHeaders,
-      };
       return createOpenAIChatModel(providerConfig, modelConfig, {
-        headers: openRouterHeaders,
+        headers: {
+          'HTTP-Referer': 'https://nanobrowser.ai',
+          'X-Title': 'Nanobrowser',
+        },
       });
     }
     case ProviderTypeEnum.Llama: {
@@ -461,44 +369,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
 
       const configuration: Record<string, unknown> = {};
       if (providerConfig.baseUrl) {
-        let finalUrl = providerConfig.baseUrl;
-
-        // Add REST endpoint if provided (e.g., '/chat/completions')
-        if (providerConfig.restEndpoint) {
-          // Ensure no double slashes
-          const baseEndsWithSlash = finalUrl.endsWith('/');
-          const endpointStartsWithSlash = providerConfig.restEndpoint.startsWith('/');
-
-          if (baseEndsWithSlash && endpointStartsWithSlash) {
-            finalUrl = finalUrl + providerConfig.restEndpoint.substring(1);
-          } else if (!baseEndsWithSlash && !endpointStartsWithSlash) {
-            finalUrl = finalUrl + '/' + providerConfig.restEndpoint;
-          } else {
-            finalUrl = finalUrl + providerConfig.restEndpoint;
-          }
-        }
-
-        // If custom query parameters are provided, append them to the URL
-        if (providerConfig.customQuery && Object.keys(providerConfig.customQuery).length > 0) {
-          const url = new URL(finalUrl);
-          Object.entries(providerConfig.customQuery).forEach(([key, value]) => {
-            url.searchParams.set(key, value);
-          });
-          finalUrl = url.toString();
-        }
-
-        console.log('[createChatModel] Llama Final URL construction:', {
-          baseUrl: providerConfig.baseUrl,
-          restEndpoint: providerConfig.restEndpoint,
-          queryParams: providerConfig.customQuery,
-          finalUrl: finalUrl,
-        });
-
-        configuration.baseURL = finalUrl;
-      }
-      // Add custom headers if provided
-      if (providerConfig.customHeaders) {
-        configuration.defaultHeaders = providerConfig.customHeaders;
+        configuration.baseURL = providerConfig.baseUrl;
       }
       args.configuration = configuration;
 
@@ -506,61 +377,8 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
     }
     default: {
       // by default, we think it's a openai-compatible provider
-      console.log('[createChatModel] Creating CustomOpenAI model:', {
-        provider: modelConfig.provider,
-        modelName: modelConfig.modelName,
-        providerType: providerConfig.type,
-        baseUrl: providerConfig.baseUrl,
-        restEndpoint: providerConfig.restEndpoint,
-        hasApiKey: !!providerConfig.apiKey,
-        hasCustomHeaders: !!providerConfig.customHeaders,
-        hasCustomQuery: !!providerConfig.customQuery,
-      });
-
-      // For deployment URLs (like Azure-style deployments), handle them specially
-      const adjustedConfig = { ...providerConfig };
-      let adjustedModelConfig = { ...modelConfig };
-
-      // Check if this looks like a deployment URL pattern
-      if (providerConfig.baseUrl && providerConfig.baseUrl.includes('/deployments/')) {
-        console.log('[createChatModel] Deployment-style URL detected:', {
-          originalUrl: providerConfig.baseUrl,
-          restEndpoint: providerConfig.restEndpoint,
-        });
-
-        // For deployment URLs, we might need to extract model name from URL
-        // But now we'll let the user configure the exact structure with restEndpoint
-        // Example: baseUrl = "https://example.com/api/openai/deployments/model-name"
-        //          restEndpoint = "/chat/completions"
-        //          Final URL = "https://example.com/api/openai/deployments/model-name/chat/completions?params"
-
-        // Extract model name from deployment URL if it follows the pattern
-        const deploymentMatch = providerConfig.baseUrl.match(/\/deployments\/([^/?]+)/);
-        if (deploymentMatch) {
-          const deploymentModel = deploymentMatch[1];
-          console.log('[createChatModel] Extracted model from deployment URL:', deploymentModel);
-
-          // Clean the model name - remove common prefixes if needed
-          const cleanModel = deploymentModel.replace(/^(google-|microsoft-|openai-)/i, '');
-          adjustedModelConfig = {
-            ...adjustedModelConfig,
-            modelName: cleanModel,
-          };
-        }
-      }
-
-      // Pass custom headers if available
-      const extraHeaders = providerConfig.customHeaders ? { headers: providerConfig.customHeaders } : undefined;
-      console.log('[createChatModel] Calling createOpenAIChatModel with:', {
-        adjustedConfig: {
-          baseUrl: adjustedConfig.baseUrl,
-          restEndpoint: adjustedConfig.restEndpoint,
-          customQuery: adjustedConfig.customQuery,
-        },
-        adjustedModelConfig: adjustedModelConfig,
-        extraHeaders: extraHeaders,
-      });
-      return createOpenAIChatModel(adjustedConfig, adjustedModelConfig, extraHeaders);
+      // Pass undefined for extraFetchOptions for default/custom cases
+      return createOpenAIChatModel(providerConfig, modelConfig, undefined);
     }
   }
 }
