@@ -597,7 +597,8 @@ export async function injectBuildDomTreeScripts(tabId: number) {
   try {
     // Check if already injected
     const injectedFrames = await scriptInjectedFrames(tabId);
-    if (injectedFrames.values().every(injected => injected)) {
+    const injectedArray = Array.from(injectedFrames.values());
+    if (injectedArray.every((injected: boolean) => injected)) {
       return;
     }
 
