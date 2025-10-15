@@ -83,6 +83,10 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   const [nameErrors, setNameErrors] = useState<Record<string, string>>({});
   // Add state for tracking API key visibility
   const [visibleApiKeys, setVisibleApiKeys] = useState<Record<string, boolean>>({});
+  // State for tracking header text values (for controlled textarea)
+  const [headerTextValues, setHeaderTextValues] = useState<Record<string, string>>({});
+  // State for tracking query parameter text values (for controlled textarea)
+  const [queryTextValues, setQueryTextValues] = useState<Record<string, string>>({});
   // Create a non-async wrapper for use in render functions
   const [availableModels, setAvailableModels] = useState<
     Array<{ provider: string; providerName: string; model: string }>
@@ -103,6 +107,16 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
 
         // Only use providers from storage, don't add default ones
         setProviders(allProviders);
+
+        // Initialize header text values for all providers
+        const initialHeaderTexts: Record<string, string> = {};
+        const initialQueryTexts: Record<string, string> = {};
+        Object.entries(allProviders).forEach(([providerId, config]) => {
+          initialHeaderTexts[providerId] = config.customHeaders ? JSON.stringify(config.customHeaders, null, 2) : '';
+          initialQueryTexts[providerId] = config.customQuery ? JSON.stringify(config.customQuery, null, 2) : '';
+        });
+        setHeaderTextValues(initialHeaderTexts);
+        setQueryTextValues(initialQueryTexts);
       } catch (error) {
         console.error('Error loading providers:', error);
         // Set empty providers on error
@@ -479,6 +493,40 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
           providers[provider].modelNames || llmProviderModelNames[provider as keyof typeof llmProviderModelNames] || [];
       }
 
+      // Ensure current header text values are properly parsed and included
+      const currentHeaderText = headerTextValues[provider]?.trim();
+      if (currentHeaderText) {
+        try {
+          const parsedHeaders = JSON.parse(currentHeaderText);
+          if (typeof parsedHeaders === 'object' && parsedHeaders !== null && !Array.isArray(parsedHeaders)) {
+            configToSave.customHeaders = parsedHeaders;
+          }
+        } catch (error) {
+          // If current header text is invalid JSON, keep existing headers from providers state
+          console.warn('Invalid header JSON during save, keeping existing headers:', error);
+        }
+      } else {
+        // Clear headers if textarea is empty
+        configToSave.customHeaders = {};
+      }
+
+      // Ensure current query text values are properly parsed and included
+      const currentQueryText = queryTextValues[provider]?.trim();
+      if (currentQueryText) {
+        try {
+          const parsedQuery = JSON.parse(currentQueryText);
+          if (typeof parsedQuery === 'object' && parsedQuery !== null && !Array.isArray(parsedQuery)) {
+            configToSave.customQuery = parsedQuery;
+          }
+        } catch (error) {
+          // If current query text is invalid JSON, keep existing query from providers state
+          console.warn('Invalid query JSON during save, keeping existing query:', error);
+        }
+      } else {
+        // Clear query if textarea is empty
+        configToSave.customQuery = {};
+      }
+
       // Pass the cleaned config to setProvider
       // Cast to ProviderConfig as we've ensured necessary fields based on type
       await llmProviderStore.setProvider(provider, configToSave as ProviderConfig);
@@ -505,6 +553,24 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     } catch (error) {
       console.error('Error saving API key:', error);
     }
+  };
+
+  // Handler for custom headers changes
+  const handleCustomHeadersChange = (providerId: string, headers: Record<string, string>) => {
+    setModifiedProviders(prev => new Set(prev).add(providerId));
+    setProviders(prev => ({
+      ...prev,
+      [providerId]: { ...prev[providerId], customHeaders: headers },
+    }));
+  };
+
+  // Handler for custom query changes
+  const handleCustomQueryChange = (providerId: string, query: Record<string, string>) => {
+    setModifiedProviders(prev => new Set(prev).add(providerId));
+    setProviders(prev => ({
+      ...prev,
+      [providerId]: { ...prev[providerId], customQuery: query },
+    }));
   };
 
   const handleDelete = async (provider: string) => {
@@ -1352,6 +1418,126 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         </div>
                       </div>
                     )}
+
+                    {/* Custom Headers input section */}
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex items-center">
+                        <label
+                          htmlFor={`${providerId}-custom-headers`}
+                          className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Headers
+                        </label>
+                        <div className="flex-1">
+                          <textarea
+                            id={`${providerId}-custom-headers`}
+                            placeholder={`Optional: Custom headers as JSON\n{\n  "Authorization": "Bearer token",\n  "X-API-Version": "v1"\n}`}
+                            value={headerTextValues[providerId] || ''}
+                            onChange={e => {
+                              const value = e.target.value;
+                              // Update the text value immediately for typing
+                              setHeaderTextValues(prev => ({
+                                ...prev,
+                                [providerId]: value,
+                              }));
+
+                              // Only update the stored headers if it's empty (to clear)
+                              // Don't try to parse JSON on every keystroke
+                              if (!value.trim()) {
+                                handleCustomHeadersChange(providerId, {});
+                              }
+                            }}
+                            onBlur={e => {
+                              const value = e.target.value.trim();
+                              if (value) {
+                                try {
+                                  const parsed = JSON.parse(value);
+                                  if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                                    handleCustomHeadersChange(providerId, parsed);
+                                  }
+                                } catch (error) {
+                                  console.warn('Invalid header JSON, reverting to stored value:', error);
+                                  // Revert to stored value
+                                  const storedHeaders = providers[providerId]?.customHeaders || {};
+                                  const revertedValue =
+                                    Object.keys(storedHeaders).length > 0 ? JSON.stringify(storedHeaders, null, 2) : '';
+                                  setHeaderTextValues(prev => ({
+                                    ...prev,
+                                    [providerId]: revertedValue,
+                                  }));
+                                }
+                              }
+                            }}
+                            rows={4}
+                            className={`rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 text-sm outline-none`}
+                          />
+                        </div>
+                      </div>
+                      <div className="ml-20">
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Add custom HTTP headers for API requests (optional)
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Custom Query Parameters input section */}
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex items-center">
+                        <label
+                          htmlFor={`${providerId}-custom-query`}
+                          className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Query
+                        </label>
+                        <div className="flex-1">
+                          <textarea
+                            id={`${providerId}-custom-query`}
+                            placeholder={`Optional: Custom query parameters as JSON\n{\n  "api-version": "2024-02-15-preview",\n  "deployment": "my-deployment"\n}`}
+                            value={queryTextValues[providerId] || ''}
+                            onChange={e => {
+                              const value = e.target.value;
+                              // Update the text value immediately for typing
+                              setQueryTextValues(prev => ({
+                                ...prev,
+                                [providerId]: value,
+                              }));
+
+                              // Only update the stored query if it's empty (to clear)
+                              // Don't try to parse JSON on every keystroke
+                              if (!value.trim()) {
+                                handleCustomQueryChange(providerId, {});
+                              }
+                            }}
+                            onBlur={e => {
+                              const value = e.target.value.trim();
+                              if (value) {
+                                try {
+                                  const parsed = JSON.parse(value);
+                                  if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                                    handleCustomQueryChange(providerId, parsed);
+                                  }
+                                } catch (error) {
+                                  console.warn('Invalid query JSON, reverting to stored value:', error);
+                                  // Revert to stored value
+                                  const storedQuery = providers[providerId]?.customQuery || {};
+                                  const revertedValue =
+                                    Object.keys(storedQuery).length > 0 ? JSON.stringify(storedQuery, null, 2) : '';
+                                  setQueryTextValues(prev => ({
+                                    ...prev,
+                                    [providerId]: revertedValue,
+                                  }));
+                                }
+                              }
+                            }}
+                            rows={4}
+                            className={`rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 text-sm outline-none`}
+                          />
+                        </div>
+                      </div>
+                      <div className="ml-20">
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Add custom query parameters for API requests (optional)
+                        </p>
+                      </div>
+                    </div>
 
                     {/* Azure Deployment Name input as tags/chips like OpenRouter models */}
                     {(providerConfig.type as ProviderTypeEnum) === ProviderTypeEnum.AzureOpenAI && (
