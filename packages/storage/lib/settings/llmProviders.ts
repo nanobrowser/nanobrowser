@@ -11,7 +11,12 @@ export interface ProviderConfig {
   type?: ProviderTypeEnum; // Help to decide which LangChain ChatModel package to use
   apiKey: string; // Must be provided, but may be empty for local models
   baseUrl?: string; // Optional base URL if provided // For Azure: Endpoint
+  restEndpoint?: string; // Optional REST endpoint path (e.g., '/chat/completions', '/v1/chat/completions')
   modelNames?: string[]; // Chosen model names (NOT used for Azure OpenAI)
+  // Custom headers for API requests
+  customHeaders?: Record<string, string>;
+  // Custom query parameters for API requests
+  customQuery?: Record<string, string>;
   createdAt?: number; // Timestamp in milliseconds when the provider was created
   // Azure Specific Fields:
   azureDeploymentNames?: string[]; // Azure deployment names array
