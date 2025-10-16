@@ -12,8 +12,9 @@ export interface RAGResponse {
 export class RAGService {
   /**
    * Perform RAG retrieval for a given query
+   * Optionally accepts an options bag to pass extra context such as a system message
    */
-  static async retrieve(query: string): Promise<RAGResponse> {
+  static async retrieve(query: string, options?: { systemMessage?: string }): Promise<RAGResponse> {
     try {
       const ragSettings = await ragSettingsStore.getSettings();
 
@@ -41,6 +42,10 @@ export class RAGService {
         if (ragSettings.queryParamName) {
           url.searchParams.set(ragSettings.queryParamName, query);
         }
+        // Include optional system message as an extra param if provided
+        if (options?.systemMessage) {
+          url.searchParams.set('system_message', options.systemMessage);
+        }
 
         requestOptions = {
           method: 'GET',
@@ -51,6 +56,9 @@ export class RAGService {
         const body: Record<string, string> = {};
         if (ragSettings.queryParamName) {
           body[ragSettings.queryParamName] = query;
+        }
+        if (options?.systemMessage) {
+          body['system_message'] = options.systemMessage;
         }
 
         requestOptions = {
@@ -107,9 +115,10 @@ export class RAGService {
 
   /**
    * Augment a task with RAG-retrieved content
+   * Accepts optional systemMessage to forward to the retrieve call
    */
-  static async augmentTask(originalTask: string): Promise<string> {
-    const ragResponse = await this.retrieve(originalTask);
+  static async augmentTask(originalTask: string, systemMessage?: string): Promise<string> {
+    const ragResponse = await this.retrieve(originalTask, { systemMessage });
 
     if (!ragResponse.success || !ragResponse.content) {
       logger.info('No RAG content retrieved, using original task');

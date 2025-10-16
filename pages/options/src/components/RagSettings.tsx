@@ -186,6 +186,23 @@ export const RagSettings = ({ isDarkMode = false }: { isDarkMode?: boolean }) =>
             </p>
           </div>
 
+          {/* Custom System Message for RAG / Planner */}
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              {tr('options_rag_custom_system_message') ?? 'Custom System Message'}
+            </label>
+            <textarea
+              value={(settings.customSystemMessage as string) || ''}
+              onChange={e => updateSetting('customSystemMessage', e.target.value)}
+              placeholder="An optional system-level message that will be included with planner prompts and used to influence RAG retrieval."
+              className={`${inputClass} h-28 resize-y`}
+            />
+            <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              This message will be sent as a system message to the planner and included when performing RAG retrievals
+              to bias the results.
+            </p>
+          </div>
+
           {/* Save Button */}
           <div className="flex justify-end pt-4">
             <Button

@@ -4,6 +4,8 @@ import type { BaseStorage } from '../base/types';
 
 export interface RAGSettingsConfig {
   enabled: boolean;
+  // Optional custom system message that will be sent with planner prompts and used during RAG retrieval
+  customSystemMessage?: string;
   // which provider id to use for retrieval/embedding (optional)
   providerId?: string;
   // index name or path for local/vector DB
@@ -31,6 +33,7 @@ export const DEFAULT_RAG_SETTINGS: RAGSettingsConfig = {
   index: undefined,
   topK: 5,
   customQuery: undefined,
+  customSystemMessage: undefined,
   endpoint: undefined,
   apiKey: undefined,
   apiKeyHeaderName: undefined,

@@ -2,9 +2,10 @@ import { BaseAgent, type BaseAgentOptions, type ExtraAgentOptions } from './base
 import { createLogger } from '@src/background/log';
 import { z } from 'zod';
 import type { AgentOutput } from '../types';
-import { HumanMessage, type BaseMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage, type BaseMessage } from '@langchain/core/messages';
 import { Actors, ExecutionState } from '../event/types';
 import { RAGService } from '../../services/ragService';
+import { ragSettingsStore } from '@extension/storage';
 import {
   ChatModelAuthError,
   ChatModelBadRequestError,
@@ -95,8 +96,11 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
 
       logger.info('Retrieving RAG context for planning:', planningContext.substring(0, 100) + '...');
 
-      // Retrieve RAG content for the planning context
-      const ragResponse = await RAGService.retrieve(planningContext);
+      // Retrieve RAG settings to include any custom system message
+      const ragSettings = await ragSettingsStore.getSettings();
+      const ragResponse = await RAGService.retrieve(planningContext, {
+        systemMessage: ragSettings.customSystemMessage,
+      });
 
       if (!ragResponse.success || !ragResponse.content) {
         logger.info('No RAG content retrieved for planning');
@@ -106,7 +110,7 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
       logger.info('RAG content retrieved for planning, length:', ragResponse.content.length);
 
       // Create a new message with RAG context and insert it before the last message
-      const ragContextMessage = new HumanMessage({
+      const ragContextMessage = new SystemMessage({
         content: `**Planning Context from Knowledge Base:**
 ${ragResponse.content}
 
@@ -132,6 +136,16 @@ ${ragResponse.content}
       const messages = this.context.messageManager.getMessages();
       // Use full message history except the first one
       let plannerMessages = [this.prompt.getSystemMessage(), ...messages.slice(1)];
+
+      // Include optional custom system message from RAG settings
+      try {
+        const ragSettings = await ragSettingsStore.getSettings();
+        if (ragSettings.customSystemMessage) {
+          plannerMessages = [new SystemMessage({ content: ragSettings.customSystemMessage }), ...plannerMessages];
+        }
+      } catch (e) {
+        logger.info('Failed to load RAG settings for planner custom system message', e);
+      }
 
       // Remove images from last message if vision is not enabled for planner but vision is enabled
       if (!this.context.options.useVisionForPlanner && this.context.options.useVision) {
