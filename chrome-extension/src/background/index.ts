@@ -6,6 +6,9 @@ import {
   generalSettingsStore,
   llmProviderStore,
   analyticsSettingsStore,
+  type ProviderConfig,
+  type ModelConfig,
+  ProviderTypeEnum,
 } from '@extension/storage';
 import { t } from '@extension/i18n';
 import BrowserContext from './browser/context';
@@ -106,7 +109,7 @@ chrome.runtime.onConnect.addListener(port => {
 
             // If executor exists, add follow-up task
             if (currentExecutor) {
-              currentExecutor.addFollowUpTask(message.task);
+              await currentExecutor.addFollowUpTask(message.task);
               // Re-subscribe to events in case the previous subscription was cleaned up
               subscribeToExecutorEvents(currentExecutor);
               const result = await currentExecutor.execute();
@@ -281,6 +284,60 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   const navigatorProviderConfig = providers[navigatorModel.provider];
   const navigatorLLM = createChatModel(navigatorProviderConfig, navigatorModel);
 
+  // Create an extractor/RAG LLM if RAG is enabled in settings
+  let extractorLLM: BaseChatModel | undefined = undefined;
+  try {
+    const { ragSettingsStore } = await import('@extension/storage');
+    const ragSettings = await ragSettingsStore.getSettings();
+
+    if (ragSettings.enabled) {
+      // Check if using custom RAG endpoint
+      if (ragSettings.endpoint) {
+        logger.info('Setting up custom RAG endpoint:', ragSettings.endpoint);
+        // For custom RAG endpoints, create a fake OpenAI provider config
+        // The actual endpoint handling will be done by the createOpenAIChatModel function
+        const customRagProvider: ProviderConfig = {
+          name: 'Custom RAG Endpoint',
+          type: ProviderTypeEnum.OpenAI,
+          apiKey: ragSettings.apiKey || '',
+          baseUrl: ragSettings.endpoint,
+          modelNames: ['custom-rag-model'],
+          customHeaders:
+            ragSettings.apiKeyHeaderName && ragSettings.apiKey
+              ? { [ragSettings.apiKeyHeaderName]: ragSettings.apiKey }
+              : undefined,
+          customQuery: ragSettings.queryParamName
+            ? { [ragSettings.queryParamName]: '' } // Will be filled during actual query
+            : undefined,
+        };
+
+        // Create extractor LLM with custom endpoint - use the same approach as OpenAI
+        const extraOptions = customRagProvider.customHeaders ? { headers: customRagProvider.customHeaders } : undefined;
+        const modelConfig: ModelConfig = {
+          provider: ProviderTypeEnum.OpenAI,
+          modelName: 'custom-rag-model',
+          parameters: {},
+        };
+        extractorLLM = createChatModel(customRagProvider, modelConfig, extraOptions);
+      }
+      // Fall back to provider-based RAG
+      else if (ragSettings.providerId && providers[ragSettings.providerId]) {
+        logger.info('Setting up provider-based RAG with provider:', ragSettings.providerId);
+        const ragProviderConfig = providers[ragSettings.providerId];
+        // attach custom headers if present to extra options when creating openai-compatible model
+        const extraOptions = ragProviderConfig.customHeaders ? { headers: ragProviderConfig.customHeaders } : undefined;
+        // create a dummy modelConfig for extractor; use first modelName or placeholder
+        const modelName = (ragProviderConfig.modelNames && ragProviderConfig.modelNames[0]) || 'gpt-4o-mini';
+        const modelConfig: ModelConfig = { provider: ragSettings.providerId, modelName, parameters: {} };
+        extractorLLM = createChatModel(ragProviderConfig, modelConfig, extraOptions);
+      } else {
+        logger.warning('RAG enabled but no valid endpoint or provider configured');
+      }
+    }
+  } catch (err) {
+    logger.error('Failed to initialize RAG extractor LLM:', err);
+  }
+
   let plannerLLM: BaseChatModel | null = null;
   const plannerModel = agentModels[AgentNameEnum.Planner];
   if (plannerModel) {
@@ -311,6 +368,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
 
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
     plannerLLM: plannerLLM ?? navigatorLLM,
+    extractorLLM: extractorLLM,
     agentOptions: {
       maxSteps: generalSettings.maxSteps,
       maxFailures: generalSettings.maxFailures,
@@ -321,6 +379,9 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
     },
     generalSettings: generalSettings,
   });
+
+  // Initialize the task with RAG augmentation
+  await executor.initializeTask(task);
 
   return executor;
 }

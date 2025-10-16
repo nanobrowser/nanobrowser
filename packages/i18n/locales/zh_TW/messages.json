@@ -377,7 +377,7 @@
     "message": "請輸入 Azure 模型的部署名稱 (例如 gpt-4o, gpt-4o-mini)"
   },
   "options_models_providers_placeholders_azureApiVersion": {
-    "message": "例如：2024-02-15-preview"
+    "message": "例如：2025-04-01-preview"
   },
   "options_models_providers_deployment_desc": {
     "message": "輸入模型名稱後，按下 Enter 或空格鍵以完成設定。為獲得最佳的相容性，部署名稱建議與 OpenAI 的模型名稱 (例如 gpt-4o) 保持一致。"

@@ -11,6 +11,7 @@ import type BrowserContext from '../browser/context';
 import { ActionBuilder } from './actions/builder';
 import { EventManager } from './event/manager';
 import { Actors, type EventCallback, EventType, ExecutionState } from './event/types';
+import { RAGService } from '../services/ragService';
 import {
   ChatModelAuthError,
   ChatModelBadRequestError,
@@ -22,8 +23,6 @@ import {
 } from './agents/errors';
 import { URLNotAllowedError } from '../browser/views';
 import { chatHistoryStore } from '@extension/storage/lib/chat';
-import { fetchRagAugmentation } from '@src/background/services/rag';
-import { HumanMessage } from '@langchain/core/messages';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
@@ -87,8 +86,26 @@ export class Executor {
     });
 
     this.context = context;
-    // Initialize message history
-    this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), task);
+    // Note: Task will be initialized with RAG content in the async initializeTask method
+  }
+
+  /**
+   * Initialize the task with RAG augmentation if enabled
+   */
+  async initializeTask(originalTask: string): Promise<void> {
+    try {
+      // Augment task with RAG content if RAG is enabled
+      const augmentedTask = await RAGService.augmentTask(originalTask);
+
+      // Initialize message history with the augmented task
+      this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), augmentedTask);
+
+      logger.info('Task initialized with RAG augmentation');
+    } catch (error) {
+      logger.error('Failed to augment task with RAG, using original task:', error);
+      // Fall back to original task if RAG fails
+      this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), originalTask);
+    }
   }
 
   subscribeExecutionEvents(callback: EventCallback): void {
@@ -100,9 +117,21 @@ export class Executor {
     this.context.eventManager.clearSubscribers(EventType.EXECUTION);
   }
 
-  addFollowUpTask(task: string): void {
-    this.tasks.push(task);
-    this.context.messageManager.addNewTask(task);
+  async addFollowUpTask(task: string): Promise<void> {
+    try {
+      // Augment follow-up task with RAG content if RAG is enabled
+      const augmentedTask = await RAGService.augmentTask(task);
+
+      this.tasks.push(task); // Store original task
+      this.context.messageManager.addNewTask(augmentedTask); // Use augmented task for execution
+
+      logger.info('Follow-up task added with RAG augmentation');
+    } catch (error) {
+      logger.error('Failed to augment follow-up task with RAG, using original task:', error);
+      // Fall back to original task if RAG fails
+      this.tasks.push(task);
+      this.context.messageManager.addNewTask(task);
+    }
 
     // need to reset previous action results that are not included in memory
     this.context.actionResults = this.context.actionResults.filter(result => result.includeInMemory);
@@ -135,18 +164,6 @@ export class Executor {
     const allowedMaxSteps = this.context.options.maxSteps;
 
     try {
-      // Attempt RAG augmentation for the user's task input before planner runs
-      try {
-        const ragResult = await fetchRagAugmentation(this.tasks[this.tasks.length - 1]);
-        if (ragResult && ragResult.trim().length > 0) {
-          // Append augmentation as a human message so planner receives it in context
-          const augmentMsg = new HumanMessage({ content: ragResult });
-          this.context.messageManager.addMessageWithTokens(augmentMsg);
-          logger.info('RAG augmentation appended to planner input');
-        }
-      } catch (e) {
-        logger.error('RAG augmentation failed, continuing without augmentation', e);
-      }
       this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_START, this.context.taskId);
 
       // Track task start

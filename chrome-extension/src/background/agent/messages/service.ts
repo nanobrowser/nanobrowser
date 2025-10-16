@@ -1,7 +1,12 @@
 import { type BaseMessage, AIMessage, HumanMessage, type SystemMessage, ToolMessage } from '@langchain/core/messages';
 import { MessageHistory, MessageMetadata } from '@src/background/agent/messages/views';
 import { createLogger } from '@src/background/log';
-import { filterExternalContent, wrapUserRequest } from '@src/background/agent/messages/utils';
+import {
+  filterExternalContent,
+  wrapUserRequest,
+  splitUserTextAndAttachments,
+  wrapAttachments,
+} from '@src/background/agent/messages/utils';
 
 const logger = createLogger('MessageManager');
 
@@ -139,10 +144,20 @@ export default class MessageManager {
    * @returns A HumanMessage object containing the task instructions
    */
   private static taskInstructions(task: string): HumanMessage {
-    const cleanedTask = filterExternalContent(task);
+    const { userText, attachmentsInner } = splitUserTextAndAttachments(task);
+
+    // Filter and wrap user text
+    const cleanedTask = filterExternalContent(userText);
     const content = `Your ultimate task is: """${cleanedTask}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.`;
-    const wrappedContent = wrapUserRequest(content, false);
-    return new HumanMessage({ content: wrappedContent });
+    const wrappedUser = wrapUserRequest(content, false);
+
+    // Filter and wrap attachments as untrusted content
+    if (attachmentsInner && attachmentsInner.length > 0) {
+      const wrappedFiles = wrapAttachments(attachmentsInner);
+      return new HumanMessage({ content: `${wrappedUser}\n\n${wrappedFiles}` });
+    }
+
+    return new HumanMessage({ content: wrappedUser });
   }
 
   /**
@@ -158,10 +173,21 @@ export default class MessageManager {
    * @param newTask - The raw description of the new task
    */
   public addNewTask(newTask: string): void {
-    const cleanedTask = filterExternalContent(newTask);
+    const { userText, attachmentsInner } = splitUserTextAndAttachments(newTask);
+
+    // Filter and wrap user text
+    const cleanedTask = filterExternalContent(userText);
     const content = `Your new ultimate task is: """${cleanedTask}""". This is a follow-up of the previous tasks. Make sure to take all of the previous context into account and finish your new ultimate task.`;
-    const wrappedContent = wrapUserRequest(content, false);
-    const msg = new HumanMessage({ content: wrappedContent });
+    const wrappedUser = wrapUserRequest(content, false);
+
+    // Filter and wrap attachments as untrusted content
+    let finalContent = wrappedUser;
+    if (attachmentsInner && attachmentsInner.length > 0) {
+      const wrappedFiles = wrapAttachments(attachmentsInner);
+      finalContent = `${wrappedUser}\n\n${wrappedFiles}`;
+    }
+
+    const msg = new HumanMessage({ content: finalContent });
     this.addMessageWithTokens(msg);
   }
 
@@ -190,7 +216,7 @@ export default class MessageManager {
    * Adds a model output message to the history
    * @param modelOutput - The model output
    */
-  public addModelOutput(modelOutput: Record<string, any>): void {
+  public addModelOutput(modelOutput: Record<string, unknown>): void {
     const toolCallId = this.nextToolId();
     const toolCalls = [
       {

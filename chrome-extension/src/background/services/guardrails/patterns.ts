@@ -62,6 +62,12 @@ export const SECURITY_PATTERNS: SecurityPattern[] = [
     replacement: '',
   },
   {
+    pattern: /\bnano[-_]+attached[-_]+files\b/gi,
+    type: ThreatType.PROMPT_INJECTION,
+    description: 'Reference to attached files',
+    replacement: '',
+  },
+  {
     pattern: /\buser[-_]+request\b/gi,
     type: ThreatType.PROMPT_INJECTION,
     description: 'Reference to user request',
@@ -134,14 +140,19 @@ export function getPatterns(strict: boolean = false): SecurityPattern[] {
 /**
  * Tags to preserve during sanitization (wrapped content tags)
  */
-export const PRESERVED_TAGS = ['nano_untrusted_content', 'nano_user_request'];
+export const PRESERVED_TAGS = [
+  'nano_untrusted_content',
+  'nano_user_request',
+  'nano_attached_files',
+  'nano_file_content',
+];
 
 /**
  * Check if a tag should be preserved during sanitization
  * @param tag - The tag to check
  * @returns True if the tag should be preserved
  */
-export function shouldPreserveTag(tag: string): boolean {
+export function isPreserveTag(tag: string): boolean {
   const tagName = tag.replace(/<\/?|\s|>/g, '').toLowerCase();
   return PRESERVED_TAGS.includes(tagName);
 }

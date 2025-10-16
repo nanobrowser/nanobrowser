@@ -592,24 +592,42 @@ async function scriptInjectedFrames(tabId: number): Promise<Map<number, boolean>
   }
 }
 
-// // Function to inject the buildDomTree script
+// Function to inject the buildDomTree script
 export async function injectBuildDomTreeScripts(tabId: number) {
   try {
     // Check if already injected
     const injectedFrames = await scriptInjectedFrames(tabId);
-    const injectedArray = Array.from(injectedFrames.values());
-    if (injectedArray.every((injected: boolean) => injected)) {
+
+    // If we couldn't check any frames or all are already injected, try to inject in main frame only
+    if (injectedFrames.size === 0) {
+      // Couldn't check frames, so just try to inject in the main frame
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['buildDomTree.js'],
+        });
+      } catch (injectionErr) {
+        // Silently ignore - script might already be injected or frame might be inaccessible
+      }
       return;
     }
 
-    await chrome.scripting.executeScript({
-      target: {
-        tabId,
-        frameIds: Array.from(injectedFrames.keys()).filter(id => !injectedFrames.get(id)),
-      },
-      files: ['buildDomTree.js'],
-    });
-    console.log('Scripts successfully injected');
+    // Check if all frames already have the script
+    if (Array.from(injectedFrames.values()).every(injected => injected)) {
+      return;
+    }
+
+    // Inject only in frames that don't have the script
+    const frameIdsToInject = Array.from(injectedFrames.keys()).filter(id => !injectedFrames.get(id));
+    if (frameIdsToInject.length > 0) {
+      await chrome.scripting.executeScript({
+        target: {
+          tabId,
+          frameIds: frameIdsToInject,
+        },
+        files: ['buildDomTree.js'],
+      });
+    }
   } catch (err) {
     console.error('Failed to inject scripts:', err);
   }

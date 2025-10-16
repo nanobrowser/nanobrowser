@@ -6,9 +6,9 @@ import { t } from '@extension/i18n';
 import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle } from 'react-icons/fi';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
+import { RagSettings } from './components/RagSettings';
 import { FirewallSettings } from './components/FirewallSettings';
 import { AnalyticsSettings } from './components/AnalyticsSettings';
-import RagSettings from './components/RagSettings';
 
 type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'rag' | 'help';
 
@@ -17,7 +17,7 @@ const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; l
   { id: 'models', icon: FiCpu, label: t('options_tabs_models') },
   { id: 'firewall', icon: FiShield, label: t('options_tabs_firewall') },
   { id: 'analytics', icon: FiTrendingUp, label: 'Analytics' },
-  { id: 'rag', icon: FiTrendingUp, label: 'RAG' },
+  { id: 'rag', icon: FiCpu, label: 'RAG' },
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
@@ -57,7 +57,9 @@ const Options = () => {
       case 'analytics':
         return <AnalyticsSettings isDarkMode={isDarkMode} />;
       case 'rag':
-        return <RagSettings />;
+        return <RagSettings isDarkMode={isDarkMode} />;
+      case 'help':
+        return null;
       default:
         return null;
     }

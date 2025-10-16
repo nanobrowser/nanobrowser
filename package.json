@@ -57,7 +57,7 @@
     "tslib": "^2.6.3",
     "typescript": "5.5.4",
     "turbo": "^2.5.3",
-    "vite": "6.3.5",
+    "vite": "6.3.6",
     "run-script-os": "^1.1.6"
   },
   "lint-staged": {
@@ -73,7 +73,8 @@
     "overrides": {
       "cross-spawn": "^7.0.5",
       "esbuild": "^0.25.1",
-      "nanoid": "3.3.11"
+      "nanoid": "3.3.11",
+      "tar-fs": "^3.1.1"
     }
   }
 }

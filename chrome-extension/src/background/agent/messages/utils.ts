@@ -14,6 +14,12 @@ export const UNTRUSTED_CONTENT_TAG_END = '</nano_untrusted_content>';
 export const USER_REQUEST_TAG_START = '<nano_user_request>';
 export const USER_REQUEST_TAG_END = '</nano_user_request>';
 
+export const ATTACHED_FILES_TAG_START = '<nano_attached_files>';
+export const ATTACHED_FILES_TAG_END = '</nano_attached_files>';
+
+export const FILE_CONTENT_TAG_START = '<nano_file_content>';
+export const FILE_CONTENT_TAG_END = '</nano_file_content>';
+
 /**
  * Remove think tags from model output
  * Some models use <think> tags for internal reasoning that should be removed
@@ -273,4 +279,51 @@ ${UNTRUSTED_CONTENT_TAG_END}
 export function wrapUserRequest(rawContent: string, filterFirst = true): string {
   const contentToWrap = filterFirst ? filterExternalContent(rawContent) : rawContent;
   return `${USER_REQUEST_TAG_START}\n${contentToWrap}\n${USER_REQUEST_TAG_END}`;
+}
+
+/**
+ * Split a raw task string into user text and attached files inner content.
+ * Attachments start at the first ATTACHED_FILES_TAG_START and end at the last ATTACHED_FILES_TAG_END
+ * (or the end of the string if no closing tag is found).
+ * User text is only the content before the first start tag. Any text after the end tag is ignored.
+ * If no attached files block is found, returns the whole input as user text.
+ * @param raw - The raw string containing user text and potentially attached files
+ * @returns Object with userText and attachmentsInner (null if no attachments found)
+ */
+export function splitUserTextAndAttachments(raw: string): { userText: string; attachmentsInner: string | null } {
+  const firstStartIdx = raw.indexOf(ATTACHED_FILES_TAG_START);
+  if (firstStartIdx === -1) {
+    return { userText: raw, attachmentsInner: null };
+  }
+
+  // User text is only the content before the first start tag
+  const userText = raw.slice(0, firstStartIdx).trimEnd();
+
+  // Find the last occurrence of the end tag
+  const lastEndIdx = raw.lastIndexOf(ATTACHED_FILES_TAG_END);
+
+  let attachmentsInner: string;
+
+  if (lastEndIdx === -1 || lastEndIdx < firstStartIdx) {
+    // No end tag found or it's before the start tag - take everything after start tag as attachments
+    attachmentsInner = raw.slice(firstStartIdx + ATTACHED_FILES_TAG_START.length).trim();
+  } else {
+    // Normal case: we have both start and end tags (any text after end tag is ignored)
+    attachmentsInner = raw.slice(firstStartIdx + ATTACHED_FILES_TAG_START.length, lastEndIdx).trim();
+  }
+
+  return { userText, attachmentsInner };
+}
+
+/**
+ * Wrap attachments content with filtering and security tags.
+ * Filters the raw attachments, optionally wraps as untrusted content, and embeds in attachment tags.
+ * @param rawAttachmentsInner - The raw inner content of attached files
+ * @param untrust - Whether to wrap as untrusted content (default: true)
+ * @returns Complete wrapped attachments block with tags
+ */
+export function wrapAttachments(rawAttachmentsInner: string, filterFirst = true, trusted = false): string {
+  const filteredAttachments = filterFirst ? filterExternalContent(rawAttachmentsInner) : rawAttachmentsInner;
+  const innerContent = trusted ? filteredAttachments : wrapUntrustedContent(filteredAttachments, false);
+  return `${ATTACHED_FILES_TAG_START}\n${innerContent}\n${ATTACHED_FILES_TAG_END}`;
 }
