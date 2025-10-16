@@ -61,6 +61,38 @@ analytics.init().catch(error => {
   logger.error('Failed to initialize analytics:', error);
 });
 
+// On first install or update, optionally preseed settings from bundled default-settings.json
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    // Try to fetch the bundled default settings file
+    const url = chrome.runtime.getURL('default-settings.json');
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      logger.info('No default-settings.json bundled');
+      return;
+    }
+    const defaults = await resp.json();
+
+    // For each top-level key in the defaults, only write if the storage key is empty
+    for (const [key, value] of Object.entries(defaults)) {
+      try {
+        const existing = await chrome.storage.local.get([key]);
+        const hasValue = existing && Object.prototype.hasOwnProperty.call(existing, key) && existing[key] !== undefined;
+        if (!hasValue) {
+          await chrome.storage.local.set({ [key]: value });
+          logger.info(`Pre-seeded storage key: ${key}`);
+        } else {
+          logger.info(`Storage key already present, skipping pre-seed: ${key}`);
+        }
+      } catch (err) {
+        logger.error('Failed to pre-seed storage key', key, err);
+      }
+    }
+  } catch (err) {
+    logger.debug('No preseed defaults or failed to load them:', err);
+  }
+});
+
 // Listen for analytics settings changes
 analyticsSettingsStore.subscribe(() => {
   analytics.updateSettings().catch(error => {

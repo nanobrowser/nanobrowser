@@ -23,7 +23,10 @@
     "lint:fix": "turbo lint:fix --continue -- --fix --cache --cache-location node_modules/.cache/.eslintcache",
     "prettier": "turbo prettier --continue -- --cache --cache-location node_modules/.cache/.prettiercache",
     "prepare": "husky",
-    "update-version": "bash update_version.sh"
+    "update-version": "bash update_version.sh",
+    "pack-crx": "node ./scripts/make-crx.cjs",
+    "pack-crx-with-defaults": "cross-env PRECONFIG_SETTINGS=$PWD/preconfigured-settings.json node ./scripts/make-crx.js",
+    "copy-defaults-from-dist": "node ./scripts/copy-settings-from-dist.js"
   },
   "dependencies": {
     "eslint-plugin-tailwindcss": "^3.17.4",
