@@ -150,7 +150,7 @@ export default class BrowserContext {
       timeoutMs?: number;
     } = {},
   ): Promise<void> {
-    const { waitForUpdate = true, waitForActivation = true, timeoutMs = 5000 } = options;
+    const { waitForUpdate = true, waitForActivation = true, timeoutMs = 50000 } = options;
 
     const promises: Promise<void>[] = [];
 
