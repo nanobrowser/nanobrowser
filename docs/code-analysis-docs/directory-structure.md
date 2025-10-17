@@ -1,0 +1,306 @@
+# Directory Structure
+
+This document contains the directory structure of the repository, extracted directly from the repository analysis.
+
+**Generated on:** 2025-10-11T17:44:45.983Z
+
+## Repository Structure
+
+```
+.husky/
+  pre-commit
+chrome-extension/
+  public/
+    permission/
+      index.html
+      permission.js
+    buildDomTree.js
+  src/
+    background/
+      agent/
+        actions/
+          builder.ts
+          schemas.ts
+        agents/
+          base.ts
+          errors.ts
+          navigator.ts
+          planner.ts
+        event/
+          manager.ts
+          types.ts
+        messages/
+          service.ts
+          utils.ts
+          views.ts
+        prompts/
+          templates/
+            common.ts
+            navigator.ts
+            planner.ts
+          base.ts
+          navigator.ts
+          planner.ts
+        executor.ts
+        helper.ts
+        history.ts
+        types.ts
+      browser/
+        dom/
+          clickable/
+            service.ts
+          history/
+            service.ts
+            view.ts
+          raw_types.ts
+          service.ts
+          views.ts
+        context.ts
+        page.ts
+        util.ts
+        views.ts
+      services/
+        guardrails/
+          __tests__/
+            guardrails.test.ts
+          index.ts
+          patterns.ts
+          sanitizer.ts
+          types.ts
+        analytics.ts
+        speechToText.ts
+      task/
+        manager.ts
+      index.ts
+      log.ts
+      utils.ts
+  utils/
+    plugins/
+      make-manifest-plugin.ts
+    refresh.js
+  manifest.js
+  package.json
+  tsconfig.json
+  vite.config.mts
+packages/
+  dev-utils/
+    lib/
+      manifest-parser/
+        impl.ts
+        index.ts
+        type.ts
+      logger.ts
+    .eslintignore
+    index.ts
+    package.json
+    tsconfig.json
+  hmr/
+    lib/
+      initializers/
+        initClient.ts
+        initReloadServer.ts
+      injections/
+        refresh.ts
+        reload.ts
+      interpreter/
+        index.ts
+      plugins/
+        index.ts
+        make-entry-point-plugin.ts
+        watch-public-plugin.ts
+        watch-rebuild-plugin.ts
+      constant.ts
+      types.ts
+    index.ts
+    package.json
+    rollup.config.mjs
+    tsconfig.build.json
+    tsconfig.json
+  i18n/
+    lib/
+      getMessageFromLocale.ts
+      i18n-dev.ts
+      i18n-prod.ts
+      type.ts
+    locales/
+      en/
+        messages.json
+      pt_BR/
+        messages.json
+      zh_TW/
+        messages.json
+    .eslintignore
+    .gitignore
+    build.dev.mjs
+    build.mjs
+    build.prod.mjs
+    genenrate-i18n.mjs
+    index.ts
+    package.json
+    tsconfig.json
+  schema-utils/
+    examples/
+      convert.ts
+      flatten.ts
+    lib/
+      helper.ts
+      json_schema.ts
+    .eslintignore
+    build.mjs
+    index.ts
+    package.json
+    tsconfig.json
+  shared/
+    lib/
+      hoc/
+        index.ts
+        withErrorBoundary.tsx
+        withSuspense.tsx
+      hooks/
+        index.ts
+        useStorage.tsx
+      utils/
+        index.ts
+        shared-types.ts
+    .eslintignore
+    build.mjs
+    index.ts
+    package.json
+    tsconfig.json
+  storage/
+    lib/
+      base/
+        base.ts
+        enums.ts
+        types.ts
+      chat/
+        history.ts
+        index.ts
+        types.ts
+      profile/
+        index.ts
+        user.ts
+      prompt/
+        favorites.ts
+      settings/
+        agentModels.ts
+        analyticsSettings.ts
+        firewall.ts
+        generalSettings.ts
+        index.ts
+        llmProviders.ts
+        speechToText.ts
+        types.ts
+      index.ts
+    .eslintignore
+    build.mjs
+    index.ts
+    package.json
+    tsconfig.json
+  tailwind-config/
+    package.json
+    tailwind.config.ts
+  tsconfig/
+    app.json
+    base.json
+    package.json
+    utils.json
+  ui/
+    lib/
+      components/
+        Button.tsx
+        index.ts
+      global.css
+      utils.ts
+      withUI.ts
+    build.mjs
+    index.ts
+    package.json
+    tsconfig.json
+  vite-config/
+    lib/
+      env.mjs
+      withPageConfig.mjs
+    index.mjs
+    package.json
+  zipper/
+    lib/
+      zip-bundle/
+        index.ts
+    .eslintignore
+    index.ts
+    package.json
+    tsconfig.json
+pages/
+  content/
+    public/
+      _content.css
+    src/
+      index.ts
+    package.json
+    tsconfig.json
+    vite.config.mts
+  options/
+    public/
+      _options.css
+    src/
+      components/
+        AnalyticsSettings.tsx
+        FirewallSettings.tsx
+        GeneralSettings.tsx
+        ModelSettings.tsx
+      index.css
+      index.tsx
+      Options.css
+      Options.tsx
+    index.html
+    package.json
+    tailwind.config.ts
+    tsconfig.json
+    vite.config.mts
+  side-panel/
+    src/
+      components/
+        BookmarkList.tsx
+        ChatHistoryList.tsx
+        ChatInput.tsx
+        MessageList.tsx
+      types/
+        event.ts
+        message.ts
+      index.css
+      index.tsx
+      SidePanel.css
+      SidePanel.tsx
+      utils.ts
+    index.html
+    package.json
+    tailwind.config.ts
+    tsconfig.json
+    vite.config.mts
+.env.example
+.eslintignore
+.eslintrc
+.example.env
+.gitattributes
+.gitignore
+.npmrc
+.nvmrc
+.prettierignore
+.prettierrc
+LICENSE
+package.json
+pnpm-workspace.yaml
+turbo.json
+update_version.sh
+vite-env.d.ts
+```
+
+## Summary
+
+The above structure represents the complete directory tree of the repository, showing:
+- All directories and subdirectories
+- File organization and hierarchy
+- Project structure and layout
+
+This structure provides an overview of how the codebase is organized and can help understand the project's architecture and component relationships.
