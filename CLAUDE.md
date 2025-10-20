@@ -80,13 +80,54 @@ This is a **monorepo** using **Turbo** for build orchestration and **pnpm worksp
 
 ### Multi-Agent System
 
-The core AI system consists of three specialized agents:
+The core AI system consists of three specialized agents that work together through message passing and state management:
 
-- **Navigator** - Handles DOM interactions and web navigation
-- **Planner** - High-level task planning and strategy
-- **Validator** - Validates task completion and results
+#### Navigator Agent
+- Handles DOM interactions and web navigation
+- Uses a state-based action system for browser automation
+- Key features:
+  - Element interaction tracking via index-based selectors
+  - Browser state history management for action replay
+  - Action registry with typed schemas for model outputs
+  - Anti-detection mechanisms for automation
+  - Support for multi-step action sequences
+  - Visual element state tracking
+  - Scroll position management
 
-Agent logic is under `chrome-extension/src/background/agent/`.
+#### Technical Implementation Details:
+
+1. **Browser State Management**:
+```typescript
+class BrowserStateHistory {
+  // Tracks DOM state, scroll position, and viewport dimensions
+  scrollY: number;
+  scrollHeight: number;
+  visualViewportHeight: number;
+  elementTree: DOMElementNode[];
+}
+```
+
+2. **Action Registry System**:
+```typescript
+class NavigatorActionRegistry {
+  // Registers available browser automation actions
+  // Each action has validation schemas and execution logic
+  setupModelOutputSchema(): z.ZodType;
+  getAction(name: string): Action;
+}
+```
+
+3. **Puppeteer Integration**:
+- Uses Chrome DevTools Protocol (CDP) for browser control
+- Custom extension transport layer for communication
+- Anti-detection scripts to avoid automation detection
+- Shadow DOM handling for robust element selection
+
+4. **LLM Integration**:
+- Structured output formats using JSONSchema
+- Vision model support for element recognition
+- Context-aware prompt templating system
+- Memory management for conversation history
 
 ### Build System
 
@@ -99,12 +140,27 @@ Agent logic is under `chrome-extension/src/background/agent/`.
 ### Key Technologies
 
 - **Chrome Extension Manifest V3**
-- **React 18** with TypeScript
-- **Tailwind CSS** for styling
-- **Vite** for bundling
-- **Puppeteer** for browser automation
-- **Chrome APIs** for browser automation
-- **LangChain.js** for LLM integration
+  - Service worker-based background scripts
+  - Cross-origin permissions management
+  - Message passing between contexts
+
+- **Browser Automation**
+  - Puppeteer Core for CDP integration
+  - Custom element selection algorithms
+  - State synchronization between contexts
+  - Anti-detection mechanisms
+
+- **AI Integration**
+  - LangChain.js for LLM orchestration
+  - Multi-provider support (OpenAI, Anthropic, Gemini)
+  - Structured output validation
+  - Vision model integration for UI understanding
+
+- **Frontend**
+  - React 18 with TypeScript
+  - Tailwind CSS for styling
+  - Side panel and options UI
+  - Real-time state updates
 
 ## Development Notes
 
@@ -114,7 +170,7 @@ Agent logic is under `chrome-extension/src/background/agent/`.
 - Content scripts inject into web pages for DOM access
 - Multi-agent coordination happens through Chrome messaging APIs
 - Distribution zips are written to `dist-zip/`
-- Build flags: set `__DEV__=true` for watch builds; 
+- Build flags: set `__DEV__=true` for watch builds
 - Do not edit generated outputs: `dist/**`, `build/**`, `packages/i18n/lib/**`
 
 ## Unit Tests
@@ -259,9 +315,9 @@ Use Chrome i18n placeholder format with proper definitions:
 - **XSS Prevention**: Sanitize content before rendering, especially when injecting into web pages
 - **URL Validation**: Validate and restrict navigation to prevent malicious redirects
 - **Error Handling**: Avoid exposing sensitive information in error messages or logs
- - **Secrets/Config**: Use `.env.local` (git‑ignored) and prefix variables with `VITE_`.
-   Example: `VITE_POSTHOG_API_KEY`. Vite in `chrome-extension/vite.config.mts` loads
-   `VITE_*` from the parent directory.
+- **Secrets/Config**: Use `.env.local` (git‑ignored) and prefix variables with `VITE_`.
+  Example: `VITE_POSTHOG_API_KEY`. Vite in `chrome-extension/vite.config.mts` loads
+  `VITE_*` from the parent directory.
 
 ## Important Reminders
 
@@ -282,7 +338,7 @@ Use Chrome i18n placeholder format with proper definitions:
    `pnpm -F <workspace> prettier -- <changed-file>`, and build if applicable
 - Vite aliases: pages use `@src` for page `src/`; the extension uses
   `@root`, `@src`, `@assets` (see `chrome-extension/vite.config.mts`). Use
-  `packages/vite-config`’s `withPageConfig` for page workspaces.
+  `packages/vite-config`'s `withPageConfig` for page workspaces.
  - Only use scripts defined in `package.json`; do not invent new commands
  - Change policy: ask first for new deps, file renames/moves/deletes, or
    global/workspace config changes; allowed without asking: read/list files,
