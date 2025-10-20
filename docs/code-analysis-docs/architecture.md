@@ -8,25 +8,26 @@ The architecture of this system is primarily a client-side, event-driven design,
 ### 1. chrome-extension/src/background/index.ts
 
 **Primary Responsibility:**
-This file serves as the main entry point and orchestrator for the Chrome extension's background service, initializing core functionalities and handling inter-component communication.
+This file serves as the main entry point and orchestrator for the Chrome extension's background service, initializing core functionalities and handling inter-component communication from both the side panel UI and external WebSocket clients.
 
 **Key Functions/Methods/Exports:**
 **`setupExecutor`**: Initializes the Executor with agents and browser context.
-**`subscribeToExecutorEvents`**: Sets up event listeners for task execution events.
+**`subscribeToExecutorEvents`**: Sets up event listeners for task execution events and broadcasts them to both side panel and WebSocket clients.
 **`handleMessage`**: Processes incoming messages from other parts of the extension (e.g., side panel).
 **`handleConnect`**: Manages long-lived connections from the side panel.
+**`handleWebSocketTaskExecution`**: Handles incoming task execution requests from WebSocket server, validating inputs and orchestrating task execution.
 
 **Internal Structure:**
-Initializes `BrowserContext`, `Executor`, `SpeechToTextService`, and sets up listeners for Chrome API events.
+Initializes `BrowserContext`, `Executor`, `SpeechToTextService`, `webSocketService`, and sets up listeners for Chrome API events and WebSocket events.
 
 **State Management:**
-Manages the lifecycle of the `Executor` and `BrowserContext` instances, including task execution state and active connections.
+Manages the lifecycle of the `Executor` and `BrowserContext` instances, including task execution state, active connections, and WebSocket connection status.
 
 **Key Imports & Interactions:**
-Imports `Executor`, `BrowserContext`, `SpeechToTextService`, `analytics`, and various storage modules. Interacts heavily with Chrome's `runtime` and `tabs` APIs.
+Imports `Executor`, `BrowserContext`, `SpeechToTextService`, `analytics`, `webSocketService`, `WebSocketMessageInterpreter`, and various storage modules. Interacts heavily with Chrome's `runtime` and `tabs` APIs, and coordinates with WebSocket service for external task requests.
 
 **Data Handling:**
-Processes incoming messages from the side panel, manages task IDs, and orchestrates data flow between agents and browser.
+Processes incoming messages from the side panel and WebSocket server, manages task IDs, validates WebSocket message payloads, orchestrates data flow between agents and browser, and broadcasts execution events to multiple clients (side panel + WebSocket).
 
 ### 2. chrome-extension/src/background/agent/executor.ts
 
@@ -696,6 +697,115 @@ Interacts with `AgentEvent`, `EventType`, `EventCallback` from `types.ts` and `c
 **Data Handling:**
 Distributes `AgentEvent` objects to all registered subscribers.
 
+### 28. chrome-extension/src/background/services/websocket/service.ts
+
+**Primary Responsibility:**
+This component provides a high-level interface for WebSocket communication with external applications, managing connection lifecycle, message serialization/deserialization, and event emission for application integration.
+
+**Key Functions/Methods/Exports:**
+**`initialize`**: Loads WebSocket settings from storage and establishes connection if enabled.
+**`connect`**: Creates and configures the ConnectionManager, sets up event listeners, and initiates connection.
+**`disconnect`**: Gracefully closes the WebSocket connection and cleans up resources.
+**`reconnect`**: Forces a reconnection attempt.
+**`sendMessage`**: Sends type-safe outgoing messages through the WebSocket connection.
+**`addEventListener`**: Registers listeners for service-level events (READY, CONNECTION_CHANGE, MESSAGE_RECEIVED, ERROR).
+**`isConnected`**: Checks if the service is ready to send messages.
+**`handleSettingsChange`**: Responds to WebSocket settings changes by reconnecting or disconnecting as needed.
+
+**Internal Structure:**
+Manages a `ConnectionManager` instance, service event listeners, WebSocket settings from storage, and initialization state. Uses `WebSocketMessageInterpreter` for message processing.
+
+**State Management:**
+Tracks initialization status, current WebSocket settings, and delegates connection state to ConnectionManager. Subscribes to settings changes from `websocketStore`.
+
+**Key Imports & Interactions:**
+Interacts with `websocketStore` for configuration, `ConnectionManager` for low-level connection handling, `WebSocketMessageInterpreter` for message protocol, and emits events for application-level integration (e.g., `chrome-extension/src/background/index.ts`).
+
+**Data Handling:**
+Serializes outgoing messages (TaskAccepted, TaskRejected, ExecutionEvent, Pong), deserializes incoming messages (ExecuteTask, Ping), validates message structure, and provides error boundaries to prevent WebSocket failures from crashing core extension functionality.
+
+### 29. chrome-extension/src/background/services/websocket/connection.ts
+
+**Primary Responsibility:**
+This component handles the low-level WebSocket connection lifecycle, implementing state machine transitions, exponential backoff reconnection strategy, and WebSocket event handling.
+
+**Key Functions/Methods/Exports:**
+**`connect`**: Initiates WebSocket connection with URL validation and connection timeout.
+**`disconnect`**: Closes WebSocket connection and resets state.
+**`reconnect`**: Forces immediate reconnection attempt.
+**`send`**: Sends serialized messages through the WebSocket if connection is ready.
+**`getState`**: Returns current connection state (DISCONNECTED, CONNECTING, CONNECTED, RECONNECTING).
+**`isReady`**: Checks if connection is ready to send messages.
+**`addEventListener`**: Registers listeners for connection-level events (STATE_CHANGE, MESSAGE, ERROR).
+**`scheduleReconnection`**: Implements exponential backoff strategy for reconnection attempts (1s, 2s, 4s, 8s, 16s, 30s max).
+
+**Internal Structure:**
+Maintains WebSocket instance, connection state enum, reconnection attempt counter, timers for connection timeout and reconnection, and event listeners map.
+
+**State Management:**
+Implements state machine: DISCONNECTED → CONNECTING → CONNECTED, with RECONNECTING state for automatic recovery. Tracks reconnection attempts and applies exponential backoff delays.
+
+**Key Imports & Interactions:**
+Uses native WebSocket API, creates WebSocketError instances for categorized error handling, emits low-level connection events consumed by WebSocketService, and implements automatic reconnection for recoverable errors.
+
+**Data Handling:**
+Validates WebSocket URLs (ws:// or wss://), handles binary/text message transmission, categorizes close events by code, and sanitizes messages for logging to prevent sensitive data exposure.
+
+### 30. chrome-extension/src/background/services/websocket/protocol.ts
+
+**Primary Responsibility:**
+This component implements the WebSocket message protocol, providing serialization/deserialization of typed messages with validation and error handling for bidirectional communication.
+
+**Key Functions/Methods/Exports:**
+**`WebSocketMessageInterpreter.send`**: Serializes outgoing messages (TaskAccepted, TaskRejected, ExecutionEvent, Pong) to JSON strings with AgentEvent serialization support.
+**`WebSocketMessageInterpreter.receive`**: Deserializes incoming JSON strings to typed messages (ExecuteTask, Ping) with comprehensive validation.
+**`validateExecuteTaskMessage`**: Validates ExecuteTaskMessage structure including taskId (max 1000 chars), prompt (max 100KB), and optional metadata.
+**`validatePingMessage`**: Validates PingMessage structure including numeric timestamp.
+**`createTaskAccepted`**: Helper to create TaskAcceptedMessage with current timestamp.
+**`createTaskRejected`**: Helper to create TaskRejectedMessage with reason and timestamp.
+**`createExecutionEvent`**: Helper to create ExecutionEventMessage from taskId and AgentEvent.
+**`createPong`**: Helper to create PongMessage with current timestamp.
+
+**Internal Structure:**
+Static class with serialization/deserialization methods, validation helpers, and factory methods for creating typed messages. Includes custom error classes for serialization/deserialization failures.
+
+**State Management:**
+Stateless message protocol interpreter. All methods are static.
+
+**Key Imports & Interactions:**
+Imports message type definitions from `types.ts`, `AgentEvent` from agent event system, error utilities from `errors.ts`, and logger for protocol operations. Used by WebSocketService for message processing.
+
+**Data Handling:**
+Handles JSON serialization with circular reference detection, validates message size limits (1MB max), performs type-safe message validation, serializes AgentEvent objects preserving actor/state/data/timestamp/type fields, and provides descriptive error messages for validation failures.
+
+### 31. chrome-extension/src/background/services/websocket/errors.ts
+
+**Primary Responsibility:**
+This module provides structured error handling for WebSocket operations, including error categorization, user-friendly messaging, and logging utilities with sensitive data sanitization.
+
+**Key Functions/Methods/Exports:**
+**`WebSocketError`**: Custom error class with category, context, and original error tracking.
+**`categorizeCloseEvent`**: Maps WebSocket close codes to error categories (1000=normal, 1006=network, 1007-1008=validation, etc.).
+**`categorizeError`**: Automatically categorizes generic errors by analyzing error messages for keywords.
+**`createWebSocketError`**: Factory function to create WebSocketError from unknown errors with automatic categorization.
+**`isRecoverableError`**: Determines if an error should trigger reconnection (NETWORK and TIMEOUT errors are recoverable).
+**`getUserFriendlyErrorMessage`**: Provides user-facing error messages suitable for UI display.
+**`sanitizeForLogging`**: Redacts sensitive fields (password, token, secret) and truncates large strings for safe logging.
+**`getUserMessage`**: Returns user-friendly error message based on error category.
+**`toLoggableObject`**: Creates sanitized error representation for logging.
+
+**Internal Structure:**
+Defines WebSocketErrorCategory enum (NETWORK, PROTOCOL, TIMEOUT, VALIDATION, AUTH, UNKNOWN), WebSocketError class extending Error, and utility functions for error classification and sanitization.
+
+**State Management:**
+Stateless error handling utilities. All functions are pure.
+
+**Key Imports & Interactions:**
+No external dependencies. Used throughout WebSocket service (connection.ts, service.ts, protocol.ts) for consistent error handling. Integrates with logger for structured error logging.
+
+**Data Handling:**
+Categorizes errors by network status codes and message patterns, sanitizes context objects by redacting sensitive keys and truncating large values (>1000 chars), provides error recovery guidance through recoverability classification, and maintains error causality chains with originalError tracking.
+
 ### 28. chrome-extension/src/background/agent/agents/errors.ts
 
 **Primary Responsibility:**
@@ -795,6 +905,9 @@ Retrieves localized string messages based on a provided key and optional substit
 - `chrome-extension/src/background/services/guardrails/patterns.ts`: Defines regular expression patterns for security threat detection.
 - `chrome-extension/src/background/services/guardrails/sanitizer.ts`: Implements the core logic for sanitizing content and detecting threats.
 - `chrome-extension/src/background/services/guardrails/types.ts`: Defines types for security patterns, threat types, and sanitization results.
+- `chrome-extension/src/background/services/websocket/types.ts`: Defines TypeScript types for WebSocket message protocol including IncomingMessage, OutgoingMessage, ExecuteTaskMessage, PingMessage, TaskAcceptedMessage, TaskRejectedMessage, ExecutionEventMessage, PongMessage, and type guards.
+- `chrome-extension/src/background/services/websocket/index.ts`: Main export module for WebSocket service, re-exporting types, protocol interpreter, error classes, connection manager, and service class.
+- `chrome-extension/src/background/services/websocket/__tests__/protocol.test.ts`: Unit tests for WebSocket message protocol using Vitest, covering serialization, deserialization, validation, error handling, and helper methods.
 - `chrome-extension/utils/plugins/make-manifest-plugin.ts`: Vite plugin for generating the Chrome extension manifest.
 - `packages/dev-utils/lib/manifest-parser/impl.ts`: Implements manifest parsing and conversion logic.
 - `packages/dev-utils/lib/manifest-parser/index.ts`: Exports the manifest parser implementation.
@@ -943,6 +1056,9 @@ Retrieves localized string messages based on a provided key and optional substit
 ## API Design & Communication
 - The system primarily uses a message-passing pattern between the Chrome extension's side panel (UI) and its background service worker.
 - Communication between the UI and background script is handled via `chrome.runtime.sendMessage` and `chrome.runtime.connect` for long-lived ports.
+- **WebSocket Communication**: The extension supports bidirectional real-time communication with external applications via WebSocket protocol. External servers can send task execution requests (`execute_task`) and ping messages, while the extension responds with task acceptance/rejection, real-time execution events, and pong responses.
+- **WebSocket Message Protocol**: Type-safe message protocol with discriminated unions for incoming messages (ExecuteTaskMessage, PingMessage) and outgoing messages (TaskAcceptedMessage, TaskRejectedMessage, ExecutionEventMessage, PongMessage).
+- **Connection Management**: WebSocket service implements automatic reconnection with exponential backoff strategy (1s, 2s, 4s, 8s, 16s, 30s max) and connection state management (DISCONNECTED, CONNECTING, CONNECTED, RECONNECTING).
 - The background service orchestrates interactions with external LLM APIs (OpenAI, Anthropic, Gemini, etc.) using the LangChain.js library.
 - Browser automation is achieved through a local Puppeteer-like connection (`puppeteer-core`) to the active Chrome tab, allowing for DOM inspection and interaction.
 

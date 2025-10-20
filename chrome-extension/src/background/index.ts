@@ -421,7 +421,15 @@ async function subscribeToExecutorEvents(executor: Executor) {
       event.state === ExecutionState.TASK_FAIL ||
       event.state === ExecutionState.TASK_CANCEL
     ) {
-      await currentExecutor?.cleanup();
+      try {
+        await executor.cleanup();
+      } catch (error) {
+        logger.error('Failed to cleanup executor on final state:', error);
+      } finally {
+        if (currentExecutor === executor) {
+          currentExecutor = null;
+        }
+      }
     }
   });
 }
@@ -496,6 +504,14 @@ async function handleWebSocketTaskExecution(message: { taskId: string; prompt: s
     logger.info('WebSocket task execution completed', {
       taskId: message.taskId,
     });
+    // Ensure the executor is cleared after completion to accept new tasks
+    try {
+      await currentExecutor?.cleanup();
+    } catch (cleanupError) {
+      logger.error('Cleanup after WebSocket task completion failed:', cleanupError);
+    } finally {
+      currentExecutor = null;
+    }
   } catch (error) {
     logger.error('WebSocket task execution failed:', error);
 

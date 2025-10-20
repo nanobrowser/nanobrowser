@@ -41,15 +41,23 @@ The following key workflows were identified based on code analysis using specifi
 38. [Internationalization (i18n)](#38-internationalization-i18n)
 39. [JSON Schema Conversion](#39-json-schema-conversion)
 40. [Zip Bundle Creation](#40-zip-bundle-creation)
+41. [WebSocket Initialization](#41-websocket-initialization)
+42. [External Task Execution via WebSocket](#42-external-task-execution-via-websocket)
+43. [WebSocket Ping/Pong Health Check](#43-websocket-pingpong-health-check)
+44. [Execution Event Broadcasting](#44-execution-event-broadcasting)
+45. [WebSocket Error Recovery](#45-websocket-error-recovery)
+46. [WebSocket Disconnection and Cleanup](#46-websocket-disconnection-and-cleanup)
 
 ## Workflow Details
 
 ### 1. Extension Initialization
-This workflow initializes the background service worker, sets up event listeners for browser and extension messages, and initializes core services like analytics.
+This workflow initializes the background service worker, sets up event listeners for browser and extension messages, initializes core services like analytics and WebSocket, and establishes WebSocket connection if enabled.
 
 **Main Components:**
 - `chrome-extension/src/background/index.ts`
 - `chrome-extension/src/background/services/analytics.ts`
+- `chrome-extension/src/background/services/websocket/service.ts`
+- `chrome-extension/src/background/services/websocket/connection.ts`
 - `chrome-extension/src/background/browser/context.ts`
 
 **Relevance:**
@@ -60,6 +68,19 @@ This workflow initializes the background service worker, sets up event listeners
 **Sequence Flow:**
 - `chrome-extension/src/background/index.ts` (top-level execution)
   - -> `analytics.init()`: Initializes PostHog analytics.
+  - -> `webSocketService.initialize()`: Initializes WebSocket service.
+    - `chrome-extension/src/background/services/websocket/service.ts` (`initialize` method)
+      - -> `websocketStore.getSettings()`: Loads WebSocket settings from storage.
+      - -> `websocketStore.subscribe(handleSettingsChange)`: Subscribes to settings changes.
+      - -> `connect()` (if enabled): Establishes WebSocket connection.
+        - `service.ts` (`connect` method)
+          - -> `new ConnectionManager({ serverUrl, connectionTimeout })`: Creates connection manager.
+          - -> `connectionManager.addEventListener()`: Sets up connection event listeners (STATE_CHANGE, MESSAGE, ERROR).
+          - -> `connectionManager.connect()`: Initiates WebSocket connection.
+      - -> `emit(ServiceEvent.READY)`: Emits service ready event.
+  - -> `webSocketService.addEventListener(ServiceEvent.MESSAGE_RECEIVED, ...)`: Sets up WebSocket message handler.
+  - -> `webSocketService.addEventListener(ServiceEvent.CONNECTION_CHANGE, ...)`: Sets up connection state change handler.
+  - -> `webSocketService.addEventListener(ServiceEvent.ERROR, ...)`: Sets up WebSocket error handler.
   - -> `chrome.debugger.onDetached.addListener()`: Sets up debugger detached listener.
   - -> `chrome.tabs.onRemoved.addListener()`: Sets up tab removal listener.
   - -> `chrome.runtime.onMessage.addListener()`: Listens for simple messages from UI.
@@ -67,7 +88,7 @@ This workflow initializes the background service worker, sets up event listeners
   - -> `analyticsSettingsStore.subscribe()`: Subscribes to analytics settings changes.
 
 ### 2. User Initiates New Task
-This workflow handles a user's request to start a new AI-driven task from the side panel, creating a new chat session and initiating the `Executor`.
+This workflow handles a user's request to start a new AI-driven task from the side panel, creating a new chat session and initiating the `Executor`. Tasks can also be initiated via WebSocket from external applications (see Workflow 42: External Task Execution via WebSocket).
 
 **Main Components:**
 - `pages/side-panel/src/SidePanel.tsx`
@@ -97,7 +118,7 @@ This workflow handles a user's request to start a new AI-driven task from the si
       - -> `executor.execute()`: Starts the agent's execution loop.
 
 ### 3. Agent Task Execution Loop
-This workflow describes the main loop where the AI agent (orchestrated by the `Executor`) continuously plans and navigates to complete a user's task.
+This workflow describes the main loop where the AI agent (orchestrated by the `Executor`) continuously plans and navigates to complete a user's task. Execution events are broadcasted to both the side panel and WebSocket clients in real-time (see Workflow 44: Execution Event Broadcasting).
 
 **Main Components:**
 - `chrome-extension/src/background/agent/executor.ts`
@@ -113,7 +134,7 @@ This workflow describes the main loop where the AI agent (orchestrated by the `E
 
 **Sequence Flow:**
 - `chrome-extension/src/background/agent/executor.ts` (`execute` method)
-  - -> `eventManager.emit(TASK_START)`: Emits task start event.
+  - -> `eventManager.emit(TASK_START)`: Emits task start event (broadcasted to side panel + WebSocket).
   - -> Loop (until task complete, max steps, or failure):
     - -> `runPlanner()`: Calls the `PlannerAgent` to get the next plan.
       - `executor.ts`
@@ -125,8 +146,8 @@ This workflow describes the main loop where the AI agent (orchestrated by the `E
       - `executor.ts`
         - -> `navigatorAgent.execute()`: Invokes the navigator LLM.
         - <- Returns `NavigatorResult` (actions taken, done status).
-    - -> `eventManager.emit(STEP_OK/FAIL)`: Emits step completion/failure events.
-  - -> `eventManager.emit(TASK_OK/FAIL/CANCEL)`: Emits final task status.
+    - -> `eventManager.emit(STEP_OK/FAIL)`: Emits step completion/failure events (broadcasted to side panel + WebSocket).
+  - -> `eventManager.emit(TASK_OK/FAIL/CANCEL)`: Emits final task status (broadcasted to side panel + WebSocket).
 
 ### 4. Planner Agent Generates Plan
 This workflow details how the `PlannerAgent` uses an LLM to generate a high-level plan or determine the next steps based on the current task and browser state.
@@ -1201,3 +1222,259 @@ This workflow packages the compiled extension files into a `.zip` archive, optio
       - -> `createWriteStream(archivePath)`: Writes the final zip file.
     - <- Returns `Promise<void>`.
   - <- A `.zip` archive of the extension is created.
+
+### 41. WebSocket Initialization
+This workflow initializes the WebSocket service when the extension starts, loading settings from storage and establishing connection if enabled.
+
+**Main Components:**
+- `chrome-extension/src/background/index.ts`
+- `chrome-extension/src/background/services/websocket/service.ts`
+- `chrome-extension/src/background/services/websocket/connection.ts`
+- `packages/storage/lib/settings/websocket.ts`
+
+**Relevance:**
+- Primary Entry Points (key UI handlers)
+- Multi-Component Orchestration
+- Critical External Integrations
+
+**Sequence Flow:**
+- `chrome-extension/src/background/index.ts` (extension initialization)
+  - -> `webSocketService.initialize()`: Starts WebSocket service initialization.
+    - `chrome-extension/src/background/services/websocket/service.ts` (`initialize` method)
+      - -> `websocketStore.getSettings()`: Loads WebSocket configuration from Chrome storage.
+        - `packages/storage/lib/settings/websocket.ts`
+          - -> `chrome.storage.local.get('websocket_settings')`: Retrieves stored settings.
+          - <- Returns `{ enabled: boolean, serverUrl: string, connectionTimeout: number }`.
+      - -> `websocketStore.subscribe(handleSettingsChange)`: Subscribes to settings changes for hot-reloading.
+      - -> If `settings.enabled === true`:
+        - -> `connect()`: Initiates connection.
+          - `service.ts` (`connect` method)
+            - -> `new ConnectionManager({ serverUrl, connectionTimeout })`: Creates connection manager.
+            - -> `connectionManager.addEventListener(ConnectionEvent.STATE_CHANGE, ...)`: Sets up state change listener.
+            - -> `connectionManager.addEventListener(ConnectionEvent.MESSAGE, ...)`: Sets up message listener.
+            - -> `connectionManager.addEventListener(ConnectionEvent.ERROR, ...)`: Sets up error listener.
+            - -> `connectionManager.connect()`: Initiates WebSocket connection.
+              - `chrome-extension/src/background/services/websocket/connection.ts` (`connect` method)
+                - -> URL validation (must start with `ws://` or `wss://`).
+                - -> `new WebSocket(serverUrl)`: Creates native WebSocket instance.
+                - -> `setupWebSocketHandlers()`: Attaches onopen, onclose, onerror, onmessage handlers.
+                - -> `setTimeout(connectionTimeout)`: Sets connection timeout timer.
+                - -> State transition: DISCONNECTED → CONNECTING.
+      - -> `emit(ServiceEvent.READY)`: Emits service ready event.
+      - -> `isInitialized = true`: Marks service as initialized.
+  - -> `webSocketService.addEventListener(ServiceEvent.MESSAGE_RECEIVED, ...)`: Background script sets up message handler.
+  - -> `webSocketService.addEventListener(ServiceEvent.CONNECTION_CHANGE, ...)`: Background script sets up connection state handler.
+  - -> `webSocketService.addEventListener(ServiceEvent.ERROR, ...)`: Background script sets up error handler.
+
+### 42. External Task Execution via WebSocket
+This workflow handles the complete lifecycle of a task execution request initiated by an external WebSocket client, from message reception to task completion.
+
+**Main Components:**
+- `chrome-extension/src/background/services/websocket/connection.ts`
+- `chrome-extension/src/background/services/websocket/protocol.ts`
+- `chrome-extension/src/background/services/websocket/service.ts`
+- `chrome-extension/src/background/index.ts` (`handleWebSocketTaskExecution`)
+- `chrome-extension/src/background/agent/executor.ts`
+- `chrome-extension/src/background/browser/context.ts`
+
+**Relevance:**
+- Primary Entry Points (key UI handlers)
+- Core Domain Focus
+- Multi-Component Orchestration
+- Major Data Operations
+- Critical External Integrations
+
+**Sequence Flow:**
+- External Server
+  - -> Sends WebSocket message: `{ type: "execute_task", taskId: "task-123", prompt: "Navigate to example.com", metadata: {...} }`.
+- `chrome-extension/src/background/services/websocket/connection.ts` (`onmessage` handler)
+  - -> `emit(ConnectionEvent.MESSAGE, { message: rawMessage })`: Emits message event.
+- `chrome-extension/src/background/services/websocket/service.ts` (`handleConnectionMessage`)
+  - -> `WebSocketMessageInterpreter.receive(rawMessage)`: Deserializes and validates message.
+    - `chrome-extension/src/background/services/websocket/protocol.ts` (`receive` method)
+      - -> `JSON.parse(rawMessage)`: Parses JSON string.
+      - -> `validateExecuteTaskMessage(parsed)`: Validates message structure.
+        - Checks `taskId` is non-empty string (max 1000 chars).
+        - Checks `prompt` is non-empty string (max 100KB).
+        - Validates optional `metadata` is object.
+      - <- Returns typed `ExecuteTaskMessage`.
+  - -> `emit(ServiceEvent.MESSAGE_RECEIVED, { message: ExecuteTaskMessage })`: Emits message to application.
+- `chrome-extension/src/background/index.ts` (`ServiceEvent.MESSAGE_RECEIVED` handler)
+  - -> `isExecuteTaskMessage(message)`: Checks message type.
+  - -> `handleWebSocketTaskExecution(message)`: Processes task execution request.
+    - `index.ts` (`handleWebSocketTaskExecution` function)
+      - -> Validates `taskId` and `prompt` are non-empty strings.
+      - -> If `currentExecutor` exists:
+        - -> `createTaskRejected(taskId, "Already executing a task")`: Creates rejection message.
+        - -> `webSocketService.sendMessage(rejectionMessage)`: Sends rejection to server.
+        - <- Returns early.
+      - -> `createTaskAccepted(taskId)`: Creates acceptance message.
+      - -> `webSocketService.sendMessage(acceptedMessage)`: Sends acceptance to server.
+        - `service.ts` (`sendMessage` method)
+          - -> `WebSocketMessageInterpreter.send(acceptedMessage)`: Serializes message to JSON.
+          - -> `connectionManager.send(serializedMessage)`: Sends via WebSocket.
+      - -> `chrome.tabs.query({ active: true, currentWindow: true })`: Gets active tab.
+      - -> `browserContext.switchTab(activeTab.id)`: Switches to active tab.
+      - -> `setupExecutor(taskId, prompt, browserContext)`: Initializes executor.
+      - -> `subscribeToExecutorEvents(executor)`: Sets up event broadcasting (side panel + WebSocket).
+      - -> `executor.execute()`: Starts task execution.
+        - Execution events are broadcasted in real-time (see Workflow 44).
+      - <- Task completes successfully or fails.
+      - -> On success: Final `ExecutionEventMessage` with TASK_OK state is sent to WebSocket.
+      - -> On failure: `createTaskRejected(taskId, errorMessage)` is sent to WebSocket.
+
+### 43. WebSocket Ping/Pong Health Check
+This workflow implements the heartbeat mechanism to ensure WebSocket connection health, with ping requests from the server and pong responses from the extension.
+
+**Main Components:**
+- `chrome-extension/src/background/services/websocket/protocol.ts`
+- `chrome-extension/src/background/services/websocket/service.ts`
+- `chrome-extension/src/background/index.ts`
+
+**Relevance:**
+- Multi-Component Orchestration
+- Critical External Integrations
+
+**Sequence Flow:**
+- External Server
+  - -> Sends WebSocket message: `{ type: "ping", timestamp: 1730000000000 }`.
+- `chrome-extension/src/background/services/websocket/connection.ts` (`onmessage` handler)
+  - -> `emit(ConnectionEvent.MESSAGE, { message: rawMessage })`: Emits message event.
+- `chrome-extension/src/background/services/websocket/service.ts` (`handleConnectionMessage`)
+  - -> `WebSocketMessageInterpreter.receive(rawMessage)`: Deserializes message.
+    - `chrome-extension/src/background/services/websocket/protocol.ts` (`receive` method)
+      - -> `validatePingMessage(parsed)`: Validates message structure.
+        - Checks `timestamp` is a valid positive number.
+      - <- Returns typed `PingMessage`.
+  - -> `emit(ServiceEvent.MESSAGE_RECEIVED, { message: PingMessage })`: Emits message to application.
+- `chrome-extension/src/background/index.ts` (`ServiceEvent.MESSAGE_RECEIVED` handler)
+  - -> `isPingMessage(message)`: Checks message type.
+  - -> `WebSocketMessageInterpreter.createPong()`: Creates pong response.
+    - `protocol.ts` (`createPong` method)
+      - <- Returns `{ type: "pong", timestamp: Date.now() }`.
+  - -> `webSocketService.sendMessage(pongMessage)`: Sends pong response.
+    - `service.ts` (`sendMessage` method)
+      - -> `WebSocketMessageInterpreter.send(pongMessage)`: Serializes message.
+      - -> `connectionManager.send(serializedMessage)`: Sends via WebSocket.
+- External Server
+  - <- Receives pong response, confirms connection is alive.
+
+### 44. Execution Event Broadcasting
+This workflow broadcasts real-time AgentEvent updates to both the side panel UI and WebSocket clients during task execution.
+
+**Main Components:**
+- `chrome-extension/src/background/index.ts` (`subscribeToExecutorEvents`)
+- `chrome-extension/src/background/agent/event/manager.ts`
+- `chrome-extension/src/background/services/websocket/protocol.ts`
+- `chrome-extension/src/background/services/websocket/service.ts`
+
+**Relevance:**
+- Core Domain Focus
+- Multi-Component Orchestration
+- Major Data Operations
+- Critical External Integrations
+
+**Sequence Flow:**
+- `chrome-extension/src/background/agent/executor.ts` (during task execution)
+  - -> `eventManager.emit(event)`: Emits AgentEvent (e.g., TASK_START, STEP_OK, ACT_OK, TASK_FAIL).
+- `chrome-extension/src/background/index.ts` (`subscribeToExecutorEvents`)
+  - -> Event listener receives `AgentEvent` object.
+  - -> **Side Panel Broadcast:**
+    - -> If `port` is connected:
+      - -> `port.postMessage({ type: 'event', event: serializedEvent })`: Sends to side panel.
+  - -> **WebSocket Broadcast:**
+    - -> If `webSocketService.isConnected()`:
+      - -> `executor.getCurrentTaskId()`: Gets current task ID.
+      - -> `WebSocketMessageInterpreter.createExecutionEvent(taskId, event)`: Creates ExecutionEventMessage.
+        - `chrome-extension/src/background/services/websocket/protocol.ts` (`createExecutionEvent` method)
+          - -> Serializes `AgentEvent` including `actor`, `state`, `data`, `timestamp`, `type` fields.
+          - <- Returns `{ type: "execution_event", taskId, event: {...}, timestamp }`.
+      - -> `webSocketService.sendMessage(eventMessage)`: Sends to WebSocket server.
+        - `chrome-extension/src/background/services/websocket/service.ts` (`sendMessage` method)
+          - -> `WebSocketMessageInterpreter.send(eventMessage)`: Serializes message to JSON.
+          - -> `connectionManager.send(serializedMessage)`: Sends via WebSocket.
+    - -> Error boundary: If WebSocket send fails, logs error but does not interrupt side panel updates.
+- External Server & Side Panel
+  - <- Both receive real-time execution updates in parallel.
+
+### 45. WebSocket Error Recovery
+This workflow handles WebSocket connection errors and implements automatic reconnection with exponential backoff strategy.
+
+**Main Components:**
+- `chrome-extension/src/background/services/websocket/connection.ts`
+- `chrome-extension/src/background/services/websocket/errors.ts`
+- `chrome-extension/src/background/services/websocket/service.ts`
+
+**Relevance:**
+- Multi-Component Orchestration
+- Critical External Integrations
+
+**Sequence Flow:**
+- WebSocket Connection Error Occurs (e.g., network failure, server unavailable, connection timeout)
+  - -> `chrome-extension/src/background/services/websocket/connection.ts` (`onerror` or `onclose` handler)
+    - -> `new WebSocketError('WebSocket error occurred', WebSocketErrorCategory.NETWORK, {...})`: Creates categorized error.
+    - -> `emit(ConnectionEvent.ERROR, { error })`: Emits error event.
+    - -> `handleConnectionError(error)`: Processes the error.
+      - `connection.ts` (`handleConnectionError` method)
+        - -> `isRecoverableError(error)`: Checks if error is recoverable.
+          - `chrome-extension/src/background/services/websocket/errors.ts` (`isRecoverableError` function)
+            - -> Categorizes error (NETWORK and TIMEOUT errors are recoverable).
+            - <- Returns `true` for NETWORK/TIMEOUT, `false` for VALIDATION/PROTOCOL/AUTH.
+        - -> If recoverable:
+          - -> `scheduleReconnection()`: Schedules reconnection attempt.
+            - `connection.ts` (`scheduleReconnection` method)
+              - -> State transition: CONNECTED/CONNECTING → RECONNECTING.
+              - -> Calculates exponential backoff delay: `Math.min(1000 * 2^attempts, 30000)`.
+                - Attempt 1: 1 second
+                - Attempt 2: 2 seconds
+                - Attempt 3: 4 seconds
+                - Attempt 4: 8 seconds
+                - Attempt 5: 16 seconds
+                - Attempt 6+: 30 seconds (capped)
+              - -> `setTimeout(() => { reconnectAttempts++; connect(); }, delay)`: Schedules reconnection.
+        - -> If not recoverable:
+          - -> State transition: → DISCONNECTED.
+          - -> No automatic reconnection.
+    - -> `emit(ConnectionEvent.STATE_CHANGE, { state: RECONNECTING })`: Emits state change.
+  - -> `chrome-extension/src/background/services/websocket/service.ts` (`handleConnectionError`)
+    - -> `emit(ServiceEvent.ERROR, { error })`: Propagates error to application layer.
+  - -> `chrome-extension/src/background/index.ts` (`ServiceEvent.ERROR` handler)
+    - -> `logger.error('WebSocket error:', error)`: Logs error for debugging.
+- After Delay
+  - -> `connectionManager.connect()`: Attempts reconnection.
+    - -> If successful: State transition RECONNECTING → CONNECTED, reconnectAttempts reset to 0.
+    - -> If fails: Repeats error recovery workflow with incremented attempt count.
+
+### 46. WebSocket Disconnection and Cleanup
+This workflow handles graceful shutdown of WebSocket connection when the extension is disabled, settings are changed, or the service is destroyed.
+
+**Main Components:**
+- `chrome-extension/src/background/services/websocket/service.ts`
+- `chrome-extension/src/background/services/websocket/connection.ts`
+
+**Relevance:**
+- Multi-Component Orchestration
+- Critical External Integrations
+
+**Sequence Flow:**
+- Trigger Event (extension shutdown, settings change, or explicit disconnect)
+  - -> `chrome-extension/src/background/services/websocket/service.ts`
+    - -> `disconnect()` or `destroy()` or `handleSettingsChange()` (when disabled): Initiates cleanup.
+      - `service.ts` (`disconnect` method)
+        - -> If `connectionManager` exists:
+          - -> `connectionManager.disconnect()`: Closes WebSocket connection.
+            - `chrome-extension/src/background/services/websocket/connection.ts` (`disconnect` method)
+              - -> `clearTimers()`: Clears connection timeout and reconnection timers.
+              - -> `reconnectAttempts = 0`: Resets reconnection counter.
+              - -> Removes WebSocket event handlers (`onopen`, `onclose`, `onerror`, `onmessage`).
+              - -> If `ws.readyState` is OPEN or CONNECTING:
+                - -> `ws.close(1000, 'Client disconnect')`: Closes WebSocket with normal closure code.
+              - -> `ws = null`: Clears WebSocket instance.
+              - -> State transition: → DISCONNECTED.
+              - -> `emit(ConnectionEvent.STATE_CHANGE, { state: DISCONNECTED })`: Emits state change.
+          - -> `connectionManager.removeAllEventListeners()`: Removes all connection event listeners.
+          - -> `connectionManager = null`: Clears connection manager reference.
+    - -> `removeAllEventListeners()` (if `destroy()` called): Removes all service event listeners.
+    - -> `isInitialized = false` (if `destroy()` called): Marks service as uninitialized.
+    - -> `settings = null` (if `destroy()` called): Clears cached settings.
+  - <- WebSocket connection is cleanly closed, all resources are released, no automatic reconnection is attempted.

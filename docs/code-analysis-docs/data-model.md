@@ -261,6 +261,138 @@ Defines the settings for the browser's firewall, including lists of allowed and 
 *   `denyList` (string[]): URLs that are explicitly blocked.
 *   `enabled` (boolean): Flag indicating if the firewall is active.
 
+### WebSocketConfig
+
+**Purpose:**
+Defines the configuration settings for the WebSocket service, controlling connection parameters and enabling/disabling the WebSocket feature.
+
+**Key Attributes:**
+*   `enabled` (boolean): Flag indicating if WebSocket communication is enabled.
+*   `serverUrl` (string): The WebSocket server URL (ws:// or wss://).
+*   `connectionTimeout` (number): Connection timeout in milliseconds (default: 10000).
+
+### ConnectionState
+
+**Purpose:**
+Enumerates the possible lifecycle states of a WebSocket connection for state machine management.
+
+**Values:**
+*   `DISCONNECTED`: WebSocket is not connected and not attempting to connect.
+*   `CONNECTING`: WebSocket is attempting to establish initial connection.
+*   `CONNECTED`: WebSocket is successfully connected and ready for communication.
+*   `RECONNECTING`: WebSocket is attempting to reconnect after a disconnection.
+
+### ExecuteTaskMessage
+
+**Purpose:**
+Represents an incoming message from the WebSocket server requesting task execution by the extension.
+
+**Key Attributes:**
+*   `type` ('execute_task'): Message type discriminator.
+*   `taskId` (string): Unique identifier for the task (max 1000 characters).
+*   `prompt` (string): The task description/instruction (max 100KB).
+*   `metadata` (Record<string, unknown>): Optional metadata for task context (e.g., priority, timeout).
+
+### PingMessage
+
+**Purpose:**
+Represents an incoming heartbeat message from the WebSocket server to check connection health.
+
+**Key Attributes:**
+*   `type` ('ping'): Message type discriminator.
+*   `timestamp` (number): Unix timestamp (milliseconds) when ping was sent.
+
+### TaskAcceptedMessage
+
+**Purpose:**
+Represents an outgoing message sent when the extension accepts a task execution request from the WebSocket server.
+
+**Key Attributes:**
+*   `type` ('task_accepted'): Message type discriminator.
+*   `taskId` (string): The ID of the accepted task.
+*   `timestamp` (number): Unix timestamp (milliseconds) when task was accepted.
+
+### TaskRejectedMessage
+
+**Purpose:**
+Represents an outgoing message sent when the extension rejects a task execution request, including the reason for rejection.
+
+**Key Attributes:**
+*   `type` ('task_rejected'): Message type discriminator.
+*   `taskId` (string): The ID of the rejected task.
+*   `reason` (string): Human-readable reason for rejection (e.g., "Already executing a task", "Invalid request").
+*   `timestamp` (number): Unix timestamp (milliseconds) when task was rejected.
+
+### ExecutionEventMessage
+
+**Purpose:**
+Represents an outgoing message that streams real-time AgentEvent updates to the WebSocket server during task execution.
+
+**Key Attributes:**
+*   `type` ('execution_event'): Message type discriminator.
+*   `taskId` (string): The ID of the executing task.
+*   `event` (AgentEvent): The serialized agent event containing actor, state, data, timestamp, and type.
+*   `timestamp` (number): Unix timestamp (milliseconds) when event was sent.
+
+**Relationships:**
+*   One-to-one with `AgentEvent`
+
+### PongMessage
+
+**Purpose:**
+Represents an outgoing heartbeat response message confirming the extension is alive and responsive.
+
+**Key Attributes:**
+*   `type` ('pong'): Message type discriminator.
+*   `timestamp` (number): Unix timestamp (milliseconds) when pong was sent.
+
+### IncomingMessage
+
+**Purpose:**
+Union type representing all possible messages the extension can receive from the WebSocket server.
+
+**Union Members:**
+*   `ExecuteTaskMessage`
+*   `PingMessage`
+
+### OutgoingMessage
+
+**Purpose:**
+Union type representing all possible messages the extension can send to the WebSocket server.
+
+**Union Members:**
+*   `TaskAcceptedMessage`
+*   `TaskRejectedMessage`
+*   `ExecutionEventMessage`
+*   `PongMessage`
+
+### WebSocketError
+
+**Purpose:**
+Represents a structured error specific to WebSocket operations, with categorization for proper error handling and recovery.
+
+**Key Attributes:**
+*   `message` (string): Human-readable error description.
+*   `category` (WebSocketErrorCategory): Error category for classification.
+*   `context` (Record<string, unknown>): Additional context about the error.
+*   `originalError` (Error): The original error object if available.
+
+**Relationships:**
+*   Extends `Error`
+
+### WebSocketErrorCategory
+
+**Purpose:**
+Enumerates error categories for WebSocket operations to determine recovery strategies.
+
+**Values:**
+*   `NETWORK`: Network-related errors (connection refused, timeout, etc.).
+*   `PROTOCOL`: Protocol errors (invalid message format, handshake failure).
+*   `TIMEOUT`: Timeout errors (connection timeout, message timeout).
+*   `VALIDATION`: Validation errors (invalid configuration, malformed messages).
+*   `AUTH`: Authentication/authorization errors.
+*   `UNKNOWN`: Unknown or uncategorized errors.
+
 ## Additional Entities
 *   `MessageMetadata`
 *   `ManagedMessage`

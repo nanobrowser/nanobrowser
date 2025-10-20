@@ -67,6 +67,15 @@ chrome-extension/
           patterns.ts
           sanitizer.ts
           types.ts
+        websocket/
+          __tests__/
+            protocol.test.ts
+          connection.ts
+          errors.ts
+          index.ts
+          protocol.ts
+          service.ts
+          types.ts
         analytics.ts
         speechToText.ts
       task/
@@ -191,6 +200,7 @@ packages/
         llmProviders.ts
         speechToText.ts
         types.ts
+        websocket.ts
       index.ts
     .eslintignore
     build.mjs

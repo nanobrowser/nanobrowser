@@ -16,6 +16,11 @@ The primary goal of this application is to provide an AI-powered web automation 
 *   **Firewall:** A security mechanism that controls which URLs the AI agent is permitted to access, based on configurable allow and deny lists.
 *   **Guardrails:** A security service that sanitizes untrusted content (e.g., web page content) to prevent prompt injection and other malicious inputs to the LLMs.
 *   **Replay Historical Tasks:** An experimental feature that stores and allows re-execution of an agent's step-by-step history for debugging or re-running tasks.
+*   **WebSocket Service:** A bidirectional real-time communication system that enables external applications to control and monitor the Nanobrowser extension via WebSocket protocol, supporting remote task execution and event streaming.
+*   **Connection State:** The lifecycle status of a WebSocket connection (DISCONNECTED, CONNECTING, CONNECTED, RECONNECTING), managed with automatic reconnection and exponential backoff strategy.
+*   **Message Protocol:** A type-safe message format for WebSocket communication, with discriminated unions for incoming messages (execute_task, ping) and outgoing messages (task_accepted, task_rejected, execution_event, pong).
+*   **Execution Event (via WebSocket):** Real-time streaming of AgentEvent updates to external WebSocket clients during task execution, providing progress visibility for remote monitoring.
+*   **Task Execution (via WebSocket):** The capability for external applications to request task execution by sending ExecuteTaskMessage with taskId and prompt, receiving TaskAccepted/TaskRejected responses and continuous ExecutionEvent updates.
 
 ## Data Persistence & State Management
 The application primarily uses Chrome's extension storage APIs for data persistence and state management.
@@ -33,11 +38,13 @@ The application primarily uses Chrome's extension storage APIs for data persiste
     *   `firewallStore`: Manages the allow and deny lists for URL access (`packages/storage/lib/settings/firewall.ts`).
     *   `favoritesStorage`: Stores user-defined favorite prompts (`packages/storage/lib/prompt/favorites.ts`).
     *   `userProfileStore`: Stores user-specific data like a unique user ID (`packages/storage/lib/profile/user.ts`).
+    *   `websocketStore`: Stores WebSocket configuration including enabled status, server URL, and connection timeout settings (`packages/storage/lib/settings/websocket.ts`).
 *   **In-memory Caching:** `WeakMap` objects are used in `chrome-extension/public/buildDomTree.js` for caching DOM element properties like bounding rectangles, client rectangles, and computed styles to optimize performance during DOM tree construction.
 
 ## External Dependencies & APIs
 *   **LangChain (client: @langchain/core 0.3.78, @langchain/openai 0.6.14, @langchain/anthropic 0.3.30, @langchain/google-genai 0.2.18, @langchain/xai 0.1.0, @langchain/groq 0.2.4, @langchain/cerebras 0.0.4, @langchain/ollama 0.2.4, @langchain/deepseek 0.1.0):** Provides the framework for integrating with various Large Language Models (LLMs) and managing conversational chains. It is central to the agent's reasoning and action selection.
 *   **Puppeteer (client: puppeteer-core 24.10.1):** Used for browser automation, enabling the agent to interact with web pages (e.g., clicking, typing, taking screenshots) in a programmatic way.
+*   **Native WebSocket API:** The extension uses the browser's native WebSocket API for bidirectional real-time communication with external applications. Supports automatic reconnection with exponential backoff (1s, 2s, 4s, 8s, 16s, 30s max), connection state management (DISCONNECTED, CONNECTING, CONNECTED, RECONNECTING), and type-safe message protocol for task execution and event streaming.
 *   **PostHog (client: posthog-js 1.271.0):** An analytics platform used for tracking task starts, completions, failures, cancellations, and domain visits to gather usage metrics.
 *   **Zod (client: zod 3.25.76):** A TypeScript-first schema declaration and validation library used for defining and validating LLM output schemas and other data structures.
 *   **Zod-to-JSON-Schema (client: zod-to-json-schema 3.24.6):** Converts Zod schemas into JSON Schema format, which is used by LLMs for structured output.

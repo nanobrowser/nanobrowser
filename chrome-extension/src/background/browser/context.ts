@@ -54,11 +54,19 @@ export default class BrowserContext {
   }
 
   public async cleanup(): Promise<void> {
-    const currentPage = await this.getCurrentPage();
-    currentPage?.removeHighlight();
-    // detach all pages
+    // Do not call getCurrentPage() here to avoid attaching during cleanup
+    // Remove highlights and detach only for pages we already manage
     for (const page of this._attachedPages.values()) {
-      await page.detachPuppeteer();
+      try {
+        await page.removeHighlight();
+      } catch (error) {
+        logger.debug('Failed to remove highlight during cleanup:', error);
+      }
+      try {
+        await page.detachPuppeteer();
+      } catch (error) {
+        logger.debug('Failed to detach puppeteer during cleanup:', error);
+      }
     }
     this._attachedPages.clear();
     this._currentTabId = null;
