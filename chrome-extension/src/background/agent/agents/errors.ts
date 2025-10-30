@@ -4,7 +4,7 @@ export const LLM_FORBIDDEN_ERROR_MESSAGE =
 export const EXTENSION_CONFLICT_ERROR_MESSAGE = `
   Cannot access a chrome-extension:// URL of different extension.
   
-  This is likely due to conflicting extensions. Please use Nanobrowser in a new profile.`;
+  This is likely due to conflicting extensions. Please use VisibleAi in a new profile.`;
 
 /**
  * Custom error class for chat model authentication errors

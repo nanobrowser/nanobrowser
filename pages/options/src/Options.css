@@ -1,12 +1,10 @@
+/* Accessibility-focused options page styles */
 #app-container {
   text-align: center;
   width: 100vw;
   height: 100vh;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+  background-color: white;
+  color: #1f2937; /* gray-800 */
 }
 
 .App {
@@ -17,30 +15,58 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background-color: white;
+  color: #1f2937; /* gray-800 */
 }
 
+/* High contrast code styling for accessibility */
 code {
-  background: rgba(148, 163, 184, 0.5);
+  background: #f3f4f6; /* gray-100 */
   border-radius: 0.25rem;
   padding: 0.2rem 0.5rem;
+  color: #1f2937; /* gray-800 */
+  border: 1px solid #d1d5db; /* gray-300 */
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  code {
-    background: rgba(30, 58, 138, 0.4);
-    color: #7dd3fc;
-  }
-  
-  .dark-mode-text {
-    color: #e2e8f0 !important; /* slate-200 */
-  }
-  
-  .dark-mode-bg {
-    background-color: #1e293b !important; /* slate-800 */
-  }
-  
-  .dark-mode-border {
-    border-color: #475569 !important; /* slate-600 */
-  }
+/* Accessible text and background colors */
+.accessible-text {
+  color: #1f2937 !important; /* gray-800 for high contrast */
+}
+
+.accessible-bg {
+  background-color: white !important;
+}
+
+.accessible-border {
+  border-color: #d1d5db !important; /* gray-300 for clear boundaries */
+}
+
+/* Focus indicators for accessibility */
+.accessible-focus:focus {
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
+  outline-offset: 2px;
+}
+
+/* High contrast button styles */
+.accessible-button {
+  background-color: #1f2937; /* gray-800 */
+  color: white;
+  border: 2px solid #1f2937;
+  transition: all 0.2s ease;
+}
+
+.accessible-button:hover {
+  background-color: #111827; /* gray-900 */
+  border-color: #111827;
+}
+
+.accessible-button:focus {
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
+  outline-offset: 2px;
+}
+
+.accessible-button:disabled {
+  background-color: #9ca3af; /* gray-400 */
+  border-color: #9ca3af;
+  cursor: not-allowed;
 }

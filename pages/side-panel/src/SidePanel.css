@@ -1,73 +1,52 @@
-/* Add this at the top of the file */
+/* Accessibility-focused styles */
 body {
-  border-color: rgb(159, 6, 11) !important; /* sky-200 color */
+  background-color: white !important;
+  color: #1f2937 !important; /* gray-800 for high contrast */
 }
 
 /* Remove unused classes: .App, .App-logo, .App-header */
 
+/* High contrast code styling for accessibility */
 code {
-  background: rgba(186, 230, 253, 0.4);
+  background: #f3f4f6; /* gray-100 */
   border-radius: 0.25rem;
   padding: 0.2rem 0.5rem;
-  color: #0369a1;
+  color: #1f2937; /* gray-800 */
+  border: 1px solid #d1d5db; /* gray-300 */
 }
 
-/* Dark mode support for code */
-@media (prefers-color-scheme: dark) {
-  code {
-    background: rgba(30, 58, 138, 0.4);
-    color: #7dd3fc;
-  }
-}
-
-/* Scrollbar styles */
+/* High contrast accessible scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 12px; /* Larger for better accessibility */
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f3f4f6; /* gray-100 */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
+  background: #6b7280; /* gray-500 for sufficient contrast */
   border-radius: 4px;
+  border: 2px solid #f3f4f6; /* gray-100 for better visual separation */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: #4b5563; /* gray-600 for hover state */
 }
 
-/* Dark mode scrollbar */
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-track {
-    background: #1e293b;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: #0ea5e9;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
-  }
+::-webkit-scrollbar-thumb:focus {
+  background: #374151; /* gray-700 for focus state */
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
 }
 
-/* Used classes from the component */
+/* Accessible header styling */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background-color: transparent;
-  border-bottom: 1px solid rgba(14, 165, 233, 0.2);
-}
-
-/* Dark mode header border */
-@media (prefers-color-scheme: dark) {
-  .header {
-    border-bottom: 1px solid rgba(14, 165, 233, 0.3);
-  }
+  background-color: white;
+  border-bottom: 2px solid #d1d5db; /* gray-300 for clear separation */
 }
 
 .header-logo {
@@ -81,34 +60,50 @@ code {
   align-items: center;
 }
 
+/* High contrast accessible icon styling */
 .header-icon {
-  color: #19C2FF;
+  color: #1f2937; /* gray-800 for high contrast */
   cursor: pointer;
-  transition: color 0.2s ease;
-  opacity: 0.8;
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border: 2px solid transparent;
 }
 
 .header-icon:hover {
-  color: #0073DC;
-  opacity: 1;
+  color: #111827; /* gray-900 for hover */
+  background-color: #f3f4f6; /* gray-100 background on hover */
 }
 
+.header-icon:focus {
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
+  outline-offset: 2px;
+}
+
+/* Accessible send button styling */
 .send-button {
-  color: #19C2FF;
+  color: #1f2937; /* gray-800 for high contrast */
   cursor: pointer;
-  transition: color 0.2s ease;
-  opacity: 0.8;
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border: 2px solid transparent;
 }
 
 .send-button:hover {
-  color: #0073DC;
-  opacity: 1;
+  color: #111827; /* gray-900 for hover */
+  background-color: #f3f4f6; /* gray-100 background on hover */
+}
+
+.send-button:focus {
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
+  outline-offset: 2px;
 }
 
 .send-button:disabled {
-  color: #CBD5E1;
+  color: #9ca3af; /* gray-400 for disabled state */
   cursor: not-allowed;
-  opacity: 0.5;
+  background-color: #f9fafb; /* gray-50 for disabled background */
 }
 
 /* Add these styles to your existing CSS */
@@ -116,50 +111,69 @@ code {
   scrollbar-gutter: stable;
 }
 
-/* Optional: Style the scrollbar for webkit browsers */
+/* Accessible scrollbar for message lists */
 .scrollbar-gutter-stable::-webkit-scrollbar {
-  width: 8px;
+  width: 12px; /* Larger for better accessibility */
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-track {
-  background: #f1f5f9;  /* sky-50 */
+  background: #f3f4f6; /* gray-100 */
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-  background: #7dd3fc;  /* sky-300 - very light blue */
+  background: #6b7280; /* gray-500 for sufficient contrast */
   border-radius: 4px;
+  border: 2px solid #f3f4f6; /* gray-100 for better visual separation */
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;  /* sky-400 - slightly darker on hover */
+  background: #4b5563; /* gray-600 for hover state */
 }
 
-/* Dark mode scrollbar for scrollbar-gutter-stable */
-@media (prefers-color-scheme: dark) {
-  .scrollbar-gutter-stable::-webkit-scrollbar-track {
-    background: #1e293b;  /* slate-800 */
-  }
-  
-  .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-    background: #0ea5e9;  /* sky-500 */
-  }
-  
-  .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;  /* sky-400 */
-  }
+.scrollbar-gutter-stable::-webkit-scrollbar-thumb:focus {
+  background: #374151; /* gray-700 for focus state */
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
 }
 
-/* Dark mode text and background colors */
-@media (prefers-color-scheme: dark) {
-  .dark-mode-text {
-    color: #e2e8f0 !important; /* slate-200 */
-  }
-  
-  .dark-mode-bg {
-    background-color: #1e293b !important; /* slate-800 */
-  }
-  
-  .dark-mode-border {
-    border-color: #475569 !important; /* slate-600 */
-  }
+/* High contrast accessible text and background colors */
+.accessible-text {
+  color: #1f2937 !important; /* gray-800 for high contrast */
+}
+
+.accessible-bg {
+  background-color: white !important;
+}
+
+.accessible-border {
+  border-color: #d1d5db !important; /* gray-300 for clear boundaries */
+}
+
+/* Focus indicators for accessibility */
+.accessible-focus:focus {
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
+  outline-offset: 2px;
+}
+
+/* High contrast button styles */
+.accessible-button {
+  background-color: #1f2937; /* gray-800 */
+  color: white;
+  border: 2px solid #1f2937;
+  transition: all 0.2s ease;
+}
+
+.accessible-button:hover {
+  background-color: #111827; /* gray-900 */
+  border-color: #111827;
+}
+
+.accessible-button:focus {
+  outline: 2px solid #2563eb; /* blue-600 focus ring */
+  outline-offset: 2px;
+}
+
+.accessible-button:disabled {
+  background-color: #9ca3af; /* gray-400 */
+  border-color: #9ca3af;
+  cursor: not-allowed;
 }

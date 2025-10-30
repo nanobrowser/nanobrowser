@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "使用 AI 自動化網頁任務！Nanobrowser 是一款開放原始碼的 Chrome 擴充功能，能協助您擷取資料、填寫表單等。"
+    "message": "使用 AI 自動化網頁任務！VisibleAi 是一款開放原始碼的 Chrome 擴充功能，能協助您擷取資料、填寫表單等。"
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "Nanobrowser：AI 網頁代理程式與自動化"
+    "message": "VisibleAi：AI 網頁代理程式與自動化"
   },
   "errors_unknown": {
     "message": "發生未知錯誤"
@@ -38,7 +38,7 @@
     "message": "回到對話"
   },
   "welcome_title": {
-    "message": "歡迎使用 Nanobrowser！"
+    "message": "歡迎使用 VisibleAi！"
   },
   "welcome_instruction": {
     "message": "開始使用前，請先完成 API 金鑰的設定。"
@@ -167,7 +167,7 @@
     "message": "啟用語音輸入"
   },
   "permissions_microphone_description": {
-    "message": "Nanobrowser 需要麥克風存取權限，才能將語音轉換為文字。"
+    "message": "VisibleAi 需要麥克風存取權限，才能將語音轉換為文字。"
   },
   "permissions_microphone_grantButton": {
     "message": "授予麥克風權限"

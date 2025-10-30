@@ -1,265 +1,206 @@
-<h1 align="center">
-    <img src="https://github.com/user-attachments/assets/ec60b0c4-87ba-48f4-981a-c55ed0e8497b" height="100" width="375" alt="banner" /><br>
-</h1>
+# VisibleAI - Accessible Web 
 
+VisibleAI is designed to break down digital barriers and make the web more accessible for everyone. Our AI-powered Chrome extension provides intelligent automation that helps users navigate, interact with, and understand web content more effectively, regardless of their abilities or technical expertise.
 
-<div align="center">
+## ♿ Accessibility-First Features
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nanobrowser)
-[![Twitter](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/nanobrowser_ai)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/NN3ABHggMK)
-[<img src="https://deepwiki.com/badge.svg" height="28" alt="Ask DeepWiki">](https://deepwiki.com/nanobrowser/nanobrowser)
-[![Sponsor](https://img.shields.io/badge/Sponsor-ff69b4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/alexchenzl)
+- **🗣️ Natural Language Web Navigation** - Control any website using simple, conversational commands
+- **🔍 Intelligent Content Discovery** - AI agents automatically identify and highlight important page elements
+- **📝 Smart Form Assistance** - Automated form filling with accessibility validation
+- **🎯 Focus Management** - Improved keyboard navigation and focus indicators
+- **📱 Universal Compatibility** - Works across all websites without requiring special accessibility implementations
+- **🧠 Cognitive Load Reduction** - Simplifies complex web interactions into intuitive conversations
 
-</div>
+## 🌟 Why VisibleAI for Accessibility?
 
-## 🌐 Nanobrowser
+Traditional web accessibility tools require websites to be properly coded with accessibility features. VisibleAI takes a different approach:
 
-Nanobrowser is an open-source AI web automation tool that runs in your browser. A free alternative to OpenAI Operator with flexible LLM options and multi-agent system.
+- **Universal Access** - Works on any website, even those without proper accessibility implementation
+- **Zero Learning Curve** - Natural language interface eliminates the need to learn complex keyboard shortcuts or screen reader commands
+- **Adaptive Intelligence** - AI agents learn and adapt to different website layouts and interaction patterns
+- **Real-time Assistance** - Provides immediate help and context for any web element or action
+- **Cost-Free Solution** - Completely free to use with your own API keys - no subscriptions or hidden costs
 
-⬇️ Get [Nanobrowser from Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) for free
+## 🚀 How It Works
 
-👏 Join the community in [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+VisibleAI employs a multi-agent system specifically designed for accessible web automation:
 
-🌟 Loving Nanobrowser? Give us a star  and help spread the word!
+1. **Navigator Agent** - Handles precise web interactions and element identification
+2. **Planner Agent** - Breaks down complex tasks into simple, accessible steps
+3. **Validator Agent** - Ensures actions complete successfully and provides feedback
 
-❤️ Support the project by [sponsoring us](https://github.com/sponsors/alexchenzl) - every contribution helps keep Nanobrowser free and open source!
-
-<div align="center">
-<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Nanobrowser Demo GIF" />
-<p><em>Nanobrowser's multi-agent system analyzing HuggingFace in real-time, with the Planner intelligently self-correcting when encountering obstacles and dynamically instructing the Navigator to adjust its approach—all running locally in your browser.</em></p>
-</div>
-
-## 🔥Why Nanobrowser?
-
-Looking for a powerful AI browser agent without the $200/month price tag of OpenAI Operator? **Nanobrowser** , as a chrome extension, delivers premium web automation capabilities while keeping you in complete control:
-
-- **100% Free** - No subscription fees or hidden costs. Just install and use your own API keys, and you only pay what you use with your own API keys.
-- **Privacy-Focused** - Everything runs in your local browser. Your credentials stay with you, never shared with any cloud service.
-- **Flexible LLM Options** - Connect to your preferred LLM providers with the freedom to choose different models for different agents.
-- **Fully Open Source** - Complete transparency in how your browser is automated. No black boxes or hidden processes.
-
-> **Note:** We currently support OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, Llama and custom OpenAI-Compatible providers, more providers will be supported.
-
-
-## 📊 Key Features
-
-- **Multi-agent System**: Specialized AI agents collaborate to accomplish complex web workflows
-- **Interactive Side Panel**: Intuitive chat interface with real-time status updates
-- **Task Automation**: Seamlessly automate repetitive web automation tasks across websites
-- **Follow-up Questions**: Ask contextual follow-up questions about completed tasks
-- **Conversation History**: Easily access and manage your AI agent interaction history
-- **Multiple LLM Support**: Connect your preferred LLM providers and assign different models to different agents
-
+Simply tell VisibleAI what you want to do in plain English, and the agents work together to make it happen.
 
 ## 🌐 Browser Support
 
 **Officially Supported:**
-- **Chrome** - Full support with all features
-- **Edge** - Full support with all features
+- **Chrome** - Full support with all accessibility features
+- **Edge** - Full support with all accessibility features
 
 **Not Supported:**
 - Firefox, Safari, and other Chromium variants (Opera, Arc, etc.)
 
-> **Note**: While Nanobrowser may function on other Chromium-based browsers, we recommend using Chrome or Edge for the best experience and guaranteed compatibility.
-
+> **Note**: While VisibleAI may function on other Chromium-based browsers, we recommend using Chrome or Edge for the best accessibility experience and guaranteed compatibility.
 
 ## 🚀 Quick Start
 
-1. **Install from Chrome Web Store** (Stable Version):
-   * Visit the [Nanobrowser Chrome Web Store page](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+### Install from Chrome Web Store (Recommended)
+
+1. **Install the Extension**:
+   * Visit the Chrome Web Store page for VisibleAI
    * Click "Add to Chrome" button
    * Confirm the installation when prompted
 
-> **Important Note**: For latest features, install from ["Manually Install Latest Version"](#-manually-install-latest-version) below, as Chrome Web Store version may be delayed due to review process.
-
-2. **Configure Agent Models**:
-   * Click the Nanobrowser icon in your toolbar to open the sidebar
+2. **Configure Your AI Models**:
+   * Click the VisibleAI icon in your toolbar to open the sidebar
    * Click the `Settings` icon (top right)
    * Add your LLM API keys
    * Choose which model to use for different agents (Navigator, Planner)
 
-## 🔧 Manually Install Latest Version
+3. **Start Using Natural Language Commands**:
+   * Open any website
+   * Tell VisibleAI what you want to do in plain English
+   * Watch as the AI agents handle the complex interactions for you
 
-To get the most recent version with all the latest features:
+### Manual Installation (Latest Features)
 
-1. **Download**
-    * Download the latest `nanobrowser.zip` file from the official Github [release page](https://github.com/nanobrowser/nanobrowser/releases).
+To get the most recent accessibility improvements:
+
+1. **Download**:
+   * Download the latest `visibleai.zip` file from the [release page](https://github.com/gabe/Workspace/Algoma/research/visible-ai/releases)
 
 2. **Install**:
-    * Unzip `nanobrowser.zip`.
-    * Open `chrome://extensions/` in Chrome
-    * Enable `Developer mode` (top right)
-    * Click `Load unpacked` (top left)
-    * Select the unzipped `nanobrowser` folder.
+   * Unzip `visibleai.zip`
+   * Open `chrome://extensions/` in Chrome
+   * Enable `Developer mode` (top right)
+   * Click `Load unpacked` (top left)
+   * Select the unzipped `visibleai` folder
 
-3. **Configure Agent Models**
-    * Click the Nanobrowser icon in your toolbar to open the sidebar
-    * Click the `Settings` icon (top right).
-    * Add your LLM API keys.
-    * Choose which model to use for different agents (Navigator, Planner)
-
-4. **Upgrading**:
-    * Download the latest `nanobrowser.zip` file from the release page.
-    * Unzip and replace your existing Nanobrowser files with the new ones.
-    * Go to `chrome://extensions/` in Chrome and click the refresh icon on the Nanobrowser card.
+3. **Configure**:
+   * Follow the configuration steps above
 
 ## 🛠️ Build from Source
 
-If you prefer to build Nanobrowser yourself, follow these steps:
+For developers who want to contribute to accessibility improvements:
 
 1. **Prerequisites**:
    * [Node.js](https://nodejs.org/) (v22.12.0 or higher)
    * [pnpm](https://pnpm.io/installation) (v9.15.1 or higher)
 
-2. **Clone the Repository**:
+2. **Clone and Build**:
    ```bash
-   git clone https://github.com/nanobrowser/nanobrowser.git
-   cd nanobrowser
-   ```
-
-3. **Install Dependencies**:
-   ```bash
+   git clone https://github.com/gabe/Workspace/Algoma/research/visible-ai.git
+   cd visible-ai
    pnpm install
-   ```
-
-4. **Build the Extension**:
-   ```bash
    pnpm build
    ```
 
-5. **Load the Extension**:
+3. **Load the Extension**:
    * The built extension will be in the `dist` directory
-   * Follow the installation steps from the Manually Install section to load the extension into your browser
+   * Follow the manual installation steps above
 
-6. **Development Mode** (optional):
+4. **Development Mode**:
    ```bash
    pnpm dev
    ```
 
-## 🤖 Choosing Your Models
+## 🤖 Accessibility-Optimized Model Configuration
 
-Nanobrowser allows you to configure different LLM models for each agent to balance performance and cost. Here are recommended configurations:
+Choose AI models that provide the best accessibility experience:
 
-### Better Performance
-- **Planner**: Claude Sonnet 4
-  - Better reasoning and planning capabilities
-- **Navigator**: Claude Haiku 3.5
-  - Efficient for web navigation tasks
-  - Good balance of performance and cost
+### Recommended for Accessibility
+- **Planner**: Claude Sonnet 4 or GPT-4
+  - Superior reasoning for complex accessibility scenarios
+  - Better understanding of user intent and context
+  
+- **Navigator**: Claude Haiku 3.5 or GPT-4o-mini
+  - Fast response times for real-time assistance
+  - Efficient element identification and interaction
 
-### Cost-Effective Configuration
-- **Planner**: Claude Haiku or GPT-4o
-  - Reasonable performance at lower cost
-  - May require more iterations for complex tasks
-- **Navigator**: Gemini 2.5 Flash or GPT-4o-mini
-  - Lightweight and cost-efficient
-  - Suitable for basic navigation tasks
+### Cost-Effective Options
+- **Local Models**: Use Ollama for complete privacy
+  - Zero API costs
+  - No data leaving your machine
+  - Recommended: Qwen 2.5 Coder 14B, Mistral Small 24B
 
-### Local Models
-- **Setup Options**:
-  - Use Ollama or other custom OpenAI-compatible providers to run models locally
-  - Zero API costs and complete privacy with no data leaving your machine
+> **Accessibility Tip**: Local models provide the ultimate privacy for users with sensitive accessibility needs, ensuring all interactions remain completely private.
 
-- **Recommended Models**:
-  - **Qwen3-30B-A3B-Instruct-2507**
-  - **Falcon3 10B**
-  - **Qwen 2.5 Coder 14B**
-  - **Mistral Small 24B**
-  - [Latest test results from community](https://gist.github.com/maximus2600/75d60bf3df62986e2254d5166e2524cb) 
-  - We welcome community experience sharing with other local models in our [Discord](https://discord.gg/NN3ABHggMK)
+## 💡 Accessibility Use Cases
 
-- **Prompt Engineering**:
-  - Local models require more specific and cleaner prompts
-  - Avoid high-level, ambiguous commands
-  - Break complex tasks into clear, detailed steps
-  - Provide explicit context and constraints
+Here are some ways VisibleAI can improve web accessibility:
 
-> **Note**: The cost-effective configuration may produce less stable outputs and require more iterations for complex tasks.
+### Navigation Assistance
+> "Find the main navigation menu and tell me what options are available"
+> "Take me to the contact form and help me fill it out"
+> "Show me all the buttons on this page and what they do"
 
-> **Tip**: Feel free to experiment with your own model configurations! Found a great combination? Share it with the community in our [Discord](https://discord.gg/NN3ABHggMK) to help others optimize their setup.
+### Content Understanding
+> "Summarize the main content of this article for me"
+> "Find and read all the error messages on this form"
+> "Identify all the interactive elements on this page"
 
-## 💡 See It In Action
+### Task Automation
+> "Fill out this job application form with my information"
+> "Find products under $50 and sort them by rating"
+> "Navigate to my account settings and change my email preferences"
 
-Here are some powerful tasks you can accomplish with just a sentence:
+## 🎨 Accessibility Standards
 
-1. **News Summary**:
-   > "Go to TechCrunch and extract top 10 headlines from the last 24 hours"
+VisibleAI is built with accessibility best practices in mind:
 
-2. **GitHub Research**:
-   > "Look for the trending Python repositories on GitHub with most stars"
+- **WCAG 2.1 AA Compliance** - Interface follows Web Content Accessibility Guidelines
+- **Keyboard Navigation** - Full functionality available via keyboard
+- **Screen Reader Support** - Compatible with popular screen reading software
+- **High Contrast Support** - Readable in high contrast and dark modes
+- **Focus Indicators** - Clear visual focus indicators for all interactive elements
 
-3. **Shopping Research**:
-   > "Find a portable Bluetooth speaker on Amazon with a water-resistant design, under $50. It should have a minimum battery life of 10 hours"
+## 🤝 Contributing to Accessibility
 
-## 🛠️ Roadmap
+We welcome contributions that improve web accessibility:
 
-We're actively developing Nanobrowser with exciting features on the horizon, welcome to join us! 
+### Ways to Help
+- **Test with Assistive Technologies** - Report compatibility issues with screen readers, voice recognition, etc.
+- **Accessibility Audits** - Help identify and fix accessibility barriers
+- **User Experience Feedback** - Share how VisibleAI helps or could better help your specific accessibility needs
+- **Code Contributions** - Submit pull requests for accessibility improvements
 
-Check out our detailed roadmap and upcoming features in our [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions/85). 
+### Getting Started
+1. Join our community discussions about accessibility improvements
+2. Review our accessibility testing guidelines
+3. Check out accessibility-related issues in our GitHub repository
 
-## 🤝 Contributing
+## 🔒 Privacy & Security
 
-**We need your help to make Nanobrowser even better!**  Contributions of all kinds are welcome:
+VisibleAI prioritizes user privacy and security:
 
-*  **Share Prompts & Use Cases** 
-   * Join our [Discord server](https://discord.gg/NN3ABHggMK).
-   * share how you're using Nanobrowser.  Help us build a library of useful prompts and real-world use cases.
-*  **Provide Feedback** 
-   * Try Nanobrowser and give us feedback on its performance or suggest improvements in our [Discord server](https://discord.gg/NN3ABHggMK).
-* **Contribute Code**
-   * Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute code to the project.
-   * Submit pull requests for bug fixes, features, or documentation improvements.
+- **Local Processing** - All AI interactions happen in your browser
+- **No Data Collection** - We don't collect, store, or analyze your browsing data
+- **Your API Keys** - Connect directly to AI providers using your own credentials
+- **Open Source** - Complete transparency in how your data is handled
 
+## 🛣️ Roadmap
 
-We believe in the power of open source and community collaboration.  Join us in building the future of web automation!
+Upcoming accessibility improvements:
 
+- **Voice Control Integration** - Direct voice commands for hands-free navigation
+- **Enhanced Screen Reader Support** - Deeper integration with assistive technologies
+- **Cognitive Accessibility Features** - Tools to help users with cognitive disabilities
+- **Multi-language Support** - Accessibility features in multiple languages
+- **Custom Accessibility Profiles** - Personalized settings for different accessibility needs
 
-## 🔒 Security
+## 📄 License
 
-If you discover a security vulnerability, please **DO NOT** disclose it publicly through issues, pull requests, or discussions.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-Instead, please create a [GitHub Security Advisory](https://github.com/nanobrowser/nanobrowser/security/advisories/new) to report the vulnerability responsibly. This allows us to address the issue before it's publicly disclosed.
+## 🙏 Acknowledgments
 
-We appreciate your help in keeping Nanobrowser and its users safe!
-
-## 💬 Community
-
-Join our growing community of developers and users:
-
-- [Discord](https://discord.gg/NN3ABHggMK) - Chat with team and community
-- [Twitter](https://x.com/nanobrowser_ai) - Follow for updates and announcements
-- [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions) - Share ideas and ask questions
-
-## 👏 Acknowledgments
-
-Nanobrowser builds on top of other awesome open-source projects:
+VisibleAI builds upon excellent open-source accessibility and automation projects:
 
 - [Browser Use](https://github.com/browser-use/browser-use)
 - [Puppeteer](https://github.com/EmergenceAI/Agent-E)
 - [Chrome Extension Boilerplate](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite)
 - [LangChain](https://github.com/langchain-ai/langchainjs)
 
-Huge thanks to their creators and contributors!
+This project is a fork of the NanoBrowser extension, enhanced with a focus on web accessibility and inclusive design. We're grateful to the original NanoBrowser team for providing the foundation that made this accessibility-focused version possible.
 
-## 📄 License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-Made with ❤️ by the Nanobrowser Team. 
-
-Like Nanobrowser? Give us a star 🌟 and join us in [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
-
-## ⚠️ DISCLAIMER ON DERIVATIVE PROJECTS
-
-**We explicitly *DO NOT* endorse, support, or participate in any** projects involving cryptocurrencies, tokens, NFTs, or other blockchain-related applications **based on this codebase.**
-
-**Any such derivative projects are NOT Affiliated with, or maintained by, or in any way connected to the official Nanobrowser project or its core team.**
-
-**We assume NO LIABILITY for any losses, damages, or issues arising from the use of third-party derivative projects. Users interact with these projects at their own risk.**
-
-**We reserve the right to publicly distance ourselves from any misuse or misleading use of our name, codebase, or brand.**
-
-We encourage open-source innovation but urge our community to be discerning and cautious. Please ensure you understand the risks before using any software or service built upon our codebase by independent developers.
-
-
+Special thanks to the accessibility community for their ongoing guidance and feedback.

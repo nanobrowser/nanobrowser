@@ -1,5 +1,5 @@
 name: Bug Report
-description: Create a report to help us improve NanoBrowser
+description: Create a report to help us improve VisibleAi
 title: "[Bug]: "
 labels: ["bug", "needs-triage"]
 body:
@@ -11,8 +11,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Nanobrowser Version
-      description: What version of NanoBrowser are you running?
+      label: VisibleAi Version
+      description: What version of VisibleAi are you running?
       placeholder: e.g., 0.1.0
     validations:
       required: true

@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "Automate web tasks with AI! NanoBrowser is an open-source Chrome extension that lets you extract data, fill forms, and more."
+    "message": "Enhance Web A11y with AI! VisibleAi is an open-source extension for Chrome that allows you to extract data, fill forms, and much more."
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "Nanobrowser: AI Web Agent & Automation"
+    "message": "VisibleAi"
   },
   "errors_unknown": {
     "message": "Unknown error occurred"
@@ -167,7 +167,7 @@
     "message": "Enable Voice Input"
   },
   "permissions_microphone_description": {
-    "message": "Nanobrowser needs microphone access to convert your speech to text."
+    "message": "VisibleAi needs microphone access to convert your speech to text."
   },
   "permissions_microphone_grantButton": {
     "message": "Grant Microphone Permission"

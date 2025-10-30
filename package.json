@@ -1,11 +1,11 @@
 {
-  "name": "nanobrowser",
+  "name": "visibleai",
   "version": "0.1.12",
-  "description": "AI web automation tool",
+  "description": "Web A11y Enhancement",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nanobrowser/nanobrowser.git"
+    "url": "https://github.com/visibleai/visibleai.git"
   },
   "type": "module",
   "scripts": {

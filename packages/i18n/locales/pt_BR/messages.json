@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Descrição da extensão",
-    "message": "Automatize tarefas da web com IA! NanoBrowser é uma extensão de código aberto para o Chrome que permite extrair dados, preencher formulários e muito mais."
+    "message": "Automatize tarefas da web com IA! VisibleAi é uma extensão de código aberto para o Chrome que permite extrair dados, preencher formulários e muito mais."
   },
   "app_metadata_name": {
     "description": "Nome da extensão",
-    "message": "Nanobrowser: Agente Web de IA e Automação"
+    "message": "VisibleAi: Agente Web de IA e Automação"
   },
   "errors_unknown": {
     "message": "Ocorreu um erro desconhecido"
@@ -38,7 +38,7 @@
     "message": "Voltar para o chat"
   },
   "welcome_title": {
-    "message": "Bem-vindo ao Nanobrowser!"
+    "message": "Bem-vindo ao VisibleAi!"
   },
   "welcome_instruction": {
     "message": "Para começar, por favor, configure suas chaves de API na página de configurações."
@@ -167,7 +167,7 @@
     "message": "Ativar Entrada de Voz"
   },
   "permissions_microphone_description": {
-    "message": "O Nanobrowser precisa de acesso ao microfone para converter sua fala em texto."
+    "message": "O VisibleAi precisa de acesso ao microfone para converter sua fala em texto."
   },
   "permissions_microphone_grantButton": {
     "message": "Conceder Permissão ao Microfone"
