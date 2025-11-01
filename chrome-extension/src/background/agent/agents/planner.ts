@@ -2,8 +2,10 @@ import { BaseAgent, type BaseAgentOptions, type ExtraAgentOptions } from './base
 import { createLogger } from '@src/background/log';
 import { z } from 'zod';
 import type { AgentOutput } from '../types';
-import { HumanMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage, type BaseMessage } from '@langchain/core/messages';
 import { Actors, ExecutionState } from '../event/types';
+import { RAGService } from '../../services/ragService';
+import { ragSettingsStore } from '@extension/storage';
 import {
   ChatModelAuthError,
   ChatModelBadRequestError,
@@ -50,13 +52,100 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
     super(plannerOutputSchema, options, { ...extraOptions, id: 'planner' });
   }
 
+  /**
+   * Extract the current planning context from messages to use for RAG retrieval
+   */
+  private extractPlanningContext(messages: BaseMessage[]): string {
+    // Get the last human message which typically contains the current state/task
+    const humanMessages = messages.filter(msg => msg._getType() === 'human');
+    if (humanMessages.length === 0) {
+      return '';
+    }
+
+    const lastMessage = humanMessages[humanMessages.length - 1];
+    let content = '';
+
+    // Extract text content from the message
+    if (Array.isArray(lastMessage.content)) {
+      for (const part of lastMessage.content) {
+        if (part.type === 'text') {
+          content += part.text + ' ';
+        }
+      }
+    } else if (typeof lastMessage.content === 'string') {
+      content = lastMessage.content;
+    }
+
+    // Clean and limit the content for RAG query
+    const cleanContent = content.trim().slice(0, 500); // Limit to 500 chars for RAG query
+    return cleanContent;
+  }
+
+  /**
+   * Augment planner messages with RAG-retrieved context
+   */
+  private async augmentWithRAG(messages: BaseMessage[]): Promise<BaseMessage[]> {
+    try {
+      // Extract the planning context for RAG retrieval
+      const planningContext = this.extractPlanningContext(messages);
+
+      if (!planningContext) {
+        logger.info('No planning context found for RAG retrieval');
+        return messages;
+      }
+
+      logger.info('Retrieving RAG context for planning:', planningContext.substring(0, 100) + '...');
+
+      // Retrieve RAG settings to include any custom system message
+      const ragSettings = await ragSettingsStore.getSettings();
+      const ragResponse = await RAGService.retrieve(planningContext, {
+        systemMessage: ragSettings.customSystemMessage,
+      });
+
+      if (!ragResponse.success || !ragResponse.content) {
+        logger.info('No RAG content retrieved for planning');
+        return messages;
+      }
+
+      logger.info('RAG content retrieved for planning, length:', ragResponse.content.length);
+
+      // Create a new message with RAG context and insert it before the last message
+      const ragContextMessage = new SystemMessage({
+        content: `**Planning Context from Knowledge Base:**
+${ragResponse.content}
+
+**Instructions for Planning:** Use the above context to inform your planning decisions. Consider this information when determining next steps, identifying challenges, and providing observations.`,
+      });
+
+      // Insert RAG context before the last message (which is typically the current state)
+      const augmentedMessages = [...messages];
+      augmentedMessages.splice(-1, 0, ragContextMessage);
+
+      return augmentedMessages;
+    } catch (error) {
+      logger.error('Failed to augment planning with RAG:', error);
+      // If RAG fails, continue with original messages
+      return messages;
+    }
+  }
+
   async execute(): Promise<AgentOutput<PlannerOutput>> {
     try {
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_START, 'Planning...');
       // get all messages from the message manager, state message should be the last one
       const messages = this.context.messageManager.getMessages();
       // Use full message history except the first one
-      const plannerMessages = [this.prompt.getSystemMessage(), ...messages.slice(1)];
+      let plannerMessages = [this.prompt.getSystemMessage(), ...messages.slice(1)];
+
+      // Include optional custom system message from RAG settings
+      try {
+        const ragSettings = await ragSettingsStore.getSettings();
+        if (ragSettings.customSystemMessage) {
+          plannerMessages = [new SystemMessage({ content: ragSettings.customSystemMessage }), ...plannerMessages];
+        }
+      } catch (e) {
+        logger.info('Failed to load RAG settings for planner custom system message', e);
+      }
 
       // Remove images from last message if vision is not enabled for planner but vision is enabled
       if (!this.context.options.useVisionForPlanner && this.context.options.useVision) {
@@ -76,6 +165,9 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
 
         plannerMessages[plannerMessages.length - 1] = new HumanMessage(newMsg);
       }
+
+      // Augment planner messages with RAG context for enhanced planning
+      plannerMessages = await this.augmentWithRAG(plannerMessages);
 
       const modelOutput = await this.invoke(plannerMessages);
       if (!modelOutput) {

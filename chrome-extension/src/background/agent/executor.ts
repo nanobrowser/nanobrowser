@@ -11,6 +11,7 @@ import type BrowserContext from '../browser/context';
 import { ActionBuilder } from './actions/builder';
 import { EventManager } from './event/manager';
 import { Actors, type EventCallback, EventType, ExecutionState } from './event/types';
+import { RAGService } from '../services/ragService';
 import {
   ChatModelAuthError,
   ChatModelBadRequestError,
@@ -85,8 +86,26 @@ export class Executor {
     });
 
     this.context = context;
-    // Initialize message history
-    this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), task);
+    // Note: Task will be initialized with RAG content in the async initializeTask method
+  }
+
+  /**
+   * Initialize the task with RAG augmentation if enabled
+   */
+  async initializeTask(originalTask: string): Promise<void> {
+    try {
+      // Augment task with RAG content if RAG is enabled
+      const augmentedTask = await RAGService.augmentTask(originalTask);
+
+      // Initialize message history with the augmented task
+      this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), augmentedTask);
+
+      logger.info('Task initialized with RAG augmentation');
+    } catch (error) {
+      logger.error('Failed to augment task with RAG, using original task:', error);
+      // Fall back to original task if RAG fails
+      this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), originalTask);
+    }
   }
 
   subscribeExecutionEvents(callback: EventCallback): void {
@@ -98,9 +117,21 @@ export class Executor {
     this.context.eventManager.clearSubscribers(EventType.EXECUTION);
   }
 
-  addFollowUpTask(task: string): void {
-    this.tasks.push(task);
-    this.context.messageManager.addNewTask(task);
+  async addFollowUpTask(task: string): Promise<void> {
+    try {
+      // Augment follow-up task with RAG content if RAG is enabled
+      const augmentedTask = await RAGService.augmentTask(task);
+
+      this.tasks.push(task); // Store original task
+      this.context.messageManager.addNewTask(augmentedTask); // Use augmented task for execution
+
+      logger.info('Follow-up task added with RAG augmentation');
+    } catch (error) {
+      logger.error('Failed to augment follow-up task with RAG, using original task:', error);
+      // Fall back to original task if RAG fails
+      this.tasks.push(task);
+      this.context.messageManager.addNewTask(task);
+    }
 
     // need to reset previous action results that are not included in memory
     this.context.actionResults = this.context.actionResults.filter(result => result.includeInMemory);

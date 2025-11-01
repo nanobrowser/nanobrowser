@@ -6,6 +6,9 @@ import {
   generalSettingsStore,
   llmProviderStore,
   analyticsSettingsStore,
+  type ProviderConfig,
+  type ModelConfig,
+  ProviderTypeEnum,
 } from '@extension/storage';
 import { t } from '@extension/i18n';
 import BrowserContext from './browser/context';
@@ -18,6 +21,13 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import {
+  webSocketService,
+  ServiceEvent,
+  WebSocketMessageInterpreter,
+  isExecuteTaskMessage,
+  isPingMessage,
+} from './services/websocket';
 
 const logger = createLogger('background');
 
@@ -58,11 +68,98 @@ analytics.init().catch(error => {
   logger.error('Failed to initialize analytics:', error);
 });
 
+// On first install or update, optionally preseed settings from bundled default-settings.json
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    // Try to fetch the bundled default settings file
+    const url = chrome.runtime.getURL('default-settings.json');
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      logger.info('No default-settings.json bundled');
+      return;
+    }
+    const defaults = await resp.json();
+
+    // For each top-level key in the defaults, only write if the storage key is empty
+    for (const [key, value] of Object.entries(defaults)) {
+      try {
+        const existing = await chrome.storage.local.get([key]);
+        const hasValue = existing && Object.prototype.hasOwnProperty.call(existing, key) && existing[key] !== undefined;
+        if (!hasValue) {
+          await chrome.storage.local.set({ [key]: value });
+          logger.info(`Pre-seeded storage key: ${key}`);
+        } else {
+          logger.info(`Storage key already present, skipping pre-seed: ${key}`);
+        }
+      } catch (err) {
+        logger.error('Failed to pre-seed storage key', key, err);
+      }
+    }
+  } catch (err) {
+    logger.debug('No preseed defaults or failed to load them:', err);
+  }
+});
+
 // Listen for analytics settings changes
 analyticsSettingsStore.subscribe(() => {
   analytics.updateSettings().catch(error => {
     logger.error('Failed to update analytics settings:', error);
   });
+});
+
+// Initialize WebSocket service
+webSocketService.initialize().catch(error => {
+  logger.error('Failed to initialize WebSocket service:', error);
+  // Continue operation even if WebSocket fails - core extension functionality should not be affected
+});
+
+// Setup WebSocket event listeners with error boundaries
+webSocketService.addEventListener(ServiceEvent.MESSAGE_RECEIVED, async event => {
+  try {
+    if (!event.message) {
+      logger.warning('Received MESSAGE_RECEIVED event with no message');
+      return;
+    }
+
+    logger.debug('Processing WebSocket message:', event.message.type);
+
+    // Handle different message types
+    if (isExecuteTaskMessage(event.message)) {
+      await handleWebSocketTaskExecution(event.message);
+    } else if (isPingMessage(event.message)) {
+      // Respond to ping with pong
+      try {
+        const pongMessage = WebSocketMessageInterpreter.createPong();
+        webSocketService.sendMessage(pongMessage);
+        logger.debug('Pong sent in response to ping');
+      } catch (pongError) {
+        logger.error('Failed to send pong response:', pongError);
+        // Don't throw - pong failure should not crash the extension
+      }
+    }
+  } catch (error) {
+    logger.error('Error handling WebSocket message:', error);
+    // Log but don't throw - continue processing other messages
+  }
+});
+
+webSocketService.addEventListener(ServiceEvent.CONNECTION_CHANGE, event => {
+  try {
+    logger.info('WebSocket connection state changed:', event.state);
+  } catch (error) {
+    logger.error('Error handling connection state change:', error);
+  }
+});
+
+webSocketService.addEventListener(ServiceEvent.ERROR, event => {
+  try {
+    if (event.error) {
+      logger.error('WebSocket error:', event.error);
+    }
+  } catch (error) {
+    // Double error - log to console directly to avoid infinite loop
+    console.error('Error in WebSocket error handler:', error);
+  }
 });
 
 // Listen for simple messages (e.g., from options page)
@@ -106,7 +203,7 @@ chrome.runtime.onConnect.addListener(port => {
 
             // If executor exists, add follow-up task
             if (currentExecutor) {
-              currentExecutor.addFollowUpTask(message.task);
+              await currentExecutor.addFollowUpTask(message.task);
               // Re-subscribe to events in case the previous subscription was cleaned up
               subscribeToExecutorEvents(currentExecutor);
               const result = await currentExecutor.execute();
@@ -281,6 +378,60 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   const navigatorProviderConfig = providers[navigatorModel.provider];
   const navigatorLLM = createChatModel(navigatorProviderConfig, navigatorModel);
 
+  // Create an extractor/RAG LLM if RAG is enabled in settings
+  let extractorLLM: BaseChatModel | undefined = undefined;
+  try {
+    const { ragSettingsStore } = await import('@extension/storage');
+    const ragSettings = await ragSettingsStore.getSettings();
+
+    if (ragSettings.enabled) {
+      // Check if using custom RAG endpoint
+      if (ragSettings.endpoint) {
+        logger.info('Setting up custom RAG endpoint:', ragSettings.endpoint);
+        // For custom RAG endpoints, create a fake OpenAI provider config
+        // The actual endpoint handling will be done by the createOpenAIChatModel function
+        const customRagProvider: ProviderConfig = {
+          name: 'Custom RAG Endpoint',
+          type: ProviderTypeEnum.OpenAI,
+          apiKey: ragSettings.apiKey || '',
+          baseUrl: ragSettings.endpoint,
+          modelNames: ['custom-rag-model'],
+          customHeaders:
+            ragSettings.apiKeyHeaderName && ragSettings.apiKey
+              ? { [ragSettings.apiKeyHeaderName]: ragSettings.apiKey }
+              : undefined,
+          customQuery: ragSettings.queryParamName
+            ? { [ragSettings.queryParamName]: '' } // Will be filled during actual query
+            : undefined,
+        };
+
+        // Create extractor LLM with custom endpoint - use the same approach as OpenAI
+        const extraOptions = customRagProvider.customHeaders ? { headers: customRagProvider.customHeaders } : undefined;
+        const modelConfig: ModelConfig = {
+          provider: ProviderTypeEnum.OpenAI,
+          modelName: 'custom-rag-model',
+          parameters: {},
+        };
+        extractorLLM = createChatModel(customRagProvider, modelConfig, extraOptions);
+      }
+      // Fall back to provider-based RAG
+      else if (ragSettings.providerId && providers[ragSettings.providerId]) {
+        logger.info('Setting up provider-based RAG with provider:', ragSettings.providerId);
+        const ragProviderConfig = providers[ragSettings.providerId];
+        // attach custom headers if present to extra options when creating openai-compatible model
+        const extraOptions = ragProviderConfig.customHeaders ? { headers: ragProviderConfig.customHeaders } : undefined;
+        // create a dummy modelConfig for extractor; use first modelName or placeholder
+        const modelName = (ragProviderConfig.modelNames && ragProviderConfig.modelNames[0]) || 'gpt-4o-mini';
+        const modelConfig: ModelConfig = { provider: ragSettings.providerId, modelName, parameters: {} };
+        extractorLLM = createChatModel(ragProviderConfig, modelConfig, extraOptions);
+      } else {
+        logger.warning('RAG enabled but no valid endpoint or provider configured');
+      }
+    }
+  } catch (err) {
+    logger.error('Failed to initialize RAG extractor LLM:', err);
+  }
+
   let plannerLLM: BaseChatModel | null = null;
   const plannerModel = agentModels[AgentNameEnum.Planner];
   if (plannerModel) {
@@ -311,6 +462,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
 
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
     plannerLLM: plannerLLM ?? navigatorLLM,
+    extractorLLM: extractorLLM,
     agentOptions: {
       maxSteps: generalSettings.maxSteps,
       maxFailures: generalSettings.maxFailures,
@@ -322,10 +474,13 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
     generalSettings: generalSettings,
   });
 
+  // Initialize the task with RAG augmentation
+  await executor.initializeTask(task);
+
   return executor;
 }
 
-// Update subscribeToExecutorEvents to use port
+// Update subscribeToExecutorEvents to use port and WebSocket
 async function subscribeToExecutorEvents(executor: Executor) {
   // Clear previous event listeners to prevent multiple subscriptions
   executor.clearExecutionEvents();
@@ -333,8 +488,22 @@ async function subscribeToExecutorEvents(executor: Executor) {
   // Subscribe to new events
   executor.subscribeExecutionEvents(async event => {
     try {
+      // Send to side panel if connected
       if (currentPort) {
         currentPort.postMessage(event);
+      }
+
+      // Send to WebSocket if connected (with error boundary)
+      try {
+        if (webSocketService.isConnected()) {
+          const taskId = await executor.getCurrentTaskId();
+          const eventMessage = WebSocketMessageInterpreter.createExecutionEvent(taskId, event);
+          webSocketService.sendMessage(eventMessage);
+          logger.debug('Execution event sent to WebSocket:', event.state);
+        }
+      } catch (error) {
+        logger.error('Failed to send event to WebSocket:', error);
+        // Don't throw - WebSocket failure should not stop side panel updates
       }
     } catch (error) {
       logger.error('Failed to send message to side panel:', error);
@@ -345,7 +514,112 @@ async function subscribeToExecutorEvents(executor: Executor) {
       event.state === ExecutionState.TASK_FAIL ||
       event.state === ExecutionState.TASK_CANCEL
     ) {
-      await currentExecutor?.cleanup();
+      try {
+        await executor.cleanup();
+      } catch (error) {
+        logger.error('Failed to cleanup executor on final state:', error);
+      } finally {
+        if (currentExecutor === executor) {
+          currentExecutor = null;
+        }
+      }
     }
   });
+}
+
+/**
+ * Handle incoming task execution requests from WebSocket server.
+ * Wrapped in error boundaries to prevent WebSocket issues from crashing the extension.
+ */
+async function handleWebSocketTaskExecution(message: { taskId: string; prompt: string; metadata?: unknown }) {
+  logger.info('WebSocket task execution requested', {
+    taskId: message.taskId,
+    promptLength: message.prompt?.length,
+    hasMetadata: !!message.metadata,
+  });
+
+  try {
+    // Validate message
+    if (!message.taskId || typeof message.taskId !== 'string') {
+      throw new Error('Invalid taskId: must be a non-empty string');
+    }
+
+    if (!message.prompt || typeof message.prompt !== 'string') {
+      throw new Error('Invalid prompt: must be a non-empty string');
+    }
+
+    // Check if a task is already running
+    if (currentExecutor) {
+      try {
+        const currentTaskId = await currentExecutor.getCurrentTaskId();
+        logger.warning('Task execution rejected: already executing task', currentTaskId);
+
+        const rejectionMessage = WebSocketMessageInterpreter.createTaskRejected(
+          message.taskId,
+          'Already executing a task',
+        );
+        webSocketService.sendMessage(rejectionMessage);
+      } catch (rejectionError) {
+        logger.error('Failed to send rejection message for concurrent task:', rejectionError);
+      }
+      return;
+    }
+
+    // Send task accepted response
+    try {
+      const acceptedMessage = WebSocketMessageInterpreter.createTaskAccepted(message.taskId);
+      webSocketService.sendMessage(acceptedMessage);
+      logger.debug('Task accepted message sent');
+    } catch (acceptError) {
+      logger.error('Failed to send task accepted message:', acceptError);
+      // Continue anyway - task can still be executed
+    }
+
+    // Get the current active tab
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const activeTab = tabs[0];
+
+    if (!activeTab?.id) {
+      throw new Error('No active tab found');
+    }
+
+    logger.debug('Switching to active tab:', activeTab.id);
+    // Switch to the active tab
+    await browserContext.switchTab(activeTab.id);
+
+    // Setup and execute the task
+    logger.debug('Setting up executor for task:', message.taskId);
+    currentExecutor = await setupExecutor(message.taskId, message.prompt, browserContext);
+    subscribeToExecutorEvents(currentExecutor);
+
+    logger.info('Executing task:', message.taskId);
+    await currentExecutor.execute();
+    logger.info('WebSocket task execution completed', {
+      taskId: message.taskId,
+    });
+    // Ensure the executor is cleared after completion to accept new tasks
+    try {
+      await currentExecutor?.cleanup();
+    } catch (cleanupError) {
+      logger.error('Cleanup after WebSocket task completion failed:', cleanupError);
+    } finally {
+      currentExecutor = null;
+    }
+  } catch (error) {
+    logger.error('WebSocket task execution failed:', error);
+
+    // Send rejection message
+    try {
+      const rejectionMessage = WebSocketMessageInterpreter.createTaskRejected(
+        message.taskId,
+        error instanceof Error ? error.message : 'Task execution failed',
+      );
+      webSocketService.sendMessage(rejectionMessage);
+      logger.debug('Task rejection message sent');
+    } catch (sendError) {
+      logger.error('Failed to send rejection message:', sendError);
+      // Last resort - log to console
+      console.error('Critical: Unable to notify WebSocket server of task failure');
+    }
+  }
 }

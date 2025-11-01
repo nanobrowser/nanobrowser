@@ -8,57 +8,56 @@ import { ChatCerebras } from '@langchain/cerebras';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatDeepSeek } from '@langchain/deepseek';
-import { AIMessage } from '@langchain/core/messages';
-import type { BaseMessage } from '@langchain/core/messages';
 
 const maxTokens = 1024 * 4;
 
 // Custom ChatLlama class to handle Llama API response format
 class ChatLlama extends ChatOpenAI {
-  constructor(args: any) {
+  constructor(args: ConstructorParameters<typeof ChatOpenAI>[0]) {
     super(args);
   }
 
+  // TODO: Fix this method - completionWithRetry might not exist in current langchain version
   // Override the completionWithRetry method to intercept and transform the response
-  async completionWithRetry(request: any, options?: any): Promise<any> {
-    try {
-      // Make the request using the parent's implementation
-      const response = await super.completionWithRetry(request, options);
+  // async completionWithRetry(request: any, options?: any): Promise<any> {
+  //   try {
+  //     // Make the request using the parent's implementation
+  //     const response = await super.completionWithRetry(request, options);
 
-      // Check if this is a Llama API response format
-      if (response?.completion_message?.content?.text) {
-        // Transform Llama API response to OpenAI format
-        const transformedResponse = {
-          id: response.id || 'llama-response',
-          object: 'chat.completion',
-          created: Date.now(),
-          model: request.model,
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: response.completion_message.content.text,
-              },
-              finish_reason: response.completion_message.stop_reason || 'stop',
-            },
-          ],
-          usage: {
-            prompt_tokens: response.metrics?.find((m: any) => m.metric === 'num_prompt_tokens')?.value || 0,
-            completion_tokens: response.metrics?.find((m: any) => m.metric === 'num_completion_tokens')?.value || 0,
-            total_tokens: response.metrics?.find((m: any) => m.metric === 'num_total_tokens')?.value || 0,
-          },
-        };
+  //     // Check if this is a Llama API response format
+  //     if (response?.completion_message?.content?.text) {
+  //       // Transform Llama API response to OpenAI format
+  //       const transformedResponse = {
+  //         id: response.id || 'llama-response',
+  //         object: 'chat.completion',
+  //         created: Date.now(),
+  //         model: request.model,
+  //         choices: [
+  //           {
+  //             index: 0,
+  //             message: {
+  //               role: 'assistant',
+  //               content: response.completion_message.content.text,
+  //             },
+  //             finish_reason: response.completion_message.stop_reason || 'stop',
+  //           },
+  //         ],
+  //         usage: {
+  //           prompt_tokens: response.metrics?.find((m: any) => m.metric === 'num_prompt_tokens')?.value || 0,
+  //           completion_tokens: response.metrics?.find((m: any) => m.metric === 'num_completion_tokens')?.value || 0,
+  //           total_tokens: response.metrics?.find((m: any) => m.metric === 'num_total_tokens')?.value || 0,
+  //         },
+  //       };
 
-        return transformedResponse;
-      }
+  //       return transformedResponse;
+  //     }
 
-      return response;
-    } catch (error: any) {
-      console.error(`[ChatLlama] Error during API call:`, error);
-      throw error;
-    }
-  }
+  //     return response;
+  //   } catch (error: any) {
+  //     console.error(`[ChatLlama] Error during API call:`, error);
+  //     throw error;
+  //   }
+  // }
 }
 
 // O series models or GPT-5 models that support reasoning
@@ -107,9 +106,75 @@ function createOpenAIChatModel(
   };
 
   const configuration: Record<string, unknown> = {};
+
+  // Handle base URL with custom query parameters
+  // NOTE: LangChain ChatOpenAI automatically appends "/chat/completions" which causes issues with query params
+  // We need a special approach for deployment URLs with query parameters
   if (providerConfig.baseUrl) {
-    configuration.baseURL = providerConfig.baseUrl;
+    let fullUrl = providerConfig.baseUrl;
+
+    // Check if we have query parameters that need special handling
+    if (providerConfig.customQuery && Object.keys(providerConfig.customQuery).length > 0) {
+      // For deployment URLs with query parameters, we need to use a custom fetch function
+      // to override LangChain's URL construction
+
+      // Create the correct final URL manually
+      let correctUrl = providerConfig.baseUrl;
+
+      // Add REST endpoint if provided
+      if (providerConfig.restEndpoint) {
+        const baseEndsWithSlash = correctUrl.endsWith('/');
+        const endpointStartsWithSlash = providerConfig.restEndpoint.startsWith('/');
+
+        if (baseEndsWithSlash && endpointStartsWithSlash) {
+          correctUrl = correctUrl + providerConfig.restEndpoint.substring(1);
+        } else if (!baseEndsWithSlash && !endpointStartsWithSlash) {
+          correctUrl = correctUrl + '/' + providerConfig.restEndpoint;
+        } else {
+          correctUrl = correctUrl + providerConfig.restEndpoint;
+        }
+      }
+
+      // Add query parameters
+      const url = new URL(correctUrl);
+      Object.entries(providerConfig.customQuery).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+      });
+      correctUrl = url.toString();
+
+      console.log('[createOpenAIChatModel] Using custom fetch to override URL construction:', {
+        baseUrl: providerConfig.baseUrl,
+        restEndpoint: providerConfig.restEndpoint,
+        queryParams: providerConfig.customQuery,
+        correctUrl: correctUrl,
+      });
+
+      // Override the fetch function to use our correct URL
+      configuration.fetch = async (url: string, init?: RequestInit) => {
+        // Replace LangChain's constructed URL with our correct URL
+        console.log('[CustomFetch] LangChain wanted to use:', url);
+        console.log('[CustomFetch] Using instead:', correctUrl);
+        return fetch(correctUrl, init);
+      };
+
+      // Set baseURL to just the base part (LangChain will append /chat/completions, but our fetch will override it)
+      configuration.baseURL = providerConfig.baseUrl;
+    } else {
+      // No query parameters, use the simpler approach
+      const url = new URL(fullUrl);
+      fullUrl = url.toString();
+      configuration.baseURL = fullUrl;
+    }
+
+    console.log('[createOpenAIChatModel] Final URL configuration:', {
+      baseUrl: providerConfig.baseUrl,
+      restEndpoint: providerConfig.restEndpoint,
+      queryParams: providerConfig.customQuery,
+      finalUrl: configuration.baseURL,
+      usingCustomFetch: !!configuration.fetch,
+    });
   }
+
   if (extraFetchOptions?.headers) {
     configuration.defaultHeaders = extraFetchOptions.headers;
   }
@@ -228,7 +293,12 @@ function createAzureChatModel(providerConfig: ProviderConfig, modelConfig: Model
 }
 
 // create a chat model based on the agent name, the model name and provider
-export function createChatModel(providerConfig: ProviderConfig, modelConfig: ModelConfig): BaseChatModel {
+export function createChatModel(
+  providerConfig: ProviderConfig,
+  modelConfig: ModelConfig,
+  extraFetchOptions?: { headers?: Record<string, string> } | undefined,
+): BaseChatModel {
+  const maybeExtra = extraFetchOptions;
   const temperature = (modelConfig.parameters?.temperature ?? 0.1) as number;
   const topP = (modelConfig.parameters?.topP ?? 0.1) as number;
 
@@ -242,18 +312,23 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
 
   switch (modelConfig.provider) {
     case ProviderTypeEnum.OpenAI: {
-      // Call helper without extra options
-      return createOpenAIChatModel(providerConfig, modelConfig, undefined);
+      // Call helper - pass any extra headers if provided
+      return createOpenAIChatModel(providerConfig, modelConfig, maybeExtra);
     }
     case ProviderTypeEnum.Anthropic: {
       // For Opus models, only include temperature, not topP
+      const clientOptions: Record<string, unknown> = {};
+      if (providerConfig.customHeaders) {
+        clientOptions.defaultHeaders = providerConfig.customHeaders;
+      }
+
       const args = isAnthropicOpusModel(modelConfig.modelName)
         ? {
             model: modelConfig.modelName,
             apiKey: providerConfig.apiKey,
             maxTokens,
             temperature,
-            clientOptions: {},
+            clientOptions,
           }
         : {
             model: modelConfig.modelName,
@@ -261,57 +336,116 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
             maxTokens,
             temperature,
             topP,
-            clientOptions: {},
+            clientOptions,
           };
       return new ChatAnthropic(args);
     }
     case ProviderTypeEnum.DeepSeek: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        configuration?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
       };
+
+      if (providerConfig.customHeaders) {
+        args.configuration = {
+          defaultHeaders: providerConfig.customHeaders,
+        };
+      }
+
       return new ChatDeepSeek(args) as BaseChatModel;
     }
     case ProviderTypeEnum.Gemini: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        clientOptions?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
       };
+
+      if (providerConfig.customHeaders) {
+        args.clientOptions = {
+          defaultHeaders: providerConfig.customHeaders,
+        };
+      }
+
       return new ChatGoogleGenerativeAI(args);
     }
     case ProviderTypeEnum.Grok: {
+      const configuration: Record<string, unknown> = {};
+      if (providerConfig.customHeaders) {
+        configuration.defaultHeaders = providerConfig.customHeaders;
+      }
+
       const args = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
         maxTokens,
-        configuration: {},
+        configuration,
       };
       return new ChatXAI(args) as BaseChatModel;
     }
     case ProviderTypeEnum.Groq: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
         maxTokens,
       };
+
+      if (providerConfig.customHeaders) {
+        args.configuration = {
+          defaultHeaders: providerConfig.customHeaders,
+        };
+      }
+
       return new ChatGroq(args);
     }
     case ProviderTypeEnum.Cerebras: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
         maxTokens,
       };
+
+      if (providerConfig.customHeaders) {
+        args.configuration = {
+          defaultHeaders: providerConfig.customHeaders,
+        };
+      }
+
       return new ChatCerebras(args);
     }
     case ProviderTypeEnum.Ollama: {
@@ -324,6 +458,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         temperature?: number;
         maxTokens?: number;
         numCtx: number;
+        configuration?: Record<string, unknown>;
       } = {
         model: modelConfig.modelName,
         // required but ignored by ollama
@@ -338,17 +473,25 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         // TODO: configure the context window size in model config
         numCtx: 64000,
       };
+
+      if (providerConfig.customHeaders) {
+        args.configuration = {
+          defaultHeaders: providerConfig.customHeaders,
+        };
+      }
+
       return new ChatOllama(args);
     }
     case ProviderTypeEnum.OpenRouter: {
       // Call the helper function, passing OpenRouter headers via the third argument
       console.log('[createChatModel] Calling createOpenAIChatModel for OpenRouter');
-      return createOpenAIChatModel(providerConfig, modelConfig, {
-        headers: {
-          'HTTP-Referer': 'https://nanobrowser.ai',
-          'X-Title': 'Nanobrowser',
-        },
-      });
+      // Merge OpenRouter default headers with provider custom headers if any
+      const defaultHeaders: Record<string, string> = {
+        'HTTP-Referer': 'https://nanobrowser.ai',
+        'X-Title': 'Nanobrowser',
+      };
+      const merged = { ...defaultHeaders, ...(maybeExtra?.headers || {}), ...(providerConfig.customHeaders || {}) };
+      return createOpenAIChatModel(providerConfig, modelConfig, { headers: merged });
     }
     case ProviderTypeEnum.Llama: {
       // Llama API has a different response format, use custom ChatLlama class
@@ -371,6 +514,9 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       if (providerConfig.baseUrl) {
         configuration.baseURL = providerConfig.baseUrl;
       }
+      if (providerConfig.customHeaders) {
+        configuration.defaultHeaders = providerConfig.customHeaders;
+      }
       args.configuration = configuration;
 
       return new ChatLlama(args);
@@ -378,7 +524,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
     default: {
       // by default, we think it's a openai-compatible provider
       // Pass undefined for extraFetchOptions for default/custom cases
-      return createOpenAIChatModel(providerConfig, modelConfig, undefined);
+      return createOpenAIChatModel(providerConfig, modelConfig, maybeExtra);
     }
   }
 }
