@@ -15,9 +15,13 @@
     "clean": "pnpm clean:bundle && pnpm clean:turbo && pnpm clean:node_modules",
     "clean:install": "pnpm clean:node_modules && pnpm install --frozen-lockfile",
     "build": "pnpm clean:bundle && turbo ready && turbo build",
+    "build:firefox": "pnpm clean:bundle && turbo ready && cross-env __FIREFOX__=true turbo build",
     "zip": "pnpm build && pnpm -F zipper zip",
+    "zip:firefox": "pnpm build:firefox && cross-env __FIREFOX__=true pnpm -F zipper zip",
     "dev": "turbo ready && cross-env __DEV__=true turbo watch dev --concurrency 20",
+    "dev:firefox": "turbo ready && cross-env __DEV__=true __FIREFOX__=true turbo watch dev --concurrency 20",
     "e2e": "pnpm build && pnpm zip && turbo e2e",
+    "e2e:firefox": "pnpm build:firefox && pnpm zip:firefox && cross-env __FIREFOX__=true turbo e2e",
     "type-check": "turbo type-check",
     "lint": "turbo lint --continue -- --fix --cache --cache-location node_modules/.cache/.eslintcache",
     "lint:fix": "turbo lint:fix --continue -- --fix --cache --cache-location node_modules/.cache/.eslintcache",
@@ -27,6 +31,7 @@
   },
   "dependencies": {
     "eslint-plugin-tailwindcss": "^3.17.4",
+    "puppeteer-core": "^24.29.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
@@ -53,12 +58,12 @@
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
+    "run-script-os": "^1.1.6",
     "tailwindcss": "^3.4.17",
     "tslib": "^2.6.3",
-    "typescript": "5.5.4",
     "turbo": "^2.5.3",
-    "vite": "6.3.6",
-    "run-script-os": "^1.1.6"
+    "typescript": "5.5.4",
+    "vite": "6.3.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json}": [
@@ -73,8 +78,7 @@
     "overrides": {
       "cross-spawn": "^7.0.5",
       "esbuild": "^0.25.1",
-      "nanoid": "3.3.11",
-      "tar-fs": "^3.1.1"
+      "nanoid": "3.3.11"
     }
   }
 }
