@@ -37,7 +37,7 @@ const SidePanel = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
-  const [replayEnabled, setReplayEnabled] = useState(false);
+  const [replayEnabled, setReplayEnabled] = useState(true);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
@@ -82,7 +82,7 @@ const SidePanel = () => {
       setReplayEnabled(settings.replayHistoricalTasks);
     } catch (error) {
       console.error('Error loading general settings:', error);
-      setReplayEnabled(false);
+      setReplayEnabled(true);
     }
   }, []);
 

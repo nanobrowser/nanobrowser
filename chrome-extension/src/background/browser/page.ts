@@ -1577,19 +1577,21 @@ export default class Page {
       console.warn('Page load failed, continuing...', error);
     }
 
-    // Calculate remaining time to meet minimum wait time
     const elapsed = (Date.now() - startTime) / 1000; // Convert to seconds
-    const minWaitTime = timeoutOverwrite || this._config.minimumWaitPageLoadTime;
-    const remaining = Math.max(minWaitTime - elapsed, 0);
 
-    console.debug(
-      `--Page loaded in ${elapsed.toFixed(2)} seconds, waiting for additional ${remaining.toFixed(2)} seconds`,
-    );
+    if (typeof timeoutOverwrite === 'number') {
+      const remaining = Math.max(timeoutOverwrite - elapsed, 0);
+      console.debug(
+        `--Page loaded in ${elapsed.toFixed(2)} seconds, waiting for additional ${remaining.toFixed(2)} seconds`,
+      );
 
-    // Sleep remaining time if needed
-    if (remaining > 0) {
-      await new Promise(resolve => setTimeout(resolve, remaining * 1000)); // Convert seconds to milliseconds
+      if (remaining > 0) {
+        await new Promise(resolve => setTimeout(resolve, remaining * 1000)); // Convert seconds to milliseconds
+      }
+      return;
     }
+
+    console.debug(`--Page loaded in ${elapsed.toFixed(2)} seconds`);
   }
 
   /**

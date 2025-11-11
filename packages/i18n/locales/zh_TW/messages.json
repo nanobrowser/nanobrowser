@@ -232,12 +232,6 @@
   "options_general_maxFailures_desc": {
     "message": "在停止執行前，可容許的連續失敗次數"
   },
-  "options_general_enableVision": {
-    "message": "啟用視覺能力"
-  },
-  "options_general_enableVision_desc": {
-    "message": "使用大型語言模型的視覺能力 (將會消耗更多的 token 以取得更好的結果)"
-  },
   "options_general_displayHighlights": {
     "message": "顯示醒目標示"
   },
@@ -249,18 +243,6 @@
   },
   "options_general_planningInterval_desc": {
     "message": "每隔 [Number] 個步驟重新評估並更新計畫"
-  },
-  "options_general_minWaitPageLoad": {
-    "message": "頁面載入等候時間"
-  },
-  "options_general_minWaitPageLoad_desc": {
-    "message": "頁面載入後的最短等候時間 (250-5000 毫秒)"
-  },
-  "options_general_replayHistoricalTasks": {
-    "message": "重播歷史任務（實驗性功能）"
-  },
-  "options_general_replayHistoricalTasks_desc": {
-    "message": "啟用儲存與重播代理程式的步驟歷史紀錄 (此為實驗性功能，可能存在問題)"
   },
   "options_models_providers_header": {
     "message": "LLM 提供者"

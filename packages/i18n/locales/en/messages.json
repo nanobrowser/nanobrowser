@@ -232,12 +232,6 @@
   "options_general_maxFailures_desc": {
     "message": "How many consecutive failures before stopping"
   },
-  "options_general_enableVision": {
-    "message": "Enable Vision"
-  },
-  "options_general_enableVision_desc": {
-    "message": "Use vision capability of LLMs (consumes more tokens for better results)"
-  },
   "options_general_displayHighlights": {
     "message": "Display Highlights"
   },
@@ -249,18 +243,6 @@
   },
   "options_general_planningInterval_desc": {
     "message": "Reconsider and update the plan every [Number] steps"
-  },
-  "options_general_minWaitPageLoad": {
-    "message": "Page Load Wait Time"
-  },
-  "options_general_minWaitPageLoad_desc": {
-    "message": "Minimum wait time after page loads (250-5000ms)"
-  },
-  "options_general_replayHistoricalTasks": {
-    "message": "Replay Historical Tasks( experimental )"
-  },
-  "options_general_replayHistoricalTasks_desc": {
-    "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
   },
 
   "options_models_providers_header": {

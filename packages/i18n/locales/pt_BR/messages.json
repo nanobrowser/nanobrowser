@@ -232,12 +232,6 @@
   "options_general_maxFailures_desc": {
     "message": "Quantas falhas consecutivas antes de parar"
   },
-  "options_general_enableVision": {
-    "message": "Ativar Visão"
-  },
-  "options_general_enableVision_desc": {
-    "message": "Usar capacidade de visão dos modelos de linguagem (consome mais tokens para melhores resultados)"
-  },
   "options_general_displayHighlights": {
     "message": "Mostrar Destaques"
   },
@@ -249,18 +243,6 @@
   },
   "options_general_planningInterval_desc": {
     "message": "Reconsiderar e atualizar o plano a cada [Número] passos"
-  },
-  "options_general_minWaitPageLoad": {
-    "message": "Tempo de Espera de Carregamento da Página"
-  },
-  "options_general_minWaitPageLoad_desc": {
-    "message": "Tempo mínimo de espera após o carregamento da página (250-5000ms)"
-  },
-  "options_general_replayHistoricalTasks": {
-    "message": "Reproduzir Tarefas Históricas (experimental)"
-  },
-  "options_general_replayHistoricalTasks_desc": {
-    "message": "Ativar o armazenamento e a reprodução do histórico de passos do agente (experimental, pode ter problemas)"
   },
   "options_models_providers_header": {
     "message": "Provedores de LLM"
