@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Descrição da extensão",
-    "message": "Automatize tarefas da web com IA! NanoBrowser é uma extensão de código aberto para o Chrome que permite extrair dados, preencher formulários e muito mais."
+    "message": "Automatize tarefas da web com IA! Browseless AI é uma extensão de código aberto para o Chrome que permite extrair dados, preencher formulários e muito mais."
   },
   "app_metadata_name": {
     "description": "Nome da extensão",
-    "message": "Nanobrowser: Agente Web de IA e Automação"
+    "message": "Browseless AI: Meu Companheiro Agente"
   },
   "errors_unknown": {
     "message": "Ocorreu um erro desconhecido"
@@ -38,7 +38,7 @@
     "message": "Voltar para o chat"
   },
   "welcome_title": {
-    "message": "Bem-vindo ao Nanobrowser!"
+    "message": "Bem-vindo ao Browseless AI!"
   },
   "welcome_instruction": {
     "message": "Para começar, por favor, configure suas chaves de API na página de configurações."
@@ -50,7 +50,7 @@
     "message": "Guia de Início Rápido"
   },
   "welcome_joinCommunity": {
-    "message": "Junte-se à Nossa Comunidade"
+    "message": "Feito por SingularityAge"
   },
   "status_checkingConfig": {
     "message": "Verificando configuração..."
@@ -167,7 +167,7 @@
     "message": "Ativar Entrada de Voz"
   },
   "permissions_microphone_description": {
-    "message": "O Nanobrowser precisa de acesso ao microfone para converter sua fala em texto."
+    "message": "O Browseless AI precisa de acesso ao microfone para converter sua fala em texto."
   },
   "permissions_microphone_grantButton": {
     "message": "Conceder Permissão ao Microfone"
@@ -200,19 +200,16 @@
     "message": "Configurações"
   },
   "options_tabs_general": {
-    "message": "Geral"
+    "message": "Configurações"
   },
   "options_tabs_models": {
     "message": "Modelos"
-  },
-  "options_tabs_firewall": {
-    "message": "Firewall"
   },
   "options_tabs_help": {
     "message": "Ajuda"
   },
   "options_general_header": {
-    "message": "Geral"
+    "message": "Configurações"
   },
   "options_general_maxSteps": {
     "message": "Máximo de Passos por Tarefa"
@@ -231,6 +228,15 @@
   },
   "options_general_maxFailures_desc": {
     "message": "Quantas falhas consecutivas antes de parar"
+  },
+  "options_general_fixedValue": {
+    "message": "Fixo em $VALUE$",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "1000"
+      }
+    }
   },
   "options_general_displayHighlights": {
     "message": "Mostrar Destaques"
@@ -294,9 +300,6 @@
   "options_models_selection_header": {
     "message": "Seleção de Modelo"
   },
-  "options_models_speechToText_header": {
-    "message": "Modelo de Fala para Texto"
-  },
 
   "options_models_agents_navigator": {
     "message": "Navega em sites e executa ações"
@@ -316,9 +319,6 @@
   },
   "options_models_labels_reasoning": {
     "message": "Raciocínio"
-  },
-  "options_models_stt_desc": {
-    "message": "Configure o modelo Gemini usado para converter fala em texto ao usar o recurso de microfone."
   },
   "options_models_chooseModel": {
     "message": "Escolher Modelo"
@@ -393,42 +393,6 @@
     }
   },
 
-  "options_firewall_header": {
-    "message": "Firewall"
-  },
-  "options_firewall_enableToggle": {
-    "message": "Ativar Firewall"
-  },
-  "options_firewall_toggleFirewall_a11y": {
-    "message": "Ativar/Desativar Firewall"
-  },
-  "options_firewall_allowList_header": {
-    "message": "Lista de Permissões"
-  },
-  "options_firewall_allowList_empty": {
-    "message": "Nenhum domínio na lista de permissões. Uma lista de permissões vazia significa que todos os domínios não negados são permitidos."
-  },
-  "options_firewall_denyList_header": {
-    "message": "Lista de Negações"
-  },
-  "options_firewall_denyList_empty": {
-    "message": "Nenhum domínio na lista de negações"
-  },
-  "options_firewall_placeholders_domainUrl": {
-    "message": "Insira domínio ou URL (ex: example.com, localhost, 127.0.0.1)"
-  },
-  "options_firewall_btnAdd": {
-    "message": "Adicionar"
-  },
-  "options_firewall_btnRemove": {
-    "message": "Remover"
-  },
-  "options_firewall_howItWorks_header": {
-    "message": "Como o Firewall Funciona"
-  },
-  "options_firewall_howItWorks": {
-    "message": "O firewall contém uma lista de negações e uma lista de permissões.\nSe ambas as listas estiverem vazias, todos os URLs são permitidos\nA lista de negações tem prioridade - se um URL corresponder a qualquer entrada da lista de negações, ele será bloqueado\nQuando a lista de permissões está vazia, todos os URLs não negados são permitidos\nQuando a lista de permissões não está vazia, apenas os URLs correspondentes são permitidos\nCuringas ainda NÃO são suportados\nA lista de permissões é preferível à lista de negações"
-  },
 
   "bg_errors_noTabId": {
     "message": "Nenhum ID de aba fornecido"

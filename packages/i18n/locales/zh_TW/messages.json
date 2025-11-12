@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "使用 AI 自動化網頁任務！Nanobrowser 是一款開放原始碼的 Chrome 擴充功能，能協助您擷取資料、填寫表單等。"
+    "message": "使用 AI 自動化網頁任務！Browseless AI 是一款開放原始碼的 Chrome 擴充功能，能協助您擷取資料、填寫表單等。"
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "Nanobrowser：AI 網頁代理程式與自動化"
+    "message": "Browseless AI：我的智能代理夥伴"
   },
   "errors_unknown": {
     "message": "發生未知錯誤"
@@ -38,7 +38,7 @@
     "message": "回到對話"
   },
   "welcome_title": {
-    "message": "歡迎使用 Nanobrowser！"
+    "message": "歡迎使用 Browseless AI！"
   },
   "welcome_instruction": {
     "message": "開始使用前，請先完成 API 金鑰的設定。"
@@ -50,7 +50,7 @@
     "message": "快速入門指南"
   },
   "welcome_joinCommunity": {
-    "message": "加入我們的社群"
+    "message": "由 SingularityAge 製作"
   },
   "status_checkingConfig": {
     "message": "正在檢查設定..."
@@ -167,7 +167,7 @@
     "message": "啟用語音輸入"
   },
   "permissions_microphone_description": {
-    "message": "Nanobrowser 需要麥克風存取權限，才能將語音轉換為文字。"
+    "message": "Browseless AI 需要麥克風存取權限，才能將語音轉換為文字。"
   },
   "permissions_microphone_grantButton": {
     "message": "授予麥克風權限"
@@ -200,19 +200,16 @@
     "message": "設定"
   },
   "options_tabs_general": {
-    "message": "一般"
+    "message": "設定"
   },
   "options_tabs_models": {
     "message": "模型"
-  },
-  "options_tabs_firewall": {
-    "message": "防火牆"
   },
   "options_tabs_help": {
     "message": "說明"
   },
   "options_general_header": {
-    "message": "一般"
+    "message": "設定"
   },
   "options_general_maxSteps": {
     "message": "單一任務的步驟上限"
@@ -231,6 +228,15 @@
   },
   "options_general_maxFailures_desc": {
     "message": "在停止執行前，可容許的連續失敗次數"
+  },
+  "options_general_fixedValue": {
+    "message": "固定為 $VALUE$",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "1000"
+      }
+    }
   },
   "options_general_displayHighlights": {
     "message": "顯示醒目標示"
@@ -292,9 +298,6 @@
   "options_models_selection_header": {
     "message": "模型選擇"
   },
-  "options_models_speechToText_header": {
-    "message": "語音轉文字模型"
-  },
   "options_models_agents_navigator": {
     "message": "瀏覽網站並執行操作"
   },
@@ -312,9 +315,6 @@
   },
   "options_models_labels_reasoning": {
     "message": "推理"
-  },
-  "options_models_stt_desc": {
-    "message": "設定在使用麥克風功能時，將語音轉換為文字所使用的 Gemini 模型。"
   },
   "options_models_chooseModel": {
     "message": "選擇模型"
@@ -387,42 +387,6 @@
         "example": "Custom OpenAI"
       }
     }
-  },
-  "options_firewall_header": {
-    "message": "防火牆"
-  },
-  "options_firewall_enableToggle": {
-    "message": "啟用防火牆"
-  },
-  "options_firewall_toggleFirewall_a11y": {
-    "message": "切換防火牆"
-  },
-  "options_firewall_allowList_header": {
-    "message": "允許清單"
-  },
-  "options_firewall_allowList_empty": {
-    "message": "允許清單中沒有網域。若允許清單為空，則表示所有未在拒絕清單中的網域都將被允許。"
-  },
-  "options_firewall_denyList_header": {
-    "message": "拒絕清單"
-  },
-  "options_firewall_denyList_empty": {
-    "message": "拒絕清單中沒有網域"
-  },
-  "options_firewall_placeholders_domainUrl": {
-    "message": "請輸入網域或 URL (例如 example.com, localhost, 127.0.0.1)"
-  },
-  "options_firewall_btnAdd": {
-    "message": "新增"
-  },
-  "options_firewall_btnRemove": {
-    "message": "移除"
-  },
-  "options_firewall_howItWorks_header": {
-    "message": "防火牆運作原理"
-  },
-  "options_firewall_howItWorks": {
-    "message": "防火牆包含一個拒絕清單和一個允許清單。\n- 如果兩個清單都為空，則允許所有 URL。\n- 拒絕清單具有較高優先順序。如果一個 URL 符合任何拒絕清單中的項目，它將被封鎖。\n- 當允許清單為空時，所有未被拒絕的 URL 都會被允許。\n- 當允許清單不為空時，只有符合清單中項目的 URL 才被允許。\n- 目前尚不支援萬用字元。\n- 建議優先使用允許清單，而非拒絕清單。"
   },
   "bg_errors_noTabId": {
     "message": "未提供分頁 ID"

@@ -12,6 +12,7 @@ export interface GeneralSettingsConfig {
   planningInterval: number;
   displayHighlights: boolean;
   replayHistoricalTasks: boolean;
+  visionNavigationRatio: number;
 }
 
 export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
@@ -22,14 +23,15 @@ export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
 
 // Default settings
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
-  maxSteps: 100,
-  maxActionsPerStep: 5,
-  maxFailures: 3,
+  maxSteps: 1000,
+  maxActionsPerStep: 100,
+  maxFailures: 12,
   useVision: true,
   useVisionForPlanner: true,
   planningInterval: 3,
   displayHighlights: true,
   replayHistoricalTasks: true,
+  visionNavigationRatio: 0.1,
 };
 
 const storage = createStorage<GeneralSettingsConfig>('general-settings', DEFAULT_GENERAL_SETTINGS, {
@@ -46,9 +48,15 @@ export const generalSettingsStore: GeneralSettingsStorage = {
       ...settings,
     };
 
+    updatedSettings.maxSteps = DEFAULT_GENERAL_SETTINGS.maxSteps;
+    updatedSettings.maxActionsPerStep = DEFAULT_GENERAL_SETTINGS.maxActionsPerStep;
+    updatedSettings.maxFailures = DEFAULT_GENERAL_SETTINGS.maxFailures;
     updatedSettings.useVision = true;
     updatedSettings.useVisionForPlanner = true;
     updatedSettings.replayHistoricalTasks = true;
+    const rawRatio = Number(updatedSettings.visionNavigationRatio);
+    const normalizedRatio = Number.isFinite(rawRatio) ? Math.min(Math.max(rawRatio, 0), 1) : DEFAULT_GENERAL_SETTINGS.visionNavigationRatio;
+    updatedSettings.visionNavigationRatio = normalizedRatio;
 
     await storage.set(updatedSettings);
   },
@@ -57,9 +65,16 @@ export const generalSettingsStore: GeneralSettingsStorage = {
     return {
       ...DEFAULT_GENERAL_SETTINGS,
       ...settings,
+      maxSteps: DEFAULT_GENERAL_SETTINGS.maxSteps,
+      maxActionsPerStep: DEFAULT_GENERAL_SETTINGS.maxActionsPerStep,
+      maxFailures: DEFAULT_GENERAL_SETTINGS.maxFailures,
       useVision: true,
       useVisionForPlanner: true,
       replayHistoricalTasks: true,
+      visionNavigationRatio:
+        settings && typeof settings.visionNavigationRatio === 'number'
+          ? Math.min(Math.max(settings.visionNavigationRatio, 0), 1)
+          : DEFAULT_GENERAL_SETTINGS.visionNavigationRatio,
     };
   },
   async resetToDefaults() {

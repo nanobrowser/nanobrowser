@@ -95,8 +95,8 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
             onDragOver={handleDragOver}
             onDrop={e => handleDrop(e, bookmark.id)}
             className={`group relative rounded-lg p-3 ${
-              isDarkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-sky-50'
-            } border ${isDarkMode ? 'border-slate-700' : 'border-sky-100'}`}>
+              isDarkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-gray-50'
+            } border ${isDarkMode ? 'border-slate-700' : 'border-gray-200'}`}>
             {editingId === bookmark.id ? (
               <div className="flex items-center">
                 <input
@@ -105,7 +105,7 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
                   value={editTitle}
                   onChange={e => setEditTitle(e.target.value)}
                   className={`mr-2 grow rounded px-2 py-1 text-sm ${
-                    isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-sky-100 bg-white text-gray-700'
+                    isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-200 bg-white text-gray-700'
                   } border`}
                 />
                 <button
@@ -162,8 +162,8 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
                   }}
                   className={`absolute right-[28px] top-1/2 z-10 -translate-y-1/2 rounded p-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
                     isDarkMode
-                      ? 'bg-slate-700 text-sky-400 hover:bg-slate-600'
-                      : 'bg-white text-sky-500 hover:bg-gray-100'
+                      ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
                   }`}
                   aria-label={t('chat_bookmarks_edit')}
                   type="button">
