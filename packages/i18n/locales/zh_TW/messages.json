@@ -118,6 +118,12 @@
       }
     }
   },
+  "chat_retry_tryAgain": {
+    "message": "再試一次"
+  },
+  "chat_retry_newChat": {
+    "message": "開新對話"
+  },
   "chat_replay_invalidArgs": {
     "message": "參數無效。請使用此格式：/replay <historySessionId>"
   },
@@ -449,7 +455,7 @@
     "message": "已達步驟上限"
   },
   "exec_errors_maxFailuresReached": {
-    "message": "已達失敗次數上限。"
+    "message": "錯誤過多：任務已停止。"
   },
   "exec_task_cancel": {
     "message": "任務已取消"

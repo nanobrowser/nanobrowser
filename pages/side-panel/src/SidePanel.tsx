@@ -22,6 +22,7 @@ declare global {
 
 const SidePanel = () => {
   const progressMessage = 'Showing progress...';
+  const failureMessage = t('exec_errors_maxFailuresReached');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
@@ -36,12 +37,19 @@ const SidePanel = () => {
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayEnabled, setReplayEnabled] = useState(true);
   const [visionNavigationRatio, setVisionNavigationRatio] = useState(0.1);
+  const [showRetryOptions, setShowRetryOptions] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
+  const lastTaskRef = useRef<{
+    type: 'new_task' | 'follow_up_task';
+    text: string;
+    displayText: string;
+    sessionId: string | null;
+  } | null>(null);
 
   // Check for dark mode preference
   useEffect(() => {
@@ -157,12 +165,14 @@ const SidePanel = () => {
             case ExecutionState.TASK_START:
               // Reset historical session flag when a new task starts
               setIsHistoricalSession(false);
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_OK:
               setIsFollowUpMode(true);
               setInputEnabled(true);
               setShowStopButton(false);
               setIsReplaying(false);
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_FAIL:
               setIsFollowUpMode(true);
@@ -170,6 +180,11 @@ const SidePanel = () => {
               setShowStopButton(false);
               setIsReplaying(false);
               skip = false;
+              if (content === failureMessage) {
+                setShowRetryOptions(true);
+              } else {
+                setShowRetryOptions(false);
+              }
               break;
             case ExecutionState.TASK_CANCEL:
               setIsFollowUpMode(false);
@@ -177,8 +192,10 @@ const SidePanel = () => {
               setShowStopButton(false);
               setIsReplaying(false);
               skip = false;
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_PAUSE:
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_RESUME:
               break;
@@ -277,7 +294,7 @@ const SidePanel = () => {
         });
       }
     },
-    [appendMessage],
+    [appendMessage, failureMessage],
   );
 
   // Stop heartbeat and close connection
@@ -316,6 +333,7 @@ const SidePanel = () => {
           });
           setInputEnabled(true);
           setShowStopButton(false);
+          setShowRetryOptions(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
         }
@@ -383,6 +401,8 @@ const SidePanel = () => {
   // Handle replay command
   const handleReplay = async (historySessionId: string): Promise<void> => {
     try {
+      setShowRetryOptions(false);
+      lastTaskRef.current = null;
       // Check if replay is enabled in settings
       if (!replayEnabled) {
         appendMessage({
@@ -554,6 +574,7 @@ const SidePanel = () => {
     }
 
     try {
+      setShowRetryOptions(false);
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tabId = tabs[0]?.id;
       if (!tabId) {
@@ -593,25 +614,21 @@ const SidePanel = () => {
       }
 
       // Send message using the utility function
-      if (isFollowUpMode) {
-        // Send as follow-up task
-        await sendMessage({
-          type: 'follow_up_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
-      } else {
-        // Send as new task
-        await sendMessage({
-          type: 'new_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('new_task sent', text, tabId, sessionIdRef.current);
-      }
+      const taskType: 'new_task' | 'follow_up_task' = isFollowUpMode ? 'follow_up_task' : 'new_task';
+      await sendMessage({
+        type: taskType,
+        task: text,
+        taskId: sessionIdRef.current,
+        tabId,
+      });
+      console.log(`${taskType} sent`, text, tabId, sessionIdRef.current);
+
+      lastTaskRef.current = {
+        type: taskType,
+        text,
+        displayText: displayText || text,
+        sessionId: sessionIdRef.current,
+      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error('Task error', errorMessage);
@@ -642,7 +659,59 @@ const SidePanel = () => {
     }
     setInputEnabled(true);
     setShowStopButton(false);
+    setShowRetryOptions(false);
   };
+
+  const handleRetryTask = useCallback(async () => {
+    const lastTask = lastTaskRef.current;
+    if (!lastTask?.text || !lastTask.sessionId) {
+      return;
+    }
+
+    try {
+      setShowRetryOptions(false);
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      setIsFollowUpMode(lastTask.type === 'follow_up_task');
+      setIsHistoricalSession(false);
+      setInputEnabled(false);
+      setShowStopButton(true);
+
+      const userMessage = {
+        actor: Actors.USER,
+        content: lastTask.displayText,
+        timestamp: Date.now(),
+      };
+
+      sessionIdRef.current = lastTask.sessionId;
+      appendMessage(userMessage, lastTask.sessionId);
+
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      await sendMessage({
+        type: lastTask.type,
+        task: lastTask.text,
+        taskId: lastTask.sessionId,
+        tabId,
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: errorMessage,
+        timestamp: Date.now(),
+      });
+      setInputEnabled(true);
+      setShowStopButton(false);
+      stopConnection();
+    }
+  }, [appendMessage, sendMessage, setupConnection, stopConnection]);
 
   const handleNewChat = () => {
     // Clear messages and start a new chat
@@ -653,6 +722,8 @@ const SidePanel = () => {
     setShowStopButton(false);
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
+    setShowRetryOptions(false);
+    lastTaskRef.current = null;
 
     // Disconnect any existing connection
     stopConnection();
@@ -674,11 +745,13 @@ const SidePanel = () => {
 
   const handleBackToChat = (reset = false) => {
     setShowHistory(false);
+    setShowRetryOptions(false);
     if (reset) {
       setCurrentSessionId(null);
       setMessages([]);
       setIsFollowUpMode(false);
       setIsHistoricalSession(false);
+      lastTaskRef.current = null;
     }
   };
 
@@ -690,6 +763,8 @@ const SidePanel = () => {
         setMessages(fullSession.messages);
         setIsFollowUpMode(false);
         setIsHistoricalSession(true); // Mark this as a historical session
+        setShowRetryOptions(false);
+        lastTaskRef.current = null;
         console.log('history session selected', sessionId);
       }
       setShowHistory(false);
@@ -973,7 +1048,15 @@ const SidePanel = () => {
                 {messages.length > 0 && (
                   <div
                     className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-                    <MessageList messages={messages} isDarkMode={isDarkMode} />
+                    <MessageList
+                      messages={messages}
+                      isDarkMode={isDarkMode}
+                      failureMessage={failureMessage}
+                      showRetryOptions={showRetryOptions}
+                      onRetry={handleRetryTask}
+                      onNewChat={handleNewChat}
+                      retryDisabled={!lastTaskRef.current?.text || !lastTaskRef.current?.sessionId}
+                    />
                     <div ref={messagesEndRef} />
                   </div>
                 )}

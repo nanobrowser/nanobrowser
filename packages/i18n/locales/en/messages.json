@@ -118,6 +118,12 @@
       }
     }
   },
+  "chat_retry_tryAgain": {
+    "message": "Try again"
+  },
+  "chat_retry_newChat": {
+    "message": "New chat"
+  },
   "chat_replay_invalidArgs": {
     "message": "Invalid arguments. Please use the format: /replay <historySessionId>"
   },
@@ -456,7 +462,7 @@
     "message": "Max steps reached"
   },
   "exec_errors_maxFailuresReached": {
-    "message": "Max failures reached"
+    "message": "Too many errors: Task halted."
   },
   "exec_task_cancel": {
     "message": "Task cancelled"

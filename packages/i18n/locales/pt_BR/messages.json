@@ -118,6 +118,12 @@
       }
     }
   },
+  "chat_retry_tryAgain": {
+    "message": "Tentar novamente"
+  },
+  "chat_retry_newChat": {
+    "message": "Novo chat"
+  },
   "chat_replay_invalidArgs": {
     "message": "Argumentos inválidos. Por favor, use o formato: /replay <historySessionId>"
   },
@@ -455,7 +461,7 @@
     "message": "Máximo de passos atingido"
   },
   "exec_errors_maxFailuresReached": {
-    "message": "Máximo de falhas atingido"
+    "message": "Erros demais: tarefa interrompida."
   },
   "exec_task_cancel": {
     "message": "Tarefa cancelada"

@@ -23,7 +23,7 @@ export interface AgentOptions {
 export const DEFAULT_AGENT_OPTIONS: AgentOptions = {
   maxSteps: 1000,
   maxActionsPerStep: 100,
-  maxFailures: 12,
+  maxFailures: 20,
   retryDelay: 10,
   maxInputTokens: 128000,
   maxErrorLength: 400,
