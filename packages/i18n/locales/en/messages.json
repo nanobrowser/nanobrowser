@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "Automate web tasks with AI! NanoBrowser is an open-source Chrome extension that lets you extract data, fill forms, and more."
+    "message": "Automate web tasks with AI! Browseless AI is an open-source Chrome extension that lets you extract data, fill forms, and more."
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "Nanobrowser: AI Web Agent & Automation"
+    "message": "Browseless AI: My Agentic Companion"
   },
   "errors_unknown": {
     "message": "Unknown error occurred"
@@ -38,7 +38,7 @@
     "message": "Back to chat"
   },
   "welcome_title": {
-    "message": "Welcome to Nanobrowser!"
+    "message": "Welcome to Browseless AI!"
   },
   "welcome_instruction": {
     "message": "To get started, please configure your API keys in the settings page."
@@ -47,10 +47,10 @@
     "message": "Open Settings"
   },
   "welcome_quickStart": {
-    "message": "Quick Start Guide"
+    "message": "Shortcuts Guide"
   },
   "welcome_joinCommunity": {
-    "message": "Join Our Community"
+    "message": "Made by SingularityAge"
   },
   "status_checkingConfig": {
     "message": "Checking configuration..."
@@ -65,7 +65,7 @@
     "message": "Send"
   },
   "chat_input_placeholder": {
-    "message": "What can I help you with?"
+    "message": "What can I do for you?"
   },
   "chat_input_form": {
     "message": "Chat input form"
@@ -86,7 +86,7 @@
     "message": "Delete session"
   },
   "chat_bookmarks_header": {
-    "message": "Quick Start"
+    "message": "Shortcuts"
   },
   "chat_bookmarks_saveEdit": {
     "message": "Save changes"
@@ -117,6 +117,12 @@
         "example": "Connection timeout"
       }
     }
+  },
+  "chat_retry_tryAgain": {
+    "message": "Try again"
+  },
+  "chat_retry_newChat": {
+    "message": "New chat"
   },
   "chat_replay_invalidArgs": {
     "message": "Invalid arguments. Please use the format: /replay <historySessionId>"
@@ -167,7 +173,7 @@
     "message": "Enable Voice Input"
   },
   "permissions_microphone_description": {
-    "message": "Nanobrowser needs microphone access to convert your speech to text."
+    "message": "Browseless AI needs microphone access to convert your speech to text."
   },
   "permissions_microphone_grantButton": {
     "message": "Grant Microphone Permission"
@@ -200,19 +206,16 @@
     "message": "Settings"
   },
   "options_tabs_general": {
-    "message": "General"
+    "message": "Settings"
   },
   "options_tabs_models": {
     "message": "Models"
-  },
-  "options_tabs_firewall": {
-    "message": "Firewall"
   },
   "options_tabs_help": {
     "message": "Help"
   },
   "options_general_header": {
-    "message": "General"
+    "message": "Settings"
   },
   "options_general_maxSteps": {
     "message": "Max Steps per Task"
@@ -232,11 +235,14 @@
   "options_general_maxFailures_desc": {
     "message": "How many consecutive failures before stopping"
   },
-  "options_general_enableVision": {
-    "message": "Enable Vision"
-  },
-  "options_general_enableVision_desc": {
-    "message": "Use vision capability of LLMs (consumes more tokens for better results)"
+  "options_general_fixedValue": {
+    "message": "Fixed at $VALUE$",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "1000"
+      }
+    }
   },
   "options_general_displayHighlights": {
     "message": "Display Highlights"
@@ -249,18 +255,6 @@
   },
   "options_general_planningInterval_desc": {
     "message": "Reconsider and update the plan every [Number] steps"
-  },
-  "options_general_minWaitPageLoad": {
-    "message": "Page Load Wait Time"
-  },
-  "options_general_minWaitPageLoad_desc": {
-    "message": "Minimum wait time after page loads (250-5000ms)"
-  },
-  "options_general_replayHistoricalTasks": {
-    "message": "Replay Historical Tasks( experimental )"
-  },
-  "options_general_replayHistoricalTasks_desc": {
-    "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
   },
 
   "options_models_providers_header": {
@@ -313,9 +307,6 @@
   "options_models_selection_header": {
     "message": "Model Selection"
   },
-  "options_models_speechToText_header": {
-    "message": "Speech-to-Text Model"
-  },
 
   "options_models_agents_navigator": {
     "message": "Navigates websites and performs actions"
@@ -335,9 +326,6 @@
   },
   "options_models_labels_reasoning": {
     "message": "Reasoning"
-  },
-  "options_models_stt_desc": {
-    "message": "Configure the Gemini model used for converting speech to text when using the microphone feature."
   },
   "options_models_chooseModel": {
     "message": "Choose Model"
@@ -412,42 +400,6 @@
     }
   },
 
-  "options_firewall_header": {
-    "message": "Firewall"
-  },
-  "options_firewall_enableToggle": {
-    "message": "Enable Firewall"
-  },
-  "options_firewall_toggleFirewall_a11y": {
-    "message": "Toggle Firewall"
-  },
-  "options_firewall_allowList_header": {
-    "message": "Allow List"
-  },
-  "options_firewall_allowList_empty": {
-    "message": "No domains in allow list. Empty allow list means all non-denied domains are allowed."
-  },
-  "options_firewall_denyList_header": {
-    "message": "Deny List"
-  },
-  "options_firewall_denyList_empty": {
-    "message": "No domains in deny list"
-  },
-  "options_firewall_placeholders_domainUrl": {
-    "message": "Enter domain or URL (e.g. example.com, localhost, 127.0.0.1)"
-  },
-  "options_firewall_btnAdd": {
-    "message": "Add"
-  },
-  "options_firewall_btnRemove": {
-    "message": "Remove"
-  },
-  "options_firewall_howItWorks_header": {
-    "message": "How the Firewall Works"
-  },
-  "options_firewall_howItWorks": {
-    "message": "The firewall contains a deny list and an allow list.\nIf both lists are empty, all URLs are allowed\nDeny list takes priority - if a URL matches any deny list entry, it's blocked\nWhen allow list is empty, all non-denied URLs are allowed\nWhen allow list is not empty, only matching URLs are allowed\nWildcards are NOT supported yet\nAllow list is preferred over deny list"
-  },
 
   "bg_errors_noTabId": {
     "message": "No tab ID provided"
@@ -510,7 +462,7 @@
     "message": "Max steps reached"
   },
   "exec_errors_maxFailuresReached": {
-    "message": "Max failures reached"
+    "message": "Too many errors: Task halted."
   },
   "exec_task_cancel": {
     "message": "Task cancelled"

@@ -17,16 +17,45 @@ import {
   ChatModelForbiddenError,
   ExtensionConflictError,
   RequestCancelledError,
-  MaxStepsReachedError,
   MaxFailuresReachedError,
 } from './agents/errors';
 import { URLNotAllowedError } from '../browser/views';
 import { chatHistoryStore } from '@extension/storage/lib/chat';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
-import { analytics } from '../services/analytics';
 
 const logger = createLogger('Executor');
+const VISION_RATIO_INCREMENT = 1 / 24;
+const VISION_RATIO_MAX = 0.5;
+const VISION_SUCCESS_DECAY = VISION_RATIO_MAX / 100;
+
+interface PlannerCadenceState {
+  interval: number;
+  lastAdjustmentStep: number;
+}
+
+/**
+ * Normalize the planner cadence interval for the current step and track when
+ * the cadence was last adjusted. This ensures mid-run updates to the agent
+ * options propagate through the executor loop without losing state.
+ */
+export function resolvePlannerInterval(context: AgentContext): PlannerCadenceState {
+  const rawInterval = context.options.planningInterval;
+  const numericInterval = Number(rawInterval);
+  const fallbackInterval = Number.isFinite(context.currentPlannerInterval) ? context.currentPlannerInterval : 1;
+  const candidateInterval = Number.isFinite(numericInterval) ? numericInterval : fallbackInterval;
+  const roundedInterval = Math.round(candidateInterval);
+  const interval = Number.isFinite(roundedInterval) && roundedInterval > 0 ? roundedInterval : 1;
+
+  const intervalChanged = context.currentPlannerInterval !== interval;
+  const needsInitialization = context.lastPlannerAdjustmentStep < 0;
+  const lastAdjustmentStep = intervalChanged || needsInitialization ? context.nSteps : context.lastPlannerAdjustmentStep;
+
+  return {
+    interval,
+    lastAdjustmentStep,
+  };
+}
 
 export interface ExecutorExtraArgs {
   plannerLLM?: BaseChatModel;
@@ -42,7 +71,11 @@ export class Executor {
   private readonly plannerPrompt: PlannerPrompt;
   private readonly navigatorPrompt: NavigatorPrompt;
   private readonly generalSettings: GeneralSettingsConfig | undefined;
+  private readonly baseVisionNavigationRatio: number;
+  private currentVisionNavigationRatio: number;
+  private visionUsageAccumulator: number;
   private tasks: string[] = [];
+  private initialPlanningInterval: number;
   constructor(
     task: string,
     taskId: string,
@@ -85,6 +118,16 @@ export class Executor {
     });
 
     this.context = context;
+    const ratio = this.generalSettings?.visionNavigationRatio ?? 0.1;
+    const normalizedRatio = Number.isFinite(ratio) ? Math.min(Math.max(ratio, 0), VISION_RATIO_MAX) : 0.1;
+    this.baseVisionNavigationRatio = normalizedRatio;
+    this.currentVisionNavigationRatio = normalizedRatio;
+    this.visionUsageAccumulator = 0;
+    const plannerCadence = resolvePlannerInterval(context);
+    this.initialPlanningInterval = plannerCadence.interval;
+    this.context.options.planningInterval = plannerCadence.interval;
+    this.context.currentPlannerInterval = plannerCadence.interval;
+    this.context.lastPlannerAdjustmentStep = plannerCadence.lastAdjustmentStep;
     // Initialize message history
     this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), task);
   }
@@ -130,13 +173,15 @@ export class Executor {
     // reset the step counter
     const context = this.context;
     context.nSteps = 0;
+    context.options.planningInterval = this.initialPlanningInterval;
+    context.currentPlannerInterval = this.initialPlanningInterval;
+    context.lastPlannerAdjustmentStep = -1;
+    this.currentVisionNavigationRatio = this.baseVisionNavigationRatio;
+    this.visionUsageAccumulator = 0;
     const allowedMaxSteps = this.context.options.maxSteps;
 
     try {
       this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_START, this.context.taskId);
-
-      // Track task start
-      void analytics.trackTaskStart(this.context.taskId);
 
       let step = 0;
       let latestPlanOutput: AgentOutput<PlannerOutput> | null = null;
@@ -148,9 +193,19 @@ export class Executor {
           maxSteps: context.options.maxSteps,
         };
 
+        context.options.useVision = this.shouldUseVisionForStep();
+
         logger.info(`🔄 Step ${step + 1} / ${allowedMaxSteps}`);
         if (await this.shouldStop()) {
           break;
+        }
+
+        const plannerCadence = resolvePlannerInterval(context);
+        context.currentPlannerInterval = plannerCadence.interval;
+        context.lastPlannerAdjustmentStep = plannerCadence.lastAdjustmentStep;
+        context.options.planningInterval = plannerCadence.interval;
+        if (this.initialPlanningInterval !== plannerCadence.interval) {
+          this.initialPlanningInterval = plannerCadence.interval;
         }
 
         // Run planner periodically for guidance
@@ -180,22 +235,11 @@ export class Executor {
         // Emit final answer if available, otherwise use task ID
         const finalMessage = this.context.finalAnswer || this.context.taskId;
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, finalMessage);
-
-        // Track task completion
-        void analytics.trackTaskComplete(this.context.taskId);
       } else if (step >= allowedMaxSteps) {
         logger.error('❌ Task failed: Max steps reached');
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, t('exec_errors_maxStepsReached'));
-
-        // Track task failure with specific error category
-        const maxStepsError = new MaxStepsReachedError(t('exec_errors_maxStepsReached'));
-        const errorCategory = analytics.categorizeError(maxStepsError);
-        void analytics.trackTaskFailed(this.context.taskId, errorCategory);
       } else if (this.context.stopped) {
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_CANCEL, t('exec_task_cancel'));
-
-        // Track task cancellation
-        void analytics.trackTaskCancelled(this.context.taskId);
       } else {
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, t('exec_task_pause'));
         // Note: We don't track pause as it's not a final state
@@ -203,16 +247,11 @@ export class Executor {
     } catch (error) {
       if (error instanceof RequestCancelledError) {
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_CANCEL, t('exec_task_cancel'));
-
-        // Track task cancellation
-        void analytics.trackTaskCancelled(this.context.taskId);
+      } else if (error instanceof MaxFailuresReachedError) {
+        this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, t('exec_errors_maxFailuresReached'));
       } else {
         const errorMessage = error instanceof Error ? error.message : String(error);
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, t('exec_task_fail', [errorMessage]));
-
-        // Track task failure with detailed error categorization
-        const errorCategory = analytics.categorizeError(error instanceof Error ? error : errorMessage);
-        void analytics.trackTaskFailed(this.context.taskId, errorCategory);
       }
     } finally {
       if (import.meta.env.DEV) {
@@ -264,6 +303,7 @@ export class Executor {
       }
       context.consecutiveFailures++;
       logger.error(`Failed to execute planner: ${error}`);
+      this.handleFailure();
       if (context.consecutiveFailures >= context.options.maxFailures) {
         throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
       }
@@ -289,6 +329,7 @@ export class Executor {
         throw new Error(navOutput.error);
       }
       context.consecutiveFailures = 0;
+      this.handleSuccessfulStep();
       if (navOutput.result?.done) {
         return true;
       }
@@ -306,6 +347,7 @@ export class Executor {
       }
       context.consecutiveFailures++;
       logger.error(`Failed to execute step: ${error}`);
+      this.handleFailure();
       if (context.consecutiveFailures >= context.options.maxFailures) {
         throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
       }
@@ -430,5 +472,40 @@ export class Executor {
     }
 
     return results;
+  }
+
+  private shouldUseVisionForStep(): boolean {
+    if (this.currentVisionNavigationRatio <= 0) {
+      return false;
+    }
+
+    this.visionUsageAccumulator += this.currentVisionNavigationRatio;
+    if (this.visionUsageAccumulator >= 1) {
+      this.visionUsageAccumulator -= 1;
+      return true;
+    }
+
+    return false;
+  }
+
+  private handleFailure(): void {
+    const failureDrivenRatio = Math.min(VISION_RATIO_MAX, this.context.consecutiveFailures * VISION_RATIO_INCREMENT);
+    const minimumTarget = Math.max(this.baseVisionNavigationRatio, failureDrivenRatio);
+    if (minimumTarget > this.currentVisionNavigationRatio) {
+      this.currentVisionNavigationRatio = minimumTarget;
+    }
+
+    if (this.currentVisionNavigationRatio > 0) {
+      this.visionUsageAccumulator = Math.max(this.visionUsageAccumulator, 1);
+    }
+  }
+
+  private handleSuccessfulStep(): void {
+    if (this.currentVisionNavigationRatio <= 0) {
+      this.currentVisionNavigationRatio = 0;
+      return;
+    }
+
+    this.currentVisionNavigationRatio = Math.max(0, this.currentVisionNavigationRatio - VISION_SUCCESS_DECAY);
   }
 }

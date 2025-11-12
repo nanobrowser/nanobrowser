@@ -12,24 +12,24 @@
 
 </div>
 
-## 🌐 Nanobrowser
+## 🌐 Browseless AI
 
-Nanobrowser 是一款在瀏覽器中執行的開放原始碼 AI 網頁自動化工具。作為 OpenAI Operator 的免費替代方案，提供彈性的 LLM 選項與多代理系統。
+Browseless AI 是一款在瀏覽器中執行的開放原始碼 AI 網頁自動化工具。作為 OpenAI Operator 的免費替代方案，提供彈性的 LLM 選項與多代理系統。
 
-⬇️ 從 [Chrome 線上應用程式商店](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) 免費取得 Nanobrowser
+⬇️ 從 [Chrome 線上應用程式商店](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) 免費取得 Browseless AI
 
 👏 加入我們的 [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai) 社群
 
-❤️ 喜歡 Nanobrowser 嗎？請給我們一顆星星 🌟 並協助分享！
+❤️ 喜歡 Browseless AI 嗎？請給我們一顆星星 🌟 並協助分享！
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Nanobrowser Demo GIF" />
-<p><em>Nanobrowser 的多代理系統即時分析 HuggingFace，其中 Planner 會在遇到障礙時自行修正，並動態指示 Navigator 調整做法——這一切都在本機瀏覽器中執行。</em></p>
+<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Browseless AI Demo GIF" />
+<p><em>Browseless AI 的多代理系統即時分析 HuggingFace，其中 Planner 會在遇到障礙時自行修正，並動態指示 Navigator 調整做法——這一切都在本機瀏覽器中執行。</em></p>
 </div>
 
-## 🔥 為什麼選擇 Nanobrowser？
+## 🔥 為什麼選擇 Browseless AI？
 
-正在尋找功能強大的 AI 瀏覽器代理，卻不想每月為 OpenAI Operator 支付 200 美元嗎？**Nanobrowser** 作為一款 Chrome 擴充功能，提供進階的網頁自動化能力，同時讓您保有完全的掌控權：
+正在尋找功能強大的 AI 瀏覽器代理，卻不想每月為 OpenAI Operator 支付 200 美元嗎？**Browseless AI** 作為一款 Chrome 擴充功能，提供進階的網頁自動化能力，同時讓您保有完全的掌控權：
 
 - **100% 免費** - 無訂閱費或隱藏成本。安裝後使用自己的 API 金鑰，只需支付給供應商的 API 使用費。
 - **注重隱私** - 所有處理都在本機瀏覽器內完成。您的認證資訊會儲存在本機，絕不會與任何雲端服務分享。
@@ -58,20 +58,20 @@ Nanobrowser 是一款在瀏覽器中執行的開放原始碼 AI 網頁自動化�
 **不支援：**
 - Firefox、Safari，以及其他 Chromium 衍生瀏覽器 (Opera、Arc 等)
 
-> **注意**：雖然 Nanobrowser 可能可在其他 Chromium 系瀏覽器上運作，我們仍建議使用 Chrome 或 Edge，以獲得最佳體驗並確保相容性。
+> **注意**：雖然 Browseless AI 可能可在其他 Chromium 系瀏覽器上運作，我們仍建議使用 Chrome 或 Edge，以獲得最佳體驗並確保相容性。
 
 
 ## 🚀 快速入門
 
 1. **從 Chrome 線上應用程式商店安裝** (穩定版)：
-   * 前往 [Nanobrowser 的 Chrome 線上應用程式商店頁面](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+   * 前往 [Browseless AI 的 Chrome 線上應用程式商店頁面](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
    * 按一下 [新增至 Chrome] 按鈕
    * 在提示出現時確認安裝
 
 > **重要提示**：若要體驗最新功能，請參考下方的 [「手動安裝最新版本」](#-手動安裝最新版本) 進行安裝，因為 Chrome 線上應用程式商店的版本可能會因審核流程而延遲。
 
 2. **設定代理模型**：
-   * 按一下工具列中的 Nanobrowser 圖示以開啟側邊面板
+   * 按一下工具列中的 Browseless AI 圖示以開啟側邊面板
    * 按一下右上角的 `設定` 圖示
    * 新增 LLM API 金鑰
    * 為不同代理 (Navigator、Planner) 選擇要使用的模型
@@ -91,19 +91,19 @@ Nanobrowser 是一款在瀏覽器中執行的開放原始碼 AI 網頁自動化�
     * 選擇已解壓縮的 `nanobrowser` 資料夾。
 
 3. **設定代理模型**
-    * 按一下工具列中的 Nanobrowser 圖示以開啟側邊面板
+    * 按一下工具列中的 Browseless AI 圖示以開啟側邊面板
     * 按一下右上角的 `設定` 圖示。
     * 新增 LLM API 金鑰。
     * 為不同代理 (Navigator、Planner) 選擇要使用的模型。
 
 4. **升級**：
     * 從版本頁面下載最新的 `nanobrowser.zip` 檔案。
-    * 解壓縮並用新檔案覆寫您現有的 Nanobrowser 檔案。
-    * 前往 Chrome 的 `chrome://extensions/` 頁面，然後在 Nanobrowser 卡片上按一下重新整理圖示。
+    * 解壓縮並用新檔案覆寫您現有的 Browseless AI 檔案。
+    * 前往 Chrome 的 `chrome://extensions/` 頁面，然後在 Browseless AI 卡片上按一下重新整理圖示。
 
 ## 🛠️ 從原始碼建置
 
-如果您偏好自行建置 Nanobrowser，請依照以下步驟操作：
+如果您偏好自行建置 Browseless AI，請依照以下步驟操作：
 
 1. **先決條件**：
    * [Node.js](https://nodejs.org/) (v22.12.0 或更高版本)
@@ -136,7 +136,7 @@ Nanobrowser 是一款在瀏覽器中執行的開放原始碼 AI 網頁自動化�
 
 ## 🤖 選擇您的模型
 
-Nanobrowser 允許您為每個代理設定不同的 LLM 模型，以平衡效能與成本。以下是建議的設定：
+Browseless AI 允許您為每個代理設定不同的 LLM 模型，以平衡效能與成本。以下是建議的設定：
 
 ### 追求高效能
 - **Planner**：Claude Sonnet 4
@@ -191,19 +191,19 @@ Nanobrowser 允許您為每個代理設定不同的 LLM 模型，以平衡效能
 
 ## 🛠️ 發展藍圖
 
-我們正積極開發 Nanobrowser，未來將有更多令人期待的功能推出，歡迎加入我們！
+我們正積極開發 Browseless AI，未來將有更多令人期待的功能推出，歡迎加入我們！
 
 請至我們的 [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions/85) 查看詳細的發展藍圖與即將推出的功能。
 
 ## 🤝 如何貢獻
 
-**我們需要您的幫助，讓 Nanobrowser 變得更好！** 我們歡迎各種形式的貢獻：
+**我們需要您的幫助，讓 Browseless AI 變得更好！** 我們歡迎各種形式的貢獻：
 
 *  **分享提示詞與使用案例**
    * 加入我們的 [Discord 伺服器](https://discord.gg/NN3ABHggMK)。
-   * 分享您如何使用 Nanobrowser，協助我們建立實用的提示詞與實際應用案例資料庫。
+   * 分享您如何使用 Browseless AI，協助我們建立實用的提示詞與實際應用案例資料庫。
 *  **提供回饋意見**
-   * 試用 Nanobrowser，並在我們的 [Discord 伺服器](https://discord.gg/NN3ABHggMK) 上提供效能回饋或改進建議。
+   * 試用 Browseless AI，並在我們的 [Discord 伺服器](https://discord.gg/NN3ABHggMK) 上提供效能回饋或改進建議。
 * **貢獻程式碼**
    * 請參閱我們的 [CONTRIBUTING.md](CONTRIBUTING.md)，瞭解如何為本專案貢獻程式碼的指南。
    * 針對錯誤修復、新功能或文件改進，提出 Pull Request。
@@ -218,7 +218,7 @@ Nanobrowser 允許您為每個代理設定不同的 LLM 模型，以平衡效能
 
 請建立一個 [GitHub Security Advisory](https://github.com/nanobrowser/nanobrowser/security/advisories/new) 來負責任地回報此漏洞。這讓我們能在漏洞被公開之前解決問題。
 
-我們感謝您協助維護 Nanobrowser 及其使用者的安全！
+我們感謝您協助維護 Browseless AI 及其使用者的安全！
 
 ## 💬 社群
 
@@ -230,7 +230,7 @@ Nanobrowser 允許您為每個代理設定不同的 LLM 模型，以平衡效能
 
 ## 👏 致謝
 
-Nanobrowser 的開發建立在許多優秀的開放原始碼專案之上：
+Browseless AI 的開發建立在許多優秀的開放原始碼專案之上：
 
 - [Browser Use](https://github.com/browser-use/browser-use)
 - [Puppeteer](https://github.com/EmergenceAI/Agent-E)
@@ -243,15 +243,15 @@ Nanobrowser 的開發建立在許多優秀的開放原始碼專案之上：
 
 本專案採用 Apache License 2.0 授權 - 詳情請參閱 [LICENSE](LICENSE) 檔案。
 
-由 Nanobrowser 團隊用 ❤️ 打造。
+由 Browseless AI 團隊用 ❤️ 打造。
 
-喜歡 Nanobrowser 嗎？請給我們一顆星星 🌟 並加入我們的 [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+喜歡 Browseless AI 嗎？請給我們一顆星星 🌟 並加入我們的 [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
 
 ## ⚠️ 衍生專案免責聲明
 
 **我們明確「不予背書、不提供支援、也不參與」任何** 基於本程式碼所打造、與加密貨幣、代幣、NFT 或其他區塊鏈相關應用有關的專案。
 
-**此類衍生專案與官方 Nanobrowser 專案或核心團隊** 「**沒有任何關聯**、**非由我們維護**、亦**未與我們有任何連結**」。
+**此類衍生專案與官方 Browseless AI 專案或核心團隊** 「**沒有任何關聯**、**非由我們維護**、亦**未與我們有任何連結**」。
 
 **對於使用第三方衍生專案所造成的任何損失、損害或問題，我們概不負責。** 使用者與其互動時請自行承擔風險。
 

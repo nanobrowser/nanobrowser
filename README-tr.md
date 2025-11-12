@@ -11,24 +11,24 @@
 
 </div>
 
-## 🌐 Nanobrowser
+## 🌐 Browseless AI
 
-Nanobrowser, tarayıcınızda çalışan açık kaynaklı bir yapay zeka tarayıcı otomasyon aracıdır. Esnek LLM seçenekleri ve çoklu ajan sistemiyle birlikte OpenAI Operator’a ücretsiz bir alternatiftir.
+Browseless AI, tarayıcınızda çalışan açık kaynaklı bir yapay zeka tarayıcı otomasyon aracıdır. Esnek LLM seçenekleri ve çoklu ajan sistemiyle birlikte OpenAI Operator’a ücretsiz bir alternatiftir.
 
-⬇️ [Nanobrowser’ı Chrome Web Mağazası’ndan ücretsiz edinin](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+⬇️ [Browseless AI’ı Chrome Web Mağazası’ndan ücretsiz edinin](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
 
 👏 Topluluğa katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
 
-❤️ Nanobrowser’ı sevdiniz mi? Bize bir yıldız ⭐ verin ve yayılmasına yardımcı olun!
+❤️ Browseless AI’ı sevdiniz mi? Bize bir yıldız ⭐ verin ve yayılmasına yardımcı olun!
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Nanobrowser Demo GIF" />
-<p><em>Nanobrowser’ın çoklu ajan sistemi, HuggingFace'i gerçek zamanlı analiz ederken; Planner engellerle karşılaştığında akıllıca kendi kendini düzeltir ve Navigator’a yaklaşımını dinamik olarak ayarlamasını söyler—tüm bunlar yerel olarak tarayıcınızda gerçekleşir.</em></p>
+<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Browseless AI Demo GIF" />
+<p><em>Browseless AI’ın çoklu ajan sistemi, HuggingFace'i gerçek zamanlı analiz ederken; Planner engellerle karşılaştığında akıllıca kendi kendini düzeltir ve Navigator’a yaklaşımını dinamik olarak ayarlamasını söyler—tüm bunlar yerel olarak tarayıcınızda gerçekleşir.</em></p>
 </div>
 
-## 🔥Neden Nanobrowser?
+## 🔥Neden Browseless AI?
 
-OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz? **Nanobrowser**, bir Chrome uzantısı olarak size premium tarayıcı otomasyonu yetenekleri sunar ve tam kontrolü elinizde tutmanızı sağlar:
+OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz? **Browseless AI**, bir Chrome uzantısı olarak size premium tarayıcı otomasyonu yetenekleri sunar ve tam kontrolü elinizde tutmanızı sağlar:
 
 - **%100 Ücretsiz** - Abonelik ücreti veya gizli maliyetler yok. Sadece yükleyin ve kendi API anahtarlarınızı kullanın, ne kadar kullanırsanız o kadar ödersiniz.
 - **Gizlilik Odaklı** - Her şey yerel tarayıcınızda çalışır. Kimlik bilgileriniz yalnızca sizde kalır, bulut hizmetleriyle paylaşılmaz.
@@ -55,19 +55,19 @@ OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz?
 **Desteklenmeyenler:**
 - Firefox, Safari ve diğer Chromium türevleri (Opera, Arc vb.)
 
-> **Not**: Nanobrowser diğer Chromium tabanlı tarayıcılarda çalışabilir, ancak en iyi deneyim ve garantili uyumluluk için Chrome veya Edge öneriyoruz.
+> **Not**: Browseless AI diğer Chromium tabanlı tarayıcılarda çalışabilir, ancak en iyi deneyim ve garantili uyumluluk için Chrome veya Edge öneriyoruz.
 
 ## 🚀 Hızlı Başlangıç
 
 1. **Chrome Web Mağazası’ndan Kurulum** (Kararlı Sürüm):
-   * [Nanobrowser Chrome Web Mağazası sayfasına](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) gidin
+   * [Browseless AI Chrome Web Mağazası sayfasına](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) gidin
    * "Chrome’a Ekle" butonuna tıklayın
    * Kurulumu onaylayın
 
 > **Önemli Not**: En yeni özellikler için aşağıdaki ["En Son Sürümü Manuel Kur"](#-en-son-sürümü-manuel-kur) kısmından kurulum yapmanızı öneririz. Chrome Web Mağazası versiyonu inceleme süreci nedeniyle gecikebilir.
 
 2. **Ajan Modellerini Yapılandırın**:
-   * Araç çubuğundaki Nanobrowser simgesine tıklayın
+   * Araç çubuğundaki Browseless AI simgesine tıklayın
    * Sağ üstteki `Ayarlar` simgesine tıklayın
    * LLM API anahtarlarınızı ekleyin
    * Farklı ajanlar (Navigator, Planner) için hangi modelin kullanılacağını seçin
@@ -87,19 +87,19 @@ En yeni özellikleri içeren en güncel sürümü kurmak için:
     * Çıkardığınız `nanobrowser` klasörünü seçin
 
 3. **Ajan Modellerini Yapılandırın**
-    * Nanobrowser simgesine tıklayarak yan paneli açın
+    * Browseless AI simgesine tıklayarak yan paneli açın
     * Sağ üstteki `Ayarlar` simgesine tıklayın
     * API anahtarlarınızı ekleyin
     * Ajanlara model atayın (Navigator, Planner)
 
 4. **Güncelleme**:
     * Yeni `nanobrowser.zip` dosyasını indirin
-    * Mevcut Nanobrowser dosyalarını yenileriyle değiştirin
-    * `chrome://extensions/` sayfasına gidip Nanobrowser kartındaki yenile simgesine tıklayın
+    * Mevcut Browseless AI dosyalarını yenileriyle değiştirin
+    * `chrome://extensions/` sayfasına gidip Browseless AI kartındaki yenile simgesine tıklayın
 
 ## 🛠️ Kaynaktan Derleme
 
-Nanobrowser’ı kendiniz derlemek isterseniz şu adımları izleyin:
+Browseless AI’ı kendiniz derlemek isterseniz şu adımları izleyin:
 
 1. **Gereksinimler**:
    * [Node.js](https://nodejs.org/) (v22.12.0 veya üstü)
@@ -136,7 +136,7 @@ Nanobrowser’ı kendiniz derlemek isterseniz şu adımları izleyin:
 
 ## 🤖 Model Seçimi
 
-Nanobrowser, her ajan için farklı LLM modelleri ayarlamanıza olanak tanır. Böylece performans ve maliyet arasında denge kurabilirsiniz. İşte önerilen yapılandırmalar:
+Browseless AI, her ajan için farklı LLM modelleri ayarlamanıza olanak tanır. Böylece performans ve maliyet arasında denge kurabilirsiniz. İşte önerilen yapılandırmalar:
 
 ### Daha Yüksek Performans
 
@@ -204,21 +204,21 @@ Sadece bir cümleyle gerçekleştirebileceğiniz güçlü görevlerden bazılar�
 
 ## 🛠️ Yol Haritası
 
-Nanobrowser için heyecan verici yeni özellikler geliştiriyoruz, katılmak ister misiniz?
+Browseless AI için heyecan verici yeni özellikler geliştiriyoruz, katılmak ister misiniz?
 
 Detaylı yol haritamıza ve gelecek özelliklere [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions/85) üzerinden göz atabilirsiniz.
 
 ## 🤝 Katkıda Bulunun
 
-**Nanobrowser’ı daha iyi hale getirmemize yardım edin!** Her türden katkıya açığız:
+**Browseless AI’ı daha iyi hale getirmemize yardım edin!** Her türden katkıya açığız:
 
 * **Prompt & Kullanım Senaryoları Paylaşın**
 
   * [Discord sunucumuza](https://discord.gg/NN3ABHggMK) katılın
-  * Nanobrowser’ı nasıl kullandığınızı anlatın ve topluluk kütüphanemizi büyütün
+  * Browseless AI’ı nasıl kullandığınızı anlatın ve topluluk kütüphanemizi büyütün
 * **Geri Bildirim Verin**
 
-  * Nanobrowser’ı deneyin ve performansı hakkında önerilerinizi paylaşın
+  * Browseless AI’ı deneyin ve performansı hakkında önerilerinizi paylaşın
 * **Kod Katkısı Yapın**
 
   * Kod katkısı için yönergeleri [CONTRIBUTING.md](CONTRIBUTING.md) dosyasında bulabilirsiniz
@@ -232,7 +232,7 @@ Bir güvenlik açığı keşfederseniz, lütfen bunu açık şekilde **issue, pu
 
 Bunun yerine, [GitHub Güvenlik Danışma Sayfası](https://github.com/nanobrowser/nanobrowser/security/advisories/new) üzerinden özel olarak bildirin. Böylece açığı kamuya açıklanmadan önce düzeltme şansı buluruz.
 
-Nanobrowser’ı ve kullanıcılarını güvende tutmaya yardım ettiğiniz için teşekkür ederiz!
+Browseless AI’ı ve kullanıcılarını güvende tutmaya yardım ettiğiniz için teşekkür ederiz!
 
 ## 💬 Topluluk
 
@@ -244,7 +244,7 @@ Giderek büyüyen geliştirici ve kullanıcı topluluğumuza katılın:
 
 ## 👏 Teşekkürler
 
-Nanobrowser, şu harika açık kaynak projeler üzerine inşa edilmiştir:
+Browseless AI, şu harika açık kaynak projeler üzerine inşa edilmiştir:
 
 * [Browser Use](https://github.com/browser-use/browser-use)
 * [Puppeteer](https://github.com/EmergenceAI/Agent-E)
@@ -257,9 +257,9 @@ Tüm yaratıcılarına ve katkıda bulunanlara büyük teşekkürler!
 
 Bu proje Apache License 2.0 ile lisanslanmıştır – detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
-Sevgiyle yapıldı ❤️ Nanobrowser Ekibi tarafından.
+Sevgiyle yapıldı ❤️ Browseless AI Ekibi tarafından.
 
-Nanobrowser’ı sevdiniz mi? Bize bir yıldız 🌟 verin ve topluluğumuza katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+Browseless AI’ı sevdiniz mi? Bize bir yıldız 🌟 verin ve topluluğumuza katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
 
 ---
 

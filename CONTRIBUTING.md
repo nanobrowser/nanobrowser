@@ -1,6 +1,6 @@
-# Contributing to NanoBrowser
+# Contributing to Browseless AI
 
-We deeply appreciate your interest in contributing to NanoBrowser! Every contribution helps make Nanobrowser more powerful and accessible for everyone.
+We deeply appreciate your interest in contributing to Browseless AI! Every contribution helps make Browseless AI more powerful and accessible for everyone.
 
 ## Quick Start
 

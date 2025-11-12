@@ -12,7 +12,6 @@ import { Button } from '@extension/ui';
 import {
   llmProviderStore,
   agentModelStore,
-  speechToTextModelStore,
   AgentNameEnum,
   llmProviderModelNames,
   ProviderTypeEnum,
@@ -87,9 +86,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   const [availableModels, setAvailableModels] = useState<
     Array<{ provider: string; providerName: string; model: string }>
   >([]);
-  // State for model input handling
-
-  const [selectedSpeechToTextModel, setSelectedSpeechToTextModel] = useState<string>('');
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -154,21 +150,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     };
 
     loadAgentModels();
-  }, []);
-
-  useEffect(() => {
-    const loadSpeechToTextModel = async () => {
-      try {
-        const config = await speechToTextModelStore.getSpeechToTextModel();
-        if (config) {
-          setSelectedSpeechToTextModel(`${config.provider}>${config.modelName}`);
-        }
-      } catch (error) {
-        console.error('Error loading speech-to-text model:', error);
-      }
-    };
-
-    loadSpeechToTextModel();
   }, []);
 
   // Auto-focus the input field when a new provider is added
@@ -685,28 +666,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
       } catch (error) {
         console.error('Error saving agent parameters:', error);
       }
-    }
-  };
-
-  const handleSpeechToTextModelChange = async (modelValue: string) => {
-    setSelectedSpeechToTextModel(modelValue);
-
-    try {
-      if (modelValue) {
-        // Parse the "provider>model" format
-        const [provider, modelName] = modelValue.split('>');
-
-        // Save to proper storage
-        await speechToTextModelStore.setSpeechToTextModel({
-          provider,
-          modelName,
-        });
-      } else {
-        // Reset if no model selected
-        await speechToTextModelStore.resetSpeechToTextModel();
-      }
-    } catch (error) {
-      console.error('Error saving speech-to-text model:', error);
     }
   };
 
@@ -1634,45 +1593,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         </div>
       </div>
 
-      {/* Speech-to-Text Model Selection */}
-      <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-          {t('options_models_speechToText_header')}
-        </h2>
-        <p className={`mb-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          {t('options_models_stt_desc')}
-        </p>
-
-        <div
-          className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
-          <div className="flex items-center">
-            <label
-              htmlFor="speech-to-text-model"
-              className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              {t('options_models_labels_model')}
-            </label>
-            <select
-              id="speech-to-text-model"
-              className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
-              value={selectedSpeechToTextModel}
-              onChange={e => handleSpeechToTextModelChange(e.target.value)}>
-              <option value="">{t('options_models_chooseModel')}</option>
-              {/* Filter available models to show only Gemini models */}
-              {availableModels
-                .filter(({ provider }) => {
-                  const providerConfig = providers[provider];
-                  return providerConfig?.type === ProviderTypeEnum.Gemini;
-                })
-                .map(({ provider, providerName, model }) => (
-                  <option key={`${provider}>${model}`} value={`${provider}>${model}`}>
-                    {`${providerName} > ${model}`}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-      </div>
     </section>
   );
 };
