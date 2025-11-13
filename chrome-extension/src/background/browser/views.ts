@@ -8,12 +8,6 @@ export interface BrowserContextWindowSize {
 
 export interface BrowserContextConfig {
   /**
-   * Minimum time to wait before getting page state for LLM input
-   * @default 0.25
-   */
-  minimumWaitPageLoadTime: number;
-
-  /**
    * Time to wait for network requests to finish before getting page state.
    * Lower values may result in incomplete page loads.
    * @default 0.5
@@ -79,7 +73,6 @@ export interface BrowserContextConfig {
 }
 
 export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
-  minimumWaitPageLoadTime: 0.25,
   waitForNetworkIdlePageLoadTime: 0.5,
   maximumWaitPageLoadTime: 5.0,
   waitBetweenActions: 0.5,

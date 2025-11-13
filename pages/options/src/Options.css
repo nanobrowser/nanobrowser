@@ -28,19 +28,19 @@ code {
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   code {
-    background: rgba(30, 58, 138, 0.4);
-    color: #7dd3fc;
+    background: rgba(51, 65, 85, 0.45);
+    color: #e2e8f0;
   }
-  
+
   .dark-mode-text {
     color: #e2e8f0 !important; /* slate-200 */
   }
-  
+
   .dark-mode-bg {
-    background-color: #1e293b !important; /* slate-800 */
+    background-color: #1f2937 !important; /* gray-800 */
   }
-  
+
   .dark-mode-border {
-    border-color: #475569 !important; /* slate-600 */
+    border-color: #4b5563 !important; /* slate-600 */
   }
 }

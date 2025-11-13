@@ -346,7 +346,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       return createOpenAIChatModel(providerConfig, modelConfig, {
         headers: {
           'HTTP-Referer': 'https://nanobrowser.ai',
-          'X-Title': 'Nanobrowser',
+          'X-Title': 'Browseless AI',
         },
       });
     }
