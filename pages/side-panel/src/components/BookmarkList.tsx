@@ -83,7 +83,8 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
             onClick={onAddShortcut}
             title={t('chat_bookmarks_add')}
             aria-label={t('chat_bookmarks_add')}
-            className="flex h-6 w-6 items-center justify-center text-[#626262] transition-colors duration-150 hover:text-[#333333]">
+            className="flex h-6 w-6 items-center justify-center text-[#626262] transition-colors duration-150 hover:text-[#333333]"
+          >
             <PlusIcon />
           </button>
         )}
@@ -119,29 +120,32 @@ const BookmarkList: React.FC<BookmarkListProps> = ({
               </button>
             </div>
 
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                handleEditRequest(bookmark);
-              }}
-              className="absolute right-[33px] top-1/2 z-10 -translate-y-1/2 p-1 opacity-0 text-[#626262] transition-opacity duration-200 group-hover:opacity-100 hover:text-[#333333]"
-              aria-label={t('chat_bookmarks_edit')}
-              type="button">
-              <FaPen size={12.7} />
-            </button>
-
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                if (onBookmarkDelete) {
-                  onBookmarkDelete(bookmark.id);
-                }
-              }}
-              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 p-1 opacity-0 text-[#626262] transition-opacity duration-200 group-hover:opacity-100 hover:text-[#333333]"
-              aria-label={t('chat_bookmarks_delete')}
-              type="button">
-              <FaTrash size={12.7} />
-            </button>
+            <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-[5px] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  handleEditRequest(bookmark);
+                }}
+                className="p-1 text-[#626262] transition-colors hover:text-[#333333]"
+                aria-label={t('chat_bookmarks_edit')}
+                type="button"
+              >
+                <FaPen size={12.7} />
+              </button>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  if (onBookmarkDelete) {
+                    onBookmarkDelete(bookmark.id);
+                  }
+                }}
+                className="p-1 text-[#626262] transition-colors hover:text-[#333333]"
+                aria-label={t('chat_bookmarks_delete')}
+                type="button"
+              >
+                <FaTrash size={12.7} />
+              </button>
+            </div>
           </div>
         ))}
       </div>

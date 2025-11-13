@@ -201,7 +201,7 @@ export default function ChatInput({
           rows={5}
           className={`min-h-0 w-full flex-1 resize-none border-none p-2 focus:outline-none placeholder:text-[#9f9f9f] ${
             disabled
-              ? 'cursor-not-allowed bg-[#e5e5e5] text-[#333333]/60'
+              ? 'cursor-not-allowed bg-[#f7f7f7] text-[#333333]/60'
               : 'bg-[#f7f7f7] text-[#333333]'
           }`}
           placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : t('chat_input_placeholder')}

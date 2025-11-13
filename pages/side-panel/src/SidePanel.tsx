@@ -43,7 +43,6 @@ const SidePanel = () => {
   const [shortcutPrompt, setShortcutPrompt] = useState('');
   const [editingShortcutId, setEditingShortcutId] = useState<number | null>(null);
   const [sidebarHeight, setSidebarHeight] = useState(0);
-  const [editorTop, setEditorTop] = useState<number | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
@@ -56,9 +55,7 @@ const SidePanel = () => {
     displayText: string;
     sessionId: string | null;
   } | null>(null);
-  const panelContainerRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
-  const promptContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Check for dark mode preference
   useEffect(() => {
@@ -153,39 +150,6 @@ const SidePanel = () => {
       window.removeEventListener('resize', updateSize);
     };
   }, []);
-
-  const updateEditorPosition = useCallback(() => {
-    const panelEl = panelContainerRef.current;
-    const promptEl = promptContainerRef.current;
-
-    if (panelEl && promptEl) {
-      const panelRect = panelEl.getBoundingClientRect();
-      const promptRect = promptEl.getBoundingClientRect();
-      const offset = promptRect.bottom - panelRect.top + 27;
-      setEditorTop(offset);
-      return;
-    }
-
-    if (sidebarHeight) {
-      setEditorTop(sidebarHeight * 0.27 + 27);
-    }
-  }, [sidebarHeight]);
-
-  const promptContainerCallbackRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      promptContainerRef.current = node;
-      if (node && showShortcutEditor) {
-        requestAnimationFrame(() => updateEditorPosition());
-      }
-    },
-    [showShortcutEditor, updateEditorPosition],
-  );
-
-  useEffect(() => {
-    if (showShortcutEditor) {
-      updateEditorPosition();
-    }
-  }, [showShortcutEditor, updateEditorPosition, favoritePrompts.length, messages.length, sidebarHeight]);
 
   useEffect(() => {
     sessionIdRef.current = currentSessionId;
@@ -890,15 +854,13 @@ const SidePanel = () => {
     setShortcutPrompt('');
     setEditingShortcutId(null);
     setShowShortcutEditor(true);
-    requestAnimationFrame(() => updateEditorPosition());
-  }, [updateEditorPosition]);
+  }, []);
 
   const handleShortcutEditorClose = useCallback(() => {
     setShowShortcutEditor(false);
     setShortcutName('');
     setShortcutPrompt('');
     setEditingShortcutId(null);
-    setEditorTop(null);
   }, []);
 
   const handleShortcutSave = useCallback(
@@ -932,9 +894,8 @@ const SidePanel = () => {
       setShortcutPrompt(bookmark.content);
       setEditingShortcutId(bookmark.id);
       setShowShortcutEditor(true);
-      requestAnimationFrame(() => updateEditorPosition());
     },
-    [updateEditorPosition],
+    [],
   );
 
   const handleBookmarkDelete = async (id: number) => {
@@ -991,17 +952,15 @@ const SidePanel = () => {
 
   // Voice input removed - cleanup only stops background connection
 
-  const computedEditorTop = editorTop ?? (sidebarHeight ? sidebarHeight * 0.27 + 27 : undefined);
-  const computedEditorHeight = sidebarHeight ? sidebarHeight * 0.38 : undefined;
+  const computedEditorHeight = sidebarHeight ? sidebarHeight * 0.5 : undefined;
   const computedTextareaHeight = sidebarHeight ? sidebarHeight * 0.27 : undefined;
 
   return (
-    <div className="relative" ref={panelContainerRef}>
-      <div
-        ref={sidebarRef}
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-gray-100'} overflow-hidden border ${
-          isDarkMode ? 'border-slate-700' : 'border-gray-200'
-        } rounded-2xl`}>
+    <div
+      ref={sidebarRef}
+      className={`relative flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-gray-100'} overflow-hidden border ${
+        isDarkMode ? 'border-slate-700' : 'border-gray-200'
+      } rounded-2xl`}>
         <header className="header relative">
           <div className="header-logo">
             {showHistory ? (
@@ -1126,7 +1085,6 @@ const SidePanel = () => {
                 {messages.length === 0 && (
                   <>
                     <div
-                      ref={promptContainerCallbackRef}
                       className={`mb-2 flex h-[27%] flex-col border-t p-2 shadow-sm backdrop-blur-sm ${
                         isDarkMode ? 'border-slate-700 bg-slate-900/70' : 'border-gray-200 bg-gray-50/60'
                       }`}>
@@ -1173,7 +1131,6 @@ const SidePanel = () => {
                 )}
                 {messages.length > 0 && (
                   <div
-                    ref={promptContainerCallbackRef}
                     className={`flex h-[27%] flex-col border-t p-2 shadow-sm backdrop-blur-sm ${
                       isDarkMode ? 'border-slate-700 bg-slate-900/70' : 'border-gray-200 bg-gray-50/60'
                     }`}>
@@ -1195,7 +1152,6 @@ const SidePanel = () => {
             )}
           </>
         )}
-      </div>
       {showShortcutEditor && (
         <div className="absolute inset-0 z-50">
           <button
@@ -1206,15 +1162,14 @@ const SidePanel = () => {
           />
           <form
             onSubmit={handleShortcutSave}
-            className="absolute left-1/2 z-10 flex -translate-x-1/2 flex-col gap-3 border border-[#d0d0d0] p-4"
+            className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 border border-[#d0d0d0] p-4"
             style={{
               width: '93%',
-              height: computedEditorHeight ? `${computedEditorHeight}px` : '38%',
-              top: computedEditorTop !== undefined ? `${computedEditorTop}px` : 'calc(27% + 27px)',
-              background: 'rgba(227, 227, 227, 0.62)',
-              borderRadius: '27px',
+              height: computedEditorHeight ? `${computedEditorHeight}px` : '50%',
+              background: 'rgba(227, 227, 227, 0.5)',
+              borderRadius: '12.7px',
               backdropFilter: 'blur(27px)',
-              boxShadow: '0 0 30px rgba(51, 51, 51, 0.1)',
+              boxShadow: '0 0 27px rgba(51, 51, 51, 0.1)',
             }}>
             <h2 className="pb-3 text-base font-semibold text-[#727272]">Shortcut editor</h2>
             <div className="flex flex-col gap-2">
@@ -1249,13 +1204,6 @@ const SidePanel = () => {
             </div>
             <div className="mt-auto flex justify-end gap-2">
               <button
-                type="button"
-                onClick={handleShortcutEditorClose}
-                className="rounded-md bg-[#626262] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4f4f4f]"
-              >
-                Cancel
-              </button>
-              <button
                 type="submit"
                 disabled={!shortcutName.trim() || !shortcutPrompt.trim()}
                 className={`rounded-md px-4 py-2 text-sm font-medium text-white transition-colors ${
@@ -1265,6 +1213,13 @@ const SidePanel = () => {
                 }`}
               >
                 Save
+              </button>
+              <button
+                type="button"
+                onClick={handleShortcutEditorClose}
+                className="rounded-md bg-[#626262] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4f4f4f]"
+              >
+                Cancel
               </button>
             </div>
           </form>
