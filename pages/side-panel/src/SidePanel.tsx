@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { RxDiscordLogo } from 'react-icons/rx';
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
+import type { FormEvent } from 'react';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
@@ -23,6 +23,7 @@ declare global {
 
 const SidePanel = () => {
   const progressMessage = 'Showing progress...';
+  const failureMessage = t('exec_errors_maxFailuresReached');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
@@ -34,19 +35,30 @@ const SidePanel = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
   const [hasConfiguredModels, setHasConfiguredModels] = useState<boolean | null>(null); // null = loading, false = no models, true = has models
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayEnabled, setReplayEnabled] = useState(true);
+  const [showRetryOptions, setShowRetryOptions] = useState(false);
+  const [showShortcutEditor, setShowShortcutEditor] = useState(false);
+  const [shortcutName, setShortcutName] = useState('');
+  const [shortcutPrompt, setShortcutPrompt] = useState('');
+  const [editingShortcutId, setEditingShortcutId] = useState<number | null>(null);
+  const [sidebarHeight, setSidebarHeight] = useState(0);
+  const [editorTop, setEditorTop] = useState<number | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<number | null>(null);
+  const lastTaskRef = useRef<{
+    type: 'new_task' | 'follow_up_task';
+    text: string;
+    displayText: string;
+    sessionId: string | null;
+  } | null>(null);
+  const panelContainerRef = useRef<HTMLDivElement | null>(null);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const promptContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Check for dark mode preference
   useEffect(() => {
@@ -117,6 +129,64 @@ const SidePanel = () => {
     };
   }, [checkModelConfiguration, loadGeneralSettings]);
 
+  useLayoutEffect(() => {
+    const sidebarEl = sidebarRef.current;
+    if (!sidebarEl) {
+      return;
+    }
+
+    const updateSize = () => {
+      setSidebarHeight(sidebarEl.offsetHeight);
+    };
+
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize();
+    });
+
+    resizeObserver.observe(sidebarEl);
+    window.addEventListener('resize', updateSize);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
+  const updateEditorPosition = useCallback(() => {
+    const panelEl = panelContainerRef.current;
+    const promptEl = promptContainerRef.current;
+
+    if (panelEl && promptEl) {
+      const panelRect = panelEl.getBoundingClientRect();
+      const promptRect = promptEl.getBoundingClientRect();
+      const offset = promptRect.bottom - panelRect.top + 27;
+      setEditorTop(offset);
+      return;
+    }
+
+    if (sidebarHeight) {
+      setEditorTop(sidebarHeight * 0.27 + 27);
+    }
+  }, [sidebarHeight]);
+
+  const promptContainerCallbackRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      promptContainerRef.current = node;
+      if (node && showShortcutEditor) {
+        requestAnimationFrame(() => updateEditorPosition());
+      }
+    },
+    [showShortcutEditor, updateEditorPosition],
+  );
+
+  useEffect(() => {
+    if (showShortcutEditor) {
+      updateEditorPosition();
+    }
+  }, [showShortcutEditor, updateEditorPosition, favoritePrompts.length, messages.length, sidebarHeight]);
+
   useEffect(() => {
     sessionIdRef.current = currentSessionId;
   }, [currentSessionId]);
@@ -160,12 +230,14 @@ const SidePanel = () => {
             case ExecutionState.TASK_START:
               // Reset historical session flag when a new task starts
               setIsHistoricalSession(false);
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_OK:
               setIsFollowUpMode(true);
               setInputEnabled(true);
               setShowStopButton(false);
               setIsReplaying(false);
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_FAIL:
               setIsFollowUpMode(true);
@@ -173,6 +245,11 @@ const SidePanel = () => {
               setShowStopButton(false);
               setIsReplaying(false);
               skip = false;
+              if (content === failureMessage) {
+                setShowRetryOptions(true);
+              } else {
+                setShowRetryOptions(false);
+              }
               break;
             case ExecutionState.TASK_CANCEL:
               setIsFollowUpMode(false);
@@ -180,8 +257,10 @@ const SidePanel = () => {
               setShowStopButton(false);
               setIsReplaying(false);
               skip = false;
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_PAUSE:
+              setShowRetryOptions(false);
               break;
             case ExecutionState.TASK_RESUME:
               break;
@@ -280,7 +359,7 @@ const SidePanel = () => {
         });
       }
     },
-    [appendMessage],
+    [appendMessage, failureMessage],
   );
 
   // Stop heartbeat and close connection
@@ -319,20 +398,7 @@ const SidePanel = () => {
           });
           setInputEnabled(true);
           setShowStopButton(false);
-        } else if (message && message.type === 'speech_to_text_result') {
-          // Handle speech-to-text result
-          if (message.text && setInputTextRef.current) {
-            setInputTextRef.current(message.text);
-          }
-          setIsProcessingSpeech(false);
-        } else if (message && message.type === 'speech_to_text_error') {
-          // Handle speech-to-text error
-          appendMessage({
-            actor: Actors.SYSTEM,
-            content: message.error || t('chat_stt_recognitionFailed'),
-            timestamp: Date.now(),
-          });
-          setIsProcessingSpeech(false);
+          setShowRetryOptions(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
         }
@@ -400,6 +466,8 @@ const SidePanel = () => {
   // Handle replay command
   const handleReplay = async (historySessionId: string): Promise<void> => {
     try {
+      setShowRetryOptions(false);
+      lastTaskRef.current = null;
       // Check if replay is enabled in settings
       if (!replayEnabled) {
         appendMessage({
@@ -571,6 +639,7 @@ const SidePanel = () => {
     }
 
     try {
+      setShowRetryOptions(false);
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tabId = tabs[0]?.id;
       if (!tabId) {
@@ -610,25 +679,21 @@ const SidePanel = () => {
       }
 
       // Send message using the utility function
-      if (isFollowUpMode) {
-        // Send as follow-up task
-        await sendMessage({
-          type: 'follow_up_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
-      } else {
-        // Send as new task
-        await sendMessage({
-          type: 'new_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('new_task sent', text, tabId, sessionIdRef.current);
-      }
+      const taskType: 'new_task' | 'follow_up_task' = isFollowUpMode ? 'follow_up_task' : 'new_task';
+      await sendMessage({
+        type: taskType,
+        task: text,
+        taskId: sessionIdRef.current,
+        tabId,
+      });
+      console.log(`${taskType} sent`, text, tabId, sessionIdRef.current);
+
+      lastTaskRef.current = {
+        type: taskType,
+        text,
+        displayText: displayText || text,
+        sessionId: sessionIdRef.current,
+      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error('Task error', errorMessage);
@@ -659,7 +724,59 @@ const SidePanel = () => {
     }
     setInputEnabled(true);
     setShowStopButton(false);
+    setShowRetryOptions(false);
   };
+
+  const handleRetryTask = useCallback(async () => {
+    const lastTask = lastTaskRef.current;
+    if (!lastTask?.text || !lastTask.sessionId) {
+      return;
+    }
+
+    try {
+      setShowRetryOptions(false);
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        throw new Error('No active tab found');
+      }
+
+      setIsFollowUpMode(lastTask.type === 'follow_up_task');
+      setIsHistoricalSession(false);
+      setInputEnabled(false);
+      setShowStopButton(true);
+
+      const userMessage = {
+        actor: Actors.USER,
+        content: lastTask.displayText,
+        timestamp: Date.now(),
+      };
+
+      sessionIdRef.current = lastTask.sessionId;
+      appendMessage(userMessage, lastTask.sessionId);
+
+      if (!portRef.current) {
+        setupConnection();
+      }
+
+      await sendMessage({
+        type: lastTask.type,
+        task: lastTask.text,
+        taskId: lastTask.sessionId,
+        tabId,
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: errorMessage,
+        timestamp: Date.now(),
+      });
+      setInputEnabled(true);
+      setShowStopButton(false);
+      stopConnection();
+    }
+  }, [appendMessage, sendMessage, setupConnection, stopConnection]);
 
   const handleNewChat = () => {
     // Clear messages and start a new chat
@@ -670,6 +787,8 @@ const SidePanel = () => {
     setShowStopButton(false);
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
+    setShowRetryOptions(false);
+    lastTaskRef.current = null;
 
     // Disconnect any existing connection
     stopConnection();
@@ -691,11 +810,13 @@ const SidePanel = () => {
 
   const handleBackToChat = (reset = false) => {
     setShowHistory(false);
+    setShowRetryOptions(false);
     if (reset) {
       setCurrentSessionId(null);
       setMessages([]);
       setIsFollowUpMode(false);
       setIsHistoricalSession(false);
+      lastTaskRef.current = null;
     }
   };
 
@@ -707,6 +828,8 @@ const SidePanel = () => {
         setMessages(fullSession.messages);
         setIsFollowUpMode(false);
         setIsHistoricalSession(true); // Mark this as a historical session
+        setShowRetryOptions(false);
+        lastTaskRef.current = null;
         console.log('history session selected', sessionId);
       }
       setShowHistory(false);
@@ -762,17 +885,57 @@ const SidePanel = () => {
     }
   };
 
-  const handleBookmarkUpdateTitle = async (id: number, title: string) => {
-    try {
-      await favoritesStorage.updatePromptTitle(id, title);
+  const handleShortcutEditorOpen = useCallback(() => {
+    setShortcutName('');
+    setShortcutPrompt('');
+    setEditingShortcutId(null);
+    setShowShortcutEditor(true);
+    requestAnimationFrame(() => updateEditorPosition());
+  }, [updateEditorPosition]);
 
-      // Update favorites in the UI
-      const prompts = await favoritesStorage.getAllPrompts();
-      setFavoritePrompts(prompts);
-    } catch (error) {
-      console.error('Failed to update favorite prompt title:', error);
-    }
-  };
+  const handleShortcutEditorClose = useCallback(() => {
+    setShowShortcutEditor(false);
+    setShortcutName('');
+    setShortcutPrompt('');
+    setEditingShortcutId(null);
+    setEditorTop(null);
+  }, []);
+
+  const handleShortcutSave = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const name = shortcutName.trim();
+      const prompt = shortcutPrompt.trim();
+      if (!name || !prompt) {
+        return;
+      }
+
+      try {
+        if (editingShortcutId !== null) {
+          await favoritesStorage.updatePrompt(editingShortcutId, name, prompt);
+        } else {
+          await favoritesStorage.addPrompt(name, prompt);
+        }
+        const prompts = await favoritesStorage.getAllPrompts();
+        setFavoritePrompts(prompts);
+        handleShortcutEditorClose();
+      } catch (error) {
+        console.error('Failed to save shortcut:', error);
+      }
+    },
+    [shortcutName, shortcutPrompt, editingShortcutId, handleShortcutEditorClose],
+  );
+
+  const handleShortcutEdit = useCallback(
+    (bookmark: FavoritePrompt) => {
+      setShortcutName(bookmark.title);
+      setShortcutPrompt(bookmark.content);
+      setEditingShortcutId(bookmark.id);
+      setShowShortcutEditor(true);
+      requestAnimationFrame(() => updateEditorPosition());
+    },
+    [updateEditorPosition],
+  );
 
   const handleBookmarkDelete = async (id: number) => {
     try {
@@ -816,15 +979,6 @@ const SidePanel = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop recording if active
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-      // Clear recording timer
-      if (recordingTimerRef.current) {
-        clearTimeout(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
       stopConnection();
     };
   }, [stopConnection]);
@@ -835,181 +989,28 @@ const SidePanel = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleMicClick = async () => {
-    if (isRecording) {
-      // Stop recording
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-      // Clear the timer
-      if (recordingTimerRef.current) {
-        clearTimeout(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
-      setIsRecording(false);
-      return;
-    }
+  // Voice input removed - cleanup only stops background connection
 
-    try {
-      // First check if permission is already granted
-      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-
-      if (permissionStatus.state === 'denied') {
-        appendMessage({
-          actor: Actors.SYSTEM,
-          content: t('chat_stt_microphone_permissionDenied'),
-          timestamp: Date.now(),
-        });
-        return;
-      }
-
-      // If permission is not granted, open permission page
-      if (permissionStatus.state !== 'granted') {
-        const permissionUrl = chrome.runtime.getURL('permission/index.html');
-
-        // Open permission page in a new window
-        chrome.windows.create(
-          {
-            url: permissionUrl,
-            type: 'popup',
-            width: 500,
-            height: 600,
-          },
-          createdWindow => {
-            if (createdWindow?.id) {
-              // Listen for window close to check permission status
-              chrome.windows.onRemoved.addListener(function onWindowClose(windowId) {
-                if (windowId === createdWindow.id) {
-                  chrome.windows.onRemoved.removeListener(onWindowClose);
-                  // Check permission status after window closes
-                  setTimeout(async () => {
-                    try {
-                      const newPermissionStatus = await navigator.permissions.query({
-                        name: 'microphone' as PermissionName,
-                      });
-                      // Only retry if permission was granted
-                      if (newPermissionStatus.state === 'granted') {
-                        handleMicClick();
-                      }
-                      // If denied or prompt, do nothing - let user manually try again
-                    } catch (error) {
-                      console.error('Failed to check permission status:', error);
-                    }
-                  }, 500);
-                }
-              });
-            }
-          },
-        );
-        return;
-      }
-
-      // Permission granted - proceed with recording
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Clear previous audio chunks
-      audioChunksRef.current = [];
-
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      // Handle data available event
-      mediaRecorder.ondataavailable = event => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      // Handle stop event
-      mediaRecorder.onstop = async () => {
-        // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
-
-        if (audioChunksRef.current.length > 0) {
-          // Create audio blob
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-
-          // Convert blob to base64
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64Audio = reader.result as string;
-
-            // Setup connection if not exists
-            if (!portRef.current) {
-              setupConnection();
-            }
-
-            // Send audio to backend for speech-to-text conversion
-            try {
-              setIsProcessingSpeech(true);
-              portRef.current?.postMessage({
-                type: 'speech_to_text',
-                audio: base64Audio,
-              });
-            } catch (error) {
-              console.error('Failed to send audio for speech-to-text:', error);
-              appendMessage({
-                actor: Actors.SYSTEM,
-                content: t('chat_stt_processingFailed'),
-                timestamp: Date.now(),
-              });
-              setIsRecording(false);
-              setIsProcessingSpeech(false);
-            }
-          };
-          reader.readAsDataURL(audioBlob);
-        }
-      };
-
-      // Set up 2-minute duration limit
-      const maxDuration = 2 * 60 * 1000;
-      recordingTimerRef.current = window.setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
-        }
-        setIsRecording(false);
-        setIsProcessingSpeech(true);
-        recordingTimerRef.current = null;
-      }, maxDuration);
-
-      // Start recording
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-
-      let errorMessage = t('chat_stt_microphone_accessFailed');
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          errorMessage += t('chat_stt_microphone_grantPermission');
-        } else if (error.name === 'NotFoundError') {
-          errorMessage += t('chat_stt_microphone_notFound');
-        } else {
-          errorMessage += error.message;
-        }
-      }
-
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: errorMessage,
-        timestamp: Date.now(),
-      });
-      setIsRecording(false);
-    }
-  };
+  const computedEditorTop = editorTop ?? (sidebarHeight ? sidebarHeight * 0.27 + 27 : undefined);
+  const computedEditorHeight = sidebarHeight ? sidebarHeight * 0.38 : undefined;
+  const computedTextareaHeight = sidebarHeight ? sidebarHeight * 0.27 : undefined;
 
   return (
-    <div>
+    <div className="relative" ref={panelContainerRef}>
       <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
+        ref={sidebarRef}
+        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-gray-100'} overflow-hidden border ${
+          isDarkMode ? 'border-slate-700' : 'border-gray-200'
+        } rounded-2xl`}>
         <header className="header relative">
           <div className="header-logo">
             {showHistory ? (
               <button
                 type="button"
                 onClick={() => handleBackToChat(false)}
-                className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                className={`${
+                  isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'
+                } cursor-pointer`}
                 aria-label={t('nav_back_a11y')}>
                 {t('nav_back')}
               </button>
@@ -1024,7 +1025,9 @@ const SidePanel = () => {
                   type="button"
                   onClick={handleNewChat}
                   onKeyDown={e => e.key === 'Enter' && handleNewChat()}
-                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  className={`header-icon ${
+                    isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'
+                  } cursor-pointer`}
                   aria-label={t('nav_newChat_a11y')}
                   tabIndex={0}>
                   <PiPlusBold size={20} />
@@ -1033,25 +1036,22 @@ const SidePanel = () => {
                   type="button"
                   onClick={handleLoadHistory}
                   onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
-                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  className={`header-icon ${
+                    isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'
+                  } cursor-pointer`}
                   aria-label={t('nav_loadHistory_a11y')}
                   tabIndex={0}>
                   <GrHistory size={20} />
                 </button>
               </>
             )}
-            <a
-              href="https://discord.gg/NN3ABHggMK"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
-              <RxDiscordLogo size={20} />
-            </a>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
               onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              className={`header-icon ${
+                isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'
+              } cursor-pointer`}
               aria-label={t('nav_settings_a11y')}
               tabIndex={0}>
               <FiSettings size={20} />
@@ -1074,9 +1074,9 @@ const SidePanel = () => {
             {/* Show loading state while checking model configuration */}
             {hasConfiguredModels === null && (
               <div
-                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 <div className="text-center">
-                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent"></div>
+                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></div>
                   <p>{t('status_checkingConfig')}</p>
                 </div>
               </div>
@@ -1085,17 +1085,17 @@ const SidePanel = () => {
             {/* Show setup message when no models are configured */}
             {hasConfiguredModels === false && (
               <div
-                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 <div className="max-w-md text-center">
-                  <img src="/icon-128.png" alt="Nanobrowser Logo" className="mx-auto mb-4 size-12" />
-                  <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-sky-200' : 'text-sky-700'}`}>
+                  <img src="/icon-128.png" alt="Browseless AI Logo" className="mx-auto mb-4 size-12" />
+                  <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                     {t('welcome_title')}
                   </h3>
                   <p className="mb-4">{t('welcome_instruction')}</p>
                   <button
                     onClick={() => chrome.runtime.openOptionsPage()}
                     className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${
-                      isDarkMode ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-sky-500 text-white hover:bg-sky-600'
+                      isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-700' : 'bg-gray-700 text-white hover:bg-gray-800'
                     }`}>
                     {t('welcome_openSettings')}
                   </button>
@@ -1104,15 +1104,15 @@ const SidePanel = () => {
                       href="https://github.com/nanobrowser/nanobrowser?tab=readme-ov-file#-quick-start"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
+                      className={`${isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-700 hover:text-gray-600'}`}>
                       {t('welcome_quickStart')}
                     </a>
                     <span className="mx-2">•</span>
                     <a
-                      href="https://discord.gg/NN3ABHggMK"
+                      href="https://x.com/SingularityAge"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
+                      className={`${isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-700 hover:text-gray-600'}`}>
                       {t('welcome_joinCommunity')}
                     </a>
                   </div>
@@ -1126,13 +1126,13 @@ const SidePanel = () => {
                 {messages.length === 0 && (
                   <>
                     <div
-                      className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                      ref={promptContainerCallbackRef}
+                      className={`mb-2 flex h-[27%] flex-col border-t p-2 shadow-sm backdrop-blur-sm ${
+                        isDarkMode ? 'border-slate-700 bg-slate-900/70' : 'border-gray-200 bg-gray-50/60'
+                      }`}>
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
-                        onMicClick={handleMicClick}
-                        isRecording={isRecording}
-                        isProcessingSpeech={isProcessingSpeech}
                         disabled={!inputEnabled || isHistoricalSession}
                         showStopButton={showStopButton}
                         setContent={setter => {
@@ -1147,9 +1147,10 @@ const SidePanel = () => {
                       <BookmarkList
                         bookmarks={favoritePrompts}
                         onBookmarkSelect={handleBookmarkSelect}
-                        onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
+                        onBookmarkEdit={handleShortcutEdit}
                         onBookmarkDelete={handleBookmarkDelete}
                         onBookmarkReorder={handleBookmarkReorder}
+                        onAddShortcut={handleShortcutEditorOpen}
                         isDarkMode={isDarkMode}
                       />
                     </div>
@@ -1158,19 +1159,27 @@ const SidePanel = () => {
                 {messages.length > 0 && (
                   <div
                     className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-                    <MessageList messages={messages} isDarkMode={isDarkMode} />
+                    <MessageList
+                      messages={messages}
+                      isDarkMode={isDarkMode}
+                      failureMessage={failureMessage}
+                      showRetryOptions={showRetryOptions}
+                      onRetry={handleRetryTask}
+                      onNewChat={handleNewChat}
+                      retryDisabled={!lastTaskRef.current?.text || !lastTaskRef.current?.sessionId}
+                    />
                     <div ref={messagesEndRef} />
                   </div>
                 )}
                 {messages.length > 0 && (
                   <div
-                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
+                    ref={promptContainerCallbackRef}
+                    className={`flex h-[27%] flex-col border-t p-2 shadow-sm backdrop-blur-sm ${
+                      isDarkMode ? 'border-slate-700 bg-slate-900/70' : 'border-gray-200 bg-gray-50/60'
+                    }`}>
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onStopTask={handleStopTask}
-                      onMicClick={handleMicClick}
-                      isRecording={isRecording}
-                      isProcessingSpeech={isProcessingSpeech}
                       disabled={!inputEnabled || isHistoricalSession}
                       showStopButton={showStopButton}
                       setContent={setter => {
@@ -1187,6 +1196,80 @@ const SidePanel = () => {
           </>
         )}
       </div>
+      {showShortcutEditor && (
+        <div className="absolute inset-0 z-50">
+          <button
+            type="button"
+            aria-label="Close shortcut editor"
+            onClick={handleShortcutEditorClose}
+            className="absolute inset-0 z-0 cursor-pointer bg-[#333333]/10 backdrop-blur-[27px]"
+          />
+          <form
+            onSubmit={handleShortcutSave}
+            className="absolute left-1/2 z-10 flex -translate-x-1/2 flex-col gap-3 border border-[#d0d0d0] p-4"
+            style={{
+              width: '93%',
+              height: computedEditorHeight ? `${computedEditorHeight}px` : '38%',
+              top: computedEditorTop !== undefined ? `${computedEditorTop}px` : 'calc(27% + 27px)',
+              background: 'rgba(227, 227, 227, 0.62)',
+              borderRadius: '27px',
+              backdropFilter: 'blur(27px)',
+              boxShadow: '0 0 30px rgba(51, 51, 51, 0.1)',
+            }}>
+            <h2 className="pb-3 text-base font-semibold text-[#727272]">Shortcut editor</h2>
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="shortcut-editor-name"
+                className="text-xs font-medium uppercase tracking-wide text-[#727272]">
+                <span className="sr-only">Shortcut name</span>
+              </label>
+              <input
+                type="text"
+                id="shortcut-editor-name"
+                value={shortcutName}
+                onChange={event => setShortcutName(event.target.value)}
+                placeholder="Shortcut name"
+                className="w-full rounded-md border border-transparent bg-[#f7f7f7] px-3 py-2 text-sm text-[#333333] placeholder:text-[#e3e3e3] focus:outline-none focus:ring-2 focus:ring-[#626262]"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="shortcut-editor-prompt"
+                className="text-xs font-medium uppercase tracking-wide text-[#727272]">
+                <span className="sr-only">Shortcut prompt</span>
+              </label>
+              <textarea
+                value={shortcutPrompt}
+                id="shortcut-editor-prompt"
+                onChange={event => setShortcutPrompt(event.target.value)}
+                placeholder="What can I do for you?"
+                className="w-full resize-none rounded-md border border-transparent bg-[#f7f7f7] px-3 py-2 text-sm text-[#333333] placeholder:text-[#e3e3e3] focus:outline-none focus:ring-2 focus:ring-[#626262]"
+                style={{ height: computedTextareaHeight ? `${computedTextareaHeight}px` : '27%' }}
+              />
+            </div>
+            <div className="mt-auto flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleShortcutEditorClose}
+                className="rounded-md bg-[#626262] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4f4f4f]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!shortcutName.trim() || !shortcutPrompt.trim()}
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white transition-colors ${
+                  !shortcutName.trim() || !shortcutPrompt.trim()
+                    ? 'cursor-not-allowed bg-[#626262]/60'
+                    : 'bg-[#626262] hover:bg-[#4f4f4f]'
+                }`}
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

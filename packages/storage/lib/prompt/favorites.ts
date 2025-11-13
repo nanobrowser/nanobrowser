@@ -5,18 +5,8 @@ import type { BaseStorage } from '../base/types';
 // Template data
 const defaultFavoritePrompts = [
   {
-    title: '📚 Explore AI Papers',
-    content:
-      '- Go to https://huggingface.co/papers and click through each of the first 3 papers.\n- For each paper:\n  - Record the title, URL and upvotes\n  - Summarise the abstract section\n- Finally, compile together a summary of all 3 papers, ranked by upvotes',
-  },
-  {
-    title: '🐦 Follow us on X/Twitter!',
-    content: 'Follow us at https://x.com/nanobrowser_ai to stay updated on the latest news and features!',
-  },
-  {
-    title: '🌟 Star us on GitHub!',
-    content:
-      "Open the Nanobrowser repository at https://github.com/nanobrowser/nanobrowser and check if you've already starred it. If not, please support us by giving us a star!",
+    title: "Show me today's AI news",
+    content: 'Open news.google.com and search for AI OR artificial intelligence when:1d',
   },
 ];
 
@@ -148,19 +138,43 @@ export function createFavoritesStorage(): FavoritePromptsStorage {
       const currentState = await favoritesStorage.get();
       let prompts = currentState.prompts;
 
-      // Check if storage is in initial state (empty prompts array and nextId=1)
-      if (currentState.prompts.length === 0 && currentState.nextId === 1) {
-        // Initialize with default prompts
-        for (const prompt of defaultFavoritePrompts) {
-          await favoritesStorage.set(prev => {
-            const id = prev.nextId;
-            const newPrompt: FavoritePrompt = { id, title: prompt.title, content: prompt.content };
-            return { nextId: id + 1, prompts: [newPrompt, ...prev.prompts] };
-          });
-        }
-        const newState = await favoritesStorage.get();
-        prompts = newState.prompts;
+      const legacyTitles = [
+        '📚 Explore AI Papers',
+        '🐦 Follow us on X/Twitter!',
+        '🌟 Star us on GitHub!',
+      ];
+
+      const shouldSeedDefaults =
+        (currentState.prompts.length === 0 && currentState.nextId === 1) ||
+        currentState.prompts.some(prompt => legacyTitles.includes(prompt.title));
+
+      if (shouldSeedDefaults) {
+        await favoritesStorage.set(prev => {
+          let promptsWithoutLegacy = prev.prompts.filter(prompt => !legacyTitles.includes(prompt.title));
+          let nextId = prev.nextId;
+
+          const hasDefault = promptsWithoutLegacy.some(prompt => prompt.content === defaultFavoritePrompts[0].content);
+          if (!hasDefault) {
+            const id = nextId;
+            const newPrompt: FavoritePrompt = {
+              id,
+              title: defaultFavoritePrompts[0].title,
+              content: defaultFavoritePrompts[0].content,
+            };
+            promptsWithoutLegacy = [newPrompt, ...promptsWithoutLegacy];
+            nextId = id + 1;
+          }
+
+          return {
+            nextId,
+            prompts: promptsWithoutLegacy,
+          };
+        });
+
+        const refreshed = await favoritesStorage.get();
+        prompts = refreshed.prompts;
       }
+
       return [...prompts].sort((a, b) => b.id - a.id);
     },
 

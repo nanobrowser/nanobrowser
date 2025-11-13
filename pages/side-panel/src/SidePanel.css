@@ -1,22 +1,22 @@
 /* Add this at the top of the file */
 body {
-  border-color: rgb(159, 6, 11) !important; /* sky-200 color */
+  border-color: #d1d5db !important;
 }
 
 /* Remove unused classes: .App, .App-logo, .App-header */
 
 code {
-  background: rgba(186, 230, 253, 0.4);
+  background: rgba(148, 163, 184, 0.25);
   border-radius: 0.25rem;
   padding: 0.2rem 0.5rem;
-  color: #0369a1;
+  color: #334155;
 }
 
 /* Dark mode support for code */
 @media (prefers-color-scheme: dark) {
   code {
-    background: rgba(30, 58, 138, 0.4);
-    color: #7dd3fc;
+    background: rgba(51, 65, 85, 0.45);
+    color: #e2e8f0;
   }
 }
 
@@ -26,16 +26,16 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #e5e7eb;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
+  background: #9ca3af;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: #6b7280;
 }
 
 /* Dark mode scrollbar */
@@ -45,11 +45,11 @@ code {
   }
   
   ::-webkit-scrollbar-thumb {
-    background: #0ea5e9;
+    background: #4b5563;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
+    background: #6b7280;
   }
 }
 
@@ -60,13 +60,13 @@ code {
   align-items: center;
   padding: 0.75rem;
   background-color: transparent;
-  border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 /* Dark mode header border */
 @media (prefers-color-scheme: dark) {
   .header {
-    border-bottom: 1px solid rgba(14, 165, 233, 0.3);
+    border-bottom: 1px solid rgba(100, 116, 139, 0.5);
   }
 }
 
@@ -82,26 +82,26 @@ code {
 }
 
 .header-icon {
-  color: #19C2FF;
+  color: #6b7280;
   cursor: pointer;
   transition: color 0.2s ease;
   opacity: 0.8;
 }
 
 .header-icon:hover {
-  color: #0073DC;
+  color: #374151;
   opacity: 1;
 }
 
 .send-button {
-  color: #19C2FF;
+  color: #6b7280;
   cursor: pointer;
   transition: color 0.2s ease;
   opacity: 0.8;
 }
 
 .send-button:hover {
-  color: #0073DC;
+  color: #374151;
   opacity: 1;
 }
 
@@ -122,16 +122,16 @@ code {
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-track {
-  background: #f1f5f9;  /* sky-50 */
+  background: #e5e7eb;
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-  background: #7dd3fc;  /* sky-300 - very light blue */
+  background: #9ca3af;
   border-radius: 4px;
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;  /* sky-400 - slightly darker on hover */
+  background: #6b7280;
 }
 
 /* Dark mode scrollbar for scrollbar-gutter-stable */
@@ -141,11 +141,11 @@ code {
   }
   
   .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-    background: #0ea5e9;  /* sky-500 */
+    background: #4b5563;
   }
-  
+
   .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;  /* sky-400 */
+    background: #6b7280;
   }
 }
 

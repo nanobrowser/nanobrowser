@@ -22,9 +22,9 @@ export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
 
 // Default settings
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
-  maxSteps: 100,
-  maxActionsPerStep: 5,
-  maxFailures: 3,
+  maxSteps: 1000,
+  maxActionsPerStep: 100,
+  maxFailures: 20,
   useVision: true,
   useVisionForPlanner: true,
   planningInterval: 3,
@@ -46,10 +46,12 @@ export const generalSettingsStore: GeneralSettingsStorage = {
       ...settings,
     };
 
+    updatedSettings.maxSteps = DEFAULT_GENERAL_SETTINGS.maxSteps;
+    updatedSettings.maxActionsPerStep = DEFAULT_GENERAL_SETTINGS.maxActionsPerStep;
+    updatedSettings.maxFailures = DEFAULT_GENERAL_SETTINGS.maxFailures;
     updatedSettings.useVision = true;
     updatedSettings.useVisionForPlanner = true;
     updatedSettings.replayHistoricalTasks = true;
-
     await storage.set(updatedSettings);
   },
   async getSettings() {
@@ -57,6 +59,9 @@ export const generalSettingsStore: GeneralSettingsStorage = {
     return {
       ...DEFAULT_GENERAL_SETTINGS,
       ...settings,
+      maxSteps: DEFAULT_GENERAL_SETTINGS.maxSteps,
+      maxActionsPerStep: DEFAULT_GENERAL_SETTINGS.maxActionsPerStep,
+      maxFailures: DEFAULT_GENERAL_SETTINGS.maxFailures,
       useVision: true,
       useVisionForPlanner: true,
       replayHistoricalTasks: true,

@@ -1,14 +1,9 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { FaMicrophone } from 'react-icons/fa';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { t } from '@extension/i18n';
 
 interface ChatInputProps {
   onSendMessage: (text: string, displayText?: string) => void;
   onStopTask: () => void;
-  onMicClick?: () => void;
-  isRecording?: boolean;
-  isProcessingSpeech?: boolean;
   disabled: boolean;
   showStopButton: boolean;
   setContent?: (setter: (text: string) => void) => void;
@@ -28,9 +23,6 @@ interface AttachedFile {
 export default function ChatInput({
   onSendMessage,
   onStopTask,
-  onMicClick,
-  isRecording = false,
-  isProcessingSpeech = false,
   disabled,
   showStopButton,
   setContent,
@@ -44,20 +36,11 @@ export default function ChatInput({
     () => disabled || (text.trim() === '' && attachedFiles.length === 0),
     [disabled, text, attachedFiles],
   );
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle text changes and resize textarea
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setText(newText);
-
-    // Resize textarea
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 100)}px`;
-    }
   };
 
   // Expose a method to set content from outside
@@ -66,15 +49,6 @@ export default function ChatInput({
       setContent(setText);
     }
   }, [setContent]);
-
-  // Initial resize when component mounts
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 100)}px`;
-    }
-  }, []);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -185,9 +159,11 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
+      className={`flex h-full flex-col overflow-hidden rounded-lg border transition-colors ${
+        disabled ? 'cursor-not-allowed' : 'focus-within:border-gray-400 hover:border-gray-400'
+      } ${isDarkMode ? 'border-slate-700' : 'border-gray-200'}`}
       aria-label={t('chat_input_form')}>
-      <div className="flex flex-col">
+      <div className="flex flex-1 flex-col">
         {/* File attachments display */}
         {attachedFiles.length > 0 && (
           <div
@@ -217,21 +193,16 @@ export default function ChatInput({
         )}
 
         <textarea
-          ref={textareaRef}
           value={text}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
           disabled={disabled}
           aria-disabled={disabled}
           rows={5}
-          className={`w-full resize-none border-none p-2 focus:outline-none ${
+          className={`min-h-0 w-full flex-1 resize-none border-none p-2 focus:outline-none placeholder:text-[#9f9f9f] ${
             disabled
-              ? isDarkMode
-                ? 'cursor-not-allowed bg-slate-800 text-gray-400'
-                : 'cursor-not-allowed bg-gray-100 text-gray-500'
-              : isDarkMode
-                ? 'bg-slate-800 text-gray-200'
-                : 'bg-white'
+              ? 'cursor-not-allowed bg-[#e5e5e5] text-[#333333]/60'
+              : 'bg-[#f7f7f7] text-[#333333]'
           }`}
           placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : t('chat_input_placeholder')}
           aria-label={t('chat_input_editor')}
@@ -270,34 +241,6 @@ export default function ChatInput({
               aria-hidden="true"
             />
 
-            {onMicClick && (
-              <button
-                type="button"
-                onClick={onMicClick}
-                disabled={disabled || isProcessingSpeech}
-                aria-label={
-                  isProcessingSpeech
-                    ? t('chat_stt_processing')
-                    : isRecording
-                      ? t('chat_stt_recording_stop')
-                      : t('chat_stt_input_start')
-                }
-                className={`rounded-md p-1.5 transition-colors ${
-                  disabled || isProcessingSpeech
-                    ? 'cursor-not-allowed opacity-50'
-                    : isRecording
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : isDarkMode
-                        ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}>
-                {isProcessingSpeech ? (
-                  <AiOutlineLoading3Quarters className="size-4 animate-spin" />
-                ) : (
-                  <FaMicrophone className={`size-4 ${isRecording ? 'animate-pulse' : ''}`} />
-                )}
-              </button>
-            )}
           </div>
 
           {showStopButton ? (
@@ -321,7 +264,9 @@ export default function ChatInput({
               type="submit"
               disabled={isSendButtonDisabled}
               aria-disabled={isSendButtonDisabled}
-              className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:enabled:bg-[#0073DC] ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+              className={`rounded-md bg-[#626262] px-3 py-1 text-white transition-colors hover:enabled:bg-[#4f4f4f] ${
+                isSendButtonDisabled ? 'cursor-not-allowed opacity-60' : ''
+              }`}>
               {t('chat_buttons_send')}
             </button>
           )}

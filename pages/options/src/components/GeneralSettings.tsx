@@ -30,79 +30,48 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
   return (
     <section className="space-y-6">
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-white'} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'} p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
           {t('options_general_header')}
         </h2>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className={`rounded-md border ${isDarkMode ? 'border-slate-700 bg-slate-800/80' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                 {t('options_general_maxSteps')}
               </h3>
-              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`mt-1 text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {t('options_general_maxSteps_desc')}
               </p>
+              <p className={`mt-3 text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                {t('options_general_fixedValue', [settings.maxSteps.toString()])}
+              </p>
             </div>
-            <label htmlFor="maxSteps" className="sr-only">
-              {t('options_general_maxSteps')}
-            </label>
-            <input
-              id="maxSteps"
-              type="number"
-              min={1}
-              max={50}
-              value={settings.maxSteps}
-              onChange={e => updateSetting('maxSteps', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
-            />
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <div className={`rounded-md border ${isDarkMode ? 'border-slate-700 bg-slate-800/80' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                 {t('options_general_maxActions')}
               </h3>
-              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`mt-1 text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {t('options_general_maxActions_desc')}
               </p>
-            </div>
-            <label htmlFor="maxActionsPerStep" className="sr-only">
-              {t('options_general_maxActions')}
-            </label>
-            <input
-              id="maxActionsPerStep"
-              type="number"
-              min={1}
-              max={50}
-              value={settings.maxActionsPerStep}
-              onChange={e => updateSetting('maxActionsPerStep', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                {t('options_general_maxFailures')}
-              </h3>
-              <p className={`text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {t('options_general_maxFailures_desc')}
+              <p className={`mt-3 text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                {t('options_general_fixedValue', [settings.maxActionsPerStep.toString()])}
               </p>
             </div>
-            <label htmlFor="maxFailures" className="sr-only">
-              {t('options_general_maxFailures')}
-            </label>
-            <input
-              id="maxFailures"
-              type="number"
-              min={1}
-              max={10}
-              value={settings.maxFailures}
-              onChange={e => updateSetting('maxFailures', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
-            />
+
+            <div className={`rounded-md border ${isDarkMode ? 'border-slate-700 bg-slate-800/80' : 'border-gray-200 bg-gray-50'} p-4`}>
+              <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                {t('options_general_maxFailures')}
+              </h3>
+              <p className={`mt-1 text-sm font-normal ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {t('options_general_maxFailures_desc')}
+              </p>
+              <p className={`mt-3 text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                {t('options_general_fixedValue', [settings.maxFailures.toString()])}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -124,7 +93,7 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
               />
               <label
                 htmlFor="displayHighlights"
-                className={`peer h-6 w-11 rounded-full ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300`}>
+                className={`peer h-6 w-11 rounded-full ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-gray-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-300`}>
                 <span className="sr-only">{t('options_general_displayHighlights')}</span>
               </label>
             </div>
@@ -149,7 +118,11 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
               max={20}
               value={settings.planningInterval}
               onChange={e => updateSetting('planningInterval', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+              className={`w-20 rounded-md border ${
+                isDarkMode
+                  ? 'border-slate-600 bg-[#f7f7f7] text-[#333333]'
+                  : 'border-gray-300 bg-[#f7f7f7] text-[#333333]'
+              } px-3 py-2`}
             />
           </div>
 
