@@ -262,7 +262,6 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
   },
-
   "options_models_providers_header": {
     "message": "LLM Providers"
   },
@@ -290,7 +289,6 @@
   "options_models_providers_custom_name_placeholder": {
     "message": "Provider name"
   },
-
   "options_models_providers_apiKey": {
     "message": "API Key"
   },
@@ -309,21 +307,18 @@
   "options_models_providers_apiKey_show": {
     "message": "Show API key"
   },
-
   "options_models_selection_header": {
     "message": "Model Selection"
   },
   "options_models_speechToText_header": {
     "message": "Speech-to-Text Model"
   },
-
   "options_models_agents_navigator": {
     "message": "Navigates websites and performs actions"
   },
   "options_models_agents_planner": {
     "message": "Develops and refines strategies to complete tasks"
   },
-
   "options_models_labels_model": {
     "message": "Model"
   },
@@ -411,7 +406,6 @@
       }
     }
   },
-
   "options_firewall_header": {
     "message": "Firewall"
   },
@@ -448,7 +442,6 @@
   "options_firewall_howItWorks": {
     "message": "The firewall contains a deny list and an allow list.\nIf both lists are empty, all URLs are allowed\nDeny list takes priority - if a URL matches any deny list entry, it's blocked\nWhen allow list is empty, all non-denied URLs are allowed\nWhen allow list is not empty, only matching URLs are allowed\nWildcards are NOT supported yet\nAllow list is preferred over deny list"
   },
-
   "bg_errors_noTabId": {
     "message": "No tab ID provided"
   },
@@ -548,7 +541,6 @@
   "exec_replay_historyEmpty": {
     "message": "History is empty"
   },
-
   "act_searchGoogle_start": {
     "message": "Searching for \"$QUERY$\" in Google",
     "placeholders": {
@@ -965,6 +957,27 @@
       "error": {
         "content": "$1",
         "example": "Option not found"
+      }
+    }
+  },
+  "act_fillForm_start": {
+    "message": "Filling form with profile data"
+  },
+  "act_fillForm_ok": {
+    "message": "Filled $COUNT$ fields using profile data",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_inputText_failed": {
+    "message": "Failed to input text: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Element not interactable"
       }
     }
   }

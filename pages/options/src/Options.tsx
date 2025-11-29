@@ -3,19 +3,21 @@ import '@src/Options.css';
 import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { t } from '@extension/i18n';
-import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle } from 'react-icons/fi';
+import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle, FiUser } from 'react-icons/fi';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
 import { AnalyticsSettings } from './components/AnalyticsSettings';
+import { ProfileSettings } from './components/ProfileSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'profile' | 'help';
 
 const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
   { id: 'general', icon: FiSettings, label: t('options_tabs_general') },
   { id: 'models', icon: FiCpu, label: t('options_tabs_models') },
   { id: 'firewall', icon: FiShield, label: t('options_tabs_firewall') },
   { id: 'analytics', icon: FiTrendingUp, label: 'Analytics' },
+  { id: 'profile', icon: FiUser, label: 'Profile' },
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
@@ -54,6 +56,8 @@ const Options = () => {
         return <FirewallSettings isDarkMode={isDarkMode} />;
       case 'analytics':
         return <AnalyticsSettings isDarkMode={isDarkMode} />;
+      case 'profile':
+        return <ProfileSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }

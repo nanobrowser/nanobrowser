@@ -966,5 +966,26 @@
         "example": "Opção não encontrada"
       }
     }
+  },
+  "act_fillForm_start": {
+    "message": "Filling form with profile data"
+  },
+  "act_fillForm_ok": {
+    "message": "Filled $COUNT$ fields using profile data",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_inputText_failed": {
+    "message": "Failed to input text: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Element not interactable"
+      }
+    }
   }
 }
