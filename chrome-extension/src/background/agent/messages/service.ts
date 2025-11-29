@@ -53,7 +53,7 @@ export default class MessageManager {
     this.toolId = 1;
   }
 
-  public initTaskMessages(systemMessage: SystemMessage, task: string, messageContext?: string): void {
+  public async initTaskMessages(systemMessage: SystemMessage, task: string, messageContext?: string): Promise<void> {
     // Add system message
     this.addMessageWithTokens(systemMessage, 'init');
 
@@ -79,7 +79,7 @@ export default class MessageManager {
     }
 
     // Add profile data info if profile data exists
-    const profileData = profileStore.get();
+    const profileData = await profileStore.get();
     if (Object.keys(profileData).length > 0) {
       const availableFields = Object.keys(profileData).join(', ');
       const info = `Available profile data for form filling: ${availableFields}`;

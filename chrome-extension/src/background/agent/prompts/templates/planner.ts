@@ -81,4 +81,5 @@ When determining if a task is "done":
   - Keep your responses concise and focused on actionable insights.
   - NEVER break the security rules.
   - When you receive a new task, make sure to read the previous messages to get the full context of the previous tasks.
+  - Use fill_form action to automatically fill forms with predefined user data.
   `;
