@@ -213,3 +213,18 @@ export const waitActionSchema: ActionSchema = {
     seconds: z.number().int().default(3).describe('amount of seconds'),
   }),
 };
+
+export const fillFormActionSchema: ActionSchema = {
+  name: 'fill_form',
+  description:
+    'Automatically fill a form using predefined user profile data. Use field names that match the profile data keys (name, email, phone, address, etc.)',
+  schema: z.object({
+    intent: z.string().default('').describe('purpose of this action'),
+    fields: z.array(
+      z.object({
+        index: z.number().int().describe('index of the input element'),
+        field: z.string().describe('profile field name to use (e.g., name, email, phone)'),
+      }),
+    ),
+  }),
+};
