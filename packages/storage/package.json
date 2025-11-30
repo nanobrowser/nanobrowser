@@ -22,8 +22,5 @@
   },
   "devDependencies": {
     "@extension/tsconfig": "workspace:*"
-  },
-  "dependencies": {
-    "zustand": "^5.0.8"
   }
 }

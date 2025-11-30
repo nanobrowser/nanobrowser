@@ -10,14 +10,14 @@ import { FirewallSettings } from './components/FirewallSettings';
 import { AnalyticsSettings } from './components/AnalyticsSettings';
 import { ProfileSettings } from './components/ProfileSettings';
 
-type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'profile' | 'help';
+type TabTypes = 'general' | 'models' | 'firewall' | 'analytics' | 'form_data' | 'help';
 
 const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
   { id: 'general', icon: FiSettings, label: t('options_tabs_general') },
   { id: 'models', icon: FiCpu, label: t('options_tabs_models') },
   { id: 'firewall', icon: FiShield, label: t('options_tabs_firewall') },
   { id: 'analytics', icon: FiTrendingUp, label: 'Analytics' },
-  { id: 'profile', icon: FiUser, label: 'Profile' },
+  { id: 'form_data', icon: FiUser, label: 'Form data' },
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
@@ -56,7 +56,7 @@ const Options = () => {
         return <FirewallSettings isDarkMode={isDarkMode} />;
       case 'analytics':
         return <AnalyticsSettings isDarkMode={isDarkMode} />;
-      case 'profile':
+      case 'form_data':
         return <ProfileSettings isDarkMode={isDarkMode} />;
       default:
         return null;
