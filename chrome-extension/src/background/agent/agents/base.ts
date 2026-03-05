@@ -115,6 +115,12 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
       return false;
     }
 
+    // Kimi Code API doesn't support structured output
+    if (this.provider === ProviderTypeEnum.Kimi) {
+      logger.debug(`[${this.modelName}] Kimi API doesn't support structured output, using manual JSON extraction`);
+      return false;
+    }
+
     return true;
   }
 

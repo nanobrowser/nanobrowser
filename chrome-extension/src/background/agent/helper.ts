@@ -381,6 +381,35 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
 
       return new ChatLlama(args);
     }
+    case ProviderTypeEnum.Kimi: {
+      // Kimi Code API uses Anthropic SDK style
+      // Base URL: https://api.kimi.com/coding/
+      const args: {
+        model: string;
+        apiKey?: string;
+        anthropicApiUrl?: string;
+        clientOptions?: Record<string, unknown>;
+        topP?: number;
+        temperature?: number;
+        maxTokens?: number;
+      } = {
+        model: modelConfig.modelName || 'kimi-for-coding',
+        apiKey: providerConfig.apiKey,
+        anthropicApiUrl: providerConfig.baseUrl || 'https://api.kimi.com/coding',
+        topP: (modelConfig.parameters?.topP ?? 0.9) as number,
+        temperature: (modelConfig.parameters?.temperature ?? 0.3) as number,
+        maxTokens,
+        clientOptions: {
+          defaultHeaders: {
+            'User-Agent': 'JobFinderAI/1.0.0',
+            'X-Client-Name': 'jobfinder',
+          },
+        },
+      };
+
+      console.log('[createChatModel] Creating Kimi client with Anthropic SDK, model:', args.model);
+      return new ChatAnthropic(args) as BaseChatModel;
+    }
     default: {
       // by default, we think it's a openai-compatible provider
       // Pass undefined for extraFetchOptions for default/custom cases

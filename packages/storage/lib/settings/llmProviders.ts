@@ -67,6 +67,7 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.OpenRouter:
     case ProviderTypeEnum.Groq:
     case ProviderTypeEnum.Cerebras:
+    case ProviderTypeEnum.Kimi:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -99,6 +100,8 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Cerebras';
     case ProviderTypeEnum.Llama:
       return 'Llama';
+    case ProviderTypeEnum.Kimi:
+      return 'Kimi';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
@@ -148,6 +151,15 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
         // modelNames: [], // Not used for Azure configuration
         azureDeploymentNames: [], // Azure deployment names
         azureApiVersion: AZURE_API_VERSION, // Provide a common default API version
+        createdAt: Date.now(),
+      };
+    case ProviderTypeEnum.Kimi:
+      return {
+        apiKey: '',
+        name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.Kimi),
+        type: ProviderTypeEnum.Kimi,
+        baseUrl: 'https://api.kimi.com/coding',
+        modelNames: llmProviderModelNames[providerId],
         createdAt: Date.now(),
       };
     default: // Handles CustomOpenAI
