@@ -927,8 +927,57 @@ const SidePanel = () => {
         stream.getTracks().forEach(track => track.stop());
 
         if (audioChunksRef.current.length > 0) {
-          // Create audio blob
+          // Create audio blob (webm from browser)
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+          // Convert webm to WAV for maximum compatibility (whisper.cpp, etc.)
+          let finalBlob = audioBlob;
+          try {
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            const audioCtx = new AudioContext({ sampleRate: 16000 });
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            await audioCtx.close();
+
+            // Resample to 16 kHz mono via OfflineAudioContext
+            const targetRate = 16000;
+            const offlineCtx = new OfflineAudioContext(1, Math.ceil(audioBuffer.duration * targetRate), targetRate);
+            const source = offlineCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(offlineCtx.destination);
+            source.start(0);
+            const rendered = await offlineCtx.startRendering();
+            const pcm = rendered.getChannelData(0);
+
+            // Encode as WAV (PCM 16-bit)
+            const wavBuffer = new ArrayBuffer(44 + pcm.length * 2);
+            const dv = new DataView(wavBuffer);
+            const writeStr = (o: number, s: string) => {
+              for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i));
+            };
+            writeStr(0, 'RIFF');
+            dv.setUint32(4, 36 + pcm.length * 2, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            dv.setUint32(16, 16, true);
+            dv.setUint16(20, 1, true);
+            dv.setUint16(22, 1, true);
+            dv.setUint32(24, targetRate, true);
+            dv.setUint32(28, targetRate * 2, true);
+            dv.setUint16(32, 2, true);
+            dv.setUint16(34, 16, true);
+            writeStr(36, 'data');
+            dv.setUint32(40, pcm.length * 2, true);
+            for (let i = 0; i < pcm.length; i++) {
+              const s = Math.max(-1, Math.min(1, pcm[i]));
+              dv.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+            }
+
+            finalBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+            console.log(`Audio converted to WAV: ${finalBlob.size} bytes`);
+          } catch (err) {
+            console.warn('WAV conversion failed, using webm:', err);
+            // Fall back to webm — Gemini and --convert servers handle it
+          }
 
           // Convert blob to base64
           const reader = new FileReader();
@@ -958,7 +1007,7 @@ const SidePanel = () => {
               setIsProcessingSpeech(false);
             }
           };
-          reader.readAsDataURL(audioBlob);
+          reader.readAsDataURL(finalBlob);
         }
       };
 

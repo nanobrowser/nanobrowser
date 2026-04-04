@@ -146,7 +146,7 @@
     "message": "Failed to process speech recording"
   },
   "chat_stt_model_notFound": {
-    "message": "No speech-to-text model configured or not a Gemini model. Please configure a Gemini model in settings."
+    "message": "No speech-to-text model configured correctly. Please configure a Gemini model or Whisper.cpp in settings."
   },
   "chat_stt_recognitionFailed": {
     "message": "Speech recognition failed"
@@ -207,6 +207,9 @@
   },
   "options_tabs_firewall": {
     "message": "Firewall"
+  },
+  "options_tabs_skills": {
+    "message": "Skills"
   },
   "options_tabs_help": {
     "message": "Help"
@@ -337,7 +340,31 @@
     "message": "Reasoning"
   },
   "options_models_stt_desc": {
-    "message": "Configure the Gemini model used for converting speech to text when using the microphone feature."
+    "message": "Configure the model used for converting speech to text when using the microphone feature. You can use Gemini, Groq Whisper, or a local whisper.cpp server."
+  },
+  "options_models_stt_type_gemini": {
+    "message": "Gemini Providers"
+  },
+  "options_models_stt_type_whisper": {
+    "message": "Whisper.cpp (Local)"
+  },
+  "options_models_stt_type_groq": {
+    "message": "Groq Whisper"
+  },
+  "options_models_stt_whisper_serverUrl": {
+    "message": "Server URL"
+  },
+  "options_models_stt_whisper_serverUrl_placeholder": {
+    "message": "http://localhost:8081"
+  },
+  "options_models_stt_whisper_testConnection": {
+    "message": "Test"
+  },
+  "options_models_stt_whisper_testSuccess": {
+    "message": "Connected successfully!"
+  },
+  "options_models_stt_whisper_testFailed": {
+    "message": "Connection failed"
   },
   "options_models_chooseModel": {
     "message": "Choose Model"
@@ -447,6 +474,88 @@
   },
   "options_firewall_howItWorks": {
     "message": "The firewall contains a deny list and an allow list.\nIf both lists are empty, all URLs are allowed\nDeny list takes priority - if a URL matches any deny list entry, it's blocked\nWhen allow list is empty, all non-denied URLs are allowed\nWhen allow list is not empty, only matching URLs are allowed\nWildcards are NOT supported yet\nAllow list is preferred over deny list"
+  },
+
+  "options_skills_header": {
+    "message": "Skills"
+  },
+  "options_skills_desc": {
+    "message": "Create reusable instruction playbooks that guide the AI agents during task execution. Enabled skills are automatically injected into every task."
+  },
+  "options_skills_empty": {
+    "message": "No skills created yet. Add a skill to get started."
+  },
+  "options_skills_btnAdd": {
+    "message": "Add Skill"
+  },
+  "options_skills_btnSave": {
+    "message": "Save"
+  },
+  "options_skills_btnCancel": {
+    "message": "Cancel"
+  },
+  "options_skills_btnEdit": {
+    "message": "Edit"
+  },
+  "options_skills_btnDelete": {
+    "message": "Delete"
+  },
+  "options_skills_name": {
+    "message": "Name"
+  },
+  "options_skills_name_placeholder": {
+    "message": "e.g. Book Flight on United"
+  },
+  "options_skills_description": {
+    "message": "Description"
+  },
+  "options_skills_description_placeholder": {
+    "message": "Brief description of what this skill does"
+  },
+  "options_skills_content": {
+    "message": "Instructions (Markdown)"
+  },
+  "options_skills_content_placeholder": {
+    "message": "Write detailed step-by-step instructions for the AI agent..."
+  },
+  "options_skills_toggle_a11y": {
+    "message": "Toggle skill"
+  },
+  "options_skills_enabled": {
+    "message": "Enabled"
+  },
+  "options_skills_disabled": {
+    "message": "Disabled"
+  },
+  "options_skills_validation_nameRequired": {
+    "message": "Skill name is required"
+  },
+  "options_skills_validation_contentRequired": {
+    "message": "Skill instructions are required"
+  },
+  "options_skills_btnImport": {
+    "message": "Import Skill"
+  },
+  "options_skills_import_success": {
+    "message": "Skill $NAME$ imported successfully.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "My Skill"
+      }
+    }
+  },
+  "options_skills_import_error": {
+    "message": "Failed to import skill: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "File not readable"
+      }
+    }
+  },
+  "options_skills_import_invalidJson": {
+    "message": "Invalid JSON format."
   },
 
   "bg_errors_noTabId": {

@@ -4,6 +4,8 @@ export const plannerSystemPromptTemplate = `You are a helpful assistant. You are
 
 ${commonSecurityRules}
 
+{{skills}}
+
 # RESPONSIBILITIES:
 1. Judge whether web navigation is required to complete the task or not and set the "web_task" field.
 2. If web_task is false, then just answer the task directly as a helpful assistant

@@ -208,6 +208,9 @@
   "options_tabs_firewall": {
     "message": "防火牆"
   },
+  "options_tabs_skills": {
+    "message": "Skills"
+  },
   "options_tabs_help": {
     "message": "說明"
   },
@@ -332,7 +335,31 @@
     "message": "推理"
   },
   "options_models_stt_desc": {
-    "message": "設定在使用麥克風功能時，將語音轉換為文字所使用的 Gemini 模型。"
+    "message": "設定在使用麥克風功能時，將語音轉換為文字所使用的模型。您可以使用 Gemini、Groq Whisper 或本地的 whisper.cpp 伺服器。"
+  },
+  "options_models_stt_type_gemini": {
+    "message": "Gemini 提供商"
+  },
+  "options_models_stt_type_whisper": {
+    "message": "Whisper.cpp (本地)"
+  },
+  "options_models_stt_type_groq": {
+    "message": "Groq Whisper"
+  },
+  "options_models_stt_whisper_serverUrl": {
+    "message": "伺服器 URL"
+  },
+  "options_models_stt_whisper_serverUrl_placeholder": {
+    "message": "http://localhost:8081"
+  },
+  "options_models_stt_whisper_testConnection": {
+    "message": "測試連接"
+  },
+  "options_models_stt_whisper_testSuccess": {
+    "message": "連接成功！"
+  },
+  "options_models_stt_whisper_testFailed": {
+    "message": "連接失敗"
   },
   "options_models_chooseModel": {
     "message": "選擇模型"
@@ -442,6 +469,89 @@
   "options_firewall_howItWorks": {
     "message": "防火牆包含一個拒絕清單和一個允許清單。\n- 如果兩個清單都為空，則允許所有 URL。\n- 拒絕清單具有較高優先順序。如果一個 URL 符合任何拒絕清單中的項目，它將被封鎖。\n- 當允許清單為空時，所有未被拒絕的 URL 都會被允許。\n- 當允許清單不為空時，只有符合清單中項目的 URL 才被允許。\n- 目前尚不支援萬用字元。\n- 建議優先使用允許清單，而非拒絕清單。"
   },
+
+  "options_skills_header": {
+    "message": "Skills"
+  },
+  "options_skills_desc": {
+    "message": "Create reusable instruction playbooks that guide the AI agents during task execution. Enabled skills are automatically injected into every task."
+  },
+  "options_skills_empty": {
+    "message": "No skills created yet. Add a skill to get started."
+  },
+  "options_skills_btnAdd": {
+    "message": "Add Skill"
+  },
+  "options_skills_btnSave": {
+    "message": "Save"
+  },
+  "options_skills_btnCancel": {
+    "message": "Cancel"
+  },
+  "options_skills_btnEdit": {
+    "message": "Edit"
+  },
+  "options_skills_btnDelete": {
+    "message": "Delete"
+  },
+  "options_skills_name": {
+    "message": "Name"
+  },
+  "options_skills_name_placeholder": {
+    "message": "e.g. Book Flight on United"
+  },
+  "options_skills_description": {
+    "message": "Description"
+  },
+  "options_skills_description_placeholder": {
+    "message": "Brief description of what this skill does"
+  },
+  "options_skills_content": {
+    "message": "Instructions (Markdown)"
+  },
+  "options_skills_content_placeholder": {
+    "message": "Write detailed step-by-step instructions for the AI agent..."
+  },
+  "options_skills_toggle_a11y": {
+    "message": "Toggle skill"
+  },
+  "options_skills_enabled": {
+    "message": "Enabled"
+  },
+  "options_skills_disabled": {
+    "message": "Disabled"
+  },
+  "options_skills_validation_nameRequired": {
+    "message": "Skill name is required"
+  },
+  "options_skills_validation_contentRequired": {
+    "message": "Skill instructions are required"
+  },
+  "options_skills_btnImport": {
+    "message": "Import Skill"
+  },
+  "options_skills_import_success": {
+    "message": "Skill $NAME$ imported successfully.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "My Skill"
+      }
+    }
+  },
+  "options_skills_import_error": {
+    "message": "Failed to import skill: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "File not readable"
+      }
+    }
+  },
+  "options_skills_import_invalidJson": {
+    "message": "Invalid JSON format."
+  },
+
   "bg_errors_noTabId": {
     "message": "未提供分頁 ID"
   },

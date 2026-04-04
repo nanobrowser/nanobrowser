@@ -33,6 +33,7 @@ export interface ExecutorExtraArgs {
   extractorLLM?: BaseChatModel;
   agentOptions?: Partial<AgentOptions>;
   generalSettings?: GeneralSettingsConfig;
+  skillsContent?: string;
 }
 
 export class Executor {
@@ -65,8 +66,9 @@ export class Executor {
 
     this.generalSettings = extraArgs?.generalSettings;
     this.tasks.push(task);
-    this.navigatorPrompt = new NavigatorPrompt(context.options.maxActionsPerStep);
-    this.plannerPrompt = new PlannerPrompt();
+    const skillsContent = extraArgs?.skillsContent ?? '';
+    this.navigatorPrompt = new NavigatorPrompt(context.options.maxActionsPerStep, skillsContent);
+    this.plannerPrompt = new PlannerPrompt(skillsContent);
 
     const actionBuilder = new ActionBuilder(context, extractorLLM);
     const navigatorActionRegistry = new NavigatorActionRegistry(actionBuilder.buildDefaultActions());

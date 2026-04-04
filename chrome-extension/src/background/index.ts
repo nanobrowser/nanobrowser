@@ -6,6 +6,7 @@ import {
   generalSettingsStore,
   llmProviderStore,
   analyticsSettingsStore,
+  skillsStorage,
 } from '@extension/storage';
 import { t } from '@extension/i18n';
 import BrowserContext from './browser/context';
@@ -196,12 +197,19 @@ chrome.runtime.onConnect.addListener(port => {
 
               // Extract base64 audio data (remove data URL prefix if present)
               let base64Audio = message.audio;
+              let audioMimeType = 'audio/webm'; // default
               if (base64Audio.startsWith('data:')) {
+                // Extract mime type from data:audio/wav;base64,... format
+                const mimeMatch = base64Audio.match(/^data:([^;]+);/);
+                if (mimeMatch) {
+                  audioMimeType = mimeMatch[1];
+                }
                 base64Audio = base64Audio.split(',')[1];
               }
+              logger.info(`Audio mime type from side panel: ${audioMimeType}`);
 
               // Transcribe audio
-              const transcribedText = await speechToTextService.transcribeAudio(base64Audio);
+              const transcribedText = await speechToTextService.transcribeAudio(base64Audio, audioMimeType);
 
               logger.info('Speech-to-text completed successfully');
               return port.postMessage({
@@ -319,6 +327,21 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
     displayHighlights: generalSettings.displayHighlights,
   });
 
+  // Load enabled skills and format them into a prompt-ready string
+  const enabledSkills = await skillsStorage.getEnabledSkills();
+  let skillsContent = '';
+  if (enabledSkills.length > 0) {
+    const skillsEntries = enabledSkills
+      .map(
+        skill => `<skill name="${skill.name}" description="${skill.description}">
+${skill.content}
+</skill>`,
+      )
+      .join('\n\n');
+    skillsContent = `# Skills\nThe following skills provide domain-specific instructions. Follow them when relevant to the current task.\n\n${skillsEntries}`;
+    logger.info(`Loaded ${enabledSkills.length} skill(s) for task execution`);
+  }
+
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
     plannerLLM: plannerLLM ?? navigatorLLM,
     agentOptions: {
@@ -330,6 +353,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
       planningInterval: generalSettings.planningInterval,
     },
     generalSettings: generalSettings,
+    skillsContent: skillsContent,
   });
 
   return executor;

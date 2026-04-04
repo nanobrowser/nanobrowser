@@ -6,6 +6,8 @@ You are an AI agent designed to automate browser tasks. Your goal is to accompli
 
 ${commonSecurityRules}
 
+{{skills}}
+
 # Input Format
 
 Task

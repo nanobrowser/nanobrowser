@@ -90,6 +90,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   // State for model input handling
 
   const [selectedSpeechToTextModel, setSelectedSpeechToTextModel] = useState<string>('');
+  const [speechToTextType, setSpeechToTextType] = useState<'gemini' | 'whisper_cpp' | 'groq'>('gemini');
+  const [whisperServerUrl, setWhisperServerUrl] = useState<string>('http://localhost:8081');
+  const [testWhisperStatus, setTestWhisperStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -161,7 +164,16 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
       try {
         const config = await speechToTextModelStore.getSpeechToTextModel();
         if (config) {
-          setSelectedSpeechToTextModel(`${config.provider}>${config.modelName}`);
+          if (config.type === 'whisper_cpp') {
+            setSpeechToTextType('whisper_cpp');
+            setWhisperServerUrl(config.serverUrl || 'http://localhost:8081');
+          } else if (config.type === 'groq') {
+            setSpeechToTextType('groq');
+            setSelectedSpeechToTextModel(`${config.provider}>${config.modelName}`);
+          } else {
+            setSpeechToTextType('gemini');
+            setSelectedSpeechToTextModel(`${config.provider}>${config.modelName}`);
+          }
         }
       } catch (error) {
         console.error('Error loading speech-to-text model:', error);
@@ -696,8 +708,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         // Parse the "provider>model" format
         const [provider, modelName] = modelValue.split('>');
 
-        // Save to proper storage
+        // Save to proper storage with the current STT type
         await speechToTextModelStore.setSpeechToTextModel({
+          type: speechToTextType,
           provider,
           modelName,
         });
@@ -707,6 +720,86 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
       }
     } catch (error) {
       console.error('Error saving speech-to-text model:', error);
+    }
+  };
+
+  const handleSpeechToTextTypeChange = async (type: 'gemini' | 'whisper_cpp' | 'groq') => {
+    setSpeechToTextType(type);
+    try {
+      if (type === 'whisper_cpp') {
+        await speechToTextModelStore.setSpeechToTextModel({
+          type: 'whisper_cpp',
+          provider: 'local',
+          modelName: 'whisper',
+          serverUrl: whisperServerUrl,
+        });
+      } else if (type === 'groq') {
+        if (selectedSpeechToTextModel) {
+          const [provider, modelName] = selectedSpeechToTextModel.split('>');
+          await speechToTextModelStore.setSpeechToTextModel({
+            type: 'groq',
+            provider,
+            modelName,
+          });
+        }
+      } else {
+        if (selectedSpeechToTextModel) {
+          const [provider, modelName] = selectedSpeechToTextModel.split('>');
+          await speechToTextModelStore.setSpeechToTextModel({
+            type: 'gemini',
+            provider,
+            modelName,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error saving STT type:', error);
+    }
+  };
+
+  const handleWhisperServerUrlChange = async (url: string) => {
+    setWhisperServerUrl(url);
+    try {
+      await speechToTextModelStore.setSpeechToTextModel({
+        type: 'whisper_cpp',
+        provider: 'local',
+        modelName: 'whisper',
+        serverUrl: url,
+      });
+    } catch (error) {
+      console.error('Error saving STT whisper URL:', error);
+    }
+  };
+
+  const testWhisperConnection = async () => {
+    setTestWhisperStatus('testing');
+    try {
+      const baseUrl = whisperServerUrl.replace(/\/$/, '');
+      let response = await fetch(`${baseUrl}/inference`, {
+        method: 'POST',
+      }).catch(e => {
+        throw e;
+      });
+      // Fallback
+      if (response.status === 404) {
+        response = await fetch(`${baseUrl}/v1/audio/transcriptions`, {
+          method: 'POST',
+        }).catch(e => {
+          throw e;
+        });
+      }
+
+      // 400 is fine as we sent no media, means server is reachable
+      // 401/403 means it wants openai API auth, which also means server is reachable!
+      if (response.status === 400 || response.status === 401 || response.ok) {
+        setTestWhisperStatus('success');
+      } else {
+        setTestWhisperStatus('error');
+      }
+      setTimeout(() => setTestWhisperStatus('idle'), 3000);
+    } catch (error) {
+      setTestWhisperStatus('error');
+      setTimeout(() => setTestWhisperStatus('idle'), 3000);
     }
   };
 
@@ -1645,31 +1738,114 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         </p>
 
         <div
-          className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4`}>
-          <div className="flex items-center">
-            <label
-              htmlFor="speech-to-text-model"
-              className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              {t('options_models_labels_model')}
+          className={`rounded-lg border ${isDarkMode ? 'border-gray-700 bg-slate-800' : 'border-gray-200 bg-gray-50'} p-4 space-y-4`}>
+          {/* Type Selection */}
+          <div className="flex gap-4">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="stt_type"
+                value="gemini"
+                className="cursor-pointer"
+                checked={speechToTextType === 'gemini'}
+                onChange={() => handleSpeechToTextTypeChange('gemini')}
+              />
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('options_models_stt_type_gemini')}
+              </span>
             </label>
-            <select
-              id="speech-to-text-model"
-              className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
-              value={selectedSpeechToTextModel}
-              onChange={e => handleSpeechToTextModelChange(e.target.value)}>
-              <option value="">{t('options_models_chooseModel')}</option>
-              {/* Filter available models to show only Gemini models */}
-              {availableModels
-                .filter(({ provider }) => {
-                  const providerConfig = providers[provider];
-                  return providerConfig?.type === ProviderTypeEnum.Gemini;
-                })
-                .map(({ provider, providerName, model }) => (
-                  <option key={`${provider}>${model}`} value={`${provider}>${model}`}>
-                    {`${providerName} > ${model}`}
-                  </option>
-                ))}
-            </select>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="stt_type"
+                value="groq"
+                className="cursor-pointer"
+                checked={speechToTextType === 'groq'}
+                onChange={() => handleSpeechToTextTypeChange('groq')}
+              />
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('options_models_stt_type_groq')}
+              </span>
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="stt_type"
+                value="whisper_cpp"
+                className="cursor-pointer"
+                checked={speechToTextType === 'whisper_cpp'}
+                onChange={() => handleSpeechToTextTypeChange('whisper_cpp')}
+              />
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('options_models_stt_type_whisper')}
+              </span>
+            </label>
+          </div>
+
+          <div className={`border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            {speechToTextType === 'gemini' || speechToTextType === 'groq' ? (
+              <div className="flex items-center">
+                <label
+                  htmlFor="speech-to-text-model"
+                  className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {t('options_models_labels_model')}
+                </label>
+                <select
+                  id="speech-to-text-model"
+                  className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+                  value={selectedSpeechToTextModel}
+                  onChange={e => handleSpeechToTextModelChange(e.target.value)}>
+                  <option value="">{t('options_models_chooseModel')}</option>
+                  {availableModels
+                    .filter(({ provider }) => {
+                      const providerConfig = providers[provider];
+                      return speechToTextType === 'groq'
+                        ? providerConfig?.type === ProviderTypeEnum.Groq
+                        : providerConfig?.type === ProviderTypeEnum.Gemini;
+                    })
+                    .map(({ provider, providerName, model }) => (
+                      <option key={`${provider}>${model}`} value={`${provider}>${model}`}>
+                        {`${providerName} > ${model}`}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center">
+                  <label
+                    htmlFor="whisper-server-url"
+                    className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('options_models_stt_whisper_serverUrl')}
+                  </label>
+                  <div className="flex flex-1 items-center space-x-2">
+                    <input
+                      id="whisper-server-url"
+                      type="text"
+                      className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500`}
+                      placeholder={t('options_models_stt_whisper_serverUrl_placeholder')}
+                      value={whisperServerUrl}
+                      onChange={e => handleWhisperServerUrlChange(e.target.value)}
+                    />
+                    <Button
+                      variant="secondary"
+                      onClick={testWhisperConnection}
+                      disabled={testWhisperStatus === 'testing' || !whisperServerUrl}
+                      className="px-4 py-2">
+                      {testWhisperStatus === 'testing' ? '...' : t('options_models_stt_whisper_testConnection')}
+                    </Button>
+                  </div>
+                </div>
+                {testWhisperStatus === 'success' && (
+                  <p className="text-sm text-green-600 font-medium ml-24">
+                    {t('options_models_stt_whisper_testSuccess')}
+                  </p>
+                )}
+                {testWhisperStatus === 'error' && (
+                  <p className="text-sm text-red-500 font-medium ml-24">{t('options_models_stt_whisper_testFailed')}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
