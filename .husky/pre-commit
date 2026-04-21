@@ -1,1 +1,0 @@
-pnpm dlx lint-staged --allow-empty

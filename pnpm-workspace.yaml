@@ -1,4 +1,0 @@
-packages:
-  - "chrome-extension"
-  - "pages/*"
-  - "packages/*"

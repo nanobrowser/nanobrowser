@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "default_locale": "en",
+  "name": "__MSG_app_metadata_name__",
+  "version": "0.1.13",
+  "description": "__MSG_app_metadata_description__",
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs",
+    "activeTab",
+    "debugger",
+    "unlimitedStorage",
+    "webNavigation",
+    "sidePanel"
+  ],
+  "options_page": "options/index.html",
+  "background": {
+    "service_worker": "background.iife.js",
+    "type": "module"
+  },
+  "action": {
+    "default_icon": "icon-32.png"
+  },
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "<all_urls>"
+      ],
+      "all_frames": true,
+      "js": [
+        "content/index.iife.js"
+      ]
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "<all_urls>"
+      ],
+      "js": [
+        "refresh.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*.js",
+        "*.css",
+        "*.svg",
+        "icon-128.png",
+        "icon-32.png",
+        "permission/index.html",
+        "permission/permission.js"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
+    }
+  ],
+  "side_panel": {
+    "default_path": "side-panel/index.html"
+  }
+}

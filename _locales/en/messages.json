@@ -1,0 +1,971 @@
+{
+  "app_metadata_description": {
+    "description": "Extension description",
+    "message": "Automate web tasks with AI! NanoBrowser is an open-source Chrome extension that lets you extract data, fill forms, and more."
+  },
+  "app_metadata_name": {
+    "description": "Extension name",
+    "message": "Nanobrowser: AI Web Agent & Automation"
+  },
+  "errors_unknown": {
+    "message": "Unknown error occurred"
+  },
+  "errors_conn_serviceWorker": {
+    "message": "Failed to connect to service worker"
+  },
+  "errors_cmd_unknown": {
+    "message": "Unsupported command: $COMMAND$.\n\nAvailable commands: /state, /nohighlight, /replay <historySessionId>",
+    "placeholders": {
+      "command": {
+        "content": "$1",
+        "example": "/unknown"
+      }
+    }
+  },
+  "nav_newChat_a11y": {
+    "message": "New Chat"
+  },
+  "nav_loadHistory_a11y": {
+    "message": "Load History"
+  },
+  "nav_settings_a11y": {
+    "message": "Settings"
+  },
+  "nav_back": {
+    "message": "← Back"
+  },
+  "nav_back_a11y": {
+    "message": "Back to chat"
+  },
+  "welcome_title": {
+    "message": "Welcome to Nanobrowser!"
+  },
+  "welcome_instruction": {
+    "message": "To get started, please configure your API keys in the settings page."
+  },
+  "welcome_openSettings": {
+    "message": "Open Settings"
+  },
+  "welcome_quickStart": {
+    "message": "Quick Start Guide"
+  },
+  "welcome_joinCommunity": {
+    "message": "Join Our Community"
+  },
+  "status_checkingConfig": {
+    "message": "Checking configuration..."
+  },
+  "chat_buttons_stop": {
+    "message": "Stop"
+  },
+  "chat_buttons_replay": {
+    "message": "Replay"
+  },
+  "chat_buttons_send": {
+    "message": "Send"
+  },
+  "chat_input_placeholder": {
+    "message": "What can I help you with?"
+  },
+  "chat_input_form": {
+    "message": "Chat input form"
+  },
+  "chat_input_editor": {
+    "message": "Message input"
+  },
+  "chat_history_title": {
+    "message": "Chat History"
+  },
+  "chat_history_empty": {
+    "message": "No chat history available"
+  },
+  "chat_history_bookmark": {
+    "message": "Bookmark session"
+  },
+  "chat_history_delete": {
+    "message": "Delete session"
+  },
+  "chat_bookmarks_header": {
+    "message": "Quick Start"
+  },
+  "chat_bookmarks_saveEdit": {
+    "message": "Save changes"
+  },
+  "chat_bookmarks_cancelEdit": {
+    "message": "Cancel changes"
+  },
+  "chat_bookmarks_edit": {
+    "message": "Edit bookmark title"
+  },
+  "chat_bookmarks_delete": {
+    "message": "Delete bookmark"
+  },
+  "chat_replay_starting": {
+    "message": "Starting replay of task:\n\n\"$TASK$\"",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Navigate to example.com"
+      }
+    }
+  },
+  "chat_replay_failed": {
+    "message": "Replay failed: $ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "chat_replay_invalidArgs": {
+    "message": "Invalid arguments. Please use the format: /replay <historySessionId>"
+  },
+  "chat_replay_disabled": {
+    "message": "Replay is disabled in general settings. Please enable \"Replay Historical Tasks\" in the extension settings to use this feature."
+  },
+  "chat_replay_noHistory": {
+    "message": "No action history found for session \"$SESSION_ID$...\". This session may not contain replayable actions.\n\nIt's a replay session itself (replay sessions cannot be replayed again), or it was created before the replay feature was available.",
+    "placeholders": {
+      "session_id": {
+        "content": "$1",
+        "example": "abc123def456789"
+      }
+    }
+  },
+  "chat_stt_processing": {
+    "message": "Processing speech..."
+  },
+  "chat_stt_recording_stop": {
+    "message": "Stop recording"
+  },
+  "chat_stt_input_start": {
+    "message": "Start voice input"
+  },
+  "chat_stt_processingFailed": {
+    "message": "Failed to process speech recording"
+  },
+  "chat_stt_model_notFound": {
+    "message": "No speech-to-text model configured or not a Gemini model. Please configure a Gemini model in settings."
+  },
+  "chat_stt_recognitionFailed": {
+    "message": "Speech recognition failed"
+  },
+  "chat_stt_microphone_permissionDenied": {
+    "message": "Microphone access denied. Please enable microphone permissions in Chrome settings."
+  },
+  "chat_stt_microphone_accessFailed": {
+    "message": "Failed to access microphone. "
+  },
+  "chat_stt_microphone_grantPermission": {
+    "message": "Please grant microphone permission."
+  },
+  "chat_stt_microphone_notFound": {
+    "message": "No microphone found."
+  },
+  "permissions_microphone_title": {
+    "message": "Enable Voice Input"
+  },
+  "permissions_microphone_description": {
+    "message": "Nanobrowser needs microphone access to convert your speech to text."
+  },
+  "permissions_microphone_grantButton": {
+    "message": "Grant Microphone Permission"
+  },
+  "permissions_microphone_requesting": {
+    "message": "Requesting microphone permission..."
+  },
+  "permissions_microphone_grantedSuccess": {
+    "message": "✅ Microphone permission granted! You can now use voice input."
+  },
+  "permissions_microphone_grantedButton": {
+    "message": "Permission Granted"
+  },
+  "permissions_microphone_denied": {
+    "message": "Permission denied. "
+  },
+  "permissions_microphone_allowHelp": {
+    "message": "Please click \"Allow\" when prompted for microphone access."
+  },
+  "permissions_microphone_notFound": {
+    "message": "No microphone found. Please check your audio devices."
+  },
+  "permissions_microphone_alreadyGranted": {
+    "message": "✅ Microphone permission already granted!"
+  },
+  "permissions_microphone_alreadyGrantedButton": {
+    "message": "Permission Already Granted"
+  },
+  "options_nav_header": {
+    "message": "Settings"
+  },
+  "options_tabs_general": {
+    "message": "General"
+  },
+  "options_tabs_models": {
+    "message": "Models"
+  },
+  "options_tabs_firewall": {
+    "message": "Firewall"
+  },
+  "options_tabs_help": {
+    "message": "Help"
+  },
+  "options_general_header": {
+    "message": "General"
+  },
+  "options_general_maxSteps": {
+    "message": "Max Steps per Task"
+  },
+  "options_general_maxSteps_desc": {
+    "message": "Step limit per task"
+  },
+  "options_general_maxActions": {
+    "message": "Max Actions per Step"
+  },
+  "options_general_maxActions_desc": {
+    "message": "Action limit per step"
+  },
+  "options_general_maxFailures": {
+    "message": "Failure Tolerance"
+  },
+  "options_general_maxFailures_desc": {
+    "message": "How many consecutive failures before stopping"
+  },
+  "options_general_enableVision": {
+    "message": "Enable Vision"
+  },
+  "options_general_enableVision_desc": {
+    "message": "Use vision capability of LLMs (consumes more tokens for better results)"
+  },
+  "options_general_displayHighlights": {
+    "message": "Display Highlights"
+  },
+  "options_general_displayHighlights_desc": {
+    "message": "Show visual highlights on interactive elements (e.g. buttons, links, etc.)"
+  },
+  "options_general_planningInterval": {
+    "message": "Replanning Frequency"
+  },
+  "options_general_planningInterval_desc": {
+    "message": "Reconsider and update the plan every [Number] steps"
+  },
+  "options_general_minWaitPageLoad": {
+    "message": "Page Load Wait Time"
+  },
+  "options_general_minWaitPageLoad_desc": {
+    "message": "Minimum wait time after page loads (250-5000ms)"
+  },
+  "options_general_replayHistoricalTasks": {
+    "message": "Replay Historical Tasks( experimental )"
+  },
+  "options_general_replayHistoricalTasks_desc": {
+    "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
+  },
+
+  "options_models_providers_header": {
+    "message": "LLM Providers"
+  },
+  "options_models_providers_notConfigured": {
+    "message": "No providers configured yet. Add a provider to get started."
+  },
+  "options_models_providers_btnCancel": {
+    "message": "Cancel"
+  },
+  "options_models_providers_btnSave": {
+    "message": "Save"
+  },
+  "options_models_providers_btnDelete": {
+    "message": "Delete"
+  },
+  "options_models_providers_setupInstructions": {
+    "message": "Enter your API key and click Save to set it up."
+  },
+  "options_models_providers_custom_name": {
+    "message": "Name"
+  },
+  "options_models_providers_custom_name_desc": {
+    "message": "Provider name (spaces are not allowed when saving)"
+  },
+  "options_models_providers_custom_name_placeholder": {
+    "message": "Provider name"
+  },
+
+  "options_models_providers_apiKey": {
+    "message": "API Key"
+  },
+  "options_models_providers_apiKey_placeholder_optional": {
+    "message": "API Key (optional)"
+  },
+  "options_models_providers_apiKey_placeholder_required": {
+    "message": "API Key (required)"
+  },
+  "options_models_providers_apiKey_placeholder_ollama": {
+    "message": "API Key (leave empty for Ollama)"
+  },
+  "options_models_providers_apiKey_hide": {
+    "message": "Hide API key"
+  },
+  "options_models_providers_apiKey_show": {
+    "message": "Show API key"
+  },
+
+  "options_models_selection_header": {
+    "message": "Model Selection"
+  },
+  "options_models_speechToText_header": {
+    "message": "Speech-to-Text Model"
+  },
+
+  "options_models_agents_navigator": {
+    "message": "Navigates websites and performs actions"
+  },
+  "options_models_agents_planner": {
+    "message": "Develops and refines strategies to complete tasks"
+  },
+
+  "options_models_labels_model": {
+    "message": "Model"
+  },
+  "options_models_labels_temperature": {
+    "message": "Temperature"
+  },
+  "options_models_labels_topP": {
+    "message": "Top P"
+  },
+  "options_models_labels_reasoning": {
+    "message": "Reasoning"
+  },
+  "options_models_stt_desc": {
+    "message": "Configure the Gemini model used for converting speech to text when using the microphone feature."
+  },
+  "options_models_chooseModel": {
+    "message": "Choose Model"
+  },
+  "options_models_addNewProvider": {
+    "message": "Add New Provider"
+  },
+  "options_models_providers_openaiCompatible": {
+    "message": "OpenAI-compatible API Provider"
+  },
+  "options_models_providers_baseUrl": {
+    "message": "Base URL"
+  },
+  "options_models_providers_endpoint": {
+    "message": "Endpoint"
+  },
+  "options_models_providers_deployment": {
+    "message": "Deployment"
+  },
+  "options_models_providers_apiVersion": {
+    "message": "API Version"
+  },
+  "options_models_providers_models": {
+    "message": "Models"
+  },
+  "options_models_providers_placeholders_baseUrl_custom": {
+    "message": "Required OpenAI-compatible API endpoint"
+  },
+  "options_models_providers_placeholders_baseUrl_azure": {
+    "message": "https://YOUR_RESOURCE_NAME.openai.azure.com/"
+  },
+  "options_models_providers_placeholders_baseUrl_openrouter": {
+    "message": "OpenRouter Base URL (optional, defaults to https://openrouter.ai/api/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_llama": {
+    "message": "Llama API Base URL (defaults to https://api.llama.com/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_ollama": {
+    "message": "Ollama base URL"
+  },
+  "options_models_providers_placeholders_azureDeployment": {
+    "message": "Enter Azure model name (e.g. gpt-4o, gpt-4o-mini)"
+  },
+  "options_models_providers_placeholders_azureApiVersion": {
+    "message": "e.g., 2025-04-01-preview"
+  },
+  "options_models_providers_deployment_desc": {
+    "message": "Type model name and press Enter or Space to set. Deployment name should match OpenAI model name (e.g., gpt-4o) for best compatibility."
+  },
+  "options_models_providers_models_instructions": {
+    "message": "Type and Press Enter or Space to add."
+  },
+  "options_models_providers_models_openrouter_empty": {
+    "message": "No models selected. Add model names manually if needed."
+  },
+  "options_models_providers_ollama_reminder": {
+    "message": "environment variable MUST be set for the Ollama server."
+  },
+  "options_models_providers_ollama_learnMore": {
+    "message": "Learn more"
+  },
+  "options_models_providers_errors_spacesNotAllowed": {
+    "message": "Spaces are not allowed in provider names. Please use underscores or other characters instead."
+  },
+  "options_models_providers_errors_baseUrlRequired": {
+    "message": "Base URL is required for $PROVIDER$. Please enter it.",
+    "placeholders": {
+      "provider": {
+        "content": "$1",
+        "example": "Custom OpenAI"
+      }
+    }
+  },
+
+  "options_firewall_header": {
+    "message": "Firewall"
+  },
+  "options_firewall_enableToggle": {
+    "message": "Enable Firewall"
+  },
+  "options_firewall_toggleFirewall_a11y": {
+    "message": "Toggle Firewall"
+  },
+  "options_firewall_allowList_header": {
+    "message": "Allow List"
+  },
+  "options_firewall_allowList_empty": {
+    "message": "No domains in allow list. Empty allow list means all non-denied domains are allowed."
+  },
+  "options_firewall_denyList_header": {
+    "message": "Deny List"
+  },
+  "options_firewall_denyList_empty": {
+    "message": "No domains in deny list"
+  },
+  "options_firewall_placeholders_domainUrl": {
+    "message": "Enter domain or URL (e.g. example.com, localhost, 127.0.0.1)"
+  },
+  "options_firewall_btnAdd": {
+    "message": "Add"
+  },
+  "options_firewall_btnRemove": {
+    "message": "Remove"
+  },
+  "options_firewall_howItWorks_header": {
+    "message": "How the Firewall Works"
+  },
+  "options_firewall_howItWorks": {
+    "message": "The firewall contains a deny list and an allow list.\nIf both lists are empty, all URLs are allowed\nDeny list takes priority - if a URL matches any deny list entry, it's blocked\nWhen allow list is empty, all non-denied URLs are allowed\nWhen allow list is not empty, only matching URLs are allowed\nWildcards are NOT supported yet\nAllow list is preferred over deny list"
+  },
+
+  "bg_errors_noTabId": {
+    "message": "No tab ID provided"
+  },
+  "bg_errors_noTaskId": {
+    "message": "No task ID provided"
+  },
+  "bg_errors_noRunningTask": {
+    "message": "No running task"
+  },
+  "bg_cmd_newTask_noTask": {
+    "message": "No task provided"
+  },
+  "bg_cmd_followUpTask_noTask": {
+    "message": "No follow up task provided"
+  },
+  "bg_cmd_followUpTask_cleaned": {
+    "message": "Executor was cleaned up, can not add follow-up task"
+  },
+  "bg_cmd_resumeTask_noTask": {
+    "message": "No task to resume"
+  },
+  "bg_cmd_state_printed": {
+    "message": "State printed to console"
+  },
+  "bg_cmd_state_failed": {
+    "message": "Failed to get state"
+  },
+  "bg_cmd_nohighlight_ok": {
+    "message": "highlight removed"
+  },
+  "bg_cmd_stt_noAudioData": {
+    "message": "No audio data provided"
+  },
+  "bg_cmd_stt_failed": {
+    "message": "Speech recognition failed"
+  },
+  "bg_cmd_replay_noHistory": {
+    "message": "No history session ID provided"
+  },
+  "bg_cmd_replay_failed": {
+    "message": "Replay failed"
+  },
+  "bg_setup_noApiKeys": {
+    "message": "Please configure API keys in the settings first"
+  },
+  "bg_setup_noProvider": {
+    "message": "Provider $PROVIDER$ not found in the settings",
+    "placeholders": {
+      "provider": {
+        "content": "$1",
+        "example": "openai"
+      }
+    }
+  },
+  "bg_setup_noNavigatorModel": {
+    "message": "Please choose a model for the navigator in the settings first"
+  },
+  "exec_errors_maxStepsReached": {
+    "message": "Max steps reached"
+  },
+  "exec_errors_maxFailuresReached": {
+    "message": "Max failures reached"
+  },
+  "exec_task_cancel": {
+    "message": "Task cancelled"
+  },
+  "exec_task_pause": {
+    "message": "Task paused"
+  },
+  "exec_task_fail": {
+    "message": "Task failed: \n\n$ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "exec_replay_cancel": {
+    "message": "Replay cancelled"
+  },
+  "exec_replay_ok": {
+    "message": "Replay completed"
+  },
+  "exec_replay_fail": {
+    "message": "Replay failed: \n\n$ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Network error"
+      }
+    }
+  },
+  "exec_replay_historyNotFound": {
+    "message": "History not found"
+  },
+  "exec_replay_historyEmpty": {
+    "message": "History is empty"
+  },
+
+  "act_searchGoogle_start": {
+    "message": "Searching for \"$QUERY$\" in Google",
+    "placeholders": {
+      "query": {
+        "content": "$1",
+        "example": "weather today"
+      }
+    }
+  },
+  "act_searchGoogle_ok": {
+    "message": "Searched for \"$QUERY$\" in Google",
+    "placeholders": {
+      "query": {
+        "content": "$1",
+        "example": "weather today"
+      }
+    }
+  },
+  "act_goToUrl_start": {
+    "message": "Navigating to $URL$",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_goToUrl_ok": {
+    "message": "Navigated to $URL$",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_goBack_start": {
+    "message": "Navigating back"
+  },
+  "act_goBack_ok": {
+    "message": "Navigated back"
+  },
+  "act_wait_start": {
+    "message": "Waiting for $SECONDS$ seconds",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_wait_ok": {
+    "message": "$SECONDS$ seconds elapsed",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_click_start": {
+    "message": "Click element with index $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_elementNotExist": {
+    "message": "Element with index $INDEX$ does not exist - retry or use alternative actions",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_elementNoLongerAvailable": {
+    "message": "Element no longer available with index $INDEX$ - most likely the page changed",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_click_fileUploader": {
+    "message": "Index $INDEX$ - has an element which opens file upload dialog. To upload files please use a specific function to upload files",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_click_ok": {
+    "message": "Clicked button with index $INDEX$: $TEXT$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      },
+      "text": {
+        "content": "$2",
+        "example": "Submit Button"
+      }
+    }
+  },
+  "act_click_newTabOpened": {
+    "message": "New tab opened - switching to it"
+  },
+  "act_inputText_start": {
+    "message": "Input text into index $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_inputText_ok": {
+    "message": "Input $TEXT$ into index $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Hello World"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_switchTab_start": {
+    "message": "Switching to tab $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_switchTab_ok": {
+    "message": "Switched to tab $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_openTab_start": {
+    "message": "Opening $URL$ in new tab",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_openTab_ok": {
+    "message": "Opened $URL$ in new tab",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_closeTab_start": {
+    "message": "Closing tab $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_closeTab_ok": {
+    "message": "Closed tab $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_cache_start": {
+    "message": "Caching findings: $CONTENT$",
+    "placeholders": {
+      "content": {
+        "content": "$1",
+        "example": "User preferences saved"
+      }
+    }
+  },
+  "act_cache_ok": {
+    "message": "Cached findings: $CONTENT$",
+    "placeholders": {
+      "content": {
+        "content": "$1",
+        "example": "User preferences saved"
+      }
+    }
+  },
+  "act_scrollToPercent_start": {
+    "message": "Scroll to percent: $PERCENT$",
+    "placeholders": {
+      "percent": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "act_scrollToPercent_ok": {
+    "message": "Scrolled to percent: $PERCENT$",
+    "placeholders": {
+      "percent": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "act_scrollToTop_start": {
+    "message": "Scroll to top"
+  },
+  "act_scrollToTop_ok": {
+    "message": "Scrolled to top"
+  },
+  "act_scrollToBottom_start": {
+    "message": "Scroll to bottom"
+  },
+  "act_scrollToBottom_ok": {
+    "message": "Scrolled to bottom"
+  },
+  "act_previousPage_start": {
+    "message": "Scroll to previous page"
+  },
+  "act_previousPage_ok": {
+    "message": "Scrolled to previous page"
+  },
+  "act_nextPage_start": {
+    "message": "Scroll to next page"
+  },
+  "act_nextPage_ok": {
+    "message": "Scrolled to next page"
+  },
+  "act_errors_alreadyAtTop": {
+    "message": "Element with index $INDEX$ is already at top, cannot scroll to previous page",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_pageAlreadyAtTop": {
+    "message": "Already at top of page, cannot scroll to previous page"
+  },
+  "act_errors_alreadyAtBottom": {
+    "message": "Element with index $INDEX$ is already at bottom, cannot scroll to next page",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_pageAlreadyAtBottom": {
+    "message": "Already at bottom of page, cannot scroll to next page"
+  },
+  "act_scrollToText_start": {
+    "message": "Scroll to text: $TEXT$, occurrence $OCCURRENCE$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Contact Us"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_ok": {
+    "message": "Scrolled to text: $TEXT$, occurrence $OCCURRENCE$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Contact Us"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_notFound": {
+    "message": "Text '$TEXT$' (occurrence $OCCURRENCE$) not found or not visible",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Contact Us"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_failed": {
+    "message": "Failed to scroll to text: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Element not found"
+      }
+    }
+  },
+  "act_sendKeys_start": {
+    "message": "Send keys: $KEYS$",
+    "placeholders": {
+      "keys": {
+        "content": "$1",
+        "example": "Enter"
+      }
+    }
+  },
+  "act_sendKeys_ok": {
+    "message": "Sent keys: $KEYS$",
+    "placeholders": {
+      "keys": {
+        "content": "$1",
+        "example": "Enter"
+      }
+    }
+  },
+  "act_getDropdownOptions_start": {
+    "message": "Getting options from dropdown with index $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_getDropdownOptions_useExactText": {
+    "message": "Use the exact text string in select_dropdown_option"
+  },
+  "act_getDropdownOptions_ok": {
+    "message": "Got $COUNT$ options from dropdown",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_getDropdownOptions_noOptions": {
+    "message": "No options found in dropdown"
+  },
+  "act_getDropdownOptions_failed": {
+    "message": "Failed to get dropdown options: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Element not found"
+      }
+    }
+  },
+  "act_selectDropdownOption_start": {
+    "message": "Select option \"$TEXT$\" from dropdown with index $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Option 1"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_selectDropdownOption_ok": {
+    "message": "Selected option \"$TEXT$\" from dropdown with index $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Option 1"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_selectDropdownOption_notSelect": {
+    "message": "Cannot select option: Element with index $INDEX$ is a $TAG_NAME$, not a SELECT",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tag_name": {
+        "content": "$2",
+        "example": "DIV"
+      }
+    }
+  },
+  "act_selectDropdownOption_failed": {
+    "message": "Failed to select option: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Option not found"
+      }
+    }
+  }
+}
