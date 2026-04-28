@@ -25,6 +25,7 @@ import { chatHistoryStore } from '@extension/storage/lib/chat';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
+import { MessageManagerSettings } from './messages/service';
 
 const logger = createLogger('Executor');
 
@@ -33,6 +34,7 @@ export interface ExecutorExtraArgs {
   extractorLLM?: BaseChatModel;
   agentOptions?: Partial<AgentOptions>;
   generalSettings?: GeneralSettingsConfig;
+  sensitiveData?: Record<string, string>;
 }
 
 export class Executor {
@@ -50,7 +52,7 @@ export class Executor {
     navigatorLLM: BaseChatModel,
     extraArgs?: Partial<ExecutorExtraArgs>,
   ) {
-    const messageManager = new MessageManager();
+    const messageManager = new MessageManager(new MessageManagerSettings({ sensitiveData: extraArgs?.sensitiveData }));
 
     const plannerLLM = extraArgs?.plannerLLM ?? navigatorLLM;
     const extractorLLM = extraArgs?.extractorLLM ?? navigatorLLM;

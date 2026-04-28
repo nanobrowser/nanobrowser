@@ -319,6 +319,14 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
     displayHighlights: generalSettings.displayHighlights,
   });
 
+  // Build sensitive data map so API keys are redacted from LLM messages
+  const sensitiveData: Record<string, string> = {};
+  for (const [providerId, config] of Object.entries(providers)) {
+    if (config.apiKey?.trim()) {
+      sensitiveData[`${providerId}_apiKey`] = config.apiKey.trim();
+    }
+  }
+
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
     plannerLLM: plannerLLM ?? navigatorLLM,
     agentOptions: {
@@ -330,6 +338,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
       planningInterval: generalSettings.planningInterval,
     },
     generalSettings: generalSettings,
+    sensitiveData,
   });
 
   return executor;
