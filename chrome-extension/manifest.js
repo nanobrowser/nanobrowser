@@ -61,7 +61,10 @@ const manifest = withOperaSidebar(
     version: packageJson.version,
     description: '__MSG_app_metadata_description__',
     host_permissions: ['<all_urls>'],
-    permissions: ['storage', 'scripting', 'tabs', 'activeTab', 'debugger', 'unlimitedStorage', 'webNavigation'],
+    permissions: ['storage', 'scripting', 'tabs', 'activeTab', 'unlimitedStorage', 'webNavigation'],
+    // SECURITY: debugger moved to optional_permissions so users must explicitly approve it at runtime.
+    // This permission grants full browser control via CDP and should not be silently granted at install.
+    optional_permissions: ['debugger'],
     options_page: 'options/index.html',
     background: {
       service_worker: 'background.iife.js',

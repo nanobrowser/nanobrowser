@@ -104,6 +104,14 @@ export default class Page {
     }
 
     logger.info('attaching puppeteer', this._tabId);
+
+    // SECURITY: Request debugger permission at runtime so the user explicitly approves CDP access.
+    const granted = await chrome.permissions.request({ permissions: ['debugger'] });
+    if (!granted) {
+      logger.error('Debugger permission denied by user');
+      return false;
+    }
+
     const browser = await connect({
       transport: await ExtensionTransport.connectTab(this._tabId),
       defaultViewport: null,
