@@ -263,3 +263,126 @@ Like Nanobrowser? Give us a star 🌟 and join us in [Discord](https://discord.g
 We encourage open-source innovation but urge our community to be discerning and cautious. Please ensure you understand the risks before using any software or service built upon our codebase by independent developers.
 
 
+## FAQ
+
+### General
+
+**What is Nanobrowser?**
+
+Nanobrowser is an open-source AI web automation tool that runs as a Chrome extension. It's a free alternative to OpenAI Operator with flexible LLM options and a multi-agent system (Planner + Navigator) that collaborates to accomplish complex web workflows.
+
+**How does Nanobrowser compare to OpenAI Operator?**
+
+- **Cost**: Nanobrowser is 100% free — you only pay for your own LLM API usage. OpenAI Operator costs $200/month.
+- **Privacy**: Everything runs locally in your browser. Your credentials stay with you.
+- **Flexibility**: Connect to multiple LLM providers with different models for different agents.
+- **Transparency**: Fully open source, no black boxes.
+
+**Is Nanobrowser production-ready?**
+
+Nanobrowser is designed for personal and productivity use. It's open source and actively maintained. For enterprise deployments, consider the security implications of browser automation.
+
+### Getting Started
+
+**How do I install Nanobrowser?**
+
+1. Visit the [Nanobrowser Chrome Web Store page](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+2. Click "Add to Chrome"
+3. Configure your LLM API keys in Settings
+
+For the latest features, you can also manually install from the GitHub releases page.
+
+**What browsers are supported?**
+
+- **Chrome**: Full support with all features
+- **Edge**: Full support with all features
+- **Firefox/Safari**: Not supported
+- **Other Chromium variants (Opera, Arc)**: May work but not officially tested
+
+**How do I configure Agent Models?**
+
+1. Click the Nanobrowser icon in your toolbar
+2. Click the Settings icon (top right)
+3. Add your LLM API keys
+4. Choose which model to use for Navigator and Planner agents
+
+### LLM Providers
+
+**What LLM providers are supported?**
+
+Nanobrowser supports:
+- OpenAI (GPT-4, GPT-4o, etc.)
+- Anthropic (Claude Sonnet, Claude Opus)
+- Google Gemini
+- Ollama (local models)
+- Groq (fast inference)
+- Cerebras
+- Llama (via compatible endpoints)
+- Custom OpenAI-Compatible providers
+
+**Can I use different models for different agents?**
+
+Yes! You can assign different models to the Navigator (executes actions) and Planner (coordinates strategy) agents.
+
+**Can I use local models?**
+
+Yes, through Ollama integration. Configure your Ollama endpoint in Settings.
+
+### Multi-Agent System
+
+**How does the multi-agent system work?**
+
+Nanobrowser uses specialized AI agents:
+- **Planner**: Coordinates strategy, breaks down tasks, handles self-correction when encountering obstacles
+- **Navigator**: Executes browser actions based on Planner instructions
+
+The agents collaborate in real-time, visible in the side panel.
+
+**What is self-correction?**
+
+When the Navigator encounters an obstacle (e.g., element not found, page structure changed), the Planner dynamically adjusts the approach and instructs the Navigator to try alternative strategies.
+
+### Features
+
+**What task automation features are available?**
+
+- Multi-agent web automation
+- Interactive side panel with real-time status
+- Follow-up questions about completed tasks
+- Conversation history management
+- Task automation across websites
+
+**Can I automate login processes?**
+
+Nanobrowser can automate web workflows, but for login processes, ensure you understand the security implications of browser automation with your credentials.
+
+### Troubleshooting
+
+**The agent is not finding elements on the page.**
+
+- Ensure the page is fully loaded before starting
+- Try refreshing the page and re-running
+- Check if the website has dynamic content that loads slowly
+- The Planner will attempt self-correction and alternative approaches
+
+**My LLM API key is not working.**
+
+- Verify the API key format is correct
+- Check if the key has sufficient credits/usage limits
+- Ensure the correct provider is selected in Settings
+- Try with a different model to isolate the issue
+
+**Nanobrowser is slow or lagging.**
+
+- Use faster LLM providers (Groq, Cerebras) for quicker responses
+- Reduce task complexity
+- Check your network connection
+- Ensure Chrome has sufficient memory
+
+### Help & Resources
+
+- **Chrome Web Store**: https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal
+- **Discord**: https://discord.gg/NN3ABHggMK
+- **X/Twitter**: https://x.com/nanobrowser_ai
+- **GitHub Issues**: Report bugs and request features
+- **Sponsor**: https://github.com/sponsors/alexchenzl
