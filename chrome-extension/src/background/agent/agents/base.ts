@@ -103,6 +103,11 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
     return modelName.includes('Llama-4') || modelName.includes('Llama-3.3') || modelName.includes('llama-3.3');
   }
 
+  // Check if model is a GLM model (ZhipuAI/z.ai models don't support json_schema structured output)
+  private isGlmModel(modelName: string): boolean {
+    return modelName.toLowerCase().includes('glm-');
+  }
+
   // Set whether to use structured output based on the model name
   private setWithStructuredOutput(): boolean {
     if (this.modelName === 'deepseek-reasoner' || this.modelName === 'deepseek-r1') {
@@ -112,6 +117,12 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
     // Llama API models don't support json_schema response format
     if (this.provider === ProviderTypeEnum.Llama || this.isLlamaModel(this.modelName)) {
       logger.debug(`[${this.modelName}] Llama API doesn't support structured output, using manual JSON extraction`);
+      return false;
+    }
+
+    // GLM models (ZhipuAI/z.ai) return prose prefixes instead of raw JSON, breaking structured output parsing
+    if (this.isGlmModel(this.modelName)) {
+      logger.debug(`[${this.modelName}] GLM model detected, using manual JSON extraction`);
       return false;
     }
 
