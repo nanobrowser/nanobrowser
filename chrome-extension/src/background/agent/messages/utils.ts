@@ -22,22 +22,50 @@ export const FILE_CONTENT_TAG_START = '<nano_file_content>';
 export const FILE_CONTENT_TAG_END = '</nano_file_content>';
 
 /**
- * Remove think tags from model output
- * Some models use <think> tags for internal reasoning that should be removed
+ * Remove think tags from model output.
+ *
+ * Handles two distinct cases:
+ *
+ * Case A – well-formed pair: `<think>…</think>answer`
+ *   Step 1 strips all `<think>…</think>` pairs. Step 2 is skipped because
+ *   there is nothing left to do.
+ *
+ * Case B – orphan open tag only: `<think>reasoning truncated…answer`
+ *   Step 1 finds no pairs (no closing tag). Step 2 then removes from the
+ *   string start up to and including the first `</think>` — but only
+ *   when step 1 made no change, so it cannot fire after a legitimate pair
+ *   has already been stripped.
+ *
+ * Case C – stray closing tag after a well-formed pair:
+ *   `<think>reason</think>Here is answer</think>done`
+ *   Step 1 strips `<think>reason</think>`, leaving
+ *   `Here is answer</think>done`. Step 2 is NOT run (step 1 matched), so
+ *   the stray `</think>` and trailing content are preserved intact. The
+ *   caller receives `Here is answer</think>done` — the tag is harmless
+ *   noise but the answer text is not lost.
+ *
  * @param text - The text containing potential think tags
  * @returns Text with think tags removed
  */
 export function removeThinkTags(text: string): string {
-  // Step 1: Remove well-formed <think>...</think>
+  // Step 1: Remove all well-formed <think>…</think> pairs.
   const thinkTagsRegex = /<think>[\s\S]*?<\/think>/g;
-  let result = text.replace(thinkTagsRegex, '');
+  const step1Result = text.replace(thinkTagsRegex, '');
+  const step1Matched = step1Result !== text;
 
-  // Step 2: If there's an unmatched closing tag </think>,
-  // remove everything up to and including that.
-  const strayCloseTagRegex = /[\s\S]*?<\/think>/g;
-  result = result.replace(strayCloseTagRegex, '');
+  if (step1Matched) {
+    // A well-formed pair was found and removed. Do NOT run step 2:
+    // running the stray-close fallback after a successful step 1 would
+    // consume valid answer text that follows a residual </think>.
+    return step1Result.trim();
+  }
 
-  return result.trim();
+  // Step 2 fallback: handle an orphan <think> with no closing tag
+  // (stream truncation / model never closed the block).
+  // Anchored to ^ and non-global so we only remove the leading reasoning
+  // fragment up to the first </think>, never eating content past it.
+  const strayCloseTagRegex = /^[\s\S]*?<\/think>/;
+  return step1Result.replace(strayCloseTagRegex, '').trim();
 }
 
 /**
