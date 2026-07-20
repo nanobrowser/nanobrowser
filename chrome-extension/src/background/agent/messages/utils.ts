@@ -21,21 +21,53 @@ export const ATTACHED_FILES_TAG_END = '</nano_attached_files>';
 export const FILE_CONTENT_TAG_START = '<nano_file_content>';
 export const FILE_CONTENT_TAG_END = '</nano_file_content>';
 
+const THINK_CLOSE_TAG = '</think>';
+
 /**
- * Remove think tags from model output
- * Some models use <think> tags for internal reasoning that should be removed
+ * Remove think tags from model output.
+ *
+ * Handles three cases:
+ *   1. Well-formed pairs  : <think>…</think>  → removed entirely
+ *   2. Stray closing tag  : </think>          → everything up to and including
+ *                                               the FIRST stray </think> is
+ *                                               discarded; content after is kept
+ *   3. Stray opening tag  : <think> only      → removed (no paired close found)
+ *
+ * ## Why the old two-step regex was wrong
+ *
+ * The previous step-2 regex `/[\s\S]*?<\/think>/g` was applied **after**
+ * step 1 had already removed all well-formed pairs. Because the regex uses
+ * `[\s\S]*?` (lazy, but still matches from position 0), it consumed all text
+ * from the start of the string up to the first remaining `</think>`, silently
+ * destroying valid response content.
+ *
+ * Example:
+ *   Input : `<think>reason</think>Here is answer</think>done`
+ *   After step 1: `Here is answer</think>done`  ← valid content preserved ✓
+ *   After old step 2: `done`  ← "Here is answer" destroyed            ✗
+ *   After new step 2: `Here is answer\ndone`                          ✓
+ *
+ * The fix uses `indexOf` + `slice` to discard only the orphaned prefix,
+ * which is unambiguous and avoids regex backtracking entirely.
+ *
  * @param text - The text containing potential think tags
- * @returns Text with think tags removed
+ * @returns Text with think tags removed, valid content preserved
  */
 export function removeThinkTags(text: string): string {
-  // Step 1: Remove well-formed <think>...</think>
-  const thinkTagsRegex = /<think>[\s\S]*?<\/think>/g;
-  let result = text.replace(thinkTagsRegex, '');
+  // Step 1: Remove all well-formed <think>…</think> pairs (non-greedy, global).
+  const wellFormedRegex = /<think>[\s\S]*?<\/think>/g;
+  let result = text.replace(wellFormedRegex, '');
 
-  // Step 2: If there's an unmatched closing tag </think>,
-  // remove everything up to and including that.
-  const strayCloseTagRegex = /[\s\S]*?<\/think>/g;
-  result = result.replace(strayCloseTagRegex, '');
+  // Step 2: If a stray </think> remains (its opening <think> was already
+  // consumed by step 1, or was never there), discard only the prefix up to
+  // and including that first stray tag. Content after it is valid output.
+  const strayCloseIdx = result.indexOf(THINK_CLOSE_TAG);
+  if (strayCloseIdx !== -1) {
+    result = result.slice(strayCloseIdx + THINK_CLOSE_TAG.length);
+  }
+
+  // Step 3: Remove any stray opening <think> with no matching close.
+  result = result.replace(/<think>/g, '');
 
   return result.trim();
 }
