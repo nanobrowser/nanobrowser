@@ -28,14 +28,19 @@ export const FILE_CONTENT_TAG_END = '</nano_file_content>';
  * @returns Text with think tags removed
  */
 export function removeThinkTags(text: string): string {
-  // Step 1: Remove well-formed <think>...</think>
+  // Step 1: Remove well-formed <think>...</think> pairs
   const thinkTagsRegex = /<think>[\s\S]*?<\/think>/g;
   let result = text.replace(thinkTagsRegex, '');
 
-  // Step 2: If there's an unmatched closing tag </think>,
-  // remove everything up to and including that.
-  const strayCloseTagRegex = /[\s\S]*?<\/think>/g;
-  result = result.replace(strayCloseTagRegex, '');
+  // Step 2: Only handle a stray </think> if step 1 produced no replacement.
+  // This prevents the stray-close-tag path from wiping valid content that
+  // step 1 already produced as output.
+  // Anchor to start-of-string so we only strip a leading orphaned block,
+  // not arbitrary content elsewhere in the response.
+  if (result === text) {
+    const strayCloseTagRegex = /^[\s\S]*?<\/think>/;
+    result = result.replace(strayCloseTagRegex, '');
+  }
 
   return result.trim();
 }
