@@ -169,25 +169,36 @@ async function _buildDomTree(
   const visibleIframesFailedLoadingCount = Object.values(visibleIframesFailedLoading).length;
   if (visibleIframesFailedLoadingCount > 0) {
     const tabFrames = await chrome.webNavigation.getAllFrames({ tabId });
-    const subFrames = (tabFrames ?? []).filter(frame => frame.frameId !== mainFrameResult[0].frameId).sort();
+    const subFrames = (tabFrames ?? [])
+      .filter(frame => frame.frameId !== mainFrameResult[0].frameId)
+      .filter(frame => {
+        const u = frame.url;
+        return u.startsWith('http://') || u.startsWith('https://') || u === '' || u === 'about:blank';
+      })
+      .sort();
 
     // Get sub-frames info, so that we can run the buildDomTree only on the frames that failed,
     // to avoid double parsing & highlighting on the frames that succeeded.
     const frameInfoResultsRaw = await Promise.all(
       subFrames.map(async frame => {
-        const result = await chrome.scripting.executeScript({
-          target: { tabId, frameIds: [frame.frameId] },
-          func: frameId => ({
-            frameId,
-            computedHeight: window.innerHeight,
-            computedWidth: window.innerWidth,
-            href: window.location.href,
-            name: window.name,
-            title: document.title,
-          }),
-          args: [frame.frameId],
-        });
-        return result[0].result;
+        try {
+          const result = await chrome.scripting.executeScript({
+            target: { tabId, frameIds: [frame.frameId] },
+            func: frameId => ({
+              frameId,
+              computedHeight: window.innerHeight,
+              computedWidth: window.innerWidth,
+              href: window.location.href,
+              name: window.name,
+              title: document.title,
+            }),
+            args: [frame.frameId],
+          });
+          return result[0].result;
+        } catch (err) {
+          logger.debug(`Skipping inaccessible frame ${frame.frameId} (${frame.url}):`, err);
+          return null;
+        }
       }),
     );
     const frameInfoResults = frameInfoResultsRaw.filter(isNotNull);
