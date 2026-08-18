@@ -181,6 +181,17 @@ export class DOMElementNode extends DOMBaseNode {
     this._hashPromise = undefined;
   }
 
+  toString(): string {
+    const tag = this.tagName ?? 'unknown';
+    if (this.highlightIndex !== null) {
+      return `<${tag}[index=${this.highlightIndex}]>`;
+    }
+    if (this.xpath) {
+      return `<${tag}[@${this.xpath}]>`;
+    }
+    return `<${tag}>`;
+  }
+
   getAllTextTillNextClickableElement(maxDepth = -1): string {
     const textParts: string[] = [];
 
