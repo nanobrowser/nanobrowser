@@ -167,7 +167,7 @@ function convertMessagesForNonFunctionCallingModels(inputMessages: BaseMessage[]
     } else if (message instanceof ToolMessage) {
       outputMessages.push(new HumanMessage({ content: message.content }));
     } else if (message instanceof AIMessage) {
-      if (message.tool_calls) {
+      if (message.tool_calls?.length) {
         const toolCalls = JSON.stringify(message.tool_calls);
         outputMessages.push(new AIMessage({ content: toolCalls }));
       } else {
