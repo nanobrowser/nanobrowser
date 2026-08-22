@@ -262,6 +262,12 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
   },
+  "options_general_enableWebMCP": {
+    "message": "Enable Page Tools (WebMCP)"
+  },
+  "options_general_enableWebMCP_desc": {
+    "message": "Let the agent use tools that websites declare through the WebMCP API. Adds a small bridge script to every page you visit."
+  },
 
   "options_models_providers_header": {
     "message": "LLM Providers"
@@ -965,6 +971,59 @@
       "error": {
         "content": "$1",
         "example": "Option not found"
+      }
+    }
+  },
+  "act_callPageTool_start": {
+    "message": "Calling page tool $TOOL$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_callPageTool_ok": {
+    "message": "Called page tool $TOOL$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolNotFound": {
+    "message": "Page tool \"$TOOL$\" is not declared by the current page. Available page tools: $AVAILABLE$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      },
+      "available": {
+        "content": "$2",
+        "example": "search_products, add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolInvalidArgs": {
+    "message": "Arguments for page tool \"$TOOL$\" must be a JSON object string",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolFailed": {
+    "message": "Page tool \"$TOOL$\" failed: $REASON$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      },
+      "reason": {
+        "content": "$2",
+        "example": "Item is out of stock"
       }
     }
   }

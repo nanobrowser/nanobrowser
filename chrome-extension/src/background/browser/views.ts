@@ -76,6 +76,13 @@ export interface BrowserContextConfig {
    * @default true
    */
   displayHighlights: boolean;
+
+  /**
+   * Allow the agent to discover and call tools that pages declare through the WebMCP API
+   * (`navigator.modelContext`).
+   * @default false
+   */
+  enableWebMCP: boolean;
 }
 
 export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
@@ -90,6 +97,7 @@ export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
   includeDynamicAttributes: true,
   homePageUrl: 'about:blank',
   displayHighlights: true,
+  enableWebMCP: false,
 };
 
 export interface PageState extends DOMState {

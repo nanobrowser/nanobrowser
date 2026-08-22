@@ -213,3 +213,18 @@ export const waitActionSchema: ActionSchema = {
     seconds: z.number().int().default(3).describe('amount of seconds'),
   }),
 };
+
+// WebMCP Actions
+export const callPageToolActionSchema: ActionSchema = {
+  name: 'call_page_tool',
+  description:
+    'Call a tool that the current page exposes through the WebMCP API. Only use tool names listed under "Page tools" in the current state, and prefer them over clicking through the UI when one matches the goal.',
+  schema: z.object({
+    intent: z.string().default('').describe('purpose of this action'),
+    tool_name: z.string().describe('name of the page tool to call, exactly as listed in "Page tools"'),
+    tool_args: z
+      .string()
+      .default('{}')
+      .describe('arguments for the tool, as a JSON object string matching the args_schema of the tool'),
+  }),
+};

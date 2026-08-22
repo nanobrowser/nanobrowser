@@ -1,6 +1,7 @@
 import { HumanMessage, type SystemMessage } from '@langchain/core/messages';
 import type { AgentContext } from '@src/background/agent/types';
 import { wrapUntrustedContent } from '../messages/utils';
+import { formatToolsForPrompt } from '@src/background/browser/webmcp/service';
 import { createLogger } from '@src/background/log';
 
 const logger = createLogger('BasePrompt');
@@ -63,6 +64,23 @@ abstract class BasePrompt {
       }
     }
 
+    // WebMCP: tools the current page declares through navigator.modelContext
+    let pageToolsDescription = '';
+    if (context.options.enableWebMCP) {
+      try {
+        const page = await context.browserContext.getCurrentPage();
+        const pageTools = await page.getWebMCPTools();
+        const formattedPageTools = formatToolsForPrompt(pageTools);
+        if (formattedPageTools !== '') {
+          pageToolsDescription = `Page tools declared by the current page (call them with the call_page_tool action):
+${wrapUntrustedContent(formattedPageTools)}
+`;
+        }
+      } catch (error) {
+        logger.warning('Failed to read page tools:', error);
+      }
+    }
+
     const currentTab = `{id: ${browserState.tabId}, url: ${browserState.url}, title: ${browserState.title}}`;
     const otherTabs = browserState.tabs
       .filter(tab => tab.id !== browserState.tabId)
@@ -76,6 +94,7 @@ Other available tabs:
   ${otherTabs.join('\n')}
 Interactive elements from top layer of the current page inside the viewport:
 ${formattedElementsText}
+${pageToolsDescription}
 ${stepInfoDescription}
 ${actionResultsDescription}
 `;

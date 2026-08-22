@@ -17,6 +17,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
+import { syncWebMCPBridgeRegistration } from './browser/webmcp/inject';
 import { analytics } from './services/analytics';
 
 const logger = createLogger('background');
@@ -53,6 +54,24 @@ chrome.tabs.onRemoved.addListener(tabId => {
 });
 
 logger.info('background loaded');
+
+// Keep the WebMCP bridge content script registration in sync with the user's setting. The
+// bridge has to be in place at document_start, so it is registered up front rather than
+// injected when a task starts.
+async function syncWebMCPBridge() {
+  const settings = await generalSettingsStore.getSettings();
+  await syncWebMCPBridgeRegistration(settings.enableWebMCP);
+}
+
+syncWebMCPBridge().catch(error => {
+  logger.error('Failed to initialize WebMCP bridge:', error);
+});
+
+generalSettingsStore.subscribe(() => {
+  syncWebMCPBridge().catch(error => {
+    logger.error('Failed to update WebMCP bridge:', error);
+  });
+});
 
 // Initialize analytics
 analytics.init().catch(error => {
@@ -317,6 +336,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   browserContext.updateConfig({
     minimumWaitPageLoadTime: generalSettings.minWaitPageLoad / 1000.0,
     displayHighlights: generalSettings.displayHighlights,
+    enableWebMCP: generalSettings.enableWebMCP,
   });
 
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
@@ -328,6 +348,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
       useVision: generalSettings.useVision,
       useVisionForPlanner: true,
       planningInterval: generalSettings.planningInterval,
+      enableWebMCP: generalSettings.enableWebMCP,
     },
     generalSettings: generalSettings,
   });

@@ -13,6 +13,12 @@ export interface GeneralSettingsConfig {
   displayHighlights: boolean;
   minWaitPageLoad: number;
   replayHistoricalTasks: boolean;
+  /**
+   * Let the agent discover and call tools that pages declare through the WebMCP API
+   * (`navigator.modelContext`). Off by default: it installs a bridge script into every page and
+   * lets pages advertise capabilities to the agent.
+   */
+  enableWebMCP: boolean;
 }
 
 export type GeneralSettingsStorage = BaseStorage<GeneralSettingsConfig> & {
@@ -32,6 +38,7 @@ export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
   displayHighlights: true,
   minWaitPageLoad: 250,
   replayHistoricalTasks: false,
+  enableWebMCP: false,
 };
 
 const storage = createStorage<GeneralSettingsConfig>('general-settings', DEFAULT_GENERAL_SETTINGS, {
