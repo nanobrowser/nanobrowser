@@ -262,6 +262,12 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "Ativar o armazenamento e a reprodução do histórico de passos do agente (experimental, pode ter problemas)"
   },
+  "options_general_enableWebMCP": {
+    "message": "Ativar Ferramentas da Página (WebMCP)"
+  },
+  "options_general_enableWebMCP_desc": {
+    "message": "Permite que o agente use ferramentas que os sites declaram pela API WebMCP. Adiciona um pequeno script de ponte a todas as páginas que você visita."
+  },
   "options_models_providers_header": {
     "message": "Provedores de LLM"
   },
@@ -964,6 +970,59 @@
       "error": {
         "content": "$1",
         "example": "Opção não encontrada"
+      }
+    }
+  },
+  "act_callPageTool_start": {
+    "message": "Chamando ferramenta da página $TOOL$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_callPageTool_ok": {
+    "message": "Ferramenta da página $TOOL$ chamada",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolNotFound": {
+    "message": "A ferramenta \"$TOOL$\" não é declarada pela página atual. Ferramentas disponíveis: $AVAILABLE$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      },
+      "available": {
+        "content": "$2",
+        "example": "search_products, add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolInvalidArgs": {
+    "message": "Os argumentos da ferramenta \"$TOOL$\" devem ser um objeto JSON em formato de texto",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolFailed": {
+    "message": "A ferramenta da página \"$TOOL$\" falhou: $REASON$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      },
+      "reason": {
+        "content": "$2",
+        "example": "Item is out of stock"
       }
     }
   }

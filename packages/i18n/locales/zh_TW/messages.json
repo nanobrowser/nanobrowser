@@ -262,6 +262,12 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "啟用儲存與重播代理程式的步驟歷史紀錄 (此為實驗性功能，可能存在問題)"
   },
+  "options_general_enableWebMCP": {
+    "message": "啟用網頁工具 (WebMCP)"
+  },
+  "options_general_enableWebMCP_desc": {
+    "message": "讓代理程式使用網站透過 WebMCP API 宣告的工具。會在你造訪的每個網頁加入一段小型橋接指令碼。"
+  },
   "options_models_providers_header": {
     "message": "LLM 提供者"
   },
@@ -957,6 +963,59 @@
       "error": {
         "content": "$1",
         "example": "Option not found"
+      }
+    }
+  },
+  "act_callPageTool_start": {
+    "message": "正在呼叫網頁工具 $TOOL$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_callPageTool_ok": {
+    "message": "已呼叫網頁工具 $TOOL$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolNotFound": {
+    "message": "目前網頁未宣告工具「$TOOL$」。可用的網頁工具：$AVAILABLE$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      },
+      "available": {
+        "content": "$2",
+        "example": "search_products, add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolInvalidArgs": {
+    "message": "網頁工具「$TOOL$」的參數必須是 JSON 物件字串",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      }
+    }
+  },
+  "act_errors_pageToolFailed": {
+    "message": "網頁工具「$TOOL$」執行失敗：$REASON$",
+    "placeholders": {
+      "tool": {
+        "content": "$1",
+        "example": "add_to_cart"
+      },
+      "reason": {
+        "content": "$2",
+        "example": "Item is out of stock"
       }
     }
   }

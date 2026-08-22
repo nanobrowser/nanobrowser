@@ -21,6 +21,9 @@ import { type BrowserContextConfig, DEFAULT_BROWSER_CONTEXT_CONFIG, type PageSta
 import { createLogger } from '@src/background/log';
 import { ClickableElementProcessor } from './dom/clickable/service';
 import { isUrlAllowed } from './util';
+import { injectWebMCPBridge } from './webmcp/inject';
+import { normalizeTools } from './webmcp/service';
+import { WEBMCP_BRIDGE_GLOBAL, WEBMCP_CALL_TIMEOUT_MS, type WebMCPCallOutcome, type WebMCPTool } from './webmcp/types';
 
 const logger = createLogger('Page');
 
@@ -116,6 +119,11 @@ export default class Page {
 
     // Add anti-detection scripts
     await this._addAntiDetectionScripts();
+
+    // Cover documents that were already loaded before the bridge was registered
+    if (this._config.enableWebMCP) {
+      await injectWebMCPBridge(this._tabId);
+    }
 
     return true;
   }
@@ -336,6 +344,73 @@ export default class Page {
 
   getCachedState(): PageState | null {
     return this._cachedState;
+  }
+
+  /**
+   * List the WebMCP tools the current page declares via `navigator.modelContext`.
+   *
+   * Reads the registry the bridge script maintains in the page's MAIN world. Returns an empty
+   * list when the bridge is absent (feature disabled, restricted page, or a document that
+   * loaded before the bridge was registered).
+   */
+  async getWebMCPTools(): Promise<WebMCPTool[]> {
+    if (!this._config.enableWebMCP || !this._puppeteerPage) {
+      return [];
+    }
+
+    try {
+      const raw = await this._puppeteerPage.evaluate((bridgeKey: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bridge = (window as any)[bridgeKey];
+        if (!bridge || typeof bridge.listTools !== 'function') {
+          return null;
+        }
+        return bridge.listTools();
+      }, WEBMCP_BRIDGE_GLOBAL);
+
+      return normalizeTools(raw);
+    } catch (error) {
+      logger.debug('Failed to list WebMCP tools:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Invoke a WebMCP tool declared by the current page.
+   * @param name Tool name, which must be one of the names returned by {@link getWebMCPTools}
+   * @param argsJson Tool arguments as a JSON object string
+   */
+  async callWebMCPTool(name: string, argsJson: string): Promise<WebMCPCallOutcome> {
+    if (!this._config.enableWebMCP) {
+      return { ok: false, error: 'WebMCP support is disabled' };
+    }
+    if (!this._puppeteerPage) {
+      return { ok: false, error: 'Page is not attached' };
+    }
+
+    try {
+      const outcome = await this._puppeteerPage.evaluate(
+        (bridgeKey: string, toolName: string, toolArgs: string, timeoutMs: number) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const bridge = (window as any)[bridgeKey];
+          if (!bridge || typeof bridge.callTool !== 'function') {
+            return { ok: false, error: 'WebMCP bridge is not available on this page' };
+          }
+          return bridge.callTool(toolName, toolArgs, timeoutMs);
+        },
+        WEBMCP_BRIDGE_GLOBAL,
+        name,
+        argsJson,
+        WEBMCP_CALL_TIMEOUT_MS,
+      );
+
+      if (!outcome || typeof outcome !== 'object' || typeof (outcome as WebMCPCallOutcome).ok !== 'boolean') {
+        return { ok: false, error: 'WebMCP bridge returned an unexpected response' };
+      }
+      return outcome as WebMCPCallOutcome;
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   async getState(useVision = false, cacheClickableElementsHashes = false): Promise<PageState> {

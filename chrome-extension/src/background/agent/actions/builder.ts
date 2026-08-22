@@ -22,12 +22,14 @@ import {
   nextPageActionSchema,
   scrollToTopActionSchema,
   scrollToBottomActionSchema,
+  callPageToolActionSchema,
 } from './schemas';
 import { z } from 'zod';
 import { createLogger } from '@src/background/log';
 import { ExecutionState, Actors } from '../event/types';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { wrapUntrustedContent } from '../messages/utils';
+import { filterExternalContent, wrapUntrustedContent } from '../messages/utils';
+import { formatToolResult, parseToolArguments } from '@src/background/browser/webmcp/service';
 
 const logger = createLogger('Action');
 
@@ -701,6 +703,57 @@ export class ActionBuilder {
       true,
     );
     actions.push(selectDropdownOption);
+
+    // WebMCP: only offered to the model when the user has enabled the feature, so that pages
+    // cannot advertise tools into the prompt when WebMCP support is off.
+    if (this.context.options.enableWebMCP) {
+      const callPageTool = new Action(async (input: z.infer<typeof callPageToolActionSchema.schema>) => {
+        const toolName = input.tool_name?.trim() ?? '';
+        const intent = input.intent || t('act_callPageTool_start', [toolName]);
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
+
+        const page = await this.context.browserContext.getCurrentPage();
+
+        // Re-read the declared tools instead of trusting the name the model produced, so a
+        // hallucinated or stale tool name fails fast with the list of what is actually there.
+        const tools = await page.getWebMCPTools();
+        const tool = tools.find(candidate => candidate.name === toolName);
+        if (!tool) {
+          const available = tools.map(candidate => candidate.name).join(', ') || 'none';
+          const errorMsg = t('act_errors_pageToolNotFound', [toolName, available]);
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+          return new ActionResult({ error: errorMsg, includeInMemory: true });
+        }
+
+        const parsedArgs = parseToolArguments(input.tool_args);
+        if (!parsedArgs.ok) {
+          const errorMsg = t('act_errors_pageToolInvalidArgs', [toolName]);
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+          return new ActionResult({ error: errorMsg, includeInMemory: true });
+        }
+
+        const outcome = await page.callWebMCPTool(toolName, parsedArgs.args);
+        const { text, isError } = formatToolResult(outcome);
+
+        if (isError) {
+          // The failure text comes from the page, and action errors are replayed into the prompt
+          // outside of an untrusted block, so sanitize and flatten it to a single line first.
+          const reason = filterExternalContent(text).replace(/\s+/g, ' ').trim();
+          const errorMsg = t('act_errors_pageToolFailed', [toolName, reason]);
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+          return new ActionResult({ error: errorMsg, includeInMemory: true });
+        }
+
+        const msg = t('act_callPageTool_ok', [toolName]);
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
+        // The result is produced by the page, so it is untrusted input like any page content.
+        return new ActionResult({
+          extractedContent: `${msg}\n${wrapUntrustedContent(text)}`,
+          includeInMemory: true,
+        });
+      }, callPageToolActionSchema);
+      actions.push(callPageTool);
+    }
 
     return actions;
   }
