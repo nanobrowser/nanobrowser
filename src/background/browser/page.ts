@@ -23,6 +23,20 @@ import { ClickableElementProcessor } from './dom/clickable/service';
 import { isUrlAllowed } from './util';
 
 const logger = createLogger('Page');
+const DATE_INPUT_TAG_NAME = 'input';
+const DATE_INPUT_TYPE = 'date';
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const INPUT_EVENT_NAME = 'input';
+const CHANGE_EVENT_NAME = 'change';
+const INPUT_VALUE_PROPERTY = 'value';
+const ELEMENT_CONNECTION_ERROR = 'Element not found or puppeteer is not connected';
+const DATE_FORMAT_NAME = 'YYYY-MM-DD';
+const nativeDateInputError = (index: number) => `Element with index ${index} is not a native date input`;
+const invalidDateFormatError = (date: string) => `Date "${date}" must use ${DATE_FORMAT_NAME} format`;
+const missingDateInputError = (index: number) => `Date input with index ${index} not found`;
+const rejectedDateError = (date: string, index: number) =>
+  `Unable to set date "${date}" on element with index ${index}`;
+const selectedDateMessage = (date: string, index: number) => `Selected date "${date}" on element with index ${index}`;
 
 export function build_initial_state(tabId?: number, url?: string, title?: string): PageState {
   return {
@@ -1022,6 +1036,63 @@ export default class Page {
       logger.error(errorMessage);
       throw new Error(errorMessage);
     }
+  }
+
+  async selectDate(index: number, date: string): Promise<string> {
+    const element = this.getSelectorMap()?.get(index);
+
+    if (!element || !this._puppeteerPage) {
+      throw new Error(ELEMENT_CONNECTION_ERROR);
+    }
+
+    if (
+      element.tagName?.toLowerCase() !== DATE_INPUT_TAG_NAME ||
+      element.attributes.type?.toLowerCase() !== DATE_INPUT_TYPE
+    ) {
+      throw new Error(nativeDateInputError(index));
+    }
+
+    if (!ISO_DATE_PATTERN.test(date)) {
+      throw new Error(invalidDateFormatError(date));
+    }
+
+    const elementHandle = await this.locateElement(element);
+    if (!elementHandle) {
+      throw new Error(missingDateInputError(index));
+    }
+
+    const selected = await elementHandle.evaluate(
+      (input, selectedDate, expectedInputType, inputEventName, changeEventName, inputValueProperty) => {
+        if (!(input instanceof HTMLInputElement) || input.type !== expectedInputType) {
+          return false;
+        }
+
+        const nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, inputValueProperty)?.set;
+        if (!nativeValueSetter) {
+          return false;
+        }
+
+        nativeValueSetter.call(input, selectedDate);
+        if (input.value !== selectedDate) {
+          return false;
+        }
+
+        input.dispatchEvent(new Event(inputEventName, { bubbles: true }));
+        input.dispatchEvent(new Event(changeEventName, { bubbles: true }));
+        return true;
+      },
+      date,
+      DATE_INPUT_TYPE,
+      INPUT_EVENT_NAME,
+      CHANGE_EVENT_NAME,
+      INPUT_VALUE_PROPERTY,
+    );
+
+    if (!selected) {
+      throw new Error(rejectedDateError(date, index));
+    }
+
+    return selectedDateMessage(date, index);
   }
 
   async locateElement(element: DOMElementNode): Promise<ElementHandle | null> {
