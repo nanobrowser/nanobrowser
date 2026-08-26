@@ -32,9 +32,8 @@ export function removeThinkTags(text: string): string {
   const thinkTagsRegex = /<think>[\s\S]*?<\/think>/g;
   let result = text.replace(thinkTagsRegex, '');
 
-  // Step 2: If there's an unmatched closing tag </think>,
-  // remove everything up to and including that.
-  const strayCloseTagRegex = /[\s\S]*?<\/think>/g;
+  // Step 2: Remove any unmatched closing tags without consuming surrounding content.
+  const strayCloseTagRegex = /<\/think>/g;
   result = result.replace(strayCloseTagRegex, '');
 
   return result.trim();
