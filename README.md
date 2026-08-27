@@ -39,7 +39,7 @@ Looking for a powerful AI browser agent without the $200/month price tag of Open
 - **Flexible LLM Options** - Connect to your preferred LLM providers with the freedom to choose different models for different agents.
 - **Fully Open Source** - Complete transparency in how your browser is automated. No black boxes or hidden processes.
 
-> **Note:** We currently support OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, Llama and custom OpenAI-Compatible providers, more providers will be supported.
+> **Note:** We currently support OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, Llama, MiniMax and custom OpenAI-Compatible providers, more providers will be supported.
 
 
 ## 📊 Key Features

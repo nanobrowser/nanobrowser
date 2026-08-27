@@ -356,6 +356,16 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         },
       });
     }
+    case ProviderTypeEnum.MiniMax: {
+      // MiniMax is OpenAI-compatible but requires temperature in (0, 1]
+      const miniMaxModelConfig = { ...modelConfig };
+      const miniMaxTemp = (modelConfig.parameters?.temperature ?? 0.1) as number;
+      miniMaxModelConfig.parameters = {
+        ...modelConfig.parameters,
+        temperature: Math.max(0.01, Math.min(miniMaxTemp, 1.0)),
+      };
+      return createOpenAIChatModel(providerConfig, miniMaxModelConfig, undefined);
+    }
     case ProviderTypeEnum.Llama: {
       // Llama API has a different response format, use custom ChatLlama class
       const args: {
