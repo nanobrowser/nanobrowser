@@ -1,0 +1,971 @@
+{
+  "app_metadata_description": {
+    "description": "Extension description",
+    "message": "أتمتة مهام الويب بالذكاء الاصطناعي! NanoBrowser هو امتداد متصفح مفتوح المصدر يتيح لك استخراج البيانات وملء النماذج والمزيد."
+  },
+  "app_metadata_name": {
+    "description": "Extension name",
+    "message": "Nanobrowser: وكيل ويب وأتمتة بالذكاء الاصطناعي"
+  },
+  "errors_unknown": {
+    "message": "حدث خطأ غير معروف"
+  },
+  "errors_conn_serviceWorker": {
+    "message": "فشل الاتصال بعامل الخدمة"
+  },
+  "errors_cmd_unknown": {
+    "message": "أمر غير مدعوم: $COMMAND$.\n\nالأوامر المتاحة: /state, /nohighlight, /replay <historySessionId>",
+    "placeholders": {
+      "command": {
+        "content": "$1",
+        "example": "/unknown"
+      }
+    }
+  },
+  "nav_newChat_a11y": {
+    "message": "محادثة جديدة"
+  },
+  "nav_loadHistory_a11y": {
+    "message": "تحميل السجل"
+  },
+  "nav_settings_a11y": {
+    "message": "الإعدادات"
+  },
+  "nav_back": {
+    "message": "← رجوع"
+  },
+  "nav_back_a11y": {
+    "message": "العودة إلى المحادثة"
+  },
+  "welcome_title": {
+    "message": "مرحباً بك في Nanobrowser!"
+  },
+  "welcome_instruction": {
+    "message": "للبدء، يرجى إعداد مفاتيح API الخاصة بك في صفحة الإعدادات."
+  },
+  "welcome_openSettings": {
+    "message": "فتح الإعدادات"
+  },
+  "welcome_quickStart": {
+    "message": "دليل البدء السريع"
+  },
+  "welcome_joinCommunity": {
+    "message": "انضم إلى مجتمعنا"
+  },
+  "status_checkingConfig": {
+    "message": "جاري التحقق من الإعدادات..."
+  },
+  "chat_buttons_stop": {
+    "message": "إيقاف"
+  },
+  "chat_buttons_replay": {
+    "message": "إعادة تشغيل"
+  },
+  "chat_buttons_send": {
+    "message": "إرسال"
+  },
+  "chat_input_placeholder": {
+    "message": "كيف يمكنني مساعدتك؟"
+  },
+  "chat_input_form": {
+    "message": "نموذج إدخال المحادثة"
+  },
+  "chat_input_editor": {
+    "message": "إدخال الرسالة"
+  },
+  "chat_history_title": {
+    "message": "سجل المحادثات"
+  },
+  "chat_history_empty": {
+    "message": "لا يوجد سجل محادثات"
+  },
+  "chat_history_bookmark": {
+    "message": "إضافة إشارة مرجعية للجلسة"
+  },
+  "chat_history_delete": {
+    "message": "حذف الجلسة"
+  },
+  "chat_bookmarks_header": {
+    "message": "بدء سريع"
+  },
+  "chat_bookmarks_saveEdit": {
+    "message": "حفظ التغييرات"
+  },
+  "chat_bookmarks_cancelEdit": {
+    "message": "إلغاء التغييرات"
+  },
+  "chat_bookmarks_edit": {
+    "message": "تعديل عنوان الإشارة المرجعية"
+  },
+  "chat_bookmarks_delete": {
+    "message": "حذف الإشارة المرجعية"
+  },
+  "chat_replay_starting": {
+    "message": "جاري بدء إعادة تشغيل المهمة:\n\n\"$TASK$\"",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Navigate to example.com"
+      }
+    }
+  },
+  "chat_replay_failed": {
+    "message": "فشلت إعادة التشغيل: $ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "chat_replay_invalidArgs": {
+    "message": "وسائط غير صالحة. يرجى استخدام الصيغة: /replay <historySessionId>"
+  },
+  "chat_replay_disabled": {
+    "message": "إعادة التشغيل معطلة في الإعدادات العامة. يرجى تفعيل \"إعادة تشغيل المهام السابقة\" في إعدادات الامتداد لاستخدام هذه الميزة."
+  },
+  "chat_replay_noHistory": {
+    "message": "لم يُعثر على سجل إجراءات للجلسة \"$SESSION_ID$...\". قد لا تحتوي هذه الجلسة على إجراءات قابلة لإعادة التشغيل.\n\nإما أنها جلسة إعادة تشغيل بحد ذاتها (لا يمكن إعادة تشغيل جلسات إعادة التشغيل مجدداً)، أو أنها أُنشئت قبل توفر ميزة إعادة التشغيل.",
+    "placeholders": {
+      "session_id": {
+        "content": "$1",
+        "example": "abc123def456789"
+      }
+    }
+  },
+  "chat_stt_processing": {
+    "message": "جاري معالجة الكلام..."
+  },
+  "chat_stt_recording_stop": {
+    "message": "إيقاف التسجيل"
+  },
+  "chat_stt_input_start": {
+    "message": "بدء الإدخال الصوتي"
+  },
+  "chat_stt_processingFailed": {
+    "message": "فشلت معالجة التسجيل الصوتي"
+  },
+  "chat_stt_model_notFound": {
+    "message": "لم يتم تكوين نموذج تحويل الكلام إلى نص أو أنه ليس نموذج Gemini. يرجى تكوين نموذج Gemini في الإعدادات."
+  },
+  "chat_stt_recognitionFailed": {
+    "message": "فشل التعرف على الكلام"
+  },
+  "chat_stt_microphone_permissionDenied": {
+    "message": "تم رفض الوصول إلى الميكروفون. يرجى تفعيل أذونات الميكروفون في إعدادات المتصفح."
+  },
+  "chat_stt_microphone_accessFailed": {
+    "message": "فشل الوصول إلى الميكروفون. "
+  },
+  "chat_stt_microphone_grantPermission": {
+    "message": "يرجى منح إذن الميكروفون."
+  },
+  "chat_stt_microphone_notFound": {
+    "message": "لم يُعثر على ميكروفون."
+  },
+  "permissions_microphone_title": {
+    "message": "تفعيل الإدخال الصوتي"
+  },
+  "permissions_microphone_description": {
+    "message": "يحتاج Nanobrowser إلى الوصول إلى الميكروفون لتحويل كلامك إلى نص."
+  },
+  "permissions_microphone_grantButton": {
+    "message": "منح إذن الميكروفون"
+  },
+  "permissions_microphone_requesting": {
+    "message": "جاري طلب إذن الميكروفون..."
+  },
+  "permissions_microphone_grantedSuccess": {
+    "message": "✅ تم منح إذن الميكروفون! يمكنك الآن استخدام الإدخال الصوتي."
+  },
+  "permissions_microphone_grantedButton": {
+    "message": "تم منح الإذن"
+  },
+  "permissions_microphone_denied": {
+    "message": "تم رفض الإذن. "
+  },
+  "permissions_microphone_allowHelp": {
+    "message": "يرجى النقر على \"سماح\" عند ظهور مطالبة الوصول إلى الميكروفون."
+  },
+  "permissions_microphone_notFound": {
+    "message": "لم يُعثر على ميكروفون. يرجى التحقق من أجهزة الصوت لديك."
+  },
+  "permissions_microphone_alreadyGranted": {
+    "message": "✅ إذن الميكروفون ممنوح بالفعل!"
+  },
+  "permissions_microphone_alreadyGrantedButton": {
+    "message": "الإذن ممنوح مسبقاً"
+  },
+  "options_nav_header": {
+    "message": "الإعدادات"
+  },
+  "options_tabs_general": {
+    "message": "عام"
+  },
+  "options_tabs_models": {
+    "message": "النماذج"
+  },
+  "options_tabs_firewall": {
+    "message": "جدار الحماية"
+  },
+  "options_tabs_help": {
+    "message": "المساعدة"
+  },
+  "options_general_header": {
+    "message": "عام"
+  },
+  "options_general_maxSteps": {
+    "message": "الحد الأقصى للخطوات لكل مهمة"
+  },
+  "options_general_maxSteps_desc": {
+    "message": "حد الخطوات لكل مهمة"
+  },
+  "options_general_maxActions": {
+    "message": "الحد الأقصى للإجراءات لكل خطوة"
+  },
+  "options_general_maxActions_desc": {
+    "message": "حد الإجراءات لكل خطوة"
+  },
+  "options_general_maxFailures": {
+    "message": "تحمل الفشل"
+  },
+  "options_general_maxFailures_desc": {
+    "message": "عدد الفشل المتتالي المسموح به قبل التوقف"
+  },
+  "options_general_enableVision": {
+    "message": "تفعيل الرؤية"
+  },
+  "options_general_enableVision_desc": {
+    "message": "استخدام قدرة الرؤية في نماذج اللغة الكبيرة (يستهلك رموزاً أكثر لنتائج أفضل)"
+  },
+  "options_general_displayHighlights": {
+    "message": "عرض التمييزات"
+  },
+  "options_general_displayHighlights_desc": {
+    "message": "إظهار التمييزات المرئية على العناصر التفاعلية (مثل الأزرار والروابط وما إلى ذلك)"
+  },
+  "options_general_planningInterval": {
+    "message": "تكرار إعادة التخطيط"
+  },
+  "options_general_planningInterval_desc": {
+    "message": "إعادة النظر في الخطة وتحديثها كل [عدد] خطوات"
+  },
+  "options_general_minWaitPageLoad": {
+    "message": "وقت انتظار تحميل الصفحة"
+  },
+  "options_general_minWaitPageLoad_desc": {
+    "message": "الحد الأدنى لوقت الانتظار بعد تحميل الصفحة (250-5000 مللي ثانية)"
+  },
+  "options_general_replayHistoricalTasks": {
+    "message": "إعادة تشغيل المهام السابقة (تجريبي)"
+  },
+  "options_general_replayHistoricalTasks_desc": {
+    "message": "تفعيل تخزين وإعادة تشغيل سجل خطوات الوكيل (تجريبي، قد يحتوي على مشكلات)"
+  },
+
+  "options_models_providers_header": {
+    "message": "موفرو نماذج اللغة الكبيرة"
+  },
+  "options_models_providers_notConfigured": {
+    "message": "لم يتم تكوين أي موفر بعد. أضف موفراً للبدء."
+  },
+  "options_models_providers_btnCancel": {
+    "message": "إلغاء"
+  },
+  "options_models_providers_btnSave": {
+    "message": "حفظ"
+  },
+  "options_models_providers_btnDelete": {
+    "message": "حذف"
+  },
+  "options_models_providers_setupInstructions": {
+    "message": "أدخل مفتاح API الخاص بك وانقر على حفظ لإعداده."
+  },
+  "options_models_providers_custom_name": {
+    "message": "الاسم"
+  },
+  "options_models_providers_custom_name_desc": {
+    "message": "اسم الموفر (المسافات غير مسموح بها عند الحفظ)"
+  },
+  "options_models_providers_custom_name_placeholder": {
+    "message": "اسم الموفر"
+  },
+
+  "options_models_providers_apiKey": {
+    "message": "مفتاح API"
+  },
+  "options_models_providers_apiKey_placeholder_optional": {
+    "message": "مفتاح API (اختياري)"
+  },
+  "options_models_providers_apiKey_placeholder_required": {
+    "message": "مفتاح API (مطلوب)"
+  },
+  "options_models_providers_apiKey_placeholder_ollama": {
+    "message": "مفتاح API (اتركه فارغاً لـ Ollama)"
+  },
+  "options_models_providers_apiKey_hide": {
+    "message": "إخفاء مفتاح API"
+  },
+  "options_models_providers_apiKey_show": {
+    "message": "إظهار مفتاح API"
+  },
+
+  "options_models_selection_header": {
+    "message": "اختيار النموذج"
+  },
+  "options_models_speechToText_header": {
+    "message": "نموذج تحويل الكلام إلى نص"
+  },
+
+  "options_models_agents_navigator": {
+    "message": "يتصفح المواقع وينفذ الإجراءات"
+  },
+  "options_models_agents_planner": {
+    "message": "يطور الاستراتيجيات ويحسّنها لإتمام المهام"
+  },
+
+  "options_models_labels_model": {
+    "message": "النموذج"
+  },
+  "options_models_labels_temperature": {
+    "message": "درجة الحرارة"
+  },
+  "options_models_labels_topP": {
+    "message": "Top P"
+  },
+  "options_models_labels_reasoning": {
+    "message": "الاستدلال"
+  },
+  "options_models_stt_desc": {
+    "message": "قم بتكوين نموذج Gemini المستخدم لتحويل الكلام إلى نص عند استخدام ميزة الميكروفون."
+  },
+  "options_models_chooseModel": {
+    "message": "اختر نموذجاً"
+  },
+  "options_models_addNewProvider": {
+    "message": "إضافة موفر جديد"
+  },
+  "options_models_providers_openaiCompatible": {
+    "message": "موفر واجهة برمجة تطبيقات متوافق مع OpenAI"
+  },
+  "options_models_providers_baseUrl": {
+    "message": "عنوان URL الأساسي"
+  },
+  "options_models_providers_endpoint": {
+    "message": "نقطة النهاية"
+  },
+  "options_models_providers_deployment": {
+    "message": "النشر"
+  },
+  "options_models_providers_apiVersion": {
+    "message": "إصدار API"
+  },
+  "options_models_providers_models": {
+    "message": "النماذج"
+  },
+  "options_models_providers_placeholders_baseUrl_custom": {
+    "message": "نقطة نهاية API متوافقة مع OpenAI (مطلوبة)"
+  },
+  "options_models_providers_placeholders_baseUrl_azure": {
+    "message": "https://YOUR_RESOURCE_NAME.openai.azure.com/"
+  },
+  "options_models_providers_placeholders_baseUrl_openrouter": {
+    "message": "عنوان URL الأساسي لـ OpenRouter (اختياري، الافتراضي: https://openrouter.ai/api/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_llama": {
+    "message": "عنوان URL الأساسي لـ Llama API (الافتراضي: https://api.llama.com/v1)"
+  },
+  "options_models_providers_placeholders_baseUrl_ollama": {
+    "message": "عنوان URL الأساسي لـ Ollama"
+  },
+  "options_models_providers_placeholders_azureDeployment": {
+    "message": "أدخل اسم نموذج Azure (مثال: gpt-4o، gpt-4o-mini)"
+  },
+  "options_models_providers_placeholders_azureApiVersion": {
+    "message": "مثال: 2025-04-01-preview"
+  },
+  "options_models_providers_deployment_desc": {
+    "message": "اكتب اسم النموذج واضغط Enter أو مسافة للتعيين. يجب أن يتطابق اسم النشر مع اسم نموذج OpenAI (مثال: gpt-4o) لأفضل توافق."
+  },
+  "options_models_providers_models_instructions": {
+    "message": "اكتب واضغط Enter أو مسافة للإضافة."
+  },
+  "options_models_providers_models_openrouter_empty": {
+    "message": "لم يتم اختيار أي نماذج. أضف أسماء النماذج يدوياً إذا لزم الأمر."
+  },
+  "options_models_providers_ollama_reminder": {
+    "message": "يجب تعيين متغير البيئة لخادم Ollama."
+  },
+  "options_models_providers_ollama_learnMore": {
+    "message": "معرفة المزيد"
+  },
+  "options_models_providers_errors_spacesNotAllowed": {
+    "message": "المسافات غير مسموح بها في أسماء الموفرين. يرجى استخدام الشرطة السفلية أو أحرف أخرى بدلاً من ذلك."
+  },
+  "options_models_providers_errors_baseUrlRequired": {
+    "message": "عنوان URL الأساسي مطلوب لـ $PROVIDER$. يرجى إدخاله.",
+    "placeholders": {
+      "provider": {
+        "content": "$1",
+        "example": "Custom OpenAI"
+      }
+    }
+  },
+
+  "options_firewall_header": {
+    "message": "جدار الحماية"
+  },
+  "options_firewall_enableToggle": {
+    "message": "تفعيل جدار الحماية"
+  },
+  "options_firewall_toggleFirewall_a11y": {
+    "message": "تبديل جدار الحماية"
+  },
+  "options_firewall_allowList_header": {
+    "message": "قائمة السماح"
+  },
+  "options_firewall_allowList_empty": {
+    "message": "لا توجد نطاقات في قائمة السماح. القائمة الفارغة تعني السماح لجميع النطاقات غير المحظورة."
+  },
+  "options_firewall_denyList_header": {
+    "message": "قائمة الحظر"
+  },
+  "options_firewall_denyList_empty": {
+    "message": "لا توجد نطاقات في قائمة الحظر"
+  },
+  "options_firewall_placeholders_domainUrl": {
+    "message": "أدخل نطاقاً أو عنوان URL (مثال: example.com، localhost، 127.0.0.1)"
+  },
+  "options_firewall_btnAdd": {
+    "message": "إضافة"
+  },
+  "options_firewall_btnRemove": {
+    "message": "إزالة"
+  },
+  "options_firewall_howItWorks_header": {
+    "message": "كيف يعمل جدار الحماية"
+  },
+  "options_firewall_howItWorks": {
+    "message": "يحتوي جدار الحماية على قائمة حظر وقائمة سماح.\nإذا كانت كلتا القائمتين فارغتين، يُسمح لجميع عناوين URL\nقائمة الحظر لها الأولوية - إذا تطابق عنوان URL مع أي إدخال في قائمة الحظر، يتم حظره\nعندما تكون قائمة السماح فارغة، يُسمح لجميع عناوين URL غير المحظورة\nعندما لا تكون قائمة السماح فارغة، يُسمح فقط لعناوين URL المتطابقة\nأحرف البدل غير مدعومة بعد\nقائمة السماح لها الأولوية على قائمة الحظر"
+  },
+
+  "bg_errors_noTabId": {
+    "message": "لم يتم تقديم معرّف التبويب"
+  },
+  "bg_errors_noTaskId": {
+    "message": "لم يتم تقديم معرّف المهمة"
+  },
+  "bg_errors_noRunningTask": {
+    "message": "لا توجد مهمة قيد التشغيل"
+  },
+  "bg_cmd_newTask_noTask": {
+    "message": "لم يتم تقديم أي مهمة"
+  },
+  "bg_cmd_followUpTask_noTask": {
+    "message": "لم يتم تقديم مهمة متابعة"
+  },
+  "bg_cmd_followUpTask_cleaned": {
+    "message": "تم تنظيف المنفذ، لا يمكن إضافة مهمة متابعة"
+  },
+  "bg_cmd_resumeTask_noTask": {
+    "message": "لا توجد مهمة لاستئنافها"
+  },
+  "bg_cmd_state_printed": {
+    "message": "تمت طباعة الحالة في وحدة التحكم"
+  },
+  "bg_cmd_state_failed": {
+    "message": "فشل الحصول على الحالة"
+  },
+  "bg_cmd_nohighlight_ok": {
+    "message": "تمت إزالة التمييز"
+  },
+  "bg_cmd_stt_noAudioData": {
+    "message": "لم يتم تقديم بيانات صوتية"
+  },
+  "bg_cmd_stt_failed": {
+    "message": "فشل التعرف على الكلام"
+  },
+  "bg_cmd_replay_noHistory": {
+    "message": "لم يتم تقديم معرّف جلسة السجل"
+  },
+  "bg_cmd_replay_failed": {
+    "message": "فشلت إعادة التشغيل"
+  },
+  "bg_setup_noApiKeys": {
+    "message": "يرجى تكوين مفاتيح API في الإعدادات أولاً"
+  },
+  "bg_setup_noProvider": {
+    "message": "الموفر $PROVIDER$ غير موجود في الإعدادات",
+    "placeholders": {
+      "provider": {
+        "content": "$1",
+        "example": "openai"
+      }
+    }
+  },
+  "bg_setup_noNavigatorModel": {
+    "message": "يرجى اختيار نموذج للمتصفح في الإعدادات أولاً"
+  },
+  "exec_errors_maxStepsReached": {
+    "message": "تم الوصول إلى الحد الأقصى للخطوات"
+  },
+  "exec_errors_maxFailuresReached": {
+    "message": "تم الوصول إلى الحد الأقصى للفشل"
+  },
+  "exec_task_cancel": {
+    "message": "تم إلغاء المهمة"
+  },
+  "exec_task_pause": {
+    "message": "تم إيقاف المهمة مؤقتاً"
+  },
+  "exec_task_fail": {
+    "message": "فشلت المهمة: \n\n$ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "exec_replay_cancel": {
+    "message": "تم إلغاء إعادة التشغيل"
+  },
+  "exec_replay_ok": {
+    "message": "اكتملت إعادة التشغيل"
+  },
+  "exec_replay_fail": {
+    "message": "فشلت إعادة التشغيل: \n\n$ERROR_MESSAGE$",
+    "placeholders": {
+      "error_message": {
+        "content": "$1",
+        "example": "Network error"
+      }
+    }
+  },
+  "exec_replay_historyNotFound": {
+    "message": "لم يُعثر على السجل"
+  },
+  "exec_replay_historyEmpty": {
+    "message": "السجل فارغ"
+  },
+
+  "act_searchGoogle_start": {
+    "message": "جاري البحث عن \"$QUERY$\" في Google",
+    "placeholders": {
+      "query": {
+        "content": "$1",
+        "example": "weather today"
+      }
+    }
+  },
+  "act_searchGoogle_ok": {
+    "message": "تم البحث عن \"$QUERY$\" في Google",
+    "placeholders": {
+      "query": {
+        "content": "$1",
+        "example": "weather today"
+      }
+    }
+  },
+  "act_goToUrl_start": {
+    "message": "جاري الانتقال إلى $URL$",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_goToUrl_ok": {
+    "message": "تم الانتقال إلى $URL$",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_goBack_start": {
+    "message": "جاري العودة للخلف"
+  },
+  "act_goBack_ok": {
+    "message": "تم العودة للخلف"
+  },
+  "act_wait_start": {
+    "message": "الانتظار لمدة $SECONDS$ ثانية",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_wait_ok": {
+    "message": "مرّت $SECONDS$ ثانية",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "act_click_start": {
+    "message": "النقر على العنصر ذي الفهرس $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_elementNotExist": {
+    "message": "العنصر ذو الفهرس $INDEX$ غير موجود - أعد المحاولة أو استخدم إجراءات بديلة",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_elementNoLongerAvailable": {
+    "message": "العنصر ذو الفهرس $INDEX$ لم يعد متاحاً - على الأرجح تغيّرت الصفحة",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_click_fileUploader": {
+    "message": "الفهرس $INDEX$ - يحتوي على عنصر يفتح مربع حوار رفع الملفات. لرفع الملفات يرجى استخدام دالة مخصصة لرفع الملفات",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_click_ok": {
+    "message": "تم النقر على الزر ذي الفهرس $INDEX$: $TEXT$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      },
+      "text": {
+        "content": "$2",
+        "example": "Submit Button"
+      }
+    }
+  },
+  "act_click_newTabOpened": {
+    "message": "تم فتح تبويب جديد - جاري التبديل إليه"
+  },
+  "act_inputText_start": {
+    "message": "إدخال نص في الفهرس $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_inputText_ok": {
+    "message": "تم إدخال $TEXT$ في الفهرس $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Hello World"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_switchTab_start": {
+    "message": "جاري التبديل إلى التبويب $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_switchTab_ok": {
+    "message": "تم التبديل إلى التبويب $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_openTab_start": {
+    "message": "جاري فتح $URL$ في تبويب جديد",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_openTab_ok": {
+    "message": "تم فتح $URL$ في تبويب جديد",
+    "placeholders": {
+      "url": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "act_closeTab_start": {
+    "message": "جاري إغلاق التبويب $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_closeTab_ok": {
+    "message": "تم إغلاق التبويب $TAB_ID$",
+    "placeholders": {
+      "tab_id": {
+        "content": "$1",
+        "example": "123456"
+      }
+    }
+  },
+  "act_cache_start": {
+    "message": "جاري تخزين النتائج: $CONTENT$",
+    "placeholders": {
+      "content": {
+        "content": "$1",
+        "example": "User preferences saved"
+      }
+    }
+  },
+  "act_cache_ok": {
+    "message": "تم تخزين النتائج: $CONTENT$",
+    "placeholders": {
+      "content": {
+        "content": "$1",
+        "example": "User preferences saved"
+      }
+    }
+  },
+  "act_scrollToPercent_start": {
+    "message": "التمرير إلى النسبة: $PERCENT$",
+    "placeholders": {
+      "percent": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "act_scrollToPercent_ok": {
+    "message": "تم التمرير إلى النسبة: $PERCENT$",
+    "placeholders": {
+      "percent": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
+  "act_scrollToTop_start": {
+    "message": "التمرير إلى الأعلى"
+  },
+  "act_scrollToTop_ok": {
+    "message": "تم التمرير إلى الأعلى"
+  },
+  "act_scrollToBottom_start": {
+    "message": "التمرير إلى الأسفل"
+  },
+  "act_scrollToBottom_ok": {
+    "message": "تم التمرير إلى الأسفل"
+  },
+  "act_previousPage_start": {
+    "message": "التمرير إلى الصفحة السابقة"
+  },
+  "act_previousPage_ok": {
+    "message": "تم التمرير إلى الصفحة السابقة"
+  },
+  "act_nextPage_start": {
+    "message": "التمرير إلى الصفحة التالية"
+  },
+  "act_nextPage_ok": {
+    "message": "تم التمرير إلى الصفحة التالية"
+  },
+  "act_errors_alreadyAtTop": {
+    "message": "العنصر ذو الفهرس $INDEX$ في الأعلى بالفعل، لا يمكن التمرير إلى الصفحة السابقة",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_pageAlreadyAtTop": {
+    "message": "أنت في أعلى الصفحة بالفعل، لا يمكن التمرير إلى الصفحة السابقة"
+  },
+  "act_errors_alreadyAtBottom": {
+    "message": "العنصر ذو الفهرس $INDEX$ في الأسفل بالفعل، لا يمكن التمرير إلى الصفحة التالية",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_errors_pageAlreadyAtBottom": {
+    "message": "أنت في أسفل الصفحة بالفعل، لا يمكن التمرير إلى الصفحة التالية"
+  },
+  "act_scrollToText_start": {
+    "message": "التمرير إلى النص: $TEXT$، التكرار $OCCURRENCE$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Contact Us"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_ok": {
+    "message": "تم التمرير إلى النص: $TEXT$، التكرار $OCCURRENCE$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Contact Us"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_notFound": {
+    "message": "النص '$TEXT$' (التكرار $OCCURRENCE$) غير موجود أو غير مرئي",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Contact Us"
+      },
+      "occurrence": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "act_scrollToText_failed": {
+    "message": "فشل التمرير إلى النص: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Element not found"
+      }
+    }
+  },
+  "act_sendKeys_start": {
+    "message": "إرسال المفاتيح: $KEYS$",
+    "placeholders": {
+      "keys": {
+        "content": "$1",
+        "example": "Enter"
+      }
+    }
+  },
+  "act_sendKeys_ok": {
+    "message": "تم إرسال المفاتيح: $KEYS$",
+    "placeholders": {
+      "keys": {
+        "content": "$1",
+        "example": "Enter"
+      }
+    }
+  },
+  "act_getDropdownOptions_start": {
+    "message": "جاري الحصول على خيارات القائمة المنسدلة ذات الفهرس $INDEX$",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_getDropdownOptions_useExactText": {
+    "message": "استخدم النص الحرفي الدقيق في select_dropdown_option"
+  },
+  "act_getDropdownOptions_ok": {
+    "message": "تم الحصول على $COUNT$ خيار من القائمة المنسدلة",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "act_getDropdownOptions_noOptions": {
+    "message": "لا توجد خيارات في القائمة المنسدلة"
+  },
+  "act_getDropdownOptions_failed": {
+    "message": "فشل الحصول على خيارات القائمة المنسدلة: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Element not found"
+      }
+    }
+  },
+  "act_selectDropdownOption_start": {
+    "message": "تحديد الخيار \"$TEXT$\" من القائمة المنسدلة ذات الفهرس $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Option 1"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_selectDropdownOption_ok": {
+    "message": "تم تحديد الخيار \"$TEXT$\" من القائمة المنسدلة ذات الفهرس $INDEX$",
+    "placeholders": {
+      "text": {
+        "content": "$1",
+        "example": "Option 1"
+      },
+      "index": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "act_selectDropdownOption_notSelect": {
+    "message": "لا يمكن تحديد الخيار: العنصر ذو الفهرس $INDEX$ هو $TAG_NAME$، وليس SELECT",
+    "placeholders": {
+      "index": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tag_name": {
+        "content": "$2",
+        "example": "DIV"
+      }
+    }
+  },
+  "act_selectDropdownOption_failed": {
+    "message": "فشل تحديد الخيار: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Option not found"
+      }
+    }
+  }
+}
