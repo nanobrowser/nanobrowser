@@ -3,7 +3,7 @@ import '@src/Options.css';
 import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { t } from '@extension/i18n';
-import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle } from 'react-icons/fi';
+import { FiSettings, FiCpu, FiShield, FiTrendingUp, FiHelpCircle, FiSun, FiMoon } from 'react-icons/fi';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { FirewallSettings } from './components/FirewallSettings';
@@ -19,22 +19,39 @@ const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; l
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
+const THEME_STORAGE_KEY = 'nanobrowser:theme';
+
 const Options = () => {
   const [activeTab, setActiveTab] = useState<TabTypes>('models');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Check for dark mode preference
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDarkMode(darkModeMediaQuery.matches);
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+
+    if (storedTheme === 'dark' || storedTheme === 'light') {
+      setIsDarkMode(storedTheme === 'dark');
+    } else {
+      setIsDarkMode(darkModeMediaQuery.matches);
+    }
 
     const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
+      if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+        setIsDarkMode(e.matches);
+      }
     };
 
     darkModeMediaQuery.addEventListener('change', handleChange);
     return () => darkModeMediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light');
+      return next;
+    });
+  };
 
   const handleTabClick = (tabId: TabTypes) => {
     if (tabId === 'help') {
@@ -61,7 +78,7 @@ const Options = () => {
 
   return (
     <div
-      className={`flex min-h-screen min-w-[768px] ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-center"} ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+      className={`options-shell ${isDarkMode ? 'dark bg-slate-900 text-gray-200' : 'light bg-[url(\'/bg.jpg\')] bg-cover bg-center text-gray-900'} flex min-h-screen min-w-[768px]`}>
       {/* Vertical Navigation Bar */}
       <nav
         className={`w-48 border-r ${isDarkMode ? 'border-slate-700 bg-slate-800/80' : 'border-white/20 bg-[#0EA5E9]/10'} backdrop-blur-sm`}>
@@ -80,12 +97,32 @@ const Options = () => {
                         ? `${isDarkMode ? 'bg-slate-700/70 text-gray-300 hover:text-white' : 'bg-[#0EA5E9]/15 font-medium text-gray-700 hover:text-white'} backdrop-blur-sm`
                         : `${isDarkMode ? 'bg-sky-800/50' : ''} text-white backdrop-blur-sm`
                     }`}>
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="size-4" />
                   <span>{item.label}</span>
                 </Button>
               </li>
             ))}
           </ul>
+
+          <div
+            className={`mt-6 flex items-center justify-between rounded-xl border px-3 py-2 backdrop-blur-sm ${
+              isDarkMode ? 'border-slate-700 bg-slate-900/60' : 'border-white/10 bg-white/10'
+            }`}>
+            <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              {isDarkMode ? 'Dark mode' : 'Light mode'}
+            </span>
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`flex size-8 items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95 ${
+                isDarkMode
+                  ? 'bg-slate-700 text-amber-300 hover:bg-slate-600'
+                  : 'bg-white/80 text-slate-700 hover:bg-white'
+              }`}>
+              {isDarkMode ? <FiSun className="size-4" /> : <FiMoon className="size-4" />}
+            </button>
+          </div>
         </div>
       </nav>
 

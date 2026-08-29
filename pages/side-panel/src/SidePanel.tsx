@@ -11,6 +11,7 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
+import SuggestedPrompts from './components/SuggestedPrompts';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -762,6 +763,12 @@ const SidePanel = () => {
     }
   };
 
+  const handleSuggestedPromptSelect = (content: string) => {
+    if (setInputTextRef.current) {
+      setInputTextRef.current(content);
+    }
+  };
+
   const handleBookmarkUpdateTitle = async (id: number, title: string) => {
     try {
       await favoritesStorage.updatePromptTitle(id, title);
@@ -1002,7 +1009,7 @@ const SidePanel = () => {
   return (
     <div>
       <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
+        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-gradient-to-b from-sky-50 via-white to-white'} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-sky-100'} rounded-2xl`}>
         <header className="header relative">
           <div className="header-logo">
             {showHistory ? (
@@ -1123,6 +1130,22 @@ const SidePanel = () => {
             {/* Show normal chat interface when models are configured */}
             {hasConfiguredModels === true && (
               <>
+                {isHistoricalSession && (
+                  <div
+                    className={`mx-2 mt-2 flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-xs ${
+                      isDarkMode
+                        ? 'border-slate-700 bg-slate-800/80 text-slate-300'
+                        : 'border-sky-100 bg-white/80 text-slate-600'
+                    }`}>
+                    <span>Viewing past session - read only</span>
+                    <button
+                      type="button"
+                      onClick={handleNewChat}
+                      className="shrink-0 font-semibold text-sky-500 hover:text-sky-400 hover:underline">
+                      New chat
+                    </button>
+                  </div>
+                )}
                 {messages.length === 0 && (
                   <>
                     <div
@@ -1144,6 +1167,7 @@ const SidePanel = () => {
                       />
                     </div>
                     <div className="flex-1 overflow-y-auto">
+                      <SuggestedPrompts onSelect={handleSuggestedPromptSelect} isDarkMode={isDarkMode} />
                       <BookmarkList
                         bookmarks={favoritePrompts}
                         onBookmarkSelect={handleBookmarkSelect}

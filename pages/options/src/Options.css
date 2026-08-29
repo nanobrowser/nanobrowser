@@ -4,6 +4,12 @@
   height: 100vh;
 }
 
+.options-shell {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -25,22 +31,36 @@ code {
   padding: 0.2rem 0.5rem;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  code {
-    background: rgba(30, 58, 138, 0.4);
-    color: #7dd3fc;
-  }
-  
-  .dark-mode-text {
-    color: #e2e8f0 !important; /* slate-200 */
-  }
-  
-  .dark-mode-bg {
-    background-color: #1e293b !important; /* slate-800 */
-  }
-  
-  .dark-mode-border {
-    border-color: #475569 !important; /* slate-600 */
-  }
+.light code {
+  background: rgba(148, 163, 184, 0.32);
+  color: #0f172a;
+}
+
+.dark code {
+  background: rgba(30, 58, 138, 0.4);
+  color: #7dd3fc;
+}
+
+.dark .dark-mode-text {
+  color: #e2e8f0 !important;
+}
+
+.light .dark-mode-text {
+  color: #111827 !important;
+}
+
+.dark .dark-mode-bg {
+  background-color: #1e293b !important;
+}
+
+.light .dark-mode-bg {
+  background-color: #ffffff !important;
+}
+
+.dark .dark-mode-border {
+  border-color: #475569 !important;
+}
+
+.light .dark-mode-border {
+  border-color: rgba(148, 163, 184, 0.4) !important;
 }
