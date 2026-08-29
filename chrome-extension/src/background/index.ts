@@ -18,6 +18,7 @@ import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
+import { updateAnthropicOriginRules } from './anthropicOriginStrip';
 
 const logger = createLogger('background');
 
@@ -53,6 +54,11 @@ chrome.tabs.onRemoved.addListener(tabId => {
 });
 
 logger.info('background loaded');
+
+updateAnthropicOriginRules().catch(e => logger.error('Failed to set Anthropic origin rules:', e));
+llmProviderStore.subscribe(() => {
+  updateAnthropicOriginRules().catch(e => logger.error('Failed to update Anthropic origin rules:', e));
+});
 
 // Initialize analytics
 analytics.init().catch(error => {

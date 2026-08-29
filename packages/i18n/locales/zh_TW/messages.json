@@ -370,6 +370,9 @@
   "options_models_providers_placeholders_baseUrl_llama": {
     "message": "Llama API 基礎 URL (預設為 https://api.llama.com/v1)"
   },
+  "options_models_providers_placeholders_baseUrl_anthropic": {
+    "message": "Anthropic 基礎 URL (選填，預設為 https://api.anthropic.com)"
+  },
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "Ollama 基礎 URL"
   },

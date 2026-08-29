@@ -375,6 +375,9 @@
   "options_models_providers_placeholders_baseUrl_llama": {
     "message": "Llama API Base URL (defaults to https://api.llama.com/v1)"
   },
+  "options_models_providers_placeholders_baseUrl_anthropic": {
+    "message": "Anthropic Base URL (optional, defaults to https://api.anthropic.com)"
+  },
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "Ollama base URL"
   },

@@ -1,5 +1,5 @@
 import { type ProviderConfig, type ModelConfig, ProviderTypeEnum } from '@extension/storage';
-import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, ChatOpenAICompletions, AzureChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
@@ -12,7 +12,7 @@ import { ChatDeepSeek } from '@langchain/deepseek';
 const maxTokens = 1024 * 4;
 
 // Custom ChatLlama class to handle Llama API response format
-class ChatLlama extends ChatOpenAI {
+class ChatLlama extends ChatOpenAICompletions {
   constructor(args: any) {
     super(args);
   }
@@ -21,7 +21,7 @@ class ChatLlama extends ChatOpenAI {
   async completionWithRetry(request: any, options?: any): Promise<any> {
     try {
       // Make the request using the parent's implementation
-      const response = await super.completionWithRetry(request, options);
+      const response = (await super.completionWithRetry(request, options)) as any;
 
       // Check if this is a Llama API response format
       if (response?.completion_message?.content?.text) {
@@ -260,16 +260,14 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       return createOpenAIChatModel(providerConfig, modelConfig, undefined);
     }
     case ProviderTypeEnum.Anthropic: {
-      // For Opus models, only support temperature, not topP
-      // For 4.5 models, only support either temperature or topP, not both, so we only use temperature to align with Opus
-      const args = {
+      const baseUrl = providerConfig.baseUrl?.trim();
+      return new ChatAnthropic({
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         maxTokens,
         temperature,
-        clientOptions: {},
-      };
-      return new ChatAnthropic(args);
+        clientOptions: baseUrl ? { baseURL: baseUrl } : {},
+      });
     }
     case ProviderTypeEnum.DeepSeek: {
       const args = {
