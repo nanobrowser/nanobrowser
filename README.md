@@ -50,7 +50,29 @@ Looking for a powerful AI browser agent without the $200/month price tag of Open
 - **Follow-up Questions**: Ask contextual follow-up questions about completed tasks
 - **Conversation History**: Easily access and manage your AI agent interaction history
 - **Multiple LLM Support**: Connect your preferred LLM providers and assign different models to different agents
+- **Form Filling**: Store personal information (name, email, phone, address, etc.) and automatically fill forms across websites with custom field support
 
+## 📝 Form Filling Feature  
+  
+Nanobrowser can automatically fill forms using your predefined profile data:  
+  
+### Setting Up Profile Data  
+1. Go to Settings → Profile tab  
+2. Fill in basic information (name, email, phone, address, etc.)  
+3. Add custom fields for specific needs (passport number, ID, etc.)  
+4. Save your profile  
+  
+### Using Form Filling  
+Simply ask Nanobrowser to fill forms:  
+- "Fill out this form with my profile"  
+- "Complete the registration using my saved data"  
+- "Fill the shipping address with my information"  
+- "Goto X website and fillout the forms for job application for Y role with my data"
+  
+### Privacy  
+- All profile data is stored locally in your browser  
+- Data never leaves your device or goes to cloud services  
+- You control what information is stored and used
 
 ## 🌐 Browser Support
 
@@ -78,6 +100,12 @@ Looking for a powerful AI browser agent without the $200/month price tag of Open
    * Click the `Settings` icon (top right)
    * Add your LLM API keys
    * Choose which model to use for different agents (Navigator, Planner)
+
+3. **Configure Profile Data** (Optional):  
+   * Click the `Profile` tab in Settings  
+   * Add your personal information (name, email, phone, etc.)  
+   * Create custom fields for specific form data  
+   * Save your profile for automatic form filling
 
 ## 🔧 Manually Install Latest Version
 
@@ -191,6 +219,11 @@ Here are some powerful tasks you can accomplish with just a sentence:
 
 3. **Shopping Research**:
    > "Find a portable Bluetooth speaker on Amazon with a water-resistant design, under $50. It should have a minimum battery life of 10 hours"
+4. **Form Filling**:  
+   > "Fill out the registration form with my profile information"  
+     
+5. **Custom Form Fields**:  
+   > "Fill the passport number field with my stored passport data"
 
 ## 🛠️ Roadmap
 

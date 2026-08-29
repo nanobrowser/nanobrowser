@@ -7,6 +7,7 @@ import {
   splitUserTextAndAttachments,
   wrapAttachments,
 } from '@src/background/agent/messages/utils';
+import { profileStore } from '@extension/storage/lib/stores/profileStore';
 
 const logger = createLogger('MessageManager');
 
@@ -52,7 +53,7 @@ export default class MessageManager {
     this.toolId = 1;
   }
 
-  public initTaskMessages(systemMessage: SystemMessage, task: string, messageContext?: string): void {
+  public async initTaskMessages(systemMessage: SystemMessage, task: string, messageContext?: string): Promise<void> {
     // Add system message
     this.addMessageWithTokens(systemMessage, 'init');
 
@@ -73,6 +74,17 @@ export default class MessageManager {
       const info = `Here are placeholders for sensitive data: ${Object.keys(this.settings.sensitiveData)}`;
       const infoMessage = new HumanMessage({
         content: `${info}\nTo use them, write <secret>the placeholder name</secret>`,
+      });
+      this.addMessageWithTokens(infoMessage, 'init');
+    }
+
+    // Add profile data info if profile data exists
+    const profileData = await profileStore.get();
+    if (Object.keys(profileData).length > 0) {
+      const availableFields = Object.keys(profileData).join(', ');
+      const info = `Available profile data for form filling: ${availableFields}`;
+      const infoMessage = new HumanMessage({
+        content: `${info}\nTo use them in fill_form action, specify the field name.`,
       });
       this.addMessageWithTokens(infoMessage, 'init');
     }

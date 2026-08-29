@@ -46,6 +46,7 @@ Nanobrowser es una herramienta de automatización web con IA que se ejecuta en t
 - **Preguntas de Seguimiento**: Haz preguntas de seguimiento sobre tareas completadas
 - **Historial de Conversaciones**: Accede y gestiona fácilmente el historial de interacciones con tu agente de IA
 - **Soporte de Múltiples LLM**: Conéctate a tus proveedores de LLM preferidos y asigna distintos modelos a diferentes agentes
+- **Llenado de formularios**: Almacena información personal (nombre, correo, teléfono, dirección, etc.) y completa formularios automáticamente en sitios web con soporte para campos personalizados
 
 
 ## 🚀 Inicio Rápido

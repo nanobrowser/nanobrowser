@@ -22,12 +22,14 @@ import {
   nextPageActionSchema,
   scrollToTopActionSchema,
   scrollToBottomActionSchema,
+  fillFormActionSchema,
 } from './schemas';
 import { z } from 'zod';
 import { createLogger } from '@src/background/log';
 import { ExecutionState, Actors } from '../event/types';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { wrapUntrustedContent } from '../messages/utils';
+import { profileStore } from '@extension/storage/lib/stores/profileStore';
 
 const logger = createLogger('Action');
 
@@ -701,6 +703,62 @@ export class ActionBuilder {
       true,
     );
     actions.push(selectDropdownOption);
+
+    const fillForm = new Action(
+      async (input: z.infer<typeof fillFormActionSchema.schema>) => {
+        const intent = input.intent || t('act_fillForm_start');
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
+
+        const page = await this.context.browserContext.getCurrentPage();
+        const state = await page.getState();
+
+        // Get profile data from storage (updated to use Chrome storage)
+        const profileData = await profileStore.get();
+
+        for (const fieldConfig of input.fields) {
+          const elementNode = state?.selectorMap.get(fieldConfig.index);
+          if (!elementNode) {
+            const errorMsg = t('act_errors_elementNotExist', [fieldConfig.index.toString()]);
+            this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+            return new ActionResult({
+              error: errorMsg,
+              includeInMemory: true,
+            });
+          }
+
+          const value = profileData[fieldConfig.field];
+          if (!value) {
+            const errorMsg = `Profile field '${fieldConfig.field}' not found or empty`;
+            this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+            return new ActionResult({
+              error: errorMsg,
+              includeInMemory: true,
+            });
+          }
+
+          try {
+            await page.inputTextElementNode(false, elementNode, value);
+          } catch (error) {
+            const errorMsg = t('act_inputText_failed', [error instanceof Error ? error.message : String(error)]);
+            this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+            return new ActionResult({
+              error: errorMsg,
+              includeInMemory: true,
+            });
+          }
+        }
+
+        const msg = t('act_fillForm_ok', [input.fields.length.toString()]);
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
+        return new ActionResult({
+          extractedContent: msg,
+          includeInMemory: true,
+        });
+      },
+      fillFormActionSchema,
+      true,
+    );
+    actions.push(fillForm);
 
     return actions;
   }

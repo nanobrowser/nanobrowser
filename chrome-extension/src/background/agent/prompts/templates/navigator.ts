@@ -79,7 +79,12 @@ Common action sequences:
 
 7. Form filling:
 
+- Use fill_form action to automatically fill forms with predefined user data  
+- Specify field names that match available profile data (name, email, phone, address, etc.)  
+- The action will fill multiple fields in sequence.
+- Makesure that fields which require any available data is filled. There could be multiple fields to fill with phone number(eg., Cell Phone, Contact number, Available number, etc.), here fill them all with according available value.
 - If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+- Makesure maximum fields are filled with curresponding known data.
 
 8. Long tasks:
 

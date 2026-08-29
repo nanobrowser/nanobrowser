@@ -45,6 +45,8 @@ OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz?
 - **Takip Soruları**: Tamamlanan görevler hakkında bağlamsal takip soruları sorabilirsiniz
 - **Konuşma Geçmişi**: Yapay zeka ajanlarınızla olan geçmiş etkileşimlere kolay erişim
 - **Çoklu LLM Desteği**: Tercih ettiğiniz LLM sağlayıcılarına bağlanın, farklı ajanlara farklı modeller atayın
+- **Form Doldurma**: Kişisel bilgileri (isim, e-posta, telefon, adres vb.) kaydeder ve özel alan desteğiyle web sitelerindeki formları otomatik olarak doldurur
+
 
 ## 🌐 Tarayıcı Desteği
 
