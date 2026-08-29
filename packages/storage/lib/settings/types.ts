@@ -19,6 +19,7 @@ export enum ProviderTypeEnum {
   Groq = 'groq',
   Cerebras = 'cerebras',
   Llama = 'llama',
+  Kimi = 'kimi', // 添加Kimi支持
   CustomOpenAI = 'custom_openai',
 }
 
@@ -50,6 +51,7 @@ export const llmProviderModelNames = {
     'Llama-4-Scout-17B-16E-Instruct-FP8',
   ],
   // Custom OpenAI providers don't have predefined models as they are user-defined
+  [ProviderTypeEnum.Kimi]: ['kimi-for-coding'], // Kimi Code API模型
 };
 
 // Default parameters for each agent per provider, for providers not specified, use OpenAI parameters
@@ -147,6 +149,16 @@ export const llmProviderParameters = {
   [ProviderTypeEnum.Llama]: {
     [AgentNameEnum.Planner]: {
       temperature: 0.7,
+      topP: 0.9,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.3,
+      topP: 0.85,
+    },
+  },
+  [ProviderTypeEnum.Kimi]: {
+    [AgentNameEnum.Planner]: {
+      temperature: 0.3,
       topP: 0.9,
     },
     [AgentNameEnum.Navigator]: {
