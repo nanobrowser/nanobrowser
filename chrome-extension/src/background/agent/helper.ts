@@ -152,19 +152,42 @@ function createOpenAIChatModel(
   return new ChatOpenAI(args);
 }
 
-// Function to extract instance name from Azure endpoint URL
+// Function to check if an Azure endpoint URL uses the standard Azure OpenAI format
+// Standard format: https://<instance-name>.openai.azure.com
+function isStandardAzureEndpoint(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    const hostnameParts = parsedUrl.hostname.split('.');
+    return hostnameParts.length >= 4 && hostnameParts[1] === 'openai' && hostnameParts[2] === 'azure';
+  } catch {
+    return false;
+  }
+}
+
+// Function to extract instance name from a standard Azure endpoint URL
+// Returns the first hostname segment (e.g. "myinstance" from "myinstance.openai.azure.com")
 function extractInstanceNameFromUrl(url: string): string | null {
   try {
     const parsedUrl = new URL(url);
     const hostnameParts = parsedUrl.hostname.split('.');
-    // Expecting format like instance-name.openai.azure.com
-    if (hostnameParts.length >= 4 && hostnameParts[1] === 'openai' && hostnameParts[2] === 'azure') {
+    if (hostnameParts.length >= 1 && hostnameParts[0]) {
       return hostnameParts[0];
     }
   } catch (e) {
     console.error('Error parsing Azure endpoint URL:', e);
   }
   return null;
+}
+
+// Function to build the azureOpenAIBasePath for custom (non-standard) Azure endpoints
+// The LangChain SDK expects a path like: https://host/openai/deployments
+function buildAzureBasePath(url: string): string {
+  const baseUrl = url.replace(/\/+$/, '');
+  const deploymentsPath = '/openai/deployments';
+  if (baseUrl.includes(deploymentsPath)) {
+    return baseUrl.substring(0, baseUrl.indexOf(deploymentsPath) + deploymentsPath.length);
+  }
+  return `${baseUrl}${deploymentsPath}`;
 }
 
 // Function to check if a provider ID is an Azure provider
@@ -202,12 +225,21 @@ function createAzureChatModel(providerConfig: ProviderConfig, modelConfig: Model
     );
   }
 
-  // Extract instance name from the endpoint URL
-  const instanceName = extractInstanceNameFromUrl(providerConfig.baseUrl);
-  if (!instanceName) {
-    throw new Error(
-      `Could not extract Instance Name from Azure Endpoint URL: ${providerConfig.baseUrl}. Expected format like https://<your-instance-name>.openai.azure.com/`,
-    );
+  // Determine endpoint configuration: standard Azure endpoints use azureOpenAIApiInstanceName,
+  // while custom/private cloud endpoints (e.g. https://instance.mycompany.com) use azureOpenAIBasePath.
+  const standardEndpoint = isStandardAzureEndpoint(providerConfig.baseUrl);
+  let endpointConfig: Record<string, string>;
+  if (standardEndpoint) {
+    const instanceName = extractInstanceNameFromUrl(providerConfig.baseUrl);
+    if (!instanceName) {
+      throw new Error(
+        `Could not extract Instance Name from Azure Endpoint URL: ${providerConfig.baseUrl}. Expected format like https://<your-instance-name>.openai.azure.com/`,
+      );
+    }
+    endpointConfig = { azureOpenAIApiInstanceName: instanceName };
+  } else {
+    // For private cloud or custom Azure-compatible endpoints, use the full base path
+    endpointConfig = { azureOpenAIBasePath: buildAzureBasePath(providerConfig.baseUrl) };
   }
 
   // Check if the Azure deployment is using an "o" series model (GPT-4o, etc.)
@@ -215,7 +247,7 @@ function createAzureChatModel(providerConfig: ProviderConfig, modelConfig: Model
 
   // Use AzureChatOpenAI with specific parameters
   const args = {
-    azureOpenAIApiInstanceName: instanceName, // Derived from endpoint
+    ...endpointConfig, // Either azureOpenAIApiInstanceName or azureOpenAIBasePath
     azureOpenAIApiDeploymentName: deploymentName,
     azureOpenAIApiKey: providerConfig.apiKey,
     azureOpenAIApiVersion: providerConfig.azureApiVersion,
@@ -235,7 +267,6 @@ function createAzureChatModel(providerConfig: ProviderConfig, modelConfig: Model
           topP,
           maxTokens,
         }),
-    // DO NOT pass baseUrl or configuration here
   };
   // console.log('[createChatModel] Azure args passed to AzureChatOpenAI:', args);
   return new AzureChatOpenAI(args);
