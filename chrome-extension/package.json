@@ -28,6 +28,7 @@
     "@langchain/ollama": "0.2.4",
     "@langchain/openai": "0.6.16",
     "@langchain/xai": "^0.1.0",
+    "aws-sigv4-fetch": "^4.4.1",
     "jsonrepair": "^3.13.1",
     "posthog-js": "^1.271.0",
     "puppeteer-core": "^24.31.0",

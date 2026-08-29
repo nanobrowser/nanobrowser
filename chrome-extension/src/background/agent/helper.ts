@@ -5,9 +5,10 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
 import { ChatGroq } from '@langchain/groq';
 import { ChatCerebras } from '@langchain/cerebras';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatDeepSeek } from '@langchain/deepseek';
+import { createSignedFetcher } from 'aws-sigv4-fetch';
 
 const maxTokens = 1024 * 4;
 
@@ -55,6 +56,299 @@ class ChatLlama extends ChatOpenAI {
     } catch (error: any) {
       console.error(`[ChatLlama] Error during API call:`, error);
       throw error;
+    }
+  }
+}
+
+// Custom ChatBedrock class using direct HTTP calls
+class ChatBedrock extends BaseChatModel {
+  private signedFetch: any;
+  private modelId: string;
+  private temperature: number;
+  private maxTokens: number;
+  private topP: number;
+  private region: string;
+  private accessKeyId: string;
+  private secretAccessKey: string;
+  private sessionToken?: string;
+
+  constructor(args: {
+    modelId: string;
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+    temperature?: number;
+    maxTokens?: number;
+    topP?: number;
+  }) {
+    super({});
+
+    const credentials: any = {
+      accessKeyId: args.accessKeyId,
+      secretAccessKey: args.secretAccessKey,
+    };
+
+    // Add session token if provided (required for temporary credentials)
+    if (args.sessionToken) {
+      credentials.sessionToken = args.sessionToken;
+    }
+
+    this.signedFetch = createSignedFetcher({
+      service: 'bedrock',
+      region: args.region,
+      credentials,
+    });
+
+    this.modelId = args.modelId;
+    this.region = args.region;
+    this.accessKeyId = args.accessKeyId;
+    this.secretAccessKey = args.secretAccessKey;
+    this.sessionToken = args.sessionToken;
+    this.temperature = args.temperature ?? 0.5;
+    this.maxTokens = args.maxTokens ?? 4096;
+    this.topP = args.topP ?? 0.9;
+  }
+
+  _llmType(): string {
+    return 'bedrock';
+  }
+
+  bindTools(tools: any[], options?: any): this {
+    // Create a new instance with tools bound
+    const newInstance = new (this.constructor as any)({
+      modelId: this.modelId,
+      region: this.region,
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      sessionToken: this.sessionToken,
+      temperature: this.temperature,
+      maxTokens: this.maxTokens,
+      topP: this.topP,
+    });
+
+    // Store tools for structured output
+    (newInstance as any).boundTools = tools;
+    (newInstance as any).toolOptions = options;
+
+    return newInstance as this;
+  }
+
+  withStructuredOutput(schema: any, options?: any): any {
+    // Return a wrapper that handles structured output
+    return {
+      invoke: async (messages: any[], callOptions?: any) => {
+        const response = await this._generate(messages, callOptions);
+        const content = response.generations[0].message.content;
+        const rawMessage = response.generations[0].message;
+
+        let parsed = null;
+
+        try {
+          // Try to extract JSON from the response content
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0]);
+          } else {
+            // If no JSON block found, try to parse the entire content
+            parsed = JSON.parse(content);
+          }
+        } catch (error) {
+          console.warn('Failed to parse JSON from Bedrock response:', error);
+          // If parsing fails, return the raw content as parsed
+          // The agent's manual parsing will handle this
+          parsed = null;
+        }
+
+        return {
+          parsed: parsed,
+          raw: rawMessage,
+        };
+      },
+    };
+  }
+
+  async _generate(messages: any[], options?: any, _runManager?: any): Promise<any> {
+    try {
+      // Convert messages to Bedrock format for Anthropic models
+      const bedrockMessages = messages.map(msg => ({
+        role: msg._getType() === 'human' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      const requestBody = {
+        anthropic_version: 'bedrock-2023-05-31',
+        max_tokens: this.maxTokens,
+        messages: bedrockMessages,
+        temperature: this.temperature,
+      };
+
+      const url = `https://bedrock-runtime.${this.region}.amazonaws.com/model/${this.modelId}/invoke`;
+
+      // Create AbortController for request cancellation
+      const abortController = new AbortController();
+      if (options?.signal) {
+        options.signal.addEventListener('abort', () => {
+          abortController.abort();
+        });
+      }
+
+      // Make the HTTP request using signed fetch
+      const response = await this.signedFetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Bedrock API error: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.content && Array.isArray(result.content) && result.content.length > 0) {
+        const content = result.content[0]?.text || '';
+        return {
+          generations: [
+            {
+              text: content,
+              message: {
+                content: content,
+                _getType: () => 'ai',
+              },
+            },
+          ],
+        };
+      }
+
+      throw new Error('Invalid response from Bedrock');
+    } catch (error) {
+      console.error('Bedrock API error:', error);
+      throw error;
+    }
+  }
+
+  async *_stream(messages: any[], options?: any, _runManager?: any): AsyncGenerator<any, void, unknown> {
+    try {
+      // Convert messages to Bedrock format for Anthropic models
+      const bedrockMessages = messages.map(msg => ({
+        role: msg._getType() === 'human' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      const requestBody = {
+        anthropic_version: 'bedrock-2023-05-31',
+        max_tokens: this.maxTokens,
+        messages: bedrockMessages,
+        temperature: this.temperature,
+      };
+
+      const url = `https://bedrock-runtime.${this.region}.amazonaws.com/model/${this.modelId}/invoke-with-response-stream`;
+
+      // Create AbortController for request cancellation
+      const abortController = new AbortController();
+      if (options?.signal) {
+        options.signal.addEventListener('abort', () => {
+          abortController.abort();
+        });
+      }
+
+      // Make the streaming HTTP request using signed fetch
+      const response = await this.signedFetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Bedrock streaming API error: ${response.status} ${errorText}`);
+      }
+
+      // Parse the streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete events from the buffer
+          let eventEnd;
+          while ((eventEnd = buffer.indexOf('\n\n')) !== -1) {
+            const eventData = buffer.slice(0, eventEnd);
+            buffer = buffer.slice(eventEnd + 2);
+
+            if (eventData.trim()) {
+              const chunk = this.parseEventStreamChunk(eventData);
+              if (chunk && chunk.delta && chunk.delta.text) {
+                const content = chunk.delta.text;
+
+                // Yield chunk in LangChain streaming format
+                yield {
+                  chunk: {
+                    content: content,
+                    _getType: () => 'ai',
+                  },
+                };
+              } else if (chunk && chunk.stop_reason) {
+                // Stream has ended
+                return;
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    } catch (error) {
+      console.error('Bedrock streaming API error:', error);
+      throw error;
+    }
+  }
+
+  private parseEventStreamChunk(eventData: string): any {
+    try {
+      // Parse AWS event stream format for Bedrock
+      const lines = eventData.split('\n');
+      let dataLine = '';
+
+      // Look for data line in the event stream format
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          dataLine = line.substring(6); // Remove 'data: ' prefix
+          break;
+        }
+      }
+
+      if (dataLine) {
+        // The data should be a JSON object
+        const chunk = JSON.parse(dataLine);
+        return chunk;
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Failed to parse event stream chunk:', error);
+      return null;
     }
   }
 }
@@ -380,6 +674,18 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       args.configuration = configuration;
 
       return new ChatLlama(args);
+    }
+    case ProviderTypeEnum.Bedrock: {
+      return new ChatBedrock({
+        modelId: modelConfig.modelName,
+        region: providerConfig.region ?? 'us-east-1',
+        accessKeyId: providerConfig.accessKeyId!,
+        secretAccessKey: providerConfig.secretAccessKey!,
+        sessionToken: providerConfig.sessionToken,
+        temperature,
+        maxTokens,
+        topP,
+      });
     }
     default: {
       // by default, we think it's a openai-compatible provider

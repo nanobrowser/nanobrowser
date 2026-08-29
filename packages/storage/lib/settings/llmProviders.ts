@@ -16,6 +16,11 @@ export interface ProviderConfig {
   // Azure Specific Fields:
   azureDeploymentNames?: string[]; // Azure deployment names array
   azureApiVersion?: string;
+  // Bedrock Specific Fields:
+  accessKeyId?: string; // AWS Access Key ID for Bedrock
+  secretAccessKey?: string; // AWS Secret Access Key for Bedrock
+  sessionToken?: string; // AWS Session Token for Bedrock (required for temporary credentials)
+  region?: string; // AWS Region for Bedrock (e.g., 'us-east-1')
 }
 
 // Interface for storing multiple LLM provider configurations
@@ -67,6 +72,7 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.OpenRouter:
     case ProviderTypeEnum.Groq:
     case ProviderTypeEnum.Cerebras:
+    case ProviderTypeEnum.Bedrock:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -99,6 +105,8 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Cerebras';
     case ProviderTypeEnum.Llama:
       return 'Llama';
+    case ProviderTypeEnum.Bedrock:
+      return 'AWS Bedrock';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
@@ -148,6 +156,18 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
         // modelNames: [], // Not used for Azure configuration
         azureDeploymentNames: [], // Azure deployment names
         azureApiVersion: AZURE_API_VERSION, // Provide a common default API version
+        createdAt: Date.now(),
+      };
+    case ProviderTypeEnum.Bedrock:
+      return {
+        apiKey: '', // Not used for Bedrock (uses AWS credentials)
+        name: getDefaultDisplayNameFromProviderId(ProviderTypeEnum.Bedrock),
+        type: ProviderTypeEnum.Bedrock,
+        modelNames: [...(llmProviderModelNames[providerId] || [])],
+        accessKeyId: '', // User needs to provide AWS Access Key ID
+        secretAccessKey: '', // User needs to provide AWS Secret Access Key
+        sessionToken: '', // User needs to provide AWS Session Token (for temporary credentials)
+        region: 'us-east-1', // Default AWS region
         createdAt: Date.now(),
       };
     default: // Handles CustomOpenAI
@@ -204,8 +224,18 @@ function ensureBackwardCompatibility(providerId: string, config: ProviderConfig)
       // console.log(`[ensureBackwardCompatibility] Deleting modelNames for Azure config ${providerId}`);
       delete updatedConfig.modelNames;
     }
+  } else if (updatedConfig.type === ProviderTypeEnum.Bedrock) {
+    // Ensure Bedrock fields exist
+    if (!updatedConfig.region) {
+      updatedConfig.region = 'us-east-1'; // Default AWS region
+    }
+
+    // Ensure modelNames exists for Bedrock
+    if (!updatedConfig.modelNames) {
+      updatedConfig.modelNames = llmProviderModelNames[ProviderTypeEnum.Bedrock] || [];
+    }
   } else {
-    // Ensure modelNames exists ONLY for non-Azure types
+    // Ensure modelNames exists ONLY for non-Azure, non-Bedrock types
     if (!updatedConfig.modelNames) {
       // console.log(`[ensureBackwardCompatibility] Adding default modelNames for non-Azure ${providerId}`);
       updatedConfig.modelNames = llmProviderModelNames[providerId as keyof typeof llmProviderModelNames] || [];
@@ -248,6 +278,16 @@ export const llmProviderStore: LLMProviderStorage = {
       if (!config.apiKey?.trim()) {
         throw new Error('API Key is required for Azure OpenAI');
       }
+    } else if (providerType === ProviderTypeEnum.Bedrock) {
+      if (!config.accessKeyId?.trim()) {
+        throw new Error('AWS Access Key ID is required for Bedrock');
+      }
+      if (!config.secretAccessKey?.trim()) {
+        throw new Error('AWS Secret Access Key is required for Bedrock');
+      }
+      if (!config.region?.trim()) {
+        throw new Error('AWS Region is required for Bedrock');
+      }
     } else if (providerType !== ProviderTypeEnum.CustomOpenAI && providerType !== ProviderTypeEnum.Ollama) {
       if (!config.apiKey?.trim()) {
         throw new Error(`API Key is required for ${getDefaultDisplayNameFromProviderId(providerId)}`);
@@ -271,9 +311,17 @@ export const llmProviderStore: LLMProviderStorage = {
             azureDeploymentNames: config.azureDeploymentNames || [],
             azureApiVersion: config.azureApiVersion,
           }
-        : {
-            modelNames: config.modelNames || [],
-          }),
+        : providerType === ProviderTypeEnum.Bedrock
+          ? {
+              modelNames: config.modelNames || [],
+              accessKeyId: config.accessKeyId,
+              secretAccessKey: config.secretAccessKey,
+              sessionToken: config.sessionToken,
+              region: config.region,
+            }
+          : {
+              modelNames: config.modelNames || [],
+            }),
     };
 
     console.log(`[llmProviderStore.setProvider] Saving config for ${providerId}:`, JSON.stringify(completeConfig));

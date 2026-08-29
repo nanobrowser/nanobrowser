@@ -412,6 +412,12 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     } else if (providerType === ProviderTypeEnum.Llama) {
       // Llama needs API Key and Base URL
       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
+    } else if (providerType === ProviderTypeEnum.Bedrock) {
+      // Bedrock needs AWS credentials and region
+      hasInput =
+        Boolean(config?.accessKeyId?.trim()) &&
+        Boolean(config?.secretAccessKey?.trim()) &&
+        Boolean(config?.region?.trim());
     } else {
       // Other built-in providers just need API Key
       hasInput = Boolean(config?.apiKey?.trim());
@@ -1223,84 +1229,88 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                       </div>
                     )}
 
-                    {/* API Key input with label */}
-                    <div className="flex items-center">
-                      <label
-                        htmlFor={`${providerId}-api-key`}
-                        className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {t('options_models_providers_apiKey')}
-                        {/* Show asterisk only if required */}
-                        {providerConfig.type !== ProviderTypeEnum.CustomOpenAI &&
-                        providerConfig.type !== ProviderTypeEnum.Ollama
-                          ? '*'
-                          : ''}
-                      </label>
-                      <div className="relative flex-1">
-                        <input
-                          id={`${providerId}-api-key`}
-                          type="password"
-                          placeholder={
-                            providerConfig.type === ProviderTypeEnum.CustomOpenAI
-                              ? t('options_models_providers_apiKey_placeholder_optional')
-                              : providerConfig.type === ProviderTypeEnum.Ollama
-                                ? t('options_models_providers_apiKey_placeholder_ollama')
-                                : t('options_models_providers_apiKey_placeholder_required')
-                          }
-                          value={providerConfig.apiKey || ''}
-                          onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
-                          className={`w-full rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
-                        />
-                        {/* Show eye button only for newly added providers */}
-                        {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
-                          <button
-                            type="button"
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 ${
-                              isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                            onClick={() => toggleApiKeyVisibility(providerId)}
-                            aria-label={
-                              visibleApiKeys[providerId]
-                                ? t('options_models_providers_apiKey_hide')
-                                : t('options_models_providers_apiKey_show')
-                            }>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="size-5"
-                              aria-hidden="true">
-                              <title>
-                                {visibleApiKeys[providerId]
+                    {/* API Key input with label - Hide for Bedrock */}
+                    {providerConfig.type !== ProviderTypeEnum.Bedrock && (
+                      <div className="flex items-center">
+                        <label
+                          htmlFor={`${providerId}-api-key`}
+                          className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {t('options_models_providers_apiKey')}
+                          {/* Show asterisk only if required */}
+                          {providerConfig.type !== ProviderTypeEnum.CustomOpenAI &&
+                          providerConfig.type !== ProviderTypeEnum.Ollama &&
+                          providerConfig.type !== ProviderTypeEnum.Bedrock
+                            ? '*'
+                            : ''}
+                        </label>
+                        <div className="relative flex-1">
+                          <input
+                            id={`${providerId}-api-key`}
+                            type="password"
+                            placeholder={
+                              providerConfig.type === ProviderTypeEnum.CustomOpenAI
+                                ? t('options_models_providers_apiKey_placeholder_optional')
+                                : providerConfig.type === ProviderTypeEnum.Ollama
+                                  ? t('options_models_providers_apiKey_placeholder_ollama')
+                                  : t('options_models_providers_apiKey_placeholder_required')
+                            }
+                            value={providerConfig.apiKey || ''}
+                            onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
+                            className={`w-full rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                          />
+                          {/* Show eye button only for newly added providers */}
+                          {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
+                            <button
+                              type="button"
+                              className={`absolute right-2 top-1/2 -translate-y-1/2 ${
+                                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                              }`}
+                              onClick={() => toggleApiKeyVisibility(providerId)}
+                              aria-label={
+                                visibleApiKeys[providerId]
                                   ? t('options_models_providers_apiKey_hide')
-                                  : t('options_models_providers_apiKey_show')}
-                              </title>
-                              {visibleApiKeys[providerId] ? (
-                                <>
-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                  <line x1="2" y1="22" x2="22" y2="2" />
-                                </>
-                              ) : (
-                                <>
-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </>
-                              )}
-                            </svg>
-                          </button>
-                        )}
+                                  : t('options_models_providers_apiKey_show')
+                              }>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="size-5"
+                                aria-hidden="true">
+                                <title>
+                                  {visibleApiKeys[providerId]
+                                    ? t('options_models_providers_apiKey_hide')
+                                    : t('options_models_providers_apiKey_show')}
+                                </title>
+                                {visibleApiKeys[providerId] ? (
+                                  <>
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                    <line x1="2" y1="22" x2="22" y2="2" />
+                                  </>
+                                ) : (
+                                  <>
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                  </>
+                                )}
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Display API key for newly added providers only when visible */}
                     {modifiedProviders.has(providerId) &&
                       !providersFromStorage.has(providerId) &&
                       visibleApiKeys[providerId] &&
-                      providerConfig.apiKey && (
+                      providerConfig.apiKey &&
+                      providerConfig.type !== ProviderTypeEnum.Bedrock && (
                         <div className="ml-20 mt-1">
                           <p
                             className={`break-words font-mono text-sm ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
@@ -1428,6 +1438,115 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                           className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
                         />
                       </div>
+                    )}
+
+                    {/* Bedrock AWS Credentials */}
+                    {(providerConfig.type as ProviderTypeEnum) === ProviderTypeEnum.Bedrock && (
+                      <>
+                        {/* AWS Access Key ID */}
+                        <div className="flex items-center">
+                          <label
+                            htmlFor={`${providerId}-access-key-id`}
+                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Access Key*
+                          </label>
+                          <input
+                            id={`${providerId}-access-key-id`}
+                            type="text"
+                            placeholder="AWS Access Key ID"
+                            value={(providerConfig as any).accessKeyId || ''}
+                            onChange={e => {
+                              setModifiedProviders(prev => new Set(prev).add(providerId));
+                              setProviders(prev => ({
+                                ...prev,
+                                [providerId]: {
+                                  ...prev[providerId],
+                                  accessKeyId: e.target.value.trim(),
+                                },
+                              }));
+                            }}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                          />
+                        </div>
+
+                        {/* AWS Secret Access Key */}
+                        <div className="flex items-center">
+                          <label
+                            htmlFor={`${providerId}-secret-access-key`}
+                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Secret Key*
+                          </label>
+                          <input
+                            id={`${providerId}-secret-access-key`}
+                            type="password"
+                            placeholder="AWS Secret Access Key"
+                            value={(providerConfig as any).secretAccessKey || ''}
+                            onChange={e => {
+                              setModifiedProviders(prev => new Set(prev).add(providerId));
+                              setProviders(prev => ({
+                                ...prev,
+                                [providerId]: {
+                                  ...prev[providerId],
+                                  secretAccessKey: e.target.value.trim(),
+                                },
+                              }));
+                            }}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                          />
+                        </div>
+
+                        {/* AWS Region */}
+                        <div className="flex items-center">
+                          <label
+                            htmlFor={`${providerId}-region`}
+                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Region*
+                          </label>
+                          <input
+                            id={`${providerId}-region`}
+                            type="text"
+                            placeholder="us-east-1"
+                            value={(providerConfig as any).region || ''}
+                            onChange={e => {
+                              setModifiedProviders(prev => new Set(prev).add(providerId));
+                              setProviders(prev => ({
+                                ...prev,
+                                [providerId]: {
+                                  ...prev[providerId],
+                                  region: e.target.value.trim(),
+                                },
+                              }));
+                            }}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                          />
+                        </div>
+
+                        {/* AWS Session Token */}
+                        <div className="flex items-center">
+                          <label
+                            htmlFor={`${providerId}-session-token`}
+                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Session Token
+                          </label>
+                          <input
+                            id={`${providerId}-session-token`}
+                            type="password"
+                            placeholder="AWS Session Token (for temporary credentials)"
+                            value={(providerConfig as any).sessionToken || ''}
+                            onChange={e => {
+                              setModifiedProviders(prev => new Set(prev).add(providerId));
+                              setProviders(prev => ({
+                                ...prev,
+                                [providerId]: {
+                                  ...prev[providerId],
+                                  sessionToken: e.target.value.trim(),
+                                },
+                              }));
+                            }}
+                            className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                          />
+                        </div>
+                      </>
                     )}
 
                     {/* Models input section (for non-Azure providers) */}
