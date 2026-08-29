@@ -351,6 +351,9 @@
   "options_models_providers_baseUrl": {
     "message": "Base URL"
   },
+  "options_models_providers_useCustomBaseUrl": {
+    "message": "Use custom Base URL"
+  },
   "options_models_providers_endpoint": {
     "message": "Endpoint"
   },

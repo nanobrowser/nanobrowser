@@ -5,6 +5,9 @@
  * - Added search functionality that filters models based on user input
  * - Added keyboard event handlers to close dropdowns with Escape key
  * - Styling for both light and dark mode themes
+ * - Added baseUrl support for all providers (OpenAI, Anthropic, DeepSeek, Gemini, Grok, Groq, Cerebras)
+ * - Removed CustomOpenAI from provider selection (all providers now support custom baseUrl)
+ * - Added checkbox toggle for showing/hiding optional baseUrl field
  */
 import { useEffect, useState, useRef, useCallback } from 'react';
 import type { KeyboardEvent } from 'react';
@@ -57,6 +60,47 @@ interface ModelSettingsProps {
   isDarkMode?: boolean; // Controls dark/light theme styling
 }
 
+// Helper function to check if baseUrl is required (vs optional)
+function requiresBaseUrl(providerType: ProviderTypeEnum | undefined): boolean {
+  if (!providerType) return false;
+  return (
+    providerType === ProviderTypeEnum.Ollama ||
+    providerType === ProviderTypeEnum.AzureOpenAI ||
+    providerType === ProviderTypeEnum.OpenRouter ||
+    providerType === ProviderTypeEnum.Llama
+  );
+}
+
+// Helper function to get placeholder for baseUrl based on provider type
+function getBaseUrlPlaceholder(providerType: ProviderTypeEnum | undefined): string {
+  switch (providerType) {
+    case ProviderTypeEnum.Ollama:
+      return 'http://localhost:11434';
+    case ProviderTypeEnum.AzureOpenAI:
+      return 'https://your-resource.openai.azure.com';
+    case ProviderTypeEnum.OpenRouter:
+      return 'https://openrouter.ai/api/v1';
+    case ProviderTypeEnum.Llama:
+      return 'https://api.llama.com/v1';
+    case ProviderTypeEnum.OpenAI:
+      return 'https://api.openai.com/v1';
+    case ProviderTypeEnum.Anthropic:
+      return 'https://api.anthropic.com';
+    case ProviderTypeEnum.DeepSeek:
+      return 'https://api.deepseek.com';
+    case ProviderTypeEnum.Gemini:
+      return 'https://generativelanguage.googleapis.com';
+    case ProviderTypeEnum.Grok:
+      return 'https://api.x.ai/v1';
+    case ProviderTypeEnum.Groq:
+      return 'https://api.groq.com/openai/v1';
+    case ProviderTypeEnum.Cerebras:
+      return 'https://api.cerebras.ai/v1';
+    default:
+      return 'https://api.example.com/v1';
+  }
+}
+
 export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   const [providers, setProviders] = useState<Record<string, ProviderConfig>>({});
   const [modifiedProviders, setModifiedProviders] = useState<Set<string>>(new Set());
@@ -83,6 +127,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   const [nameErrors, setNameErrors] = useState<Record<string, string>>({});
   // Add state for tracking API key visibility
   const [visibleApiKeys, setVisibleApiKeys] = useState<Record<string, boolean>>({});
+  // State for tracking which providers have custom baseUrl enabled
+  const [customBaseUrlEnabled, setCustomBaseUrlEnabled] = useState<Record<string, boolean>>({});
   // Create a non-async wrapper for use in render functions
   const [availableModels, setAvailableModels] = useState<
     Array<{ provider: string; providerName: string; model: string }>
@@ -103,6 +149,16 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
 
         // Only use providers from storage, don't add default ones
         setProviders(allProviders);
+
+        // Initialize customBaseUrlEnabled for providers that have baseUrl set
+        const baseUrlEnabled: Record<string, boolean> = {};
+        for (const [providerId, config] of Object.entries(allProviders)) {
+          // If provider has a baseUrl and it's not required, enable the checkbox
+          if (config.baseUrl && !requiresBaseUrl(config.type)) {
+            baseUrlEnabled[providerId] = true;
+          }
+        }
+        setCustomBaseUrlEnabled(baseUrlEnabled);
       } catch (error) {
         console.error('Error loading providers:', error);
         // Set empty providers on error
@@ -176,20 +232,10 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     // Only focus if we have a newly added provider reference
     if (newlyAddedProviderRef.current && providers[newlyAddedProviderRef.current]) {
       const providerId = newlyAddedProviderRef.current;
-      const config = providers[providerId];
-
-      // For custom providers, focus on the name input
-      if (config.type === ProviderTypeEnum.CustomOpenAI) {
-        const nameInput = document.getElementById(`${providerId}-name`);
-        if (nameInput) {
-          nameInput.focus();
-        }
-      } else {
-        // For default providers, focus on the API key input
-        const apiKeyInput = document.getElementById(`${providerId}-api-key`);
-        if (apiKeyInput) {
-          apiKeyInput.focus();
-        }
+      // Focus on the API key input for all providers
+      const apiKeyInput = document.getElementById(`${providerId}-api-key`);
+      if (apiKeyInput) {
+        apiKeyInput.focus();
       }
 
       // Clear the ref after focusing
@@ -281,6 +327,28 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
       ...prev,
       [provider]: !prev[provider],
     }));
+  };
+
+  // Toggle handler for custom baseUrl checkbox
+  const toggleCustomBaseUrl = (provider: string) => {
+    setCustomBaseUrlEnabled(prev => {
+      const newEnabled = !prev[provider];
+      // If disabling, clear the baseUrl
+      if (!newEnabled) {
+        setModifiedProviders(modified => new Set(modified).add(provider));
+        setProviders(provs => ({
+          ...provs,
+          [provider]: {
+            ...provs[provider],
+            baseUrl: '',
+          },
+        }));
+      }
+      return {
+        ...prev,
+        [provider]: newEnabled,
+      };
+    });
   };
 
   const handleNameChange = (provider: string, name: string) => {
@@ -395,9 +463,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     const providerType = providers[provider]?.type;
     const config = providers[provider];
 
-    if (providerType === ProviderTypeEnum.CustomOpenAI) {
-      hasInput = Boolean(config?.baseUrl?.trim()); // Custom needs Base URL, name checked elsewhere
-    } else if (providerType === ProviderTypeEnum.Ollama) {
+    if (providerType === ProviderTypeEnum.Ollama) {
       hasInput = Boolean(config?.baseUrl?.trim()); // Ollama needs Base URL
     } else if (providerType === ProviderTypeEnum.AzureOpenAI) {
       // Azure needs API Key, Endpoint, Deployment Names, and API Version
@@ -413,7 +479,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
       // Llama needs API Key and Base URL
       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
     } else {
-      // Other built-in providers just need API Key
+      // Other built-in providers just need API Key (baseUrl is optional)
       hasInput = Boolean(config?.apiKey?.trim());
     }
 
@@ -427,20 +493,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
 
   const handleSave = async (provider: string) => {
     try {
-      // Check if name contains spaces for custom providers
-      if (providers[provider].type === ProviderTypeEnum.CustomOpenAI && providers[provider].name?.includes(' ')) {
-        setNameErrors(prev => ({
-          ...prev,
-          [provider]: t('options_models_providers_errors_spacesNotAllowed'),
-        }));
-        return;
-      }
-
-      // Check if base URL is required but missing for custom_openai, ollama, azure_openai or openrouter
-      // Note: Groq and Cerebras do not require base URL as they use the default endpoint
+      // Check if base URL is required but missing for ollama, azure_openai, openrouter, or llama
       if (
-        (providers[provider].type === ProviderTypeEnum.CustomOpenAI ||
-          providers[provider].type === ProviderTypeEnum.Ollama ||
+        (providers[provider].type === ProviderTypeEnum.Ollama ||
           providers[provider].type === ProviderTypeEnum.AzureOpenAI ||
           providers[provider].type === ProviderTypeEnum.OpenRouter ||
           providers[provider].type === ProviderTypeEnum.Llama) &&
@@ -533,6 +588,13 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         return next;
       });
 
+      // Also remove from customBaseUrlEnabled
+      setCustomBaseUrlEnabled(prev => {
+        const next = { ...prev };
+        delete next[provider];
+        return next;
+      });
+
       // Refresh available models
       const models = await getAvailableModelsCallback();
       setAvailableModels(models);
@@ -553,6 +615,13 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     setModifiedProviders(prev => {
       const next = new Set(prev);
       next.delete(providerId);
+      return next;
+    });
+
+    // Remove from customBaseUrlEnabled
+    setCustomBaseUrlEnabled(prev => {
+      const next = { ...prev };
+      delete next[providerId];
       return next;
     });
   };
@@ -878,50 +947,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     }
   };
 
-  const getMaxCustomProviderNumber = () => {
-    let maxNumber = 0;
-    for (const providerId of Object.keys(providers)) {
-      if (providerId.startsWith('custom_openai_')) {
-        const match = providerId.match(/custom_openai_(\d+)/);
-        if (match) {
-          const number = Number.parseInt(match[1], 10);
-          maxNumber = Math.max(maxNumber, number);
-        }
-      }
-    }
-    return maxNumber;
-  };
-
-  const addCustomProvider = () => {
-    const nextNumber = getMaxCustomProviderNumber() + 1;
-    const providerId = `custom_openai_${nextNumber}`;
-
-    setProviders(prev => ({
-      ...prev,
-      [providerId]: {
-        apiKey: '',
-        name: `CustomProvider${nextNumber}`,
-        type: ProviderTypeEnum.CustomOpenAI,
-        baseUrl: '',
-        modelNames: [],
-        createdAt: Date.now(),
-      },
-    }));
-
-    setModifiedProviders(prev => new Set(prev).add(providerId));
-
-    // Set the newly added provider ref
-    newlyAddedProviderRef.current = providerId;
-
-    // Scroll to the newly added provider after render
-    setTimeout(() => {
-      const providerElement = document.getElementById(`provider-${providerId}`);
-      if (providerElement) {
-        providerElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-  };
-
   const addBuiltInProvider = (provider: string) => {
     // Get the default provider configuration
     const config = getDefaultProviderConfig(provider);
@@ -990,18 +1015,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
       if (configA.createdAt) return -1;
       if (configB.createdAt) return 1;
 
-      // If neither has createdAt, sort by type and then name
-      const isCustomA = configA.type === ProviderTypeEnum.CustomOpenAI;
-      const isCustomB = configB.type === ProviderTypeEnum.CustomOpenAI;
-
-      if (isCustomA && !isCustomB) {
-        return 1; // Custom providers come after non-custom
-      }
-
-      if (!isCustomA && isCustomB) {
-        return -1; // Non-custom providers come before custom
-      }
-
       // Sort alphabetically by name within each group
       return (configA.name || keyA).localeCompare(configB.name || keyB);
     });
@@ -1010,12 +1023,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   const handleProviderSelection = (providerType: string) => {
     // Close the dropdown immediately
     setIsProviderSelectorOpen(false);
-
-    // Handle custom provider
-    if (providerType === ProviderTypeEnum.CustomOpenAI) {
-      addCustomProvider();
-      return;
-    }
 
     // Handle Azure OpenAI specially to allow multiple instances
     if (providerType === ProviderTypeEnum.AzureOpenAI) {
@@ -1182,47 +1189,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                   )}
 
                   <div className="space-y-3">
-                    {/* Name input (only for custom_openai) - moved to top for prominence */}
-                    {providerConfig.type === ProviderTypeEnum.CustomOpenAI && (
-                      <div className="flex flex-col">
-                        <div className="flex items-center">
-                          <label
-                            htmlFor={`${providerId}-name`}
-                            className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {t('options_models_providers_custom_name')}
-                          </label>
-                          <input
-                            id={`${providerId}-name`}
-                            type="text"
-                            placeholder={t('options_models_providers_custom_name_placeholder')}
-                            value={providerConfig.name || ''}
-                            onChange={e => {
-                              console.log('Name input changed:', e.target.value);
-                              handleNameChange(providerId, e.target.value);
-                            }}
-                            className={`flex-1 rounded-md border p-2 text-sm ${
-                              nameErrors[providerId]
-                                ? isDarkMode
-                                  ? 'border-red-700 bg-slate-700 text-gray-200 focus:border-red-600 focus:ring-2 focus:ring-red-900'
-                                  : 'border-red-300 bg-gray-50 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-                                : isDarkMode
-                                  ? 'border-blue-700 bg-slate-700 text-gray-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-900'
-                                  : 'border-blue-300 bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'
-                            } outline-none`}
-                          />
-                        </div>
-                        {nameErrors[providerId] ? (
-                          <p className={`ml-20 mt-1 text-xs ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>
-                            {nameErrors[providerId]}
-                          </p>
-                        ) : (
-                          <p className={`ml-20 mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {t('options_models_providers_custom_name_desc')}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
                     {/* API Key input with label */}
                     <div className="flex items-center">
                       <label
@@ -1230,21 +1196,16 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {t('options_models_providers_apiKey')}
                         {/* Show asterisk only if required */}
-                        {providerConfig.type !== ProviderTypeEnum.CustomOpenAI &&
-                        providerConfig.type !== ProviderTypeEnum.Ollama
-                          ? '*'
-                          : ''}
+                        {providerConfig.type !== ProviderTypeEnum.Ollama ? '*' : ''}
                       </label>
                       <div className="relative flex-1">
                         <input
                           id={`${providerId}-api-key`}
                           type="password"
                           placeholder={
-                            providerConfig.type === ProviderTypeEnum.CustomOpenAI
-                              ? t('options_models_providers_apiKey_placeholder_optional')
-                              : providerConfig.type === ProviderTypeEnum.Ollama
-                                ? t('options_models_providers_apiKey_placeholder_ollama')
-                                : t('options_models_providers_apiKey_placeholder_required')
+                            providerConfig.type === ProviderTypeEnum.Ollama
+                              ? t('options_models_providers_apiKey_placeholder_ollama')
+                              : t('options_models_providers_apiKey_placeholder_required')
                           }
                           value={providerConfig.apiKey || ''}
                           onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
@@ -1309,12 +1270,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         </div>
                       )}
 
-                    {/* Base URL input (for custom_openai, ollama, azure_openai, openrouter, and llama) */}
-                    {(providerConfig.type === ProviderTypeEnum.CustomOpenAI ||
-                      providerConfig.type === ProviderTypeEnum.Ollama ||
-                      providerConfig.type === ProviderTypeEnum.AzureOpenAI ||
-                      providerConfig.type === ProviderTypeEnum.OpenRouter ||
-                      providerConfig.type === ProviderTypeEnum.Llama) && (
+                    {/* Base URL input - Required providers show it directly */}
+                    {requiresBaseUrl(providerConfig.type) && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
                           <label
@@ -1324,32 +1281,60 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                             {providerConfig.type === ProviderTypeEnum.AzureOpenAI
                               ? t('options_models_providers_endpoint')
                               : t('options_models_providers_baseUrl')}
-                            {/* Show asterisk only if required */}
-                            {/* OpenRouter has a default, so not strictly required, but needed for save button */}
-                            {providerConfig.type === ProviderTypeEnum.CustomOpenAI ||
-                            providerConfig.type === ProviderTypeEnum.AzureOpenAI
-                              ? '*'
-                              : ''}
+                            *
                           </label>
                           <input
                             id={`${providerId}-base-url`}
                             type="text"
-                            placeholder={
-                              providerConfig.type === ProviderTypeEnum.CustomOpenAI
-                                ? t('options_models_providers_placeholders_baseUrl_custom')
-                                : providerConfig.type === ProviderTypeEnum.AzureOpenAI
-                                  ? t('options_models_providers_placeholders_baseUrl_azure')
-                                  : providerConfig.type === ProviderTypeEnum.OpenRouter
-                                    ? t('options_models_providers_placeholders_baseUrl_openrouter')
-                                    : providerConfig.type === ProviderTypeEnum.Llama
-                                      ? t('options_models_providers_placeholders_baseUrl_llama')
-                                      : t('options_models_providers_placeholders_baseUrl_ollama')
-                            }
+                            placeholder={getBaseUrlPlaceholder(providerConfig.type)}
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}
                             className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
                           />
                         </div>
+                      </div>
+                    )}
+
+                    {/* Custom Base URL checkbox and input - for optional providers */}
+                    {!requiresBaseUrl(providerConfig.type) && (
+                      <div className="flex flex-col">
+                        {/* Checkbox to enable custom base URL */}
+                        <div className="flex items-center">
+                          <label className="w-20" />
+                          <label
+                            htmlFor={`${providerId}-custom-baseurl-checkbox`}
+                            className={`flex cursor-pointer items-center text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            <input
+                              id={`${providerId}-custom-baseurl-checkbox`}
+                              type="checkbox"
+                              checked={customBaseUrlEnabled[providerId] || false}
+                              onChange={() => toggleCustomBaseUrl(providerId)}
+                              className={`mr-2 size-4 rounded border ${isDarkMode ? 'border-slate-500 bg-slate-700' : 'border-gray-300 bg-white'}`}
+                            />
+                            {t('options_models_providers_useCustomBaseUrl') || 'Use custom Base URL'}
+                          </label>
+                        </div>
+
+                        {/* Base URL input - only shown when checkbox is checked */}
+                        {customBaseUrlEnabled[providerId] && (
+                          <div className="mt-2 flex items-center">
+                            <label
+                              htmlFor={`${providerId}-base-url`}
+                              className={`w-20 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              {t('options_models_providers_baseUrl')}
+                            </label>
+                            <input
+                              id={`${providerId}-base-url`}
+                              type="text"
+                              placeholder={getBaseUrlPlaceholder(providerConfig.type)}
+                              value={providerConfig.baseUrl || ''}
+                              onChange={e =>
+                                handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)
+                              }
+                              className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-800' : 'border-gray-300 bg-white text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-200'} p-2 outline-none`}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -1579,15 +1564,14 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                     : 'border-blue-200 bg-white shadow-xl shadow-blue-100/50'
                 }`}>
                 <div className="py-1">
-                  {/* Map through provider types to create buttons */}
+                  {/* Map through provider types to create buttons - excluding CustomOpenAI */}
                   {Object.values(ProviderTypeEnum)
-                    // Allow Azure to appear multiple times, but filter out other already added providers
+                    // Filter out CustomOpenAI and already added providers (except Azure which can be added multiple times)
                     .filter(
                       type =>
-                        type === ProviderTypeEnum.AzureOpenAI || // Always show Azure
-                        (type !== ProviderTypeEnum.CustomOpenAI &&
-                          !providersFromStorage.has(type) &&
-                          !modifiedProviders.has(type)),
+                        type !== ProviderTypeEnum.CustomOpenAI && // Never show CustomOpenAI
+                        (type === ProviderTypeEnum.AzureOpenAI || // Always show Azure
+                          (!providersFromStorage.has(type) && !modifiedProviders.has(type))),
                     )
                     .map(type => (
                       <button
@@ -1602,18 +1586,6 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         <span className="font-medium">{getDefaultDisplayNameFromProviderId(type)}</span>
                       </button>
                     ))}
-
-                  {/* Custom provider button (always shown) */}
-                  <button
-                    type="button"
-                    className={`flex w-full items-center px-4 py-3 text-left text-sm ${
-                      isDarkMode
-                        ? 'text-blue-200 hover:bg-blue-600/30 hover:text-white'
-                        : 'text-blue-700 hover:bg-blue-100 hover:text-blue-800'
-                    } transition-colors duration-150`}
-                    onClick={() => handleProviderSelection(ProviderTypeEnum.CustomOpenAI)}>
-                    <span className="font-medium">{t('options_models_providers_openaiCompatible')}</span>
-                  </button>
                 </div>
               </div>
             )}

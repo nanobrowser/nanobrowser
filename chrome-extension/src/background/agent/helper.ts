@@ -11,54 +11,6 @@ import { ChatDeepSeek } from '@langchain/deepseek';
 
 const maxTokens = 1024 * 4;
 
-// Custom ChatLlama class to handle Llama API response format
-class ChatLlama extends ChatOpenAI {
-  constructor(args: any) {
-    super(args);
-  }
-
-  // Override the completionWithRetry method to intercept and transform the response
-  async completionWithRetry(request: any, options?: any): Promise<any> {
-    try {
-      // Make the request using the parent's implementation
-      const response = await super.completionWithRetry(request, options);
-
-      // Check if this is a Llama API response format
-      if (response?.completion_message?.content?.text) {
-        // Transform Llama API response to OpenAI format
-        const transformedResponse = {
-          id: response.id || 'llama-response',
-          object: 'chat.completion',
-          created: Date.now(),
-          model: request.model,
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: response.completion_message.content.text,
-              },
-              finish_reason: response.completion_message.stop_reason || 'stop',
-            },
-          ],
-          usage: {
-            prompt_tokens: response.metrics?.find((m: any) => m.metric === 'num_prompt_tokens')?.value || 0,
-            completion_tokens: response.metrics?.find((m: any) => m.metric === 'num_completion_tokens')?.value || 0,
-            total_tokens: response.metrics?.find((m: any) => m.metric === 'num_total_tokens')?.value || 0,
-          },
-        };
-
-        return transformedResponse;
-      }
-
-      return response;
-    } catch (error: any) {
-      console.error(`[ChatLlama] Error during API call:`, error);
-      throw error;
-    }
-  }
-}
-
 // O series models or GPT-5 models that support reasoning
 function isOpenAIReasoningModel(modelName: string): boolean {
   let modelNameWithoutProvider = modelName;
@@ -262,35 +214,82 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
     case ProviderTypeEnum.Anthropic: {
       // For Opus models, only support temperature, not topP
       // For 4.5 models, only support either temperature or topP, not both, so we only use temperature to align with Opus
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        maxTokens: number;
+        temperature: number;
+        clientOptions: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         maxTokens,
         temperature,
         clientOptions: {},
       };
+
+      // Add baseUrl support for Anthropic (custom API endpoint or proxy)
+      if (providerConfig.baseUrl) {
+        args.clientOptions = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+
       return new ChatAnthropic(args);
     }
     case ProviderTypeEnum.DeepSeek: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        configuration?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
       };
+
+      // Add baseUrl support for DeepSeek
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+
       return new ChatDeepSeek(args) as BaseChatModel;
     }
     case ProviderTypeEnum.Gemini: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        baseUrl?: string;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
       };
+
+      // Add baseUrl support for Gemini
+      if (providerConfig.baseUrl) {
+        args.baseUrl = providerConfig.baseUrl;
+      }
+
       return new ChatGoogleGenerativeAI(args);
     }
     case ProviderTypeEnum.Grok: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
@@ -298,26 +297,64 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         maxTokens,
         configuration: {},
       };
+
+      // Add baseUrl support for Grok
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+
       return new ChatXAI(args) as BaseChatModel;
     }
     case ProviderTypeEnum.Groq: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
         maxTokens,
       };
+
+      // Add baseUrl support for Groq
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+
       return new ChatGroq(args);
     }
     case ProviderTypeEnum.Cerebras: {
-      const args = {
+      const args: {
+        model: string;
+        apiKey: string;
+        temperature: number;
+        topP: number;
+        maxTokens: number;
+        configuration?: Record<string, unknown>;
+      } = {
         model: modelConfig.modelName,
         apiKey: providerConfig.apiKey,
         temperature,
         topP,
         maxTokens,
       };
+
+      // Add baseUrl support for Cerebras
+      if (providerConfig.baseUrl) {
+        args.configuration = {
+          baseURL: providerConfig.baseUrl,
+        };
+      }
+
       return new ChatCerebras(args);
     }
     case ProviderTypeEnum.Ollama: {
@@ -357,7 +394,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       });
     }
     case ProviderTypeEnum.Llama: {
-      // Llama API has a different response format, use custom ChatLlama class
+      // Llama API is OpenAI-compatible, use ChatOpenAI directly with baseUrl
       const args: {
         model: string;
         apiKey?: string;
@@ -379,7 +416,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       }
       args.configuration = configuration;
 
-      return new ChatLlama(args);
+      return new ChatOpenAI(args);
     }
     default: {
       // by default, we think it's a openai-compatible provider

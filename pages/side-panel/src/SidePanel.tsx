@@ -38,6 +38,8 @@ const SidePanel = () => {
   const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayEnabled, setReplayEnabled] = useState(false);
+  // Track the last ACT_START action name to determine if ACT_OK should be displayed
+  const [lastActionName, setLastActionName] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
@@ -226,13 +228,19 @@ const SidePanel = () => {
               displayProgress = false;
               break;
             case ExecutionState.ACT_START:
+              // Track the action name for ACT_OK handling
+              setLastActionName(content || null);
               if (content !== 'cache_content') {
                 // skip to display caching content
                 skip = false;
               }
               break;
             case ExecutionState.ACT_OK:
-              skip = !isReplayingRef.current;
+              // Show ACT_OK for 'done' action (which contains the final response text)
+              // or when replaying historical tasks
+              if (lastActionName === 'done' || isReplayingRef.current) {
+                skip = false;
+              }
               break;
             case ExecutionState.ACT_FAIL:
               skip = false;
@@ -280,7 +288,7 @@ const SidePanel = () => {
         });
       }
     },
-    [appendMessage],
+    [appendMessage, lastActionName],
   );
 
   // Stop heartbeat and close connection
@@ -670,6 +678,7 @@ const SidePanel = () => {
     setShowStopButton(false);
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
+    setLastActionName(null);
 
     // Disconnect any existing connection
     stopConnection();
