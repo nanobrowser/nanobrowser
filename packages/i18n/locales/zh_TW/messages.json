@@ -262,6 +262,12 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "啟用儲存與重播代理程式的步驟歷史紀錄 (此為實驗性功能，可能存在問題)"
   },
+  "options_general_includeExampleOutput": {
+    "message": "包含輸出範例"
+  },
+  "options_general_includeExampleOutput_desc": {
+    "message": "在提示中包含一個展示預期輸出格式的範例。如果您的模型傾向於複製範例內容而非遵循您的實際請求，請停用此選項。"
+  },
   "options_models_providers_header": {
     "message": "LLM 提供者"
   },

@@ -262,6 +262,12 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "Enable storing and replaying of agent step history (experimental, may have issues)"
   },
+  "options_general_includeExampleOutput": {
+    "message": "Include Example Output"
+  },
+  "options_general_includeExampleOutput_desc": {
+    "message": "Include a one-shot example in the prompt showing the expected output format. Disable this if your model tends to copy the example's content instead of following your actual request."
+  },
 
   "options_models_providers_header": {
     "message": "LLM Providers"

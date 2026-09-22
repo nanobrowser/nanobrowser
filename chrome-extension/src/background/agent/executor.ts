@@ -6,7 +6,7 @@ import { PlannerAgent, type PlannerOutput } from './agents/planner';
 import { NavigatorPrompt } from './prompts/navigator';
 import { PlannerPrompt } from './prompts/planner';
 import { createLogger } from '@src/background/log';
-import MessageManager from './messages/service';
+import MessageManager, { MessageManagerSettings } from './messages/service';
 import type BrowserContext from '../browser/context';
 import { ActionBuilder } from './actions/builder';
 import { EventManager } from './event/manager';
@@ -50,7 +50,11 @@ export class Executor {
     navigatorLLM: BaseChatModel,
     extraArgs?: Partial<ExecutorExtraArgs>,
   ) {
-    const messageManager = new MessageManager();
+    const messageManager = new MessageManager(
+      new MessageManagerSettings({
+        includeExampleOutput: extraArgs?.generalSettings?.includeExampleOutput,
+      }),
+    );
 
     const plannerLLM = extraArgs?.plannerLLM ?? navigatorLLM;
     const extractorLLM = extraArgs?.extractorLLM ?? navigatorLLM;

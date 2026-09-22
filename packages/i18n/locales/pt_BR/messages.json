@@ -262,6 +262,12 @@
   "options_general_replayHistoricalTasks_desc": {
     "message": "Ativar o armazenamento e a reprodução do histórico de passos do agente (experimental, pode ter problemas)"
   },
+  "options_general_includeExampleOutput": {
+    "message": "Incluir Exemplo de Saída"
+  },
+  "options_general_includeExampleOutput_desc": {
+    "message": "Incluir um exemplo no prompt mostrando o formato de saída esperado. Desative se o seu modelo tender a copiar o conteúdo do exemplo em vez de seguir o seu pedido real."
+  },
   "options_models_providers_header": {
     "message": "Provedores de LLM"
   },

@@ -18,6 +18,7 @@ export class MessageManagerSettings {
   messageContext?: string;
   sensitiveData?: Record<string, string>;
   availableFilePaths?: string[];
+  includeExampleOutput = true;
 
   constructor(
     options: {
@@ -28,6 +29,7 @@ export class MessageManagerSettings {
       messageContext?: string;
       sensitiveData?: Record<string, string>;
       availableFilePaths?: string[];
+      includeExampleOutput?: boolean;
     } = {},
   ) {
     if (options.maxInputTokens !== undefined) this.maxInputTokens = options.maxInputTokens;
@@ -38,6 +40,7 @@ export class MessageManagerSettings {
     if (options.messageContext !== undefined) this.messageContext = options.messageContext;
     if (options.sensitiveData !== undefined) this.sensitiveData = options.sensitiveData;
     if (options.availableFilePaths !== undefined) this.availableFilePaths = options.availableFilePaths;
+    if (options.includeExampleOutput !== undefined) this.includeExampleOutput = options.includeExampleOutput;
   }
 }
 
@@ -78,44 +81,46 @@ export default class MessageManager {
     }
 
     // Add example output
-    const placeholderMessage = new HumanMessage({
-      content: 'Example output:',
-    });
-    this.addMessageWithTokens(placeholderMessage, 'init');
+    if (this.settings.includeExampleOutput) {
+      const placeholderMessage = new HumanMessage({
+        content: 'Example output:',
+      });
+      this.addMessageWithTokens(placeholderMessage, 'init');
 
-    const toolCallId = this.nextToolId();
-    const toolCalls = [
-      {
-        name: 'AgentOutput',
-        args: {
-          current_state: {
-            evaluation_previous_goal:
-              `Success - I successfully clicked on the 'Apple' link from the Google Search results page, 
-              which directed me to the 'Apple' company homepage. This is a good start toward finding 
-              the best place to buy a new iPhone as the Apple website often list iPhones for sale.`.trim(),
-            memory: `I searched for 'iPhone retailers' on Google. From the Google Search results page, 
-              I used the 'click_element' tool to click on a element labelled 'Best Buy' but calling 
-              the tool did not direct me to a new page. I then used the 'click_element' tool to click 
-              on a element labelled 'Apple' which redirected me to the 'Apple' company homepage. 
-              Currently at step 3/15.`.trim(),
-            next_goal: `Looking at reported structure of the current page, I can see the item '[127]<h3 iPhone/>' 
-              in the content. I think this button will lead to more information and potentially prices 
-              for iPhones. I'll click on the link to 'iPhone' at index [127] using the 'click_element' 
-              tool and hope to see prices on the next page.`.trim(),
+      const toolCallId = this.nextToolId();
+      const toolCalls = [
+        {
+          name: 'AgentOutput',
+          args: {
+            current_state: {
+              evaluation_previous_goal:
+                `Success - I successfully clicked on the 'Apple' link from the Google Search results page,
+                which directed me to the 'Apple' company homepage. This is a good start toward finding
+                the best place to buy a new iPhone as the Apple website often list iPhones for sale.`.trim(),
+              memory: `I searched for 'iPhone retailers' on Google. From the Google Search results page,
+                I used the 'click_element' tool to click on a element labelled 'Best Buy' but calling
+                the tool did not direct me to a new page. I then used the 'click_element' tool to click
+                on a element labelled 'Apple' which redirected me to the 'Apple' company homepage.
+                Currently at step 3/15.`.trim(),
+              next_goal: `Looking at reported structure of the current page, I can see the item '[127]<h3 iPhone/>'
+                in the content. I think this button will lead to more information and potentially prices
+                for iPhones. I'll click on the link to 'iPhone' at index [127] using the 'click_element'
+                tool and hope to see prices on the next page.`.trim(),
+            },
+            action: [{ click_element: { index: 127 } }],
           },
-          action: [{ click_element: { index: 127 } }],
+          id: String(toolCallId),
+          type: 'tool_call' as const,
         },
-        id: String(toolCallId),
-        type: 'tool_call' as const,
-      },
-    ];
+      ];
 
-    const exampleToolCall = new AIMessage({
-      content: '',
-      tool_calls: toolCalls,
-    });
-    this.addMessageWithTokens(exampleToolCall, 'init');
-    this.addToolMessage('Browser started', toolCallId, 'init');
+      const exampleToolCall = new AIMessage({
+        content: '',
+        tool_calls: toolCalls,
+      });
+      this.addMessageWithTokens(exampleToolCall, 'init');
+      this.addToolMessage('Browser started', toolCallId, 'init');
+    }
 
     // Add history start marker
     const historyStartMessage = new HumanMessage({
