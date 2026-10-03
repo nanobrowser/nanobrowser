@@ -381,8 +381,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         Boolean(config?.baseUrl?.trim()) &&
         Boolean(config?.azureDeploymentNames?.length) &&
         Boolean(config?.azureApiVersion?.trim());
-    } else if (providerType === ProviderTypeEnum.OpenRouter) {
-      // OpenRouter needs API Key and optionally Base URL (has default)
+    } else if (providerType === ProviderTypeEnum.OpenRouter || providerType === ProviderTypeEnum.Qwen) {
+      // OpenRouter and Qwen need API Key and optionally Base URL (both have a default)
       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
     } else {
       // Other built-in providers just need API Key
@@ -408,12 +408,13 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         return;
       }
 
-      // Check if base URL is required but missing for custom_openai, ollama, azure_openai or openrouter
+      // Check if base URL is required but missing for custom_openai, ollama, azure_openai, openrouter or qwen
       if (
         (providers[provider].type === ProviderTypeEnum.CustomOpenAI ||
           providers[provider].type === ProviderTypeEnum.Ollama ||
           providers[provider].type === ProviderTypeEnum.AzureOpenAI ||
-          providers[provider].type === ProviderTypeEnum.OpenRouter) &&
+          providers[provider].type === ProviderTypeEnum.OpenRouter ||
+          providers[provider].type === ProviderTypeEnum.Qwen) &&
         (!providers[provider].baseUrl || !providers[provider].baseUrl.trim())
       ) {
         alert(t('options_models_providers_errors_baseUrlRequired', getDefaultDisplayNameFromProviderId(provider)));
@@ -1133,11 +1134,12 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                         </div>
                       )}
 
-                    {/* Base URL input (for custom_openai, ollama, azure_openai and openrouter) */}
+                    {/* Base URL input (for custom_openai, ollama, azure_openai, openrouter and qwen) */}
                     {(providerConfig.type === ProviderTypeEnum.CustomOpenAI ||
                       providerConfig.type === ProviderTypeEnum.Ollama ||
                       providerConfig.type === ProviderTypeEnum.AzureOpenAI ||
-                      providerConfig.type === ProviderTypeEnum.OpenRouter) && (
+                      providerConfig.type === ProviderTypeEnum.OpenRouter ||
+                      providerConfig.type === ProviderTypeEnum.Qwen) && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
                           <label
@@ -1164,7 +1166,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                                   ? t('options_models_providers_placeholders_baseUrl_azure')
                                   : providerConfig.type === ProviderTypeEnum.OpenRouter
                                     ? t('options_models_providers_placeholders_baseUrl_openrouter')
-                                    : t('options_models_providers_placeholders_baseUrl_ollama')
+                                    : providerConfig.type === ProviderTypeEnum.Qwen
+                                      ? t('options_models_providers_placeholders_baseUrl_qwen')
+                                      : t('options_models_providers_placeholders_baseUrl_ollama')
                             }
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}

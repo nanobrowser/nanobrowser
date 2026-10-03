@@ -15,7 +15,26 @@ const store = vi.hoisted(() => {
   return data;
 });
 
-const { llmProviderStore } = await import('../llmProviders');
+const { llmProviderStore, getDefaultProviderConfig, getDefaultDisplayNameFromProviderId } =
+  await import('../llmProviders');
+const { ProviderTypeEnum } = await import('../types');
+
+describe('built-in Tongyi QWen provider', () => {
+  it('is named and typed so the settings UI offers it', () => {
+    expect(getDefaultDisplayNameFromProviderId(ProviderTypeEnum.Qwen)).toBe('Tongyi QWen');
+    expect(getDefaultProviderConfig(ProviderTypeEnum.Qwen)).toMatchObject({
+      name: 'Tongyi QWen',
+      type: ProviderTypeEnum.Qwen,
+      baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    });
+  });
+
+  it('starts with the DashScope models prefilled', () => {
+    const config = getDefaultProviderConfig(ProviderTypeEnum.Qwen);
+
+    expect(config.modelNames?.length).toBeGreaterThan(0);
+  });
+});
 
 describe('llmProviderStore.getAllProviders', () => {
   beforeEach(() => {
