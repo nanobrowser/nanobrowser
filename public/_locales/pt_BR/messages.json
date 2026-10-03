@@ -365,6 +365,9 @@
   "options_models_providers_placeholders_baseUrl_openrouter": {
     "message": "URL Base do OpenRouter (opcional, padrão para https://openrouter.ai/api/v1)"
   },
+  "options_models_providers_placeholders_baseUrl_qwen": {
+    "message": "URL Base do DashScope (opcional, padrão para https://dashscope-intl.aliyuncs.com/compatible-mode/v1)"
+  },
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "URL base do Ollama"
   },

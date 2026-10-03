@@ -10,6 +10,7 @@ import {
   type ModelConfig,
   type ReasoningEffort,
   ProviderTypeEnum,
+  QWEN_BASE_URL,
   getDefaultReasoningEffort,
   getProviderTypeByProviderId,
   normalizeReasoningEffort,
@@ -60,6 +61,10 @@ export function getStructuredMode(provider: string, modelName: string): Structur
     case ProviderTypeEnum.Grok:
     case ProviderTypeEnum.DeepSeek:
       return 'tool';
+    // DashScope implements response_format json_object but not the json_schema of native structured outputs,
+    // so the reply is read as text and parsed, with JSON Output keeping it syntactically valid
+    case ProviderTypeEnum.Qwen:
+      return 'text';
     default:
       return 'native';
   }
@@ -315,6 +320,23 @@ export function createChatModel(
         model: openrouter.chat(modelName, { structuredOutputs: { strict: false } }),
         settings: { maxOutputTokens: maxTokens },
         providerOptions: effort ? { openrouter: { reasoning: { effort } } } : undefined,
+      };
+    }
+    case ProviderTypeEnum.Qwen: {
+      // Tongyi QWen is served by Alibaba Cloud DashScope over an OpenAI-compatible chat completions API
+      const qwen = createOpenAI({
+        apiKey,
+        baseURL: providerConfig.baseUrl || QWEN_BASE_URL,
+        fetch,
+      });
+      // getStructuredMode returns 'text' for Qwen, and JSON Output requests response_format json_object, the only
+      // structured output DashScope supports. No reasoning effort is sent: the endpoint does not document it.
+      return {
+        ...base,
+        model: qwen.chat(modelName),
+        settings: { maxOutputTokens: maxTokens },
+        structuredMode: 'text',
+        jsonOutput: true,
       };
     }
     default: {

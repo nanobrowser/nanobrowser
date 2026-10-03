@@ -5,6 +5,9 @@ import { llmProviderModelNames, ProviderTypeEnum } from './types';
 import type { ReasoningEffort } from './agentModels';
 
 const AZURE_API_VERSION = '2025-04-01-preview';
+// Alibaba Cloud DashScope, the OpenAI-compatible endpoint that serves Tongyi QWen. The international region is the
+// default; mainland China users switch to https://dashscope.aliyuncs.com/compatible-mode/v1 in the base URL field.
+export const QWEN_BASE_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
 
 // Interface for a single provider configuration
 export interface ProviderConfig {
@@ -70,6 +73,7 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.Grok:
     case ProviderTypeEnum.Ollama:
     case ProviderTypeEnum.OpenRouter:
+    case ProviderTypeEnum.Qwen:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -96,6 +100,8 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Azure OpenAI';
     case ProviderTypeEnum.OpenRouter:
       return 'OpenRouter';
+    case ProviderTypeEnum.Qwen:
+      return 'Tongyi QWen';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
@@ -110,11 +116,17 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
     case ProviderTypeEnum.Gemini:
     case ProviderTypeEnum.Grok:
     case ProviderTypeEnum.OpenRouter: // OpenRouter uses modelNames
+    case ProviderTypeEnum.Qwen: // Qwen uses modelNames
       return {
         apiKey: '',
         name: getDefaultDisplayNameFromProviderId(providerId),
         type: providerId,
-        baseUrl: providerId === ProviderTypeEnum.OpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
+        baseUrl:
+          providerId === ProviderTypeEnum.OpenRouter
+            ? 'https://openrouter.ai/api/v1'
+            : providerId === ProviderTypeEnum.Qwen
+              ? QWEN_BASE_URL
+              : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
         createdAt: Date.now(),
       };
@@ -157,9 +169,12 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
  */
 export function getDefaultReasoningEffort(providerType: ProviderTypeEnum | undefined): ReasoningEffort {
   switch (providerType) {
+    // Qwen joins them because the OpenAI-compatible endpoint that serves Tongyi QWen does not document
+    // reasoning_effort either, so sending one would be rejected or ignored
     case ProviderTypeEnum.OpenRouter:
     case ProviderTypeEnum.Ollama:
     case ProviderTypeEnum.CustomOpenAI:
+    case ProviderTypeEnum.Qwen:
     case undefined:
       return 'none';
     default:

@@ -361,6 +361,9 @@
   "options_models_providers_placeholders_baseUrl_openrouter": {
     "message": "OpenRouter 基礎 URL (選填，預設為 https://openrouter.ai/api/v1)"
   },
+  "options_models_providers_placeholders_baseUrl_qwen": {
+    "message": "DashScope 基礎 URL (選填，預設為 https://dashscope-intl.aliyuncs.com/compatible-mode/v1)"
+  },
   "options_models_providers_placeholders_baseUrl_ollama": {
     "message": "Ollama 基礎 URL"
   },

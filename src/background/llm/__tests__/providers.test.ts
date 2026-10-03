@@ -97,6 +97,8 @@ describe('getStructuredMode', () => {
     ['grok', 'grok-4', 'tool'],
     ['deepseek', 'deepseek-v4-flash', 'tool'],
     ['deepseek', 'deepseek-v4-pro', 'tool'],
+    ['qwen', 'qwen3-max', 'text'],
+    ['qwen', 'qwen-turbo', 'text'],
     ['openai', 'gpt-4.1', 'native'],
     ['anthropic', 'claude-sonnet-4-5', 'tool'],
     ['anthropic', 'claude-opus-5-5', 'tool'],
@@ -119,6 +121,7 @@ describe('createChatModel', () => {
       ['gemini', 'gemini-2.5-flash', 'google.generative-ai'],
       ['grok', 'grok-4', 'xai.responses'],
       ['openrouter', 'openai/gpt-4o', 'openrouter'],
+      ['qwen', 'qwen3-max', 'openai.chat'],
     ];
     for (const [providerId, modelName, expectedProvider] of cases) {
       const chatModel = createChatModel(provider(), model(providerId, modelName));
@@ -139,6 +142,7 @@ describe('createChatModel', () => {
     ['gemini', 'gemini-3.8-flash', 'low'],
     ['grok', 'grok-4.7', 'low'],
     ['openrouter', 'openai/gpt-5-mini', undefined],
+    ['qwen', 'qwen3-max', undefined],
     ['ollama', 'qwen3.8', undefined],
     ['custom_openai', 'qwen', undefined],
     ['my_custom_id', 'qwen', undefined],
@@ -274,6 +278,74 @@ describe('createChatModel', () => {
     it("doesn't treat model names that look like OpenAI reasoning models as reasoning models", () => {
       const chatModel = createChatModel(provider(), model('ollama', 'olmo2:13b', { reasoningEffort: 'low' }));
       expect(chatModel.providerOptions).toEqual({ openai: { strictJsonSchema: false, reasoningEffort: 'low' } });
+    });
+  });
+
+  describe('qwen', () => {
+    // DashScope implements response_format json_object but not json_schema, so structured output has to go
+    // through JSON Output in text mode. Sending json_schema makes every navigator step fail.
+    it('sends json_object to the DashScope endpoint instead of json_schema', async () => {
+      const { fetch, requests } = captureFetch();
+      const chatModel = createChatModel(provider(), model('qwen', 'qwen3-max'), { fetch });
+      expect(chatModel.structuredMode).toBe('text');
+      expect(chatModel.jsonOutput).toBe(true);
+      const request = await captureRequest(chatModel, requests);
+
+      expect(request.url).toBe('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions');
+      expect(request.body.response_format).toEqual({ type: 'json_object' });
+      expect(request.body.reasoning_effort).toBeUndefined();
+      expect(request.body.temperature).toBeUndefined();
+      expect(request.body.top_p).toBeUndefined();
+    });
+
+    it.each<ModelConfig['reasoningEffort']>([undefined, 'none', 'low', 'xhigh'])(
+      'sends no reasoning effort when %s is saved, which DashScope does not accept',
+      async effort => {
+        const { fetch, requests } = captureFetch();
+        const chatModel = createChatModel(provider(), model('qwen', 'qwen3-max', { reasoningEffort: effort }), {
+          fetch,
+        });
+        const request = await captureRequest(chatModel, requests);
+
+        expect(request.body.reasoning_effort).toBeUndefined();
+        expect(request.body.reasoning).toBeUndefined();
+      },
+    );
+
+    it('uses a configured base URL so mainland China endpoints can be reached', async () => {
+      const { fetch, requests } = captureFetch();
+      const chatModel = createChatModel(
+        provider({ baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' }),
+        model('qwen', 'qwen3-max'),
+        {
+          fetch,
+        },
+      );
+      const request = await captureRequest(chatModel, requests);
+
+      expect(request.url).toBe('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions');
+    });
+
+    it('sends the history as text, since JSON Output has no tool calls', async () => {
+      const { fetch, requests } = captureFetch();
+      const chatModel = createChatModel(provider(), model('qwen', 'qwen3-max'), { fetch });
+      await generateStructured({
+        chatModel,
+        messages: [
+          userMessage('task'),
+          toolCallMessage({ toolCallId: '1', input: { action: [] } }),
+          toolResultMessage({ toolCallId: '1', content: 'done' }),
+          userMessage('next step'),
+        ],
+        schema,
+        name: 'planner_output',
+      }).catch(() => undefined);
+      const request = requests[0];
+
+      expect(request.body.tools).toBeUndefined();
+      expect(request.body.tool_choice).toBeUndefined();
+      const messages = request.body.messages as Record<string, unknown>[];
+      expect(messages.some(m => m.tool_calls !== undefined || m.role === 'tool')).toBe(false);
     });
   });
 

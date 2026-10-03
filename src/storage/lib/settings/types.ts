@@ -16,6 +16,7 @@ export enum ProviderTypeEnum {
   Ollama = 'ollama',
   AzureOpenAI = 'azure_openai',
   OpenRouter = 'openrouter',
+  Qwen = 'qwen',
   CustomOpenAI = 'custom_openai',
 }
 
@@ -29,5 +30,6 @@ export const llmProviderModelNames = {
   [ProviderTypeEnum.Ollama]: ['qwen3.8', 'qwen3.8:27b-mlx'],
   [ProviderTypeEnum.AzureOpenAI]: ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'],
   [ProviderTypeEnum.OpenRouter]: ['google/gemini-2.5-pro', 'google/gemini-2.5-flash', 'openai/gpt-4o-2024-11-20'],
+  [ProviderTypeEnum.Qwen]: ['qwen3-max', 'qwen-max', 'qwen-plus', 'qwen-turbo'],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
