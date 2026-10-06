@@ -1,4 +1,8 @@
 {
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/ravidorr"
+  },
   "name": "nanobrowser",
   "version": "0.1.9",
   "description": "AI web automation tool",
