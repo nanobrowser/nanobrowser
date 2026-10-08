@@ -32,18 +32,25 @@ To work, Nanobrowser sends data directly from your browser to the AI providers y
 
 - **Your model provider** (for example Anthropic, OpenAI, Google, OpenRouter, or a local server such as Ollama): your messages, your attachments, the content of the tabs the agent works in, and, for models that can see images, screenshots of those tabs.
 - **Your voice model provider** (OpenAI or Google), only if you turn on voice input: the audio of each recording. Recordings are not kept.
+- **The optional Jev decision service** (TypeSafe), only when you enable Jev: the task and relevant bounded page text, proposed action descriptors, recent outcomes and completion claims used to evaluate actions, completion, routing or click proposals. Requests go directly to `https://api.typesafe.ai/v1/systemone`. The Jev key is sent only to TypeSafe. Jev is off by default for a new installation.
 
-How these providers handle your data is governed by their own privacy policies. If you use a local model, the data stays on your computer.
+Before sending Jev evidence, Nanobrowser redacts credential patterns, cookies, URL credentials and query values, sensitive input values, typed action text and serialized form-field values. Redaction is best effort for arbitrary page text and prose. Use pages and tasks whose remaining content may be sent to TypeSafe. No screenshots are sent by this Jev adapter.
+
+Jev settings and its separate key stay in local browser storage under the same credential-storage model as other providers; it is not an encrypted vault. Decision records stored with the conversation retain selected outcomes, confidence, elapsed time, request counts and token usage, with estimated cost only when prices were explicitly supplied. These records do not retain raw Jev response bodies, credentials or page/action payloads, and are not sent as analytics to Nanobrowser's developers.
+
+How these providers handle your data is governed by their own privacy policies. A local conversation model processes its requests on your computer. Optional Jev and cloud voice input still send the data described above to their respective providers.
 
 ## API keys
 
-- You provide your own API keys.
+- You provide your own API keys, including a separate TypeSafe key if you enable Jev.
 - Keys are stored locally in your browser, and are sent only to their own provider.
 - Keys are never included in exports and never written to logs.
 
 ## Updating from an earlier version
 
 When Nanobrowser updates from its earlier version, it moves your providers and API keys, your default model, your saved prompts and your blocked sites into the new version, in your browser, and deletes the rest of the earlier version's data. Your earlier conversations are kept in your browser until you export or delete them in Settings → Data; nothing is sent anywhere.
+
+If you update from a Jev prerelease, valid Jev settings and its saved key are migrated locally into the new separate settings/key stores. A previous explicit enabled choice can be retained. The migration itself makes no TypeSafe or LLM requests; malformed legacy data is retained for later recovery rather than used to enable calls.
 
 ## Your control
 
@@ -59,4 +66,4 @@ We may update this policy. Changes are published in the GitHub repository.
 
 Questions or concerns? Contact us at cws@felight.xyz.
 
-Last updated: October 13, 2026
+Last updated: October 2026

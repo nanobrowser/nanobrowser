@@ -101,3 +101,28 @@ describe('PromptBroker', () => {
     expect(await b.userPrompt().confirm({ ...request, tabId: 99 }, new AbortController().signal)).toBe('decline');
   });
 });
+
+it('withdraws prompts for a removed tab without accepting late approval or changing other tabs and kinds', async () => {
+  const { b, events } = broker();
+  const signal = new AbortController().signal;
+  const pending = b.open<string>('c1', 'jev-confirm', { action: 'click' }, signal, { tabId: 7 });
+  const otherTab = b.open<string>('c1', 'jev-confirm', { action: 'click' }, signal, { tabId: 8 });
+  const otherKind = b.open<string>('c1', 'confirm', { question: 'move-tab' }, signal, { tabId: 7 });
+  const prompts = b.promptsOf('c1');
+  const target = prompts.find(prompt => prompt.kind === 'jev-confirm' && prompt.tabId === 7)!;
+  b.withdrawForTab(7, 'jev-confirm');
+  expect(await pending).toBe('withdrawn');
+  expect(await b.answer(target.id, 'approve')).toBe(false);
+  expect(b.promptsOf('c1')).toEqual(prompts.filter(prompt => prompt.id !== target.id));
+  expect(
+    events.some(
+      ([, event]) => event.type === 'prompt_closed' && event.id === target.id && event.outcome === 'withdrawn',
+    ),
+  ).toBe(true);
+  b.withdrawForTab(7);
+  expect(await otherKind).toBe('withdrawn');
+  expect(b.promptsOf('c1')).toHaveLength(1);
+  expect(b.promptsOf('c1')[0].tabId).toBe(8);
+  b.withdrawAll('c1');
+  expect(await otherTab).toBe('withdrawn');
+});

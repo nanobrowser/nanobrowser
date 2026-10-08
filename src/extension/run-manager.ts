@@ -2,6 +2,11 @@
 // run; panels are views that can close and reopen.
 import { AgentLoop, REASONING_DROPPED, STOPPED_BY_USER, STOPPED_NOTE } from '@src/agent/loop';
 import type { LoopEnd } from '@src/agent/loop';
+import type { JevConfirmationRequest, JevLoopOptions } from '@src/agent/jev';
+import { createDecisionEngine } from '@src/llm/jev';
+import type { DecisionResult } from '@src/llm/jev';
+import { DEFAULT_JEV_SETTINGS, JEV_KEY_ID, jevSettingsStorage } from '@src/store/jev';
+import { routeJevModel } from './jev-routing';
 import type { HostPort } from '@src/agent/ports';
 import type { Session, UserStepDetails } from '@src/browser-control';
 import { agentSystemPrompt } from '@src/agent/prompt';
@@ -26,7 +31,15 @@ import {
   titleFrom,
   updateConversation,
 } from '@src/store/conversations';
-import { DEFAULT_SETTINGS, getLive, removeLive, setLive, settingsStorage } from '@src/store/settings';
+import {
+  DEFAULT_SETTINGS,
+  getLive,
+  keysStorage,
+  providersStorage,
+  removeLive,
+  setLive,
+  settingsStorage,
+} from '@src/store/settings';
 import { NOTE_LABEL, RunWriter } from '@src/agent/records';
 import { planRestore, RESTART_NOTE, takenOver } from '@src/agent/restore';
 import { runCompaction } from '@src/agent/compaction';
@@ -149,6 +162,7 @@ export class RunManager {
   /** The scope changed: the panels get the new list, and a session in a run gains or loses the tab. */
   async #scopeChanged(conversationId: string, added: number[], removed: number[]): Promise<void> {
     void this.border.tabsChanged(added, removed).catch(() => undefined);
+    for (const tabId of removed) this.broker.withdrawForTab(tabId, 'jev-confirm');
     const session = this.#sessions.get(conversationId);
     if (session) {
       for (const tabId of added) if (!session.hasTab(tabId)) await session.share(tabId).catch(() => undefined);
@@ -740,6 +754,8 @@ export class RunManager {
         'nb.settings',
         'nb.providers',
         'nb.keys',
+        'nb.jev',
+        'jev-settings',
         'nb.siteRules',
         UPGRADE_KEY,
         WHATS_NEW_KEY,
@@ -1284,7 +1300,69 @@ export class RunManager {
       await this.#setStatus(record, 'running');
       let end: LoopEnd | undefined;
       try {
-        const model = await resolveModel(await starting);
+        let chosen = await starting;
+        const jevSettings = (await jevSettingsStorage.get()) ?? DEFAULT_JEV_SETTINGS;
+        let jev: JevLoopOptions | undefined;
+        if (jevSettings.enabled) {
+          const apiKey = (await keysStorage.get())[JEV_KEY_ID]?.trim();
+          if (apiKey) {
+            try {
+              const engine = createDecisionEngine({ ...jevSettings, apiKey });
+              const latestUser = (await activeBranch(conversationId)).findLast(
+                e => e.type === 'message' && e.message.role === 'user' && !e.appOwned,
+              ) as EntryOf<'message'> | undefined;
+              const task =
+                latestUser?.message.parts.flatMap(p => (p.type === 'text' && !p.attached ? [p.text] : [])).join('\n') ??
+                '';
+              jev = {
+                engine,
+                task,
+                experimental: jevSettings.system1Enabled,
+                confirm: (request, signal) => this.#confirmJev(conversationId, runId, request, signal),
+                record: (operation, result) => this.#jevRecord(conversationId, runId, operation, result),
+              };
+            } catch {
+              throw new ModelUnavailable('Jev could not be configured. Check its settings before starting a run.');
+            }
+          } else {
+            throw new ModelUnavailable(
+              'Jev is enabled but has no saved API key. Save its key in Settings → Providers.',
+            );
+          }
+        }
+        if (jev && jevSettings.routingEnabled) {
+          const route = await routeJevModel(
+            chosen,
+            jevSettings,
+            await providersStorage.get(),
+            jev.engine,
+            { taskId: runId, task: jev.task, signal: controller.signal },
+            async () =>
+              (await this.broker.open<string>(
+                conversationId,
+                'jev-confirm',
+                {
+                  taskId: runId,
+                  toolCallId: 'routing',
+                  action: { name: 'route_task', parameters: {} },
+                },
+                controller.signal,
+                { tabId: conversation.tabs[0] },
+              )) === 'approve',
+          );
+          if (route.decision) await this.#jevRecord(conversationId, runId, 'routing', route.decision);
+          if (route.rejected) controller.abort();
+          if (route.unavailable)
+            await this.#notice(
+              conversationId,
+              'Jev routing is unavailable. This run will use the chosen model.',
+              'warn',
+            );
+          chosen = route.pair;
+        }
+        controller.signal.throwIfAborted();
+        const model = await resolveModel(chosen);
+        controller.signal.throwIfAborted();
         const settings = (await settingsStorage.get()) ?? DEFAULT_SETTINGS;
         record.model = await runModel(model.ref);
         if (record.model) {
@@ -1314,6 +1392,7 @@ export class RunManager {
           emit: event => this.emit(conversationId, event),
           turnCap: settings.turnCap,
           thumbnail,
+          jev,
           agentTool: (call, signal) => this.#agentTool(conversationId, call, signal),
           restore: restore ? { debt: restore.debt as DebtEntry[], guards: restore.guards } : undefined,
           takeSteering: () => {
@@ -1342,10 +1421,16 @@ export class RunManager {
           await notifyFinished(conversationId, end.outcome === 'success', (await this.scope.tabsOf(conversationId))[0]);
         }
       } catch (error) {
-        const message = error instanceof ModelUnavailable ? error.message : `The run failed: ${String(error)}`;
-        await this.#notice(conversationId, message, 'error');
-        record.outcome = 'failed';
-        await this.#setStatus(record, 'failed', message);
+        if (controller.signal.aborted) {
+          await this.#notice(conversationId, STOPPED_BY_USER, 'info');
+          await new RunWriter(conversationId, runId).appNote(STOPPED_NOTE);
+          await this.#setStatus(record, 'stopped', STOPPED_BY_USER);
+        } else {
+          const message = error instanceof ModelUnavailable ? error.message : `The run failed: ${String(error)}`;
+          await this.#notice(conversationId, message, 'error');
+          record.outcome = 'failed';
+          await this.#setStatus(record, 'failed', message);
+        }
       } finally {
         runEnded(record, end ?? {});
         // A run that finished well counts towards the card that asks for a store rating.
@@ -1390,6 +1475,52 @@ export class RunManager {
     this.emit(conversationId, {
       type: 'message_end',
       entry: { kind: 'notice', id: entry.id, text, tone, at: entry.at },
+    });
+  }
+
+  async #confirmJev(
+    conversationId: string,
+    runId: string,
+    request: JevConfirmationRequest,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    if (signal.aborted || request.taskId !== runId || this.#runs.get(conversationId)?.runId !== runId) return false;
+    const answer = await this.broker.open<string>(conversationId, 'jev-confirm', { ...request }, signal, {
+      tabId: request.tabId,
+    });
+    // A resume, a hand-back or a withdrawn card cannot approve an action. The loop rechecks page state next.
+    return answer === 'approve' && !signal.aborted && this.#runs.get(conversationId)?.runId === runId;
+  }
+
+  async #jevRecord(
+    conversationId: string,
+    runId: string,
+    operation: string,
+    result: DecisionResult<string>,
+  ): Promise<void> {
+    // Deliberately select metadata fields: no task, page, action arguments, raw response or credential is persisted here.
+    await appendEntry(conversationId, {
+      type: 'ui',
+      kind: 'jev-decision',
+      data: {
+        runId,
+        operation,
+        outcome: result.outcome,
+        reasonCode: result.reasonCode,
+        confidence: result.confidence,
+        probability: result.probability,
+        elapsedMs: result.metadata.elapsedMs,
+        apiCalls: result.metadata.apiCalls,
+        ...(result.metadata.usage
+          ? {
+              usage: {
+                inputTokens: result.metadata.usage.inputTokens,
+                outputTokens: result.metadata.usage.outputTokens,
+              },
+            }
+          : {}),
+        ...(result.metadata.estimatedCost !== undefined ? { estimatedCost: result.metadata.estimatedCost } : {}),
+      },
     });
   }
 }

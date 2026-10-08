@@ -4,6 +4,8 @@ import './fixtures-a';
 import './panel-screenshot';
 import './page-screenshot';
 import './providers-key';
+import './jev-settings';
+import './jev-loop';
 import './providers-test';
 import './panel-chat';
 import './panel-history';

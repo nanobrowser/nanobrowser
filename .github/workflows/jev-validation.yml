@@ -1,0 +1,95 @@
+# Manual, offline validation for the v0.3 single-agent Jev migration. This workflow never publishes a release.
+name: Jev validation and packaging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jev-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      # Corepack uses pnpm 10.34.7, as pinned in package.json; no extra runtime or test dependency is added.
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --check .
+      - run: pnpm lint
+      - run: pnpm type-check
+      - run: pnpm test
+      - name: Record the offline bilingual fixture controls
+        shell: bash
+        run: |
+          mkdir -p release-artifacts
+          pnpm test src/llm/jev/__tests__/fixtures.test.ts --reporter=json --outputFile=release-artifacts/jev-fixture-tests.json
+      - run: pnpm build
+      - run: pnpm zip
+      - name: Validate production package and record provenance
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+          const manifest = JSON.parse(readFileSync('dist/manifest.json', 'utf8'));
+          if (manifest.manifest_version !== 3 || manifest.version !== pkg.version || !manifest.background?.service_worker) {
+            throw new Error('Invalid production MV3 manifest or version');
+          }
+          const files = [
+            manifest.background.service_worker,
+            manifest.side_panel?.default_path,
+            manifest.options_ui?.page,
+            ...Object.values(manifest.icons ?? {}),
+            ...(manifest.content_scripts ?? []).flatMap(script => [...(script.js ?? []), ...(script.css ?? [])]),
+          ].filter(Boolean);
+          for (const file of files) {
+            if (!existsSync(join('dist', file))) throw new Error(`Missing production entry: ${file}`);
+          }
+          copyFileSync(`dist-zip/nanobrowser-${pkg.version}.zip`, 'release-artifacts/nanobrowser-jev.zip');
+          for (const file of ['docs/jev.md', 'docs/jev-evaluation.md', 'docs/evaluation/jev-fixtures.json', 'PRIVACY.md']) {
+            copyFileSync(file, join('release-artifacts', file.split('/').pop()));
+          }
+          writeFileSync('release-artifacts/validation-context.json', JSON.stringify({
+            mode: 'offline-mocked-v0.3-validation',
+            sourceCommit: process.env.GITHUB_SHA,
+            extensionVersion: pkg.version,
+            packageManager: pkg.packageManager,
+            fixtureReport: 'jev-fixture-tests.json',
+            browserBuild: '.output/autorun, separate from the production ZIP',
+            liveProviderAcceptance: 'not run',
+          }, null, 2) + '\n');
+          NODE
+          unzip -t release-artifacts/nanobrowser-jev.zip
+      - name: Install stable Chrome for Testing
+        run: pnpm install-chrome
+      - name: Run headless Jev checks with local fixtures and supplied responses
+        # Autorun uses chrome.debugger inside the extension and --use-mock-keychain, without remote CDP.
+        run: pnpm autorun jev-settings,jev-loop
+      - name: Collect browser evidence and package checksums
+        shell: bash
+        run: |
+          mkdir -p release-artifacts/browser
+          cp -R fixtures/.results/. release-artifacts/browser/
+          (cd release-artifacts && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: nanobrowser-jev-validation-${{ github.sha }}
+          path: |
+            release-artifacts/
+            fixtures/.results/
+          if-no-files-found: warn
