@@ -953,5 +953,25 @@
         "example": "Option not found"
       }
     }
+  },
+  "act_selectDate_start": {
+    "message": "正在索引為 $INDEX$ 的日期欄位設定 $DATE$",
+    "placeholders": {
+      "date": { "content": "$1", "example": "2026-10-10" },
+      "index": { "content": "$2", "example": "5" }
+    }
+  },
+  "act_selectDate_ok": {
+    "message": "已在索引為 $INDEX$ 的日期欄位設定 $DATE$",
+    "placeholders": {
+      "date": { "content": "$1", "example": "2026-10-10" },
+      "index": { "content": "$2", "example": "5" }
+    }
+  },
+  "act_selectDate_fail": {
+    "message": "無法設定日期：$ERROR$",
+    "placeholders": {
+      "error": { "content": "$1", "example": "找不到日期欄位" }
+    }
   }
 }

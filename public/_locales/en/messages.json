@@ -961,5 +961,25 @@
         "example": "Option not found"
       }
     }
+  },
+  "act_selectDate_start": {
+    "message": "Set date $DATE$ on date input with index $INDEX$",
+    "placeholders": {
+      "date": { "content": "$1", "example": "2026-10-10" },
+      "index": { "content": "$2", "example": "5" }
+    }
+  },
+  "act_selectDate_ok": {
+    "message": "Set date $DATE$ on date input with index $INDEX$",
+    "placeholders": {
+      "date": { "content": "$1", "example": "2026-10-10" },
+      "index": { "content": "$2", "example": "5" }
+    }
+  },
+  "act_selectDate_fail": {
+    "message": "Failed to set date: $ERROR$",
+    "placeholders": {
+      "error": { "content": "$1", "example": "Date input not found" }
+    }
   }
 }

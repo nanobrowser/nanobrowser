@@ -960,5 +960,25 @@
         "example": "Opção não encontrada"
       }
     }
+  },
+  "act_selectDate_start": {
+    "message": "Definir a data $DATE$ no campo de data com índice $INDEX$",
+    "placeholders": {
+      "date": { "content": "$1", "example": "2026-10-10" },
+      "index": { "content": "$2", "example": "5" }
+    }
+  },
+  "act_selectDate_ok": {
+    "message": "Data $DATE$ definida no campo de data com índice $INDEX$",
+    "placeholders": {
+      "date": { "content": "$1", "example": "2026-10-10" },
+      "index": { "content": "$2", "example": "5" }
+    }
+  },
+  "act_selectDate_fail": {
+    "message": "Falha ao definir a data: $ERROR$",
+    "placeholders": {
+      "error": { "content": "$1", "example": "Campo de data não encontrado" }
+    }
   }
 }

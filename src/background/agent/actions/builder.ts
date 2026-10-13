@@ -14,6 +14,7 @@ import {
   scrollToTextActionSchema,
   cacheContentActionSchema,
   selectDropdownOptionActionSchema,
+  selectDateActionSchema,
   getDropdownOptionsActionSchema,
   closeTabActionSchema,
   waitActionSchema,
@@ -701,6 +702,28 @@ export class ActionBuilder {
       true,
     );
     actions.push(selectDropdownOption);
+
+    const selectDate = new Action(
+      async (input: z.infer<typeof selectDateActionSchema.schema>) => {
+        const intent = input.intent || t('act_selectDate_start', [input.date, input.index.toString()]);
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
+
+        const page = await this.context.browserContext.getCurrentPage();
+        try {
+          const result = await page.selectDate(input.index, input.date);
+          const message = t('act_selectDate_ok', [input.date, input.index.toString()]);
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, message);
+          return new ActionResult({ extractedContent: result, includeInMemory: true });
+        } catch (error) {
+          const message = t('act_selectDate_fail', [error instanceof Error ? error.message : String(error)]);
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, message);
+          return new ActionResult({ error: message, includeInMemory: true });
+        }
+      },
+      selectDateActionSchema,
+      true,
+    );
+    actions.push(selectDate);
 
     return actions;
   }

@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SELECT_DATE_ACTION_NAME = 'select_date';
+const SELECT_DATE_ACTION_DESCRIPTION = 'Set a native date input to a calendar date';
+const EMPTY_INTENT = '';
+const INTENT_DESCRIPTION = 'purpose of this action';
+const DATE_INPUT_INDEX_DESCRIPTION = 'index of the native date input';
+const ISO_DATE_DESCRIPTION = 'date in YYYY-MM-DD format';
+
 export interface ActionSchema<T extends z.ZodType = z.ZodType> {
   name: string;
   description: string;
@@ -202,6 +210,16 @@ export const selectDropdownOptionActionSchema = {
     intent: z.string().default('').describe('purpose of this action'),
     index: z.number().int().describe('index of the dropdown element'),
     text: z.string().describe('text of the option'),
+  }),
+} satisfies ActionSchema;
+
+export const selectDateActionSchema = {
+  name: SELECT_DATE_ACTION_NAME,
+  description: SELECT_DATE_ACTION_DESCRIPTION,
+  schema: z.object({
+    intent: z.string().default(EMPTY_INTENT).describe(INTENT_DESCRIPTION),
+    index: z.number().int().describe(DATE_INPUT_INDEX_DESCRIPTION),
+    date: z.string().regex(ISO_DATE_PATTERN).describe(ISO_DATE_DESCRIPTION),
   }),
 } satisfies ActionSchema;
 
