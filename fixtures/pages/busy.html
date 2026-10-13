@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Busy page</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Busy page</h1>
+<p>Shortly after load the main thread is blocked for the number of milliseconds in <code>?ms=</code> (default 12,000), so an accessibility capture cannot answer within its 10 s budget.</p>
+<button type="button">Unreachable while busy</button>
+<script>
+  const ms = Number(new URLSearchParams(location.search).get('ms') ?? 12000);
+  setTimeout(() => {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {}
+    document.querySelector('p').textContent = 'No longer busy.';
+  }, 300);
+</script>
+</body>
+</html>

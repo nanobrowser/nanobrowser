@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Records</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Records</h1>
+<ul id="people" aria-label="People">
+  <li><span class="who">Alice</span> <button type="button" class="del">Delete</button></li>
+  <li><span class="who">Carol</span> <button type="button" class="del">Delete</button></li>
+  <li><span class="who">Dave</span> <button type="button" class="del">Delete</button></li>
+</ul>
+<p><button type="button" id="reuse">Scroll the list</button> <button type="button" id="sort">Sort descending</button></p>
+<section aria-label="Live clock">
+  <p>Time: <span id="clock">0</span></p>
+  <button type="button" id="noop">Do nothing</button>
+</section>
+<section aria-label="Feedback">
+  <button type="button" id="error">Show error</button>
+  <button type="button" id="dialog">Open dialog</button>
+  <button type="button" id="focus">Move focus</button>
+  <label>Next field <input type="text" id="next"></label>
+  <div id="errors"></div>
+  <dialog id="dlg" aria-label="Confirm removal"><p>Remove all?</p><button type="button" onclick="this.closest('dialog').close()">Close</button></dialog>
+</section>
+<script>
+  window.deleted = [];
+  document.getElementById('people').addEventListener('click', e => {
+    const b = e.target.closest('button.del');
+    if (b) window.deleted.push(b.parentElement.querySelector('.who').textContent);
+  });
+  // A virtualized list: the first row element is reused for another record; its button node stays the same.
+  document.getElementById('reuse').addEventListener('click', () => {
+    document.querySelector('#people li .who').textContent = 'Bob';
+  });
+  // A re-sort that moves the row elements without reusing them.
+  document.getElementById('sort').addEventListener('click', () => {
+    const list = document.getElementById('people');
+    [...list.children].reverse().forEach(li => list.append(li));
+  });
+  let t = 0;
+  setInterval(() => (document.getElementById('clock').textContent = String(++t)), 100);
+  document.getElementById('error').addEventListener('click', () => {
+    const div = document.createElement('div');
+    div.setAttribute('role', 'alert');
+    div.textContent = 'Something went wrong';
+    document.getElementById('errors').append(div);
+  });
+  document.getElementById('dialog').addEventListener('click', () => document.getElementById('dlg').show());
+  document.getElementById('focus').addEventListener('click', () => document.getElementById('next').focus());
+</script>
+</body>
+</html>

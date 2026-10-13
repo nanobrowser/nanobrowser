@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Target states</title><link rel="stylesheet" href="/style.css">
+<style>
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(300px); } }
+  #moving { animation: slide 1.2s linear infinite alternate; }
+</style></head>
+<body>
+<h1>Target states</h1>
+<p><button type="button" id="disabled" disabled>Disabled action</button></p>
+<p><button type="button" id="hideable">Hideable action</button></p>
+<p><button type="button" id="moving">Moving action</button></p>
+<p style="position: relative; height: 30px"><button type="button" id="jsmoving" style="position: absolute; left: 0">Script-moved action</button></p>
+<p><button type="button" id="renamable">Rename me</button></p>
+<div id="rerender"><button type="button" id="rerendered">Rerendered action</button></div>
+<p><span id="lbl">Labelled by text</span> <button type="button" id="named" aria-label="Aria label text" aria-labelledby="lbl">Content text</button></p>
+<p><label>Readonly field <input type="text" id="ro" value="fixed" readonly></label></p>
+<p id="clicks" class="note">0 clicks</p>
+<script>
+  window.clicks = 0;
+  let x = 0;
+  setInterval(() => {
+    x = (x + 7) % 300;
+    document.getElementById('jsmoving').style.left = `${x}px`;
+  }, 16);
+  document.addEventListener('click', e => {
+    if (e.target.closest('button')) document.getElementById('clicks').textContent = `${++window.clicks} clicks`;
+  });
+</script>
+</body>
+</html>

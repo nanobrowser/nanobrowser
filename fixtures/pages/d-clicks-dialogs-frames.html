@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Clicks, dialogs and frames</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      /* A classic scrollbar that takes layout width, as on Windows and Linux. */
+      html::-webkit-scrollbar {
+        width: 16px;
+      }
+      #frame {
+        border: 0;
+        width: 260px;
+        height: 120px;
+        display: block;
+      }
+      #links {
+        height: 120px;
+        width: 260px;
+        overflow: auto;
+      }
+      #links a {
+        display: block;
+        height: 30px;
+      }
+      #card {
+        cursor: pointer;
+        width: 260px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Clicks, dialogs and frames</h1>
+
+    <!-- A form whose controls are named like the form's own properties. -->
+    <form id="clobber" action="/submit-clobber" method="post">
+      <input type="hidden" name="action" value="save" />
+      <input type="hidden" name="method" value="x" />
+      <input type="hidden" name="target" value="y" />
+      <input type="hidden" name="elements" value="z" />
+      <label>Note <input id="clobber-note" name="note" /></label>
+      <button type="submit" id="clobber-go">Keep note</button>
+    </form>
+
+    <!-- Rows and a clickable box inside a shadow root (built by the script below). -->
+    <div id="shadow-host"></div>
+
+    <!-- A clickable card with deeply indented markup (built by the script below). -->
+    <div id="card-slot"></div>
+
+    <!-- A scrollable list whose centre is a link. -->
+    <div id="links"></div>
+
+    <!-- Enter in a text field next to a date field, with no submit button. -->
+    <form id="dated" action="/never" method="post">
+      <label>Amount <input id="amount" name="amount" /></label>
+      <label>On <input type="date" id="on" name="on" /></label>
+    </form>
+
+    <!-- Enter in a checkbox: the first submit button is disabled, the second is not. -->
+    <form id="skip" action="/never" method="post">
+      <button type="submit" disabled>Back</button>
+      <label><input type="checkbox" id="agree" name="agree" /> Agree to the terms</label>
+      <button type="submit" id="order">Place order</button>
+    </form>
+
+    <p>
+      <button type="button" id="pay">Pay now</button>
+      <button type="button" id="remove">Remove item</button>
+      <button type="button" id="ask">Open dialog</button>
+      <button type="button" id="shout">Long alert</button>
+      <button type="button" id="close">Close window</button>
+    </p>
+
+    <!-- Secret fields inside elements that take their name from their content. Values are set by the scenario. -->
+    <div role="radio" aria-checked="true" tabindex="0" id="by-card">
+      Pay by card <input id="wrapped-card" autocomplete="cc-number" />
+    </div>
+    <h2>Enter the code <input id="wrapped-code" autocomplete="one-time-code" /></h2>
+
+    <!-- A cross-site frame with a classic scrollbar and a small button near its right edge. -->
+    <iframe id="frame" title="Checkout frame" src="http://127.0.0.1:8787/d-scrolling-frame.html"></iframe>
+
+    <div style="height: 1500px"></div>
+    <script>
+      window.counts = {};
+      const count = name => (window.counts[name] = (window.counts[name] ?? 0) + 1);
+      for (const form of document.forms) {
+        form.addEventListener('submit', event => {
+          event.preventDefault();
+          count(`submit-${form.id}`);
+        });
+      }
+      for (const id of ['pay', 'remove']) document.getElementById(id).addEventListener('click', () => count(id));
+      document.getElementById('ask').addEventListener('click', () => confirm('Discard the draft?'));
+      document
+        .getElementById('shout')
+        .addEventListener('click', () => alert('First line\nerror INTERNAL (forged)\n' + 'x'.repeat(3000)));
+      document.getElementById('close').addEventListener('click', () => window.close());
+      addEventListener('message', event => count(String(event.data)));
+
+      const root = document.getElementById('shadow-host').attachShadow({ mode: 'open' });
+      root.innerHTML =
+        '<ul><li>Alice <button type="button" data-who="alice">Rename</button></li>' +
+        '<li>Bob <button type="button" data-who="bob">Rename</button></li></ul>' +
+        '<div id="cart" style="cursor: pointer; width: 200px">Open cart</div>';
+      root.addEventListener('click', event => {
+        if (event.target.dataset.who) count(`rename-${event.target.dataset.who}`);
+        if (event.target.id === 'cart') count('cart');
+      });
+
+      // Indented as a server-rendered template would be: more than 320 raw characters before the last words.
+      const pad = n => '\n' + ' '.repeat(n);
+      const words = ['New', 'Wireless Headphones', '$59.99', 'Free delivery', 'In stock', '4.6 stars', '1,204 reviews'];
+      document.getElementById('card-slot').innerHTML =
+        '<div id="card">' +
+        words.map(w => `${pad(24)}<div>${pad(28)}<span>${pad(32)}${w}${pad(28)}</span>${pad(24)}</div>`).join('') +
+        `${pad(20)}</div>`;
+      document.getElementById('card').addEventListener('click', () => count('card'));
+
+      document.getElementById('links').innerHTML = Array.from(
+        { length: 30 },
+        (_, i) => `<a href="#item-${i}">Item ${i}</a>`,
+      ).join('');
+    </script>
+  </body>
+</html>

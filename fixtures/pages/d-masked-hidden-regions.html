@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Masked hidden regions</title
+    ><link rel="stylesheet" href="/style.css" />
+    <style>
+      #pay-frame {
+        border: 0;
+        width: 260px;
+        height: 40px;
+        display: block;
+      }
+    </style></head
+  >
+  <body>
+    <h1>Masked hidden regions</h1>
+    <!-- The page behind a modal: hidden from accessibility, still rendered. -->
+    <div id="background" aria-hidden="true">
+      <p
+        ><label>Notes <textarea id="hidden-note" name="note" rows="1">654321</textarea></label></p
+      >
+      <p
+        ><label
+          >Saved card
+          <select id="hidden-cards" name="saved">
+            <option>4111 1111 1111 1111</option>
+            <option>5555 5555 5555 4444</option>
+          </select></label
+        ></p
+      >
+      <iframe id="pay-frame" title="Payment frame" src="http://127.0.0.1:8787/d-card-frame.html"></iframe>
+    </div>
+    <form id="pay" onsubmit="return false;">
+      <label
+        >Pay with
+        <select id="pay-card" name="paycard" autocomplete="cc-number">
+          <option value="">Choose</option>
+          <option value="c1">4111 1111 1111 1111</option>
+          <option value="c2">5555 5555 5555 4444</option>
+        </select></label
+      >
+      <span id="pay-error"></span>
+    </form>
+    <p
+      ><label
+        >Payment method
+        <select id="method" name="method">
+          <option value="">Select one</option>
+          <option value="4111111111111111">Visa</option>
+          <option value="5555555555554444">Mastercard</option>
+        </select></label
+      ></p
+    >
+    <ul id="records">
+      <li id="rec1"
+        >Card on file
+        <select id="rec-card" name="reccard">
+          <option>4111 1111 1111 1111</option>
+        </select>
+        <span id="rec-status">Active</span>
+        <button type="button" id="rec-use">Use</button></li
+      >
+    </ul>
+    <script>
+      const byId = id => document.getElementById(id);
+      // Validation markup that changes with the selection.
+      byId('pay-card').addEventListener('change', () => {
+        byId('pay-error').textContent = 'Card selected';
+      });
+      window.used = 0;
+      byId('rec-use').addEventListener('click', () => window.used++);
+    </script>
+  </body>
+</html>

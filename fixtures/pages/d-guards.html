@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Guards across keys and frames</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Guards across keys and frames</h1>
+<p><label>Entry <input type="text" id="entry"></label> <label>Alternate <input type="text" id="alt"></label></p>
+<p><button type="button" id="pay">Pay now</button></p>
+<p><iframe id="same" title="Same-origin frame" srcdoc="<label>Frame field <input id='inner'></label>" width="300" height="40"></iframe></p>
+<p><iframe id="cross" title="Cross-site frame" src="http://127.0.0.1:8787/d-guards-child.html" width="300" height="40"></iframe></p>
+<form id="code-search" action="/submit" method="get">
+  <label>Search code <input type="text" name="q"></label>
+  <span id="pay-label">Pay now</span> <button type="submit" aria-labelledby="pay-label">Continue</button>
+</form>
+<p><label>Status <select id="status"><option value="pending">Same label</option><option value="paid">Same label</option></select></label></p>
+<p><label>Access code <input type="password" id="code" value="test-secret-742"></label></p>
+<pre id="log" class="note"></pre>
+<script>
+  window.payments = 0;
+  window.crossValue = '';
+  window.submits = [];
+  document.getElementById('pay').addEventListener('click', () => window.payments++);
+  document.getElementById('code-search').addEventListener('submit', e => {
+    e.preventDefault();
+    window.submits.push('code-search');
+  });
+  // The page refuses the change: the select goes back to the first option.
+  document.getElementById('status').addEventListener('change', e => (e.target.value = 'pending'));
+  // The cross-site frame reports its field's value.
+  window.addEventListener('message', e => (window.crossValue = String(e.data)));
+  const entry = document.getElementById('entry');
+  const frameField = () => document.getElementById('same').contentDocument.getElementById('inner');
+  // Page behaviours the scenarios turn on.
+  window.focusMovesToPay = () => entry.addEventListener('focus', () => document.getElementById('pay').focus());
+  window.keyupMovesToPay = () => entry.addEventListener('keyup', () => document.getElementById('pay').focus());
+  window.keydownMovesToPay = () => entry.addEventListener('keydown', () => document.getElementById('pay').focus(), { once: true });
+  window.keydownMovesToFrame = () => entry.addEventListener('keydown', () => frameField().focus(), { once: true });
+  window.keydownMovesToCross = () => entry.addEventListener('keydown', () => document.getElementById('cross').focus(), { once: true });
+  window.slowKeys = () => {
+    let n = 0;
+    entry.addEventListener('keydown', () => {
+      const start = performance.now();
+      while (performance.now() - start < 800) {}
+      if (++n === 6) document.getElementById('alt').focus();
+    });
+  };
+  window.revealOnKey = () => {
+    const code = document.getElementById('code');
+    code.addEventListener('keydown', () => (code.type = 'text'));
+  };
+  window.frameValue = () => frameField().value;
+</script>
+</body>
+</html>

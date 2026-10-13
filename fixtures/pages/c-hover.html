@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Hover</title><link rel="stylesheet" href="/style.css">
+<style>.menu { display: none; } #trigger:hover + .menu, .menu:hover { display: block; }</style></head>
+<body>
+<h1>Hover</h1>
+<button type="button" id="trigger">Account menu</button>
+<div class="menu" role="menu" aria-label="Account"><a role="menuitem" href="#profile">Profile</a></div>
+<p class="note">enters: <span id="enters">0</span>, clicks: <span id="clicks">0</span></p>
+<script>
+  window.enters = 0;
+  window.clicks = 0;
+  const t = document.getElementById('trigger');
+  t.addEventListener('mouseenter', () => (document.getElementById('enters').textContent = ++window.enters));
+  t.addEventListener('click', () => (document.getElementById('clicks').textContent = ++window.clicks));
+</script>
+</body>
+</html>

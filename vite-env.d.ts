@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_POSTHOG_API_KEY?: string;
+  /** Set only for unattended development runs (fixtures/autorun.mjs). */
+  readonly WXT_AUTORUN_URL?: string;
 }
 
 interface ImportMeta {

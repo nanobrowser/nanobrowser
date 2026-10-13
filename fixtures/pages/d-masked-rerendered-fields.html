@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Masked re-rendered fields</title
+    ><link rel="stylesheet" href="/style.css" />
+    <style>
+      input[type='text'] {
+        font: 16px monospace;
+        width: 240px;
+        height: 28px;
+      }
+    </style></head
+  >
+  <body>
+    <h1>Masked re-rendered fields</h1>
+    <p id="rerendered"
+      ><label>Card number <input type="text" id="live-card" name="cardnumber" autocomplete="cc-number" /></label
+    ></p>
+    <div id="background" aria-hidden="true">
+      <p
+        ><label>Saved card <input type="text" id="hidden-card" name="saved" autocomplete="cc-number" /></label
+      ></p>
+    </div>
+    <p
+      ><label>Card <input type="text" id="plain-card" name="card" /></label
+    ></p>
+    <fieldset id="settings" disabled>
+      <legend
+        ><label><input type="checkbox" id="unlock" /> Edit these settings</label></legend
+      >
+      <label>Display name <input type="text" id="display" name="display" /></label>
+    </fieldset>
+    <script>
+      const byId = id => document.getElementById(id);
+      byId('live-card').value = '4111111111111111';
+      byId('hidden-card').value = '5555555555554444';
+      // A framework re-render: the field is replaced by a new element with the same value.
+      window.rerender = () => {
+        const old = byId('live-card');
+        const fresh = old.cloneNode(true);
+        fresh.value = old.value;
+        old.replaceWith(fresh);
+      };
+      // The page accepts digits only and clears anything else.
+      byId('plain-card').addEventListener('input', e => {
+        if (!/^\d*$/.test(e.target.value)) e.target.value = '';
+      });
+      byId('unlock').addEventListener('change', e => {
+        byId('settings').disabled = !e.target.checked;
+      });
+    </script>
+  </body>
+</html>

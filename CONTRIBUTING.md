@@ -1,56 +1,67 @@
-# Contributing to NanoBrowser
+# Contributing to Nanobrowser
 
-We deeply appreciate your interest in contributing to NanoBrowser! Every contribution helps make Nanobrowser more powerful and accessible for everyone.
+Thank you for your interest in contributing to Nanobrowser! Every contribution helps make it better for everyone.
 
-## Quick Start
+## Quick start
 
-1. Fork and clone the repository
-2. Create a new branch (`git checkout -b feature-name`)
-3. Make your changes
-4. Submit a Pull Request
+1. Fork and clone the repository.
+2. Create a branch (`git checkout -b feature-name`).
+3. Make your changes.
+4. Open a pull request.
 
 ## Local development
 
-Use Node.js 24 LTS (v24.11.0 or higher is required, see `engines` in `package.json`) and pnpm 10. The exact version is pinned in `package.json`: any global pnpm 10 or newer switches to it automatically, and older pnpm and npm are refused at install time. If you don't have pnpm yet, run `corepack enable` once for each Node installation:
+Use Node.js 24 LTS (v24.11.0 or higher, see `engines` in `package.json`) and pnpm 10. The exact pnpm version is pinned in `package.json`: run `corepack enable` once, or use `corepack pnpm <script>`, and the pinned version is used.
 
 ```bash
-corepack enable # skip if pnpm 10+ is already installed
+corepack enable # skip if pnpm 10 is already installed
 pnpm install
 pnpm dev
 ```
 
-Load the repository's `dist/` folder as an unpacked extension in Chrome or Edge. The WXT browser runner is disabled by default, so you can use your existing browser profile. WXT hot-updates pages, including shared code under `src/`, and reloads the extension for background/content edits.
+Load the repository's `dist/` folder as an unpacked extension in Chrome or Edge (`chrome://extensions` or `edge://extensions`, Developer mode, Load unpacked). WXT rebuilds as you edit and reloads the extension.
 
-`entrypoints/` contains thin wrappers importing the background, content, side panel, and options source under `src/`. Keep application logic in those source directories.
+| Command               | What it does                                                 |
+| --------------------- | ------------------------------------------------------------ |
+| `pnpm build`          | Production build into `dist/`                                |
+| `pnpm zip`            | Production build, packed into `dist-zip/nanobrowser-<version>.zip` |
+| `pnpm type-check`     | TypeScript checks                                            |
+| `pnpm lint`           | ESLint, including the import rules between the parts of the code |
+| `pnpm test`           | Unit tests                                                   |
+| `pnpm prettier`       | Format the repository                                        |
+| `pnpm install-chrome` | Install Chrome for Testing for the automated browser checks  |
+| `pnpm autorun <check>` | Run browser checks headless against the local test pages, for example `pnpm autorun scenarios` |
 
-Locales live in `public/_locales/`. During `pnpm dev`, editing them regenerates the i18n types, and WXT copies `_locales` and reloads the extension. WXT is pinned to `0.21.4`; upgrades should explicitly verify the config hooks, manifest, and CSS baseline.
+Before you open a pull request, make sure `pnpm prettier`, `pnpm lint`, `pnpm type-check` and `pnpm test` pass. CI runs the same checks, and a build, on every pull request. The browser checks (`pnpm autorun`) are run by maintainers by hand.
 
-Run `pnpm build` for production, `pnpm zip` for an archive in `dist-zip/`, `pnpm test` for unit tests, and `pnpm type-check` for TypeScript checks.
+[AGENTS.md](AGENTS.md) (also `CLAUDE.md`) describes the layout of the code, the design rules that are not open for change, and the working rules. Please read it before a larger change. It is also the guide for AI coding assistants.
 
-`pnpm type-check` passes; `pnpm exec eslint .` reports one pre-existing error (`no-explicit-any` in `src/background/browser/dom/history/view.ts`). Avoid introducing new failures. The `pnpm lint` script auto-fixes files; use `pnpm exec eslint <path>` for a check without fixes.
+## How can I contribute?
 
-## How Can I Contribute?
+### Reporting bugs
 
-### Reporting Bugs
-- Search existing issues first
-- Include:
-  - Clear description
-  - Steps to reproduce
-  - Environment details (OS, browser version)
-  - Screenshots if applicable
+- Search the existing issues first.
+- Include a clear description, the steps to reproduce, your environment (OS, browser and its version, Nanobrowser version), the provider and model you used, and screenshots if they help.
+- Never include API keys, passwords or other secrets.
 
-### Suggesting Enhancements
-- Open an issue with a clear title and detailed description
-- Explain why this enhancement would be useful
+### Suggesting enhancements
 
-### Code Contributions
-1. Follow the existing code style
-2. Write clear commit messages in present tense ("Add feature" not "Added feature")
-3. Test your changes thoroughly
-4. Update documentation if needed
-5. Create a Pull Request with a clear description
-6. Be responsive to feedback and address review comments promptly
+- Open an issue with a clear title and a detailed description.
+- Explain why the enhancement would be useful.
+
+### Code contributions
+
+1. Follow the existing code style (Prettier and ESLint enforce most of it).
+2. Keep each pull request to one change.
+3. Add unit tests for pure functions, and a test page and scenario for anything that needs a browser.
+4. Write clear commit messages in the present tense ("Add feature", not "Added feature").
+5. Update the documentation if needed.
+6. Respond to review comments.
+
+## Security
+
+Please do not report security vulnerabilities in public issues. See [SECURITY.md](SECURITY.md).
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the project's license terms.
+By contributing, you agree that your contributions are licensed under the project's [Apache License 2.0](LICENSE).

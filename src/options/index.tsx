@@ -1,17 +1,11 @@
 import { createRoot } from 'react-dom/client';
-// Shared base styles first, so the page's own CSS can override them.
-import '@extension/ui/lib/global.css';
-import './index.css';
-import Options from './Options';
+import '@src/ui/index.css';
+import { watchSystemTheme } from '@src/ui/theme';
+import { installTestHook } from '@src/side-panel/test-hook';
+import { App } from './App';
 
-function init() {
-  const appContainer = document.querySelector('#app-container');
-  if (!appContainer) {
-    throw new Error('Can not find #app-container');
-  }
-  const root = createRoot(appContainer);
-  appContainer.className = 'min-w-[768px]';
-  root.render(<Options />);
-}
-
-init();
+const container = document.querySelector('#app-container');
+if (!container) throw new Error('Cannot find #app-container');
+watchSystemTheme();
+installTestHook(0, 'options');
+createRoot(container).render(<App />);

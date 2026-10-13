@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Dialogs</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Dialogs</h1>
+<p><button type="button" id="confirm">Ask confirm</button> <button type="button" id="prompt">Ask prompt</button> <button type="button" id="later">Alert later</button></p>
+<p>result: <span id="result">none</span></p>
+<script>
+  const out = v => (document.getElementById('result').textContent = String(v));
+  document.getElementById('confirm').addEventListener('click', () => out(confirm('Delete draft?')));
+  document.getElementById('prompt').addEventListener('click', () => out(prompt('Your name?', 'Ada')));
+  document.getElementById('later').addEventListener('click', () => setTimeout(() => alert('Later'), 300));
+</script>
+</body>
+</html>

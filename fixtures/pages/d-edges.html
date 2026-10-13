@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Edges of keys, forms and refs</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Edges of keys, forms and refs</h1>
+<p><label>Entry <input type="text" id="entry"></label> <label>Other <input type="text" id="other"></label></p>
+<p><button type="button" id="pay">Pay now</button> <button type="button" id="preview">Preview</button> <button type="button" id="other-action">Other action</button> <button type="button" id="unnamed" style="width:100px;height:30px"></button></p>
+<form id="checkout" action="/submit" method="post"><button type="submit">Pay now</button></form>
+<form id="image-form" action="/submit" method="get">
+  <label>Image form code <input type="text" name="code"></label>
+  <input type="image" alt="Pay now" width="80" height="30" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='30'%3E%3Crect width='80' height='30' fill='%23336'/%3E%3C/svg%3E">
+</form>
+<p><label>Rewrite status <select id="rewrite"><option value="pending">Pending</option><option value="paid">Paid</option></select></label></p>
+<p><label>Due date <input type="date" id="due" value="2026-01-01"></label></p>
+<pre id="log" class="note"></pre>
+<script>
+  window.effects = [];
+  const effect = name => window.effects.push(name);
+  for (const id of ['pay', 'preview', 'unnamed']) document.getElementById(id).addEventListener('click', () => effect(id));
+  for (const form of document.forms) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      effect(`submit ${form.id}`);
+    });
+  }
+  const entry = document.getElementById('entry');
+  // The page renames the option it was asked for, so the request no longer matches what is selected.
+  document.getElementById('rewrite').addEventListener('change', e => (e.target.selectedOptions[0].value = 'pending'));
+  // The page puts the date back, a little later.
+  const due = document.getElementById('due');
+  due.addEventListener('change', () => setTimeout(() => (due.value = '2026-01-01'), 10));
+  // Page behaviours the scenarios turn on.
+  window.bodyKeyMovesToPay = () =>
+    document.addEventListener('keydown', () => document.getElementById('pay').focus(), { once: true });
+  window.closedShadowPay = () => {
+    const host = document.createElement('div');
+    host.id = 'shadow-host';
+    document.body.append(host);
+    const root = host.attachShadow({ mode: 'closed' });
+    const button = document.createElement('button');
+    button.textContent = 'Pay now';
+    button.addEventListener('click', () => effect('shadow pay'));
+    root.append(button);
+    button.focus();
+  };
+  window.shiftAsks = () =>
+    entry.addEventListener('keydown', e => {
+      if (e.key === 'Shift' && confirm('Continue?')) document.getElementById('pay').focus();
+    });
+  window.inputJoinsCheckout = () => entry.addEventListener('input', () => entry.setAttribute('form', 'checkout'));
+  window.thirdKeyMovesFocus = () => {
+    let n = 0;
+    entry.addEventListener('keydown', () => {
+      if (++n === 3) document.getElementById('other').focus();
+    });
+  };
+  window.askCode = () => setTimeout(() => (window.answer = prompt('Enter the one-time code')), 0);
+</script>
+</body>
+</html>

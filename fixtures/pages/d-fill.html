@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Fill a form</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Fill a form</h1>
+<form id="signup" action="/submit" method="post">
+  <p><label>Full name <input type="text" name="name"></label></p>
+  <p><label>Email <input type="email" name="email"></label></p>
+  <p><label>Country <select name="country"><option value="">Choose</option><option value="fr">France</option><option value="jp">Japan</option></select></label></p>
+  <p><label>Notes <textarea name="notes"></textarea></label></p>
+  <p><label><input type="checkbox" name="terms"> I agree</label></p>
+  <p><button type="submit">Create account</button></p>
+</form>
+<script>
+  window.submits = [];
+  document.getElementById('signup').addEventListener('submit', e => {
+    e.preventDefault();
+    window.submits.push(Object.fromEntries(new FormData(e.target)));
+  });
+</script>
+</body>
+</html>

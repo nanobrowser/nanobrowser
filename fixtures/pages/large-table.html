@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Large table</title
+    ><link rel="stylesheet" href="/style.css"
+  /></head>
+  <body>
+    <h1>Large table</h1>
+    <p class="note">2,000 rows, each with a link and a button. Rows are generated once at load.</p>
+    <table aria-label="Invoices">
+      <thead
+        ><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead
+      >
+      <tbody id="rows"></tbody>
+    </table>
+    <script>
+      const customers = ['Acme Corp', 'Globex', 'Initech', 'Umbrella', 'Hooli', 'Stark Industries'];
+      const statuses = ['Paid', 'Overdue', 'Draft'];
+      const rows = [];
+      for (let i = 0; i < 2000; i++) {
+        const id = 1000 + i;
+        rows.push(
+          `<tr><td><a href="#inv-${id}">INV-${id}</a></td><td>${customers[i % customers.length]}</td>` +
+            `<td>$${(((i * 37) % 5000) + 20).toFixed(2)}</td><td>${statuses[i % statuses.length]}</td>` +
+            `<td><button type="button">Archive</button></td></tr>`,
+        );
+      }
+      document.getElementById('rows').innerHTML = rows.join('');
+    </script>
+  </body>
+</html>

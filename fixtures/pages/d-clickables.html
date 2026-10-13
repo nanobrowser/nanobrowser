@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Non-semantic clickables</title><link rel="stylesheet" href="/style.css">
+<style>
+  .card { border: 1px solid #94a3b8; padding: 10px; width: 220px; margin: 6px 0; cursor: pointer; }
+  .card span { cursor: pointer; }
+  .icon { display: inline-block; width: 28px; height: 28px; background: #cbd5e1; cursor: pointer; }
+  .switch { position: relative; display: inline-flex; gap: 6px; align-items: center; padding: 4px; border: 1px dashed #64748b; }
+  .switch input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+  .knob { width: 30px; height: 16px; background: #94a3b8; border-radius: 8px; }
+  .switch input:checked + .knob { background: #16a34a; }
+  .scroller { height: 80px; width: 260px; overflow: auto; border: 1px solid #cbd5e1; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; background: #e2e8f0; }
+</style></head>
+<body>
+<h1>Non-semantic clickables</h1>
+<div class="card" id="open-settings">Open settings <span>›</span></div>
+<div class="icon" id="icon-only" title=""></div>
+<p><span class="chip" tabindex="0" id="chip">Filter: open</span></p>
+<p><label class="switch" id="terms-label"><input type="checkbox" id="terms"><span class="knob"></span> I accept the <a href="#terms-text" id="terms-link">terms</a></label></p>
+<p><label class="switch"><input type="checkbox" id="newsletter" style="display:none"><span class="knob"></span> Newsletter</label></p>
+<div class="scroller" id="scroller"><p>Line 1</p><p>Line 2</p><p>Line 3</p><p>Line 4</p><p>Line 5</p><p>Line 6</p></div>
+<p class="note">clicks: <span id="log"></span></p>
+<script>
+  window.clicks = [];
+  const note = id => {
+    window.clicks.push(id);
+    document.getElementById('log').textContent = window.clicks.join(', ');
+  };
+  document.getElementById('open-settings').addEventListener('click', () => note('open-settings'));
+  document.getElementById('icon-only').addEventListener('click', () => note('icon-only'));
+  document.getElementById('chip').addEventListener('click', () => note('chip'));
+  document.getElementById('terms-link').addEventListener('click', e => {
+    e.preventDefault();
+    note('terms-link');
+  });
+</script>
+</body>
+</html>

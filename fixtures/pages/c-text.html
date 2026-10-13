@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Text and form controls</title><link rel="stylesheet" href="/style.css">
+<style>.editor { border: 1px solid #94a3b8; width: 360px; } .toolbar { background: #e2e8f0; padding: 2px 6px; } #rich { padding: 6px; min-height: 40px; }</style></head>
+<body>
+<h1>Text and form controls</h1>
+<p><label>Controlled name <input type="text" id="controlled" value=""></label> state: <span id="controlled-state"></span></p>
+<p><label>Controlled notes <textarea id="notes"></textarea></label> state: <span id="notes-state"></span></p>
+<div class="editor"><div class="toolbar" id="toolbar">B I U</div><div contenteditable="true" role="textbox" aria-label="Rich editor" id="rich"><p>Hello <b>world</b></p></div></div>
+<p><label>Phone <input type="tel" id="phone" value=""></label></p>
+<p><label>Country <select id="country"><option value="">Choose</option><option value="us">United States</option><option value="gb">United Kingdom</option><option value="fr">France</option></select></label></p>
+<p><label>Plan <select id="plan"><option value="a">Standard</option><option value="b">Standard</option><option value="c">Premium</option></select></label></p>
+<p><label>Start date <input type="date" id="date"></label> <label>Volume <input type="range" id="volume" min="0" max="10" value="2"></label></p>
+<p><label><input type="checkbox" id="terms"> I agree</label></p>
+<p><span role="switch" tabindex="0" aria-checked="false" id="dark" aria-label="Dark mode">Dark mode</span></p>
+<p><label><input type="radio" name="size" value="s" checked> Small</label> <label><input type="radio" name="size" value="l"> Large</label></p>
+<form id="search" role="search"><label>Search <input type="search" id="q" name="q"></label></form>
+<p><label>Password <input type="password" id="pw" value=""></label></p>
+<p class="note">keydowns in Controlled name: <span id="keys">0</span>; searches: <span id="searches"></span></p>
+<script>
+  // A framework-like controlled input: state follows input events, and every render writes state back to the field,
+  // so a value assigned directly (without input events) is reverted.
+  const state = { controlled: '', notes: '' };
+  for (const id of ['controlled', 'notes']) {
+    document.getElementById(id).addEventListener('input', e => (state[id] = e.target.value));
+  }
+  setInterval(() => {
+    for (const id of ['controlled', 'notes']) {
+      const el = document.getElementById(id);
+      if (el.value !== state[id]) el.value = state[id];
+      document.getElementById(`${id}-state`).textContent = state[id];
+    }
+  }, 100);
+  window.formState = state;
+  window.keys = 0;
+  document.getElementById('controlled').addEventListener('keydown', () => (document.getElementById('keys').textContent = ++window.keys));
+  const phone = document.getElementById('phone');
+  phone.addEventListener('input', () => {
+    const d = phone.value.replace(/\D/g, '').slice(0, 10);
+    phone.value = d.length > 6 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : d;
+  });
+  const dark = document.getElementById('dark');
+  dark.addEventListener('click', () => dark.setAttribute('aria-checked', dark.getAttribute('aria-checked') === 'true' ? 'false' : 'true'));
+  window.searches = [];
+  document.getElementById('search').addEventListener('submit', e => {
+    e.preventDefault();
+    window.searches.push(document.getElementById('q').value);
+    document.getElementById('searches').textContent = window.searches.join(', ');
+  });
+</script>
+</body>
+</html>

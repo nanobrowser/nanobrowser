@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Keys and the gate</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Keys and the gate</h1>
+<form id="payment" action="/submit" method="post">
+  <label>Card number <input type="text" name="card"></label>
+  <label>Name on card <input type="text" name="holder"></label>
+  <label><input type="checkbox" name="save"> Save this card</label>
+  <label>Note to seller <textarea name="note"></textarea></label>
+  <button type="submit">Pay now</button>
+</form>
+<form id="search-pay" action="/submit" method="get">
+  <label>Gift code <input type="text" name="code"></label>
+  <button type="submit">Pay now</button>
+</form>
+<p><button type="button" id="delete-account">Delete account</button></p>
+<p>
+  <label>First field <input type="text" id="first"></label>
+  <label>Second field <input type="text" id="second"></label>
+</p>
+<pre id="log" class="note"></pre>
+<script>
+  window.clicks = {};
+  window.submits = [];
+  const log = t => (document.getElementById('log').textContent += `${t}\n`);
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || !e.isTrusted) return;
+    window.clicks[b.id || b.textContent] = (window.clicks[b.id || b.textContent] ?? 0) + 1;
+    log(`click ${b.id || b.textContent}`);
+  });
+  for (const form of document.forms) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      window.submits.push(form.id);
+      log(`submit ${form.id}`);
+    });
+  }
+  // A page that moves focus from the first field to the second on its first key (the scenario turns it on).
+  window.moveFocusOnKey = () => {
+    document.getElementById('first').addEventListener('keydown', () => document.getElementById('second').focus(), { once: true });
+  };
+</script>
+</body>
+</html>

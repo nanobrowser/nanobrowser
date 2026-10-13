@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Alert on click</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>The click handler calls alert()</h1>
+<button type="button" id="save">Save settings</button>
+<button type="button" id="other">Other action</button>
+<p class="note">clicks: <span id="clicks">0</span></p>
+<script>
+  window.clicks = 0;
+  document.getElementById('save').addEventListener('click', () => {
+    document.getElementById('clicks').textContent = ++window.clicks;
+    alert('Settings saved');
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Wait and navigate deadlines</title
+    ><link rel="stylesheet" href="/style.css"
+  /></head>
+  <body>
+    <h1>Wait and navigate deadlines</h1>
+    <!-- With ?alert, a script opens an alert before DOMContentLoaded: the document stops loading until it is closed. -->
+    <script>
+      if (location.search.includes('alert')) alert('Welcome back');
+    </script>
+    <p id="after">Loaded after the script</p>
+  </body>
+</html>

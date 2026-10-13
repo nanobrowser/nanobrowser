@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Long page</title><link rel="stylesheet" href="/style.css">
+<style>.item { height: 28px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #e2e8f0; }</style></head>
+<body>
+<h1>Long page</h1>
+<p class="note">120 items, each 29 px tall: about 3,500 px, several viewports.</p>
+<div id="items"></div>
+<script>
+  const rows = [];
+  for (let i = 1; i <= 120; i++) {
+    rows.push(`<div class="item" role="listitem"><span>Item ${i}: a moderately long description so that the outline grows quickly</span><button type="button">Open ${i}</button></div>`);
+  }
+  document.getElementById('items').setAttribute('role', 'list');
+  document.getElementById('items').innerHTML = rows.join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Observation form</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<nav aria-label="Main">
+  <a href="/index.html">Home</a>
+  <a href="/form.html" aria-current="page">Form</a>
+</nav>
+<main>
+  <h1>Observation form</h1>
+  <p>Roles, states and values as Chrome computes them. Sensitive values must be masked.</p>
+  <form id="profile" action="/submit" method="post">
+    <label>Full name <input type="text" name="name" value="Ada Lovelace" required></label>
+    <label>Email <input type="email" name="email" value="ada@example.test" readonly></label>
+    <label>Password <input type="password" name="password" value="hunter2-secret"></label>
+    <label>Card number <input type="text" name="cardnumber" autocomplete="cc-number" value="4111 1111 1111 1111"></label>
+    <label>Security code <input type="text" name="cvc" autocomplete="cc-csc" value="123"></label>
+    <label>One-time code <input type="text" name="otp" autocomplete="one-time-code" value="654321"></label>
+    <label>Status
+      <select name="status">
+        <option>All</option>
+        <option selected>Overdue</option>
+        <option>Paid</option>
+      </select>
+    </label>
+    <label><input type="checkbox" name="overdue" checked> Overdue only</label>
+    <label><input type="checkbox" name="archived"> Include archived</label>
+    <fieldset>
+      <legend>Plan</legend>
+      <label><input type="radio" name="plan" value="free"> Free</label>
+      <label><input type="radio" name="plan" value="pro" checked> Pro</label>
+    </fieldset>
+    <div role="switch" aria-checked="true" tabindex="0" aria-label="Notifications">On</div>
+    <label>Volume <input type="range" name="volume" min="0" max="10" value="7"></label>
+    <label>Notes <textarea name="notes">First line
+Second line</textarea></label>
+    <div contenteditable="true" role="textbox" aria-label="Rich editor"><p>Rich <b>text</b></p></div>
+    <button type="button" aria-expanded="false" aria-controls="more">More options</button>
+    <button type="button" aria-pressed="true">Bold</button>
+    <button type="submit" disabled>Save</button>
+  </form>
+  <div role="tablist" aria-label="Views">
+    <button role="tab" aria-selected="true">Table</button>
+    <button role="tab" aria-selected="false">Chart</button>
+  </div>
+  <h2>Invoices</h2>
+  <table aria-label="Invoice list">
+    <tr><th>Invoice</th><th>Customer</th><th>Action</th></tr>
+    <tr><td><a href="#1042">INV-1042</a></td><td>Acme Corp</td><td><button type="button">Delete</button></td></tr>
+    <tr><td><a href="#1043">INV-1043</a></td><td>Globex</td><td><button type="button">Delete</button></td></tr>
+  </table>
+  <details><summary>Shipping details</summary><p>Hidden until opened.</p></details>
+  <div tabindex="0" aria-label="Custom card" onclick="void 0">Custom focusable card</div>
+  <iframe title="Embedded" src="/form-inner.html" width="400" height="90"></iframe>
+  <iframe title="Tiny" src="/form-inner.html" width="4" height="4"></iframe>
+  <iframe title="Hidden" src="/form-inner.html" style="display: none"></iframe>
+</main>
+</body>
+</html>

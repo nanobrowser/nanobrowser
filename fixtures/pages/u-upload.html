@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Uploads</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<!-- Upload fixtures: a plain input in a form, a multiple input, a button that opens a hidden input, and a drop zone
+     with a hidden input inside (the shape of React dropzones). -->
+<h1>Uploads</h1>
+<form method="post" action="/submit" enctype="multipart/form-data">
+  <label>Document <input type="file" name="doc" id="doc" /></label>
+  <button type="submit">Send document</button>
+</form>
+<p id="doc-status" aria-live="polite">No document</p>
+<p><label>Photos <input type="file" name="photos" id="photos" multiple accept="image/*" /></label></p>
+<p id="photos-status">No photos</p>
+<p><input type="file" id="hidden" hidden /><button type="button" id="pick">Choose a file</button></p>
+<p id="hidden-status">No file chosen</p>
+<div id="zone" role="button" tabindex="0" aria-label="Drop files here" style="border: 2px dashed #888; padding: 1em">
+  Drop files here, or click to choose
+  <input type="file" id="zone-input" multiple style="display: none" />
+</div>
+<p id="zone-status">No files dropped</p>
+<script>
+  window.hits = [];
+  const list = input => [...input.files].map(f => `${f.name} ${f.size}`).join('; ');
+  const watch = (id, out, empty) => {
+    const input = document.getElementById(id);
+    input.addEventListener('change', () => {
+      window.hits.push('change:' + id);
+      document.getElementById(out).textContent = list(input) || empty;
+    });
+    input.addEventListener('input', () => window.hits.push('input:' + id));
+  };
+  watch('photos', 'photos-status', 'No photos');
+  watch('hidden', 'hidden-status', 'No file chosen');
+  watch('zone-input', 'zone-status', 'No files dropped');
+  // The document's text is read in the page, so a check sees the bytes arrived, not only a name.
+  const doc = document.getElementById('doc');
+  doc.addEventListener('change', async () => {
+    window.hits.push('change:doc');
+    const file = doc.files[0];
+    document.getElementById('doc-status').textContent = file
+      ? `${file.name} ${file.size}: ${(await file.text()).slice(0, 60)}`
+      : 'No document';
+  });
+  document.getElementById('pick').addEventListener('click', () => document.getElementById('hidden').click());
+  document.getElementById('zone').addEventListener('click', () => document.getElementById('zone-input').click());
+</script>
+</body>
+</html>

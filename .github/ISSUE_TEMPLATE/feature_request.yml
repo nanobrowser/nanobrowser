@@ -1,13 +1,13 @@
 name: Feature
 description: Suggest an idea for Nanobrowser
-title: "[Feature]: "
-labels: ["enhancement", "needs-triage"]
+title: '[Feature]: '
+labels: ['enhancement', 'needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for suggesting a new feature!
-        
+
   - type: textarea
     id: problem
     attributes:
@@ -15,7 +15,7 @@ body:
       placeholder: I'm frustrated when [...]
     validations:
       required: true
-      
+
   - type: textarea
     id: solution
     attributes:
@@ -23,7 +23,7 @@ body:
       description: What would you like to see happen?
     validations:
       required: true
-      
+
   - type: textarea
     id: context
     attributes:

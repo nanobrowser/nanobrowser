@@ -1,7 +1,7 @@
 name: Documentation
 description: Suggest a change to our documentation
-title: "[Docs]: "
-labels: ["docs", "needs-triage"]
+title: '[Docs]: '
+labels: ['docs', 'needs-triage']
 body:
   - type: markdown
     attributes:

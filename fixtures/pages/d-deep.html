@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Deep nesting</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Deep nesting</h1>
+<p><button type="button" id="top">Top button</button></p>
+<div id="deep"></div>
+<script>
+  // Built by script: the HTML parser stops nesting at 512 levels, so only script can go deeper.
+  const depth = Number(new URLSearchParams(location.search).get('depth') ?? 1500);
+  let node = document.getElementById('deep');
+  for (let i = 0; i < depth; i++) {
+    const div = document.createElement('div');
+    div.style.margin = '0';
+    node.append(div);
+    node = div;
+  }
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'bottom';
+  button.textContent = 'Bottom button';
+  node.append(button);
+  document.title = `Deep nesting (${depth})`;
+</script>
+</body>
+</html>

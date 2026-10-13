@@ -1,0 +1,25 @@
+<!doctype html>
+<!-- Set G: writes under the host's policy. window.hits counts what reached the page. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Messages</title>
+    <script>
+      window.hits = [];
+      function hit(what) { window.hits.push(what); }
+    </script>
+  </head>
+  <body>
+    <h1>Reply to Dana</h1>
+    <form id="reply" method="post" onsubmit="event.preventDefault(); hit('send')">
+      <textarea aria-label="Message">Thanks!</textarea>
+      <button type="submit">Send</button>
+    </form>
+    <button class="btn-delete" onclick="hit('delete')">Delete draft</button>
+    <form action="http://127.0.0.1:8787/submit" method="post">
+      <input aria-label="Feedback" name="feedback" value="ok" />
+      <button type="submit">Submit feedback</button>
+    </form>
+    <iframe title="Embedded widget" src="http://127.0.0.1:8787/g-writes-frame.html" width="300" height="80"></iframe>
+  </body>
+</html>

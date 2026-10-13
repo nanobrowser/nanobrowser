@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * The brand (the Nanobrowser brandbook). Primary #0073DC and sky #19C2FF on a pale sky canvas in light; a deep navy
+ * canvas in dark. Text colours meet WCAG AA on the canvas, the surfaces and the cards. Fonts are the system's: sans for
+ * the interface, and the system's serif for answers, as in Claude in Chrome's side panel.
+ */
+:root {
+  --nb-canvas: 250 251 253;
+  --nb-bg: 255 255 255;
+  --nb-fg: 15 27 45;
+  --nb-muted: 91 107 130;
+  --nb-border: 214 227 240;
+  --nb-surface: 234 244 252;
+  --nb-accent: 0 115 220;
+  --nb-accent-strong: 0 95 184;
+  --nb-sky: 25 194 255;
+  --nb-link: 0 104 201;
+  --nb-auto: 180 83 9;
+  --nb-shadow: 30 70 150;
+  color-scheme: light;
+}
+
+.dark {
+  --nb-canvas: 10 18 32;
+  --nb-bg: 17 29 50;
+  --nb-fg: 238 244 255;
+  --nb-muted: 148 166 192;
+  --nb-border: 40 58 88;
+  --nb-surface: 26 42 69;
+  --nb-accent: 0 115 220;
+  --nb-accent-strong: 26 132 232;
+  --nb-sky: 25 194 255;
+  --nb-link: 92 176 255;
+  --nb-auto: 251 191 36;
+  --nb-shadow: 0 8 24;
+  color-scheme: dark;
+}
+
+html,
+body,
+#app-container {
+  height: 100%;
+}
+
+body {
+  @apply bg-nb-canvas font-sans text-sm leading-normal text-nb-fg antialiased;
+}
+
+/* Checkboxes, radios and sliders in the brand's blue. */
+input,
+progress {
+  accent-color: rgb(var(--nb-accent));
+}
+
+h1,
+h2,
+h3 {
+  @apply tracking-tight;
+}
+
+::selection {
+  @apply bg-nb-sky/30;
+}
+
+/* The brand's wave behind the welcome and microphone pages; a navy field in dark. */
+.nb-wave {
+  background:
+    url('/brand/wave.jpg') center top / cover no-repeat fixed,
+    rgb(var(--nb-canvas));
+}
+.dark .nb-wave {
+  background: linear-gradient(140deg, #0b1730 0%, #0c1626 40%, #0a1220 70%, #0f1c34 100%) fixed;
+}
+
+/* The panel's new-chat page, after Gemini in Chrome's: the brand background's strongest blue band, turned upside down
+   and shrunk to 16 by 8 pixels so it spreads into a soft field, fills the lower 65% and fades in from the middle, under
+   the quick start and the composer; a blue glow at the bottom of the navy field in dark. */
+.nb-start {
+  background:
+    linear-gradient(to bottom, #f6fcff 35%, rgb(246 252 255 / 0) 75%),
+    url('/brand/panel-wave.png') center bottom / 100% 65% no-repeat,
+    #f6fcff;
+}
+.dark .nb-start {
+  background: radial-gradient(120% 45% at 30% 100%, rgb(0 115 220 / 0.25), transparent 70%), rgb(var(--nb-canvas));
+}
+
+/* The settings page's field: the plain canvas in light, as under the panel's conversation, so the forms read calmly
+   and the page matches the panel; a navy gradient in dark. */
+.dark .nb-field {
+  background: linear-gradient(140deg, #0b1730 0%, #0c1626 40%, #0a1220 70%, #0f1c34 100%) fixed;
+}
+
+/* Thin, quiet scrollbars in the narrow panel. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--nb-border)) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* An answer in the transcript: the system's serif at reading size. Code stays monospaced. */
+.nb-answer {
+  @apply font-serif text-[15px] leading-[1.45];
+}
+
+.nb-markdown {
+  @apply break-words leading-relaxed;
+}
+.nb-answer .nb-markdown {
+  @apply leading-[inherit];
+}
+.nb-markdown > * + * {
+  @apply mt-2;
+}
+.nb-answer .nb-markdown > * + * {
+  @apply mt-2.5;
+}
+.nb-markdown h1,
+.nb-markdown h2,
+.nb-markdown h3 {
+  @apply font-semibold tracking-tight;
+}
+.nb-markdown h1 {
+  @apply text-base;
+}
+.nb-markdown ul {
+  @apply list-disc pl-5;
+}
+.nb-markdown ol {
+  @apply list-decimal pl-5;
+}
+.nb-markdown li::marker {
+  @apply text-nb-muted;
+}
+.nb-markdown code {
+  @apply rounded bg-nb-surface px-1 font-mono text-[0.85em];
+}
+.nb-markdown pre code {
+  @apply bg-transparent p-0;
+}
+.nb-markdown blockquote {
+  @apply border-l-2 border-nb-sky pl-2 text-nb-muted;
+}
+/* Tables: a rounded frame, a tinted header, lines between rows only. */
+.nb-table-frame {
+  @apply overflow-x-auto rounded-lg border border-nb-border;
+}
+.nb-table {
+  @apply min-w-full border-collapse;
+}
+.nb-table th,
+.nb-table td {
+  @apply border-b border-nb-border px-3 py-1.5 text-left align-top;
+}
+.nb-table tr:last-child td {
+  @apply border-b-0;
+}
+.nb-table th {
+  @apply bg-nb-surface font-semibold;
+}
