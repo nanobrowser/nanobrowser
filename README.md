@@ -28,25 +28,25 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 
 ## 🔥 Why Nanobrowser?
 
-- **Free and open source.** No subscription. Bring your own API key, or a local model, and pay only your provider.
-- **Local first.** It runs in your browser. Your keys stay in the browser and go only to their own provider. Page content goes only to the model you chose.
-- **You stay in control.** You decide how much the agent may change on its own. Payments, sign-in secrets and access grants are always your step.
-- **Reliable.** A deterministic browser layer underneath checks every action and reports what really happened, so the agent does not guess.
+- **Free.** No subscription and no hidden costs. Use your own API key or a local model, and pay only for what you use.
+- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose.
+- **Flexible LLM.** Choose from many cloud providers, or run a model on your own computer, and switch whenever you like. No lock-in.
+- **Open source.** All the code is public, so you can see exactly how it works and change it to fit your needs.
 
 ## 📊 Key Features
 
-- **One agent in the side panel**: tell it a task in plain words, and it reads pages, clicks, types and moves between tabs to get it done.
-- **A side panel per tab**: each task works in its own tab group, and several tasks can run at once while you keep browsing.
-- **Permission modes** decide when the agent asks you (see below).
-- **Many models**: cloud providers and local models, with the model and the reasoning effort chosen per conversation.
-- **Attachments**: add images and text files to a message, or a screenshot of the current tab. The agent can also upload your attachments into a page.
-- **Saved files**: the agent can save what it made, such as a CSV table or a Markdown report, to your Downloads folder, once you let Nanobrowser save files (Chrome asks you the first time).
-- **Shortcuts**: save a prompt you use often and start it with `/`, with an optional start page and model.
-- **Voice input** through OpenAI's or Gemini's voice model.
-- **Custom instructions** that every conversation reads.
-- **Long tasks**: the conversation is compacted automatically before the model's context window fills, and every message you sent is kept in full.
-- **Conversation history**: continue, edit and restart from any message, or export a conversation as Markdown.
-- **Three languages**: English, Simplified Chinese and Traditional Chinese, with light and dark themes.
+- **Chat in the side panel**: say what you need in plain words. The agent reads pages, clicks, types and moves between tabs to get it done.
+- **Several tasks at once**: each task works in its own tab group, so you can run a few side by side and keep browsing.
+- **You choose when it asks**: pick Ask or Auto mode, and set rules for each site (see below).
+- **Your choice of model**: cloud or local. Pick the model, and how hard it thinks, for each chat.
+- **Images and files**: attach images, text files or a screenshot of the current tab. The agent can also upload your files to a page.
+- **Save results**: the agent can save its work, like a CSV table or a Markdown report, to your Downloads folder. Chrome asks you the first time.
+- **Shortcuts**: save a prompt you use often and start it by typing `/`. You can give it a start page and a model.
+- **Voice input**: speak instead of typing, with OpenAI's or Gemini's voice model.
+- **Memory**: tell the agent what to keep in mind in every chat, like who you are or how you like your answers.
+- **Long tasks**: when a chat gets long, older steps are summed up automatically so the task can go on. Your own messages are always kept in full.
+- **Chat history**: go back to any chat, edit a message and run it again from there, or export the chat as Markdown.
+- **Your language and theme**: English, Simplified Chinese or Traditional Chinese, in light or dark.
 
 ## 🌐 Browser Support
 
@@ -63,7 +63,12 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 
 You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in both modes) or **Block** (the agent may not use it), in Settings → Permissions.
 
-Detection is best effort: the agent may not spot every such step. Whatever it does detect is enforced strictly in code, and no model can change your settings. Page content is treated as data, never as instructions to the agent. This lowers the risk of prompt injection but does not remove it, so keep to sites you trust, watch the agent, and press Stop at any time to take the page back.
+> [!NOTE]
+> **You are always in charge.**
+>
+> - The agent may not notice every step that needs you. When it does notice one, your settings always apply, and no AI model can change them.
+> - The agent reads text on a web page as information, never as orders. This helps against pages that try to trick it (prompt injection), but no protection is perfect.
+> - So use sites you trust, keep an eye on the agent, and press **Stop** at any time to take over.
 
 ## 🤖 Models
 
