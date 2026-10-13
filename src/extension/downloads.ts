@@ -3,6 +3,8 @@
 // document when it holds none.
 const OFFSCREEN = 'offscreen.html';
 const held = new Set<string>();
+/** The name asked for each blob URL being saved. */
+const naming = new Map<string, string>();
 
 async function ensureOffscreen(): Promise<void> {
   const url = chrome.runtime.getURL(OFFSCREEN);
@@ -40,7 +42,7 @@ export async function blobUrl(content: string, mimeType: string): Promise<string
 
 export interface SavedFile {
   downloadId: number;
-  /** The name the file got in the Downloads folder: a number is added rather than overwrite a file. */
+  /** The name the file got: a number is added rather than overwrite a file. */
   name: string;
   state: 'complete' | 'interrupted';
   error?: string;
@@ -68,6 +70,35 @@ function follow(downloadId: number): Promise<{ state: 'complete' | 'interrupted'
 }
 
 /**
+ * Chrome ignores the `filename` given to chrome.downloads.download while any extension listens to
+ * onDeterminingFilename, and then names the file after the blob URL (a random id). So while a file is being saved,
+ * Nanobrowser listens too and suggests the name itself. It stops listening once its files are named, before any Save as
+ * dialog: an empty answer still counts as a choice in Chrome and would override other extensions' names.
+ */
+function suggestName(
+  item: chrome.downloads.DownloadItem,
+  suggest: (suggestion?: chrome.downloads.FilenameSuggestion) => void,
+): void {
+  const filename = item.byExtensionId === chrome.runtime.id ? naming.get(item.url) : undefined;
+  if (!filename) return suggest();
+  suggest({ filename, conflictAction: 'uniquify' });
+  stopNaming(item.url);
+}
+
+function stopNaming(url: string): void {
+  naming.delete(url);
+  if (!naming.size) chrome.downloads.onDeterminingFilename.removeListener(suggestName);
+}
+
+/** Whether `saved` is `asked` with a number Chrome added, as in `prices (1).csv` for `prices.csv`. */
+export function isNumberedCopy(saved: string, asked: string): boolean {
+  const dot = asked.lastIndexOf('.');
+  const [stem, ext] = dot > 0 ? [asked.slice(0, dot), asked.slice(dot)] : [asked, ''];
+  const middle = saved.slice(stem.length, saved.length - ext.length);
+  return saved.startsWith(stem) && saved.endsWith(ext) && /^ \(\d+\)$/.test(middle);
+}
+
+/**
  * Saves text as a file in the Downloads folder. Never overwrites: Chrome adds a number to the name. With `saveAs`,
  * Chrome's own dialog lets the user choose where.
  */
@@ -76,6 +107,8 @@ export async function saveText(
   saveAs = false,
 ): Promise<SavedFile> {
   const url = await blobUrl(file.content, file.mimeType);
+  naming.set(url, file.filename);
+  chrome.downloads.onDeterminingFilename.addListener(suggestName);
   try {
     const downloadId = await chrome.downloads.download({
       url,
@@ -88,6 +121,7 @@ export async function saveText(
     const name = item?.filename ? item.filename.split(/[/\\]/).pop()! : file.filename;
     return { downloadId, name, ...end };
   } finally {
+    stopNaming(url);
     await revoke(url);
   }
 }

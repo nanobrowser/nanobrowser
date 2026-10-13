@@ -370,7 +370,7 @@
   "welcome.next": "Next",
   "welcome.back": "Back",
   "welcome.later": "Set it later",
-  "welcome.intro": "Nanobrowser is an AI helper that works in your browser. Tell it what you want, and it reads pages, clicks and types for you.",
+  "welcome.intro": "Nanobrowser is an AI agent that works in your browser. Tell it what you want, and it reads pages, clicks and types for you.",
   "welcome.examples": "For example, ask it to:",
   "welcome.example.summary": "Summarize a page or a long article",
   "welcome.example.form": "Fill in a form with the details you give it",

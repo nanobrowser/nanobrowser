@@ -370,7 +370,7 @@
   "welcome.next": "下一步",
   "welcome.back": "上一步",
   "welcome.later": "稍後設定",
-  "welcome.intro": "Nanobrowser 是在瀏覽器裡工作的 AI 助理。告訴它你想做什麼，它會替你閱讀網頁、點選和輸入。",
+  "welcome.intro": "Nanobrowser 是在瀏覽器裡工作的 AI 代理程式。告訴它你想做什麼，它會替你閱讀網頁、點選和輸入。",
   "welcome.examples": "例如，你可以請它：",
   "welcome.example.summary": "摘要目前的網頁或一篇長文章",
   "welcome.example.form": "用你提供的資料填寫表單",

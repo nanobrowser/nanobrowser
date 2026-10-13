@@ -49,7 +49,7 @@ import { Permissions } from './permissions';
 import { PromptBroker } from './prompt-broker';
 import { notifyFinished, notifyNeeds } from './notify';
 import { thumbnail } from './thumbnail';
-import { saveText } from './downloads';
+import { isNumberedCopy, saveText } from './downloads';
 import { checkSave } from '@src/agent/save-file';
 import { conversationMarkdown, exportName } from '@src/agent/export';
 import { isBlockedSite, quote } from '@src/browser-control';
@@ -1024,8 +1024,15 @@ export class RunManager {
         at: entry.at,
       },
     });
+    // The name can differ for other reasons too: the user chose another in Save as…, or Chrome changed it.
+    const note =
+      saved.name === check.filename
+        ? ''
+        : isNumberedCopy(saved.name, check.filename)
+          ? `; a file named ${quote(check.filename, 120)} was already there, so a number was added`
+          : `; it was saved under that name instead of ${quote(check.filename, 120)}`;
     return {
-      text: `save_file · saved ${quote(saved.name, 120)} (${check.bytes} bytes) in the Downloads folder${saved.name !== check.filename ? `; a file named ${quote(check.filename, 120)} was already there, so a number was added` : ''}.`,
+      text: `save_file · saved ${quote(saved.name, 120)} (${check.bytes} bytes)${saveAs ? '' : ' in the Downloads folder'}${note}.`,
       isError: false,
     };
   }
