@@ -13,6 +13,8 @@ export const ERROR_STOP = 5;
 export interface GuardVerdict {
   nudge?: string;
   stop?: string;
+  /** Which guard stopped the run. */
+  guard?: 'errors' | 'no_effect';
 }
 
 const NO_EFFECT_TOOLS = new Set(['click', 'set', 'type', 'press', 'fill_form']);
@@ -53,7 +55,7 @@ export class Guards {
     const sig = signature(tool, args, result, isError);
     s.recent = [...s.recent, sig].slice(-REPEAT_WINDOW);
     s.errorsInRow = isError ? s.errorsInRow + 1 : 0;
-    if (s.errorsInRow >= ERROR_STOP) return { stop: `${ERROR_STOP} calls in a row failed.` };
+    if (s.errorsInRow >= ERROR_STOP) return { stop: `${ERROR_STOP} calls in a row failed.`, guard: 'errors' };
 
     const key = NO_EFFECT_TOOLS.has(tool) ? targetKey(args) : null;
     if (
@@ -64,7 +66,8 @@ export class Guards {
     ) {
       const count = (s.noEffect[key] ?? 0) + 1;
       s.noEffect[key] = count;
-      if (count >= NO_EFFECT_STOP) return { stop: `${tool} on the same target had no effect ${count} times.` };
+      if (count >= NO_EFFECT_STOP)
+        return { stop: `${tool} on the same target had no effect ${count} times.`, guard: 'no_effect' };
       if (count >= NO_EFFECT_NUDGE) {
         const signals = result.receipt.effect.signals.join(' · ') || 'no signal';
         return {

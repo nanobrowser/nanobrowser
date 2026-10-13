@@ -40,6 +40,8 @@ export type PanelCommand =
       reasoning: ReasoningEffort;
       /** A shortcut's start page: opened in the tab before the run starts. */
       startUrl?: string;
+      /** The message is a saved shortcut's, for the usage counts. */
+      shortcut?: true;
     }
   | {
       type: 'queue';
@@ -71,7 +73,9 @@ export type PanelCommand =
   | { type: 'export'; conversationId: string }
   | { type: 'share-tab' | 'unshare-tab'; conversationId: string; tabId: number }
   /** "Screenshot of this tab": taken through the layer, answered with an `attached` event. */
-  | { type: 'screenshot-tab'; tabId: number; conversationId: string | null };
+  | { type: 'screenshot-tab'; tabId: number; conversationId: string | null }
+  /** Voice input was used, for the usage counts. */
+  | { type: 'voice-used' };
 
 /** A tool row of the activity block. */
 export interface ToolRow {

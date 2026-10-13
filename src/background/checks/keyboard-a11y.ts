@@ -3,7 +3,7 @@
 // reduced-motion rule, Settings → About, and deleting everything through the worker.
 import { listConversations } from '@src/store/conversations';
 import { listShortcuts, saveShortcut } from '@src/store/shortcuts';
-import type { DEFAULT_SETTINGS } from '@src/store/settings';
+import { DEFAULT_SETTINGS } from '@src/store/settings';
 import { FIXTURE_ORIGIN } from '../fixtures-config';
 import { defineCheck } from './registry';
 import { sleep, waitForLoad } from './helpers';
@@ -133,7 +133,13 @@ defineCheck({
         deletedAll:
           afterAll.conversations === 0 &&
           afterAll.shortcuts === 0 &&
-          afterAll.settings === undefined &&
+          // Only the two Privacy switches stay; every other setting is back to its default.
+          (Object.keys(DEFAULT_SETTINGS) as Array<keyof typeof DEFAULT_SETTINGS>).every(
+            k =>
+              k === 'analyticsPing' ||
+              k === 'analyticsStats' ||
+              JSON.stringify(afterAll.settings?.[k]) === JSON.stringify(DEFAULT_SETTINGS[k]),
+          ) &&
           afterAll.providers === undefined,
         panelImage,
         optionsImage,
@@ -143,6 +149,7 @@ defineCheck({
           JSON.stringify({
             ...report,
             panelImage: undefined,
+            settingsAfter: afterAll.settings,
             optionsImage: undefined,
             live,
             panelZoomed,

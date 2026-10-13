@@ -32,6 +32,11 @@ export interface UpgradeRecord {
   skippedSites: number;
   /** The old version let the agent open only the sites on a list, which this version cannot do. */
   allowList: boolean;
+  /**
+   * The old version's "Help improve Nanobrowser" switch, on unless the user turned it off (it was on by default there).
+   * Kept so that analytics, when this version has it, starts as the user left it.
+   */
+  analytics?: boolean;
   /** The user closed the card. The record stays, so the move never runs again. */
   dismissed: boolean;
 }

@@ -71,3 +71,27 @@ export function Notice({ tone = 'info', children }: { tone?: 'info' | 'warn' | '
   };
   return <div className={`rounded-xl border px-3 py-2 text-sm leading-relaxed ${tones[tone]}`}>{children}</div>;
 }
+
+/** An on/off switch. It carries its own `aria-label`, as the settings rows expect. */
+export function Switch({
+  checked,
+  onChange,
+  ...props
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> & {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nb-accent ${checked ? 'bg-nb-accent' : 'bg-nb-border'}`}
+      {...props}>
+      <span
+        className={`inline-block size-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`}
+      />
+    </button>
+  );
+}

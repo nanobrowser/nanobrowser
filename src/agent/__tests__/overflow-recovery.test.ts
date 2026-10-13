@@ -161,6 +161,7 @@ describe('a request the provider refuses for its size', () => {
     const { loop, scripted } = loopFor(c.id, fn, new FakeLayer(), 65_536);
     const end = await loop.run();
     expect(end.reason).toBe(CONTEXT_LIMIT);
+    expect(end.providerError?.overflow).toBe(true);
     expect(refused.length).toBe(1);
     for (const call of scripted.calls) expect(JSON.stringify(call.prompt)).toContain(long.slice(0, 200));
   });

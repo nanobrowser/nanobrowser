@@ -29,7 +29,7 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 ## 🔥 Why Nanobrowser?
 
 - **Free.** No subscription and no hidden costs. Use your own API key or a local model, and pay only for what you use.
-- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose.
+- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose. A daily count of users and usage counts are sent without an ID and never include your pages or sites; see [PRIVACY.md](PRIVACY.md).
 - **Flexible LLM.** Choose from many cloud providers, or run a model on your own computer, and switch whenever you like. No lock-in.
 - **Open source.** All the code is public, so you can see exactly how it works and change it to fit your needs.
 

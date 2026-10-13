@@ -73,7 +73,10 @@ export function App() {
   // Voice input: the panel sends the recording to the chosen voice model's provider, with its key.
   const voice = voiceSetup(settings, providers, apiKeys);
   const transcribe = voice
-    ? (audio: Uint8Array) => transcribeAudio(voice, audio, { language: voiceLanguage(settings.dictationLanguage) })
+    ? (audio: Uint8Array) => {
+        client?.send({ type: 'voice-used' });
+        return transcribeAudio(voice, audio, { language: voiceLanguage(settings.dictationLanguage) });
+      }
     : null;
   const [client, setClient] = useState<PanelClient | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -262,7 +265,7 @@ export function App() {
    */
   const sendMessage = (
     text: string,
-    extra: { mode?: PermissionMode; model?: ModelRef; startUrl?: string } = {},
+    extra: { mode?: PermissionMode; model?: ModelRef; startUrl?: string; shortcut?: true } = {},
   ): void => {
     if (!client) return;
     // `/compact` compacts the conversation now, or at the next turn boundary of a run.
@@ -302,6 +305,7 @@ export function App() {
       model: chosenModel,
       reasoning,
       ...(extra.startUrl ? { startUrl: extra.startUrl } : {}),
+      ...(extra.shortcut ? { shortcut: true as const } : {}),
     });
     setPendingTabs([]);
     setQuotes([]);
@@ -311,7 +315,7 @@ export function App() {
   const runShortcut = (s: SavedShortcut) => {
     if (!model) return;
     if (!active && s.mode === 'auto' && mode !== 'auto' && !settings.autoNoticeShown) setAutoNotice(true);
-    sendMessage(s.text, active ? {} : { mode: s.mode, model: s.model, startUrl: s.startUrl });
+    sendMessage(s.text, active ? {} : { mode: s.mode, model: s.model, startUrl: s.startUrl, shortcut: true });
   };
 
   const onLaunch = (item: LauncherItem) => {

@@ -12,7 +12,7 @@ This repository is the next version of Nanobrowser, an AI web automation Chrome 
 ## Scope
 
 - **Built and maintained:** the browser control layer, a simple Chrome extension for testing it by hand (the test panel), fixture pages, unit tests, and the automated checks.
-- **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, and three UI languages (English, Simplified Chinese, Traditional Chinese).
+- **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, three UI languages (English, Simplified Chinese, Traditional Chinese), and anonymous analytics (a daily count of users and usage counts, both on until the user turns them off) with no identifier.
 - **Not in the first release:** for example skills the model loads, site notes, saved memory, the in-page indicator, PDF and Office parsing, the text tool-call parser, scheduled tasks. Do not add any of these unless asked.
 - **Not in scope:** an MCP bridge, browsers other than Chrome and Edge, a planner and navigator design, several cooperating agents.
 
@@ -72,7 +72,7 @@ For the agent and the extension:
 - `fixtures/` - Static test pages for the layer's and the extension's scenario sets, the fixture server (with a fake OpenAI-compatible model) and `autorun.mjs`
 - `README.md`, `CONTRIBUTING.md`, `PRIVACY.md`, `SECURITY.md`, `LICENSE`, `.github/` - The project's pages for users and contributors, the issue templates and the CI workflow (`.github/workflows/`). `PRIVACY.md` says what data leaves the browser and where it goes; a change to that updates it
 - `AGENTS.md` - This file; `CLAUDE.md` is a link to it
-- `.env.example` - The environment variables a build will read, for the PostHog analytics to come (nothing reads them yet)
+- `.env.example` - The PostHog key and host a production build reads; with both set it sends analytics, and development and autorun builds never send to PostHog
 
 The extension:
 

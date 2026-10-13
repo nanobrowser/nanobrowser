@@ -31,6 +31,10 @@ export interface Settings {
   /** What to do with the tabs the agent opened when a conversation ends. */
   agentTabsOnEnd: 'ask' | 'close' | 'keep';
   onboarded: boolean;
+  /** The anonymous daily ping that counts active users. */
+  analyticsPing: boolean;
+  /** The daily usage counts. */
+  analyticsStats: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +51,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoNoticeShown: false,
   agentTabsOnEnd: 'ask',
   onboarded: false,
+  analyticsPing: true,
+  analyticsStats: true,
 };
 
 /** Stored settings over the defaults, so a field added later has its default. */

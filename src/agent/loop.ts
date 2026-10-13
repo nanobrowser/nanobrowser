@@ -84,6 +84,10 @@ export interface LoopEnd {
   status: RunStatus;
   outcome?: 'success' | 'partial' | 'failed';
   reason?: string;
+  /** Why the run ended badly, when the loop knows: a guard, the context, the provider, or a reply cut off. */
+  cause?: 'guard_errors' | 'guard_no_effect' | 'context' | 'provider' | 'cut';
+  /** The provider's failure that ended the run, as its status code says. */
+  providerError?: { status?: number; overflow: boolean; network?: boolean };
   summary?: string;
   usage: Usage;
   turns: number;
@@ -165,7 +169,7 @@ export class AgentLoop {
   #debt: DebtEntry[] = [];
   readonly guards: Guards;
   /** A guard asked to stop the run. */
-  #guardStop: string | null = null;
+  #guardStop: { reason: string; guard: 'errors' | 'no_effect' } | null = null;
   /** Some page action reached the page in this run: a plain-text ending then needs done. */
   #mutated = false;
   #plainEndings = 0;
@@ -522,7 +526,7 @@ export class AgentLoop {
         outcome.isError,
       );
       if (verdict.nudge) notes.push(note(verdict.nudge));
-      if (verdict.stop) this.#guardStop ??= verdict.stop;
+      if (verdict.stop) this.#guardStop ??= { reason: verdict.stop, guard: verdict.guard ?? 'errors' };
     }
     const image = await this.#withThumb(this.#screenshotImage(outcome) ?? (await this.autoScreenshot(outcome)));
     const text = cutText(outcome.text, RESULT_CAP, `… the result was cut at ${RESULT_CAP} characters.`);
@@ -719,7 +723,7 @@ export class AgentLoop {
       const status: RunStatus = done.outcome === 'failed' ? 'failed' : 'done';
       return { status, outcome: done.outcome, summary: done.summary, usage: this.#usage, turns: this.#turns };
     }
-    if (this.#guardStop) return this.salvage(this.#guardStop, 'guard');
+    if (this.#guardStop) return this.salvage(this.#guardStop.reason, `guard_${this.#guardStop.guard}`);
     if (!reply.toolCalls.length) {
       if (!this.#mutated) return { status: 'done', outcome: 'success', usage: this.#usage, turns: this.#turns };
       // Plain text after a mutation: one note, then partial.
@@ -738,11 +742,11 @@ export class AgentLoop {
    * The salvage call: when a guard or the turn cap stops the run, one last request in which only `done` is offered, so
    * the user gets an honest summary rather than a silent stop.
    */
-  async salvage(reason: string, cause: 'guard' | 'cap'): Promise<LoopEnd> {
+  async salvage(reason: string, cause: 'guard_errors' | 'guard_no_effect' | 'cap'): Promise<LoopEnd> {
     const failedEnd: LoopEnd =
       cause === 'cap'
         ? { status: 'capped', outcome: 'partial', reason, usage: this.#usage, turns: this.#turns }
-        : { status: 'failed', outcome: 'failed', reason, usage: this.#usage, turns: this.#turns };
+        : { status: 'failed', outcome: 'failed', reason, cause, usage: this.#usage, turns: this.#turns };
     if (this.options.signal.aborted) return failedEnd;
     await this.writer.appNote(
       `the run is stopping: ${reason} Only done is available now: call done with "partial" or "failed" and an honest summary of what was and was not done.`,
@@ -766,6 +770,7 @@ export class AgentLoop {
       status: outcome === 'failed' ? 'failed' : 'done',
       outcome,
       reason,
+      cause,
       summary,
       usage: this.#usage,
       turns: this.#turns,
@@ -785,7 +790,7 @@ export class AgentLoop {
         await this.storeHeader();
         const request = await this.prepareRequest();
         const check = await this.prepareNextTurn(request);
-        if (check.stop) return this.#end({ status: 'failed', outcome: 'failed', reason: check.stop });
+        if (check.stop) return this.#end({ status: 'failed', outcome: 'failed', reason: check.stop, cause: 'context' });
         this.#turns++;
         emit({ type: 'turn_start', turn: this.#turns });
         const sent = check.request ?? request;
@@ -806,12 +811,27 @@ export class AgentLoop {
             });
           }
           if (await this.recoverFromOverflow(sent)) continue;
-          return this.#end({ status: 'failed', outcome: 'failed', reason: CONTEXT_LIMIT });
+          // The provider's overflow error, when there was one, is kept for the counts.
+          const providerError = reply.error && {
+            status: reply.error.status,
+            overflow: reply.error.overflow,
+            network: reply.error.network,
+          };
+          return this.#end({
+            status: 'failed',
+            outcome: 'failed',
+            reason: CONTEXT_LIMIT,
+            cause: 'context',
+            providerError,
+          });
         }
-        if (reply.error) return this.#end({ status: 'failed', outcome: 'failed', reason: reply.error.message });
+        if (reply.error) {
+          const { message, ...providerError } = reply.error;
+          return this.#end({ status: 'failed', outcome: 'failed', reason: message, cause: 'provider', providerError });
+        }
         // A reply that spent its whole allowance reasoning ends the turn as an error, not a silent success.
         if (reply.finish === 'length' && !reply.text && !reply.toolCalls.length) {
-          return this.#end({ status: 'failed', outcome: 'failed', reason: CUT_BEFORE_ANYTHING });
+          return this.#end({ status: 'failed', outcome: 'failed', reason: CUT_BEFORE_ANYTHING, cause: 'cut' });
         }
         this.#overflowStage = 0;
         const outcomes = await this.#runBatch(reply);

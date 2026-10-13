@@ -5,6 +5,8 @@ import { listenForPanels } from './panel-port';
 import { RunManager } from './run-manager';
 import { listenForSelections } from './selection';
 import { upgradeFromOldVersion } from './upgrade';
+import { analyticsReady, listenForSwitches, recordInstall } from './analytics';
+import { setUninstallPage } from './uninstall';
 import { openWhatsNew } from '@src/store/whats-new';
 import { WHATS_NEW, releaseOf } from '@src/ui/whats-new';
 import { DATA_REQUEST } from '@src/ui/protocol';
@@ -24,6 +26,9 @@ chrome.runtime.onInstalled.addListener(details => {
       void openWhatsNew(release).catch(error => console.error('[install] what is new failed', error));
     }
   }
+  // Analytics records a real install's week; autorun builds too, so their check can see it.
+  if (details.reason === 'install')
+    void recordInstall().catch(error => console.error('[analytics] install failed', error));
   if (details.reason !== 'install' || import.meta.env.WXT_AUTORUN_URL) return;
   void addFirstShortcuts().catch(error => console.error('[install] first shortcut failed', error));
   void chrome.tabs.create({ url: chrome.runtime.getURL('/welcome.html') });
@@ -43,3 +48,7 @@ chrome.alarms?.onAlarm.addListener(() => undefined);
 void runManager.restore().catch(error => console.error('[runs] restore failed', error));
 // An update from the old Nanobrowser: its data is moved on the first start that finds it, whenever that comes.
 void upgradeFromOldVersion().catch(error => console.error('[upgrade] move failed', error));
+// Analytics waits for that move, then applies the old version's choice once; nothing is sent before.
+void analyticsReady();
+listenForSwitches();
+setUninstallPage();

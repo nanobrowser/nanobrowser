@@ -329,6 +329,7 @@ async function moveSettings(stored: Record<string, unknown>, favorites: number):
     blockedSites: Object.keys(sites.rules).length,
     skippedSites: sites.skipped,
     allowList: sites.allowList,
+    analytics: (stored['analytics-settings'] as { enabled?: unknown } | undefined)?.enabled !== false,
     dismissed: false,
   };
   items[UPGRADE_KEY] = record;

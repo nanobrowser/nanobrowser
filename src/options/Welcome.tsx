@@ -16,7 +16,7 @@ import {
   settingsStorage,
 } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
-import { Button, Input, Notice, Select } from '@src/ui/components';
+import { Button, Input, Notice, Select, Switch } from '@src/ui/components';
 import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
@@ -399,6 +399,7 @@ const TIPS: Array<{ title: MessageKey; body: MessageKey }> = [
 ];
 
 function TipsStep() {
+  const settings = useStorage(settingsStorage, DEFAULT_SETTINGS);
   return (
     <>
       <p>{t('tips.intro')}</p>
@@ -413,6 +414,15 @@ function TipsStep() {
       {/* Its own button: Open the panel uses its click to open the side panel. Skipping it is fine. */}
       <SettingsCard>
         <BrowserFeaturesRow />
+      </SettingsCard>
+      <SettingsCard>
+        <SettingsRow label={t('welcome.help')} description={t('welcome.helpHint')}>
+          <Switch
+            aria-label={t('welcome.help')}
+            checked={settings.analyticsStats}
+            onChange={on => void settingsStorage.set(s => ({ ...s, analyticsStats: on }))}
+          />
+        </SettingsRow>
       </SettingsCard>
     </>
   );

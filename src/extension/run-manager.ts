@@ -1,6 +1,7 @@
 // The RunManager: one run per active conversation, the panel commands, run records and statuses. The worker owns the
 // run; panels are views that can close and reopen.
 import { AgentLoop, REASONING_DROPPED } from '@src/agent/loop';
+import type { LoopEnd } from '@src/agent/loop';
 import type { HostPort } from '@src/agent/ports';
 import type { Session, UserStepDetails } from '@src/browser-control';
 import { agentSystemPrompt } from '@src/agent/prompt';
@@ -62,6 +63,7 @@ import type { DebtEntry } from '@src/agent/completion';
 import { Journal } from './journal';
 import type { Sink } from './journal';
 import { livePair, ModelUnavailable, resolveModel } from './models';
+import { count, deleteKeepingChoices, noteActivity, observe, runEnded, runModel, runStarted } from './analytics';
 
 export interface PanelConnection {
   tabId: number | null;
@@ -288,6 +290,7 @@ export class RunManager {
 
   emit(conversationId: string, body: PanelEventBody): void {
     this.journal.emit(conversationId, body);
+    observe(body);
   }
 
   /**
@@ -330,6 +333,8 @@ export class RunManager {
         pendingPrompt: plan.reopen ? run.pendingPrompt : undefined,
       };
       await putRun(record);
+      // A run the restart ended is counted once, as interrupted; one already interrupted was counted before.
+      if (plan.status === 'interrupted' && run.status !== 'interrupted') runEnded(record, {});
       await updateConversation(conversationId, { status: plan.status });
       await this.scope.status(conversationId, plan.status, (await getConversation(conversationId))?.title ?? '');
       // A panel that subscribed before the restore got the stored status; it gets the restored one, and the queued
@@ -703,21 +708,24 @@ export class RunManager {
   async deleteAll(): Promise<void> {
     // A move from the old Nanobrowser that is still running would write its data back after the deletion.
     await upgradeFromOldVersion().catch(() => undefined);
-    for (const c of await listConversations()) await this.#delete(c.id, false);
-    await deleteEverything();
-    await clearShortcuts();
-    // The old conversations go first: with them still there and the upgrade record gone, a worker start in between would
-    // run the move again.
-    await deleteOldChats();
-    await chrome.storage.local.remove([
-      'nb.settings',
-      'nb.providers',
-      'nb.keys',
-      'nb.siteRules',
-      UPGRADE_KEY,
-      WHATS_NEW_KEY,
-      ...OLD_KEYS,
-    ]);
+    // Analytics keeps the user's two switches through it, and clears its own keys.
+    await deleteKeepingChoices(async () => {
+      for (const c of await listConversations()) await this.#delete(c.id, false);
+      await deleteEverything();
+      await clearShortcuts();
+      // The old conversations go first: with them still there and the upgrade record gone, a worker start in between
+      // would run the move again.
+      await deleteOldChats();
+      await chrome.storage.local.remove([
+        'nb.settings',
+        'nb.providers',
+        'nb.keys',
+        'nb.siteRules',
+        UPGRADE_KEY,
+        WHATS_NEW_KEY,
+        ...OLD_KEYS,
+      ]);
+    });
   }
 
   /**
@@ -1247,10 +1255,20 @@ export class RunManager {
         updatedAt: now,
       };
       this.#records.set(conversationId, record);
+      noteActivity('run');
+      // Counted here, before the model resolves, since every run that starts is counted when it ends.
+      void count('runs.started');
       await this.#setStatus(record, 'running');
+      let end: LoopEnd | undefined;
       try {
         const model = await resolveModel(await starting);
         const settings = (await settingsStorage.get()) ?? DEFAULT_SETTINGS;
+        record.model = await runModel(model.ref);
+        if (record.model) {
+          // Written now, so a run the restart cuts still counts its model's outcome.
+          await putRun(record);
+          void runStarted(record.model, model.reasoning, conversation.mode, model.profile.vision, this.#runs.size > 1);
+        }
         this.#modes.set(conversationId, conversation.mode);
         const session = await this.#openSession(conversationId);
         record.tabs = session.tabIds();
@@ -1285,7 +1303,7 @@ export class RunManager {
         if (active?.runId === runId) active.loop = loop;
         loopRef = loop;
         loop.hasSteering = () => (this.#queues.get(conversationId)?.length ?? 0) > 0;
-        const end = await loop.run();
+        end = await loop.run();
         record.turns += end.turns;
         record.usage = addUsage(record.usage, end.usage);
         record.outcome = end.outcome;
@@ -1302,6 +1320,7 @@ export class RunManager {
         record.outcome = 'failed';
         await this.#setStatus(record, 'failed', message);
       } finally {
+        runEnded(record, end ?? {});
         this.#runs.delete(conversationId);
         this.#records.delete(conversationId);
         this.broker.withdrawAll(conversationId);

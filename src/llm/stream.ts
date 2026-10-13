@@ -6,7 +6,7 @@ import { jsonSchema, streamText, tool } from 'ai';
 import type { JSONSchema7, ModelMessage, ToolSet } from 'ai';
 import type { ChatModel } from './providers';
 import type { WireEffort } from './catalogue';
-import { errorText, getApiCallStatusCode, isRetryable, retryAfterMs } from './errors';
+import { errorText, getApiCallStatusCode, isRetryable, retryAfterMs, unwrapError } from './errors';
 import { isContextOverflow } from './overflow';
 import { withSlot } from './limiter';
 
@@ -44,7 +44,7 @@ export interface TurnResult {
   finish: TurnFinish;
   /** Null when the server reported no usage. */
   usage: TokenUsage | null;
-  error?: { message: string; status?: number; overflow: boolean };
+  error?: { message: string; status?: number; overflow: boolean; network?: boolean };
   durationMs: number;
   attempts: number;
   /**
@@ -322,6 +322,8 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
         message: errorText(failure),
         status: getApiCallStatusCode(failure),
         overflow: isContextOverflow(failure),
+        // fetch rejects with a TypeError when the network fails.
+        network: unwrapError(failure) instanceof TypeError,
       },
       durationMs: Date.now() - start,
       attempts: attempt,

@@ -15,9 +15,16 @@ Nanobrowser is licensed under the Apache License 2.0. All source code is public 
 - Your logins and cookies never leave your browser through Nanobrowser.
 - The values of password, payment-card and one-time-code fields are hidden from the AI model.
 
-## No analytics
+## What is sent to the Nanobrowser team
 
-Nanobrowser collects no analytics, telemetry or usage data, and sends nothing to its developers.
+Nanobrowser sends its developers only the small amounts of data below. Nothing sent has an ID. The daily count cannot be linked from one day to another, and the usage counts name no one. It never includes your pages, the sites you visit, your messages, your files, your keys or your settings' text.
+
+- **A daily count of users** (on by default; turn it off in Settings → Data → **Anonymous daily count**). At most once a day, on a day you use Nanobrowser: the version, the browser (Chrome, Edge or other), the language of the screens, the week you installed Nanobrowser, whether it is the first time this week and this month, and whether you have set up a model or run a task that day.
+- **Usage counts** (on unless you turn them off, on the welcome page or in Settings → Data → **Help improve Nanobrowser**). At most once a day, with the version, the browser and the language of the screens, totals for a past day: how many tasks started, were resumed or continued, and how they ended, how long they were and how much text the model read, which tools ran and which errors happened (as fixed codes), which kind of provider, catalogue model, reasoning effort and mode were used, whether the model can see images, how often features such as attachments, shortcuts, voice input and Retry were used, how often a long conversation was shortened to fit, what you have set up (the kinds of providers, whether the default model runs on your computer, whether voice input and custom instructions are set, how many site rules of each kind you have), and how often confirmation cards were shown, approved or declined, and how often a step was handed to you. If you turned off the "Help improve Nanobrowser" switch of the earlier version, both start off.
+
+This data goes to PostHog, a product analytics service, in the United States. Nanobrowser asks PostHog not to store your IP address or work out your location, and to create no profile of you. The data is kept for one year.
+
+When you remove Nanobrowser, Chrome opens a short optional Google Form that asks why. Nanobrowser fills in nothing in it; you can answer any question or none. Google asks you to sign in, so that each person answers once, but the form does not record who you are.
 
 ## What is sent to the providers you choose
 
@@ -40,7 +47,8 @@ When Nanobrowser updates from its earlier version, it moves your providers and A
 
 ## Your control
 
-- Delete a conversation at any time, or delete all your data in Settings → Data.
+- Delete a conversation at any time, or delete all your data in Settings → Data. Your two choices about what is sent stay as you set them.
+- Turn off the daily count and the usage counts at any time in Settings → Data; what was counted and not yet sent is deleted at once.
 - Uninstall the extension to remove all its local data.
 
 ## Changes to this policy
@@ -51,4 +59,4 @@ We may update this policy. Changes are published in the GitHub repository.
 
 Questions or concerns? Contact us at cws@felight.xyz.
 
-Last updated: October 12, 2026
+Last updated: October 13, 2026

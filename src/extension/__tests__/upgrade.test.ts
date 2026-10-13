@@ -200,6 +200,8 @@ describe('the move', () => {
       blockedSites: 3,
       skippedSites: 2,
       allowList: true,
+      // The old "Help improve Nanobrowser" switch was off in the fixture.
+      analytics: false,
       dismissed: false,
     } satisfies Partial<UpgradeRecord>);
     // The release's What's new card opens with the move.
@@ -252,6 +254,23 @@ describe('the move', () => {
     expect(data).toEqual(changed);
     expect(data['llm-api-keys']).toBeUndefined();
     expect(await listShortcuts()).toEqual(shortcuts);
+  });
+
+  it('keeps the old "Help improve Nanobrowser" switch, which was on unless turned off', async () => {
+    for (const [setting, expected] of [
+      [{ enabled: true, anonymousUserId: 'x' }, true],
+      [undefined, true],
+      [{ enabled: false }, false],
+    ] as const) {
+      const storage: Record<string, unknown> = { ...old, 'analytics-settings': setting };
+      if (setting === undefined) delete storage['analytics-settings'];
+      const { data } = fakeLocal(storage);
+      await upgradeFromOldVersion();
+      expect((data['nb.upgrade'] as UpgradeRecord).analytics).toBe(expected);
+      expect(data).not.toHaveProperty('analytics-settings');
+      await closeDb();
+      globalThis.indexedDB = new IDBFactory();
+    }
   });
 
   it('keeps what the user set up in this version', async () => {

@@ -1,5 +1,6 @@
 // What the extension stores. Plain JSON, so IndexedDB and chrome.storage hold it as it is.
 import type { ReasoningEffort, WireEffort } from '../llm/catalogue';
+import type { ProviderKind } from '../llm/providers';
 
 export type PermissionMode = 'ask' | 'auto';
 
@@ -226,8 +227,17 @@ export interface RunRecord {
   /** The session's tabs, to rebuild the layer session. */
   tabs: number[];
   pendingPrompt?: PendingPrompt;
+  /** The run's model as the usage counts name it, kept so a run a restart ends still counts its model's outcome. */
+  model?: RunModel;
   startedAt: string;
   updatedAt: string;
+}
+
+/** A run's provider, and the catalogue row its model matched. */
+export interface RunModel {
+  provider: ProviderKind;
+  /** The catalogue row the model matched, or `unknown`. */
+  modelRow: string;
 }
 
 export const UNFINISHED: ReadonlySet<RunStatus> = new Set(['running', 'awaiting_user', 'interrupted']);

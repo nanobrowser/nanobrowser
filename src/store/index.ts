@@ -8,3 +8,4 @@ export { db, closeDb, DB_NAME, DB_VERSION } from './db';
 export * from './shortcuts';
 export * from './legacy';
 export * from './whats-new';
+export * from './analytics';

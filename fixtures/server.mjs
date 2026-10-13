@@ -26,6 +26,10 @@
 //   POST /__llm/reset             clears the queue and the recorded requests
 //   GET  /download?name=<file>    a small text file sent as an attachment (GET or POST), for the download report
 //   GET  /__llm/api/ps            Ollama's list of loaded models: the fake model with a 12,288-token context
+//   POST /__posthog/i/v0/e/       a fake PostHog capture endpoint for analytics: records each event; answers 503 while
+//                                 failures are queued
+//   GET  /__posthog/events        the events it received, oldest first
+//   POST /__posthog/reset         clears them; { fail: n } makes the next n events fail
 //   GET  /__live/keys             provider keys from this process's environment, only when NB_LIVE=1 (for the
 //                                 live provider check; keys are never written to a file)
 import { createServer } from 'node:http';
@@ -51,6 +55,8 @@ const posts = [];
 const autorunJobs = [];
 /** The fake model: replies to give, in order, and the requests it received. */
 const llm = { replies: [], requests: [], transcriptions: [], rejectReasoning: false };
+/** The fake PostHog: the events it received, and how many more to refuse. */
+const posthog = { events: [], fail: 0 };
 export const autorunEvents = new EventEmitter();
 
 export function queueAutorunJob(job) {
@@ -124,6 +130,22 @@ async function handle(req, res) {
       return send(res, 200, { ok: true });
     }
     if (path.startsWith('/__llm/')) return handleLlm(req, res, path);
+    if (path === '/__posthog/i/v0/e/' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)) || '{}');
+      if (posthog.fail > 0) {
+        posthog.fail--;
+        return send(res, 503, { error: 'failing on purpose' });
+      }
+      posthog.events.push(body);
+      return send(res, 200, { status: 1 });
+    }
+    if (path === '/__posthog/events') return send(res, 200, posthog.events);
+    if (path === '/__posthog/reset' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)) || '{}');
+      posthog.events.length = 0;
+      posthog.fail = Number(body.fail ?? 0);
+      return send(res, 200, { ok: true });
+    }
     if (path === '/__live/keys') {
       if (process.env.NB_LIVE !== '1') return send(res, 403, { error: 'set NB_LIVE=1' });
       const env = process.env;
