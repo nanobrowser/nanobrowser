@@ -175,6 +175,13 @@ export const ExtensionsIcon = (p: IconProps) => (
   </Svg>
 );
 
+/** The Extensions button as Edge draws it: a rounded square with bumps on the top, left and bottom, a notch on the right. */
+export const EdgeExtensionsIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8.5 6H11A2 2 0 0 1 15 6h2.5A1.5 1.5 0 0 1 19 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5H15a2 2 0 0 1-4 0H8.5A1.5 1.5 0 0 1 7 16.5V14a2 2 0 0 1 0-4V7.5A1.5 1.5 0 0 1 8.5 6z" />
+  </Svg>
+);
+
 /** Chrome's pin in the Extensions menu: a pushpin. */
 export const PinIcon = (p: IconProps) => (
   <Svg {...p}>
@@ -182,11 +189,10 @@ export const PinIcon = (p: IconProps) => (
   </Svg>
 );
 
-/** Edge's Show in toolbar in the Extensions menu: an eye. */
-export const EyeIcon = (p: IconProps) => (
+/** Edge's pin in the Extensions menu: the same pushpin, slanted with its head to the top right. */
+export const SlantedPinIcon = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-    <circle cx="12" cy="12" r="3" />
+    <path transform="rotate(45 12 12)" d="M8 3h8M9 3v6l-3 4h12l-3-4V3M12 13v8" />
   </Svg>
 );
 

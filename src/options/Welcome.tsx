@@ -25,7 +25,7 @@ import { KINDS, ListedCount, OriginFix } from './ProvidersSection';
 import { SettingsCard, SettingsRow } from './SettingsCard';
 import { BrowserFeaturesRow } from './BrowserFeaturesCard';
 import { testModel } from './model-test';
-import { ExtensionsIcon, EyeIcon, Logo, PinIcon } from '@src/ui/icons';
+import { EdgeExtensionsIcon, ExtensionsIcon, Logo, PinIcon, SlantedPinIcon } from '@src/ui/icons';
 
 const STEPS: MessageKey[] = ['welcome.step.welcome', 'welcome.step.model', 'tips.title'];
 const NO_PROVIDERS: ProviderConfig[] = [];
@@ -122,15 +122,15 @@ function usePinned(): boolean | null {
 /** A few typical tasks, shown on the first step. */
 const EXAMPLES: MessageKey[] = ['welcome.example.summary', 'welcome.example.form', 'welcome.example.research'];
 
-/** Edge's Extensions menu shows an eye (Show in toolbar) where Chrome's shows a pin. */
+/** Edge draws its Extensions button and its pin differently: another puzzle piece, and the pin slanted. */
 const IS_EDGE =
   (navigator as Navigator & { userAgentData?: { brands: Array<{ brand: string }> } }).userAgentData?.brands.some(
     b => b.brand === 'Microsoft Edge',
   ) ?? /\bEdg\//.test(navigator.userAgent);
 const ICON_CLASS = 'mx-0.5 inline-block align-[-3px]';
 const PIN_ICONS: Record<string, ReactNode> = {
-  extensions: <ExtensionsIcon className={ICON_CLASS} />,
-  pin: IS_EDGE ? <EyeIcon className={ICON_CLASS} /> : <PinIcon className={ICON_CLASS} />,
+  extensions: IS_EDGE ? <EdgeExtensionsIcon className={ICON_CLASS} /> : <ExtensionsIcon className={ICON_CLASS} />,
+  pin: IS_EDGE ? <SlantedPinIcon className={ICON_CLASS} /> : <PinIcon className={ICON_CLASS} />,
 };
 
 /** A string with `{name}` placeholders replaced by icons. */
