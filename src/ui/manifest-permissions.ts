@@ -26,6 +26,7 @@ export const REQUIRED_PERMISSIONS = [
   'alarms',
   'offscreen',
   'contextMenus',
+  'scripting',
 ] as const satisfies readonly chrome.runtime.ManifestPermission[];
 
 export interface PermissionLists {

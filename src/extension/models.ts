@@ -81,8 +81,8 @@ export async function resolveModel(pair: LivePair | null): Promise<ResolvedModel
     apiKey: keys[found.provider.id],
     baseUrl: found.provider.baseUrl,
     maxOutputTokens: profile.maxOutput,
-    // Ollama and LM Studio take a limited number of requests at once.
-    ...(LOCAL_KINDS.has(found.provider.kind) ? { maxConcurrent: Math.max(1, found.provider.maxConcurrent ?? 1) } : {}),
+    // Ollama and LM Studio take one request at a time by default; more wait in the extension, not on the server.
+    ...(LOCAL_KINDS.has(found.provider.kind) ? { maxConcurrent: 1 } : {}),
   });
   const learn = (facts: Parameters<NonNullable<ResolvedModel['learn']>>[0]) =>
     void learnFacts(found.provider.id, found.provider.baseUrl, found.model.name, facts);

@@ -80,7 +80,7 @@ export interface TurnRequest {
   reasoning?: WireEffort;
   /** When `reasoning` is None's value: Low's, to try once if the server refuses None. */
   noneRetry?: WireEffort;
-  /** False for Test connection's probes: a refusal comes back as the error, with nothing sent again. */
+  /** False for Test models's probes: a refusal comes back as the error, with nothing sent again. */
   fallback?: false;
   signal?: AbortSignal;
   onTextDelta?: (delta: string) => void;

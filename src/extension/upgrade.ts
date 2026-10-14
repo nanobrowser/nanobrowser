@@ -87,7 +87,6 @@ export function moveProviders(raw: unknown): { providers: ProviderConfig[]; keys
           kind: 'ollama',
           name,
           baseUrl: (str(record.baseUrl) || 'http://localhost:11434').replace(/\/+$/, '').replace(/\/v1$/, ''),
-          maxConcurrent: 1,
         };
         break;
       case 'deepseek':

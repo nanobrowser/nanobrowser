@@ -10,6 +10,7 @@ import './panel-history';
 import './panel-cards';
 import './panel-tabs';
 import './panel-run';
+import './page-border';
 import './restart-restore';
 import './panel-runs';
 import './injection-entry';

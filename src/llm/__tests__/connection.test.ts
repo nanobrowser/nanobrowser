@@ -177,6 +177,17 @@ describe('listModels', () => {
     ) as unknown as typeof globalThis.fetch;
     await expect(listModels({ kind: 'ollama' }, fetch)).rejects.toMatchObject({ originRefused: true });
   });
+
+  it("throws with the status and the provider's own reason", async () => {
+    const fetch = vi.fn(
+      async () => new Response(JSON.stringify({ error: { message: 'Incorrect API key provided' } }), { status: 401 }),
+    ) as unknown as typeof globalThis.fetch;
+    await expect(listModels({ kind: 'openai', apiKey: 'wrong' }, fetch)).rejects.toMatchObject({
+      status: 401,
+      message: '401 Incorrect API key provided',
+      originRefused: false,
+    });
+  });
 });
 
 // The lists as the vendors returned them on 2026-10-11, trimmed to the fields the filter reads.

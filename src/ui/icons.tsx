@@ -117,6 +117,23 @@ export const ListIcon = (p: IconProps) => (
   </Svg>
 );
 
+/** Show a hidden value: an open eye. */
+export const EyeIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </Svg>
+);
+
+/** Hide it again: the eye struck through. */
+export const EyeOffIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+    <circle cx="12" cy="12" r="3" />
+    <path d="M4 4l16 16" />
+  </Svg>
+);
+
 export const TrashIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />

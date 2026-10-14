@@ -43,7 +43,7 @@ export const DEFAULT_BASE_URLS: Partial<Record<ProviderKind, string>> = {
 
 /**
  * The kinds that speak chat completions at a base URL. Their servers may refuse `reasoning_effort`, which the run's
- * fallback handles, and Test connection probes them for reasoning.
+ * fallback handles, and Test models probes them for reasoning.
  */
 export const CHAT_COMPLETIONS_KINDS: readonly ProviderKind[] = [
   'openai-compatible',

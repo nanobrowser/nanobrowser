@@ -1,5 +1,6 @@
-// Settings → Providers: editing a saved API key or provider name. The edit stays a draft, with a check to save it and a
-// cross to drop it, until one of them is pressed; storage changes only on save.
+// Settings → Providers: the API key and the provider name. A saved key is hidden and cannot be edited, only cleared; a
+// new key is a draft, shown in plain text with the eye, until the check saves it or the cross drops it. A name edit is
+// a draft the same way. Storage changes only on save or clear.
 import { defineCheck } from './registry';
 import { sleep, waitForLoad } from './helpers';
 
@@ -14,7 +15,7 @@ defineCheck({
   name: 'providers-key',
   title: 'Saving or dropping an API key or name edit',
   description:
-    "Seeds a provider with a key, types a new one, and checks that the key is stored only after the check is pressed, and that the cross drops an edit; then the same for the provider name; then the Add a provider menu's order, and that it opens above its button at the bottom of the window. Captures the key field with its two buttons, and the open menu.",
+    "Seeds a provider with a key and checks that it cannot be edited, only cleared; then types a new key, shows it with the eye, drops it with the cross, and checks that the next one is stored only after the check is pressed; then the same draft for the provider name; then the Add a provider menu's order, and that it opens above its button at the bottom of the window. Captures the key field with its two buttons, and the open menu.",
   async run() {
     await chrome.storage.local.set({ 'nb.providers': [PROVIDER], 'nb.keys': { [PROVIDER.id]: 'old-key' } });
     const tab = await chrome.tabs.create({ url: chrome.runtime.getURL('/options.html#providers'), active: true });
@@ -24,23 +25,42 @@ defineCheck({
       await chrome.tabs.setZoom(tab.id!, 0.6);
       await sleep(800);
       const failures: string[] = [];
-      if ((await options('click', { label: 'Save key' })).ok) failures.push('Save key shown before any edit');
+      const keyField = async () =>
+        (await options('field', { label: 'API key' })) as unknown as { type: string; readOnly: boolean; value: string };
 
-      await options('fill', { label: 'API key', text: 'new-key' });
+      // The saved key: hidden, read-only, and only Clear key.
+      const savedField = await keyField();
+      if (!savedField?.readOnly || savedField.value.includes('old-key'))
+        failures.push('the saved key is editable or shown');
+      await options('fill', { label: 'API key', text: 'edited-key' });
       await sleep(200);
-      const image = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
-      if ((await storedKey()) !== 'old-key') failures.push('the key was stored while still a draft');
-      if (!(await options('click', { label: 'Save key' })).ok) failures.push('no Save key button after an edit');
+      if ((await options('click', { label: 'Save key' })).ok) failures.push('a saved key could be edited');
+      if (!(await options('click', { label: 'Clear key' })).ok) failures.push('no Clear key button');
       await sleep(200);
-      if ((await storedKey()) !== 'new-key') failures.push('Save key did not store the new key');
-      if ((await options('click', { label: 'Save key' })).ok) failures.push('Save key still shown after saving');
+      if ((await storedKey()) !== undefined) failures.push('Clear key did not remove the key');
 
+      // A new key: hidden as typed, shown by the eye, dropped by the cross.
       await options('fill', { label: 'API key', text: 'dropped-key' });
       await sleep(200);
-      if (!(await options('click', { label: 'Cancel' })).ok) failures.push('no Cancel button after an edit');
+      if ((await keyField())?.type !== 'password') failures.push('the new key is not hidden as typed');
+      if (!(await options('click', { label: 'Show key' })).ok) failures.push('no Show key button');
       await sleep(200);
-      if ((await storedKey()) !== 'new-key') failures.push('Cancel changed the stored key');
+      if ((await keyField())?.type !== 'text') failures.push('Show key did not show the key');
+      const image = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+      if (!(await options('click', { label: 'Hide key' })).ok) failures.push('no Hide key button');
+      if (!(await options('click', { label: 'Cancel' })).ok) failures.push('no Cancel button after typing a key');
+      await sleep(200);
+      if ((await storedKey()) !== undefined) failures.push('Cancel stored the key');
       if ((await options('click', { label: 'Save key' })).ok) failures.push('Save key still shown after Cancel');
+
+      // Saved only with the check.
+      await options('fill', { label: 'API key', text: 'new-key' });
+      await sleep(200);
+      if ((await storedKey()) !== undefined) failures.push('the key was stored while still a draft');
+      if (!(await options('click', { label: 'Save key' })).ok) failures.push('no Save key button after typing a key');
+      await sleep(200);
+      if ((await storedKey()) !== 'new-key') failures.push('Save key did not store the new key');
+      if (!(await keyField())?.readOnly) failures.push('the key is still editable after saving');
 
       const storedName = async () =>
         ((await chrome.storage.local.get('nb.providers'))['nb.providers'] as Array<{ name: string }>)[0]?.name;

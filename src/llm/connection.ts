@@ -1,4 +1,4 @@
-// Test connection and model lists for the Models page. Called from the options page directly: the page needs no
+// Test models and model lists for the Models page. Called from the options page directly: the page needs no
 // worker command.
 import { CHAT_COMPLETIONS_KINDS, createModel, DEFAULT_BASE_URLS, openAICompatibleBaseUrl } from './providers';
 import type { CreateModelOptions, ModelSpec } from './providers';
@@ -172,7 +172,11 @@ export async function listModels(
       throw Object.assign(new Error(`Could not reach ${new URL(url).host}`), { originRefused: isOriginRefused(error) });
     }
     if (!response.ok) {
-      throw Object.assign(new Error(`${response.status} ${response.statusText}`), {
+      // The provider's own reason when its body has one (`{ error: { message } }`), else the status line.
+      const body = (await response.json().catch(() => null)) as { error?: { message?: unknown } } | null;
+      const reason = typeof body?.error?.message === 'string' ? body.error.message : response.statusText;
+      throw Object.assign(new Error(`${response.status} ${reason}`.trim()), {
+        status: response.status,
         originRefused: response.status === 403,
       });
     }

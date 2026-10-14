@@ -9,3 +9,4 @@ export * from './shortcuts';
 export * from './legacy';
 export * from './whats-new';
 export * from './analytics';
+export * from './rating';

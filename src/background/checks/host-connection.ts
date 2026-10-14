@@ -10,7 +10,7 @@ defineCheck({
   name: 'host-connection',
   title: 'Host connection',
   description:
-    'Timeout of a command that never answers; console events from a child session reach only subscribers of that session; closing the tab rejects a pending command with DEBUGGER_DETACHED; chrome:// pages give PAGE_NOT_SUPPORTED; every frame has a loader ID.',
+    'Timeout of a command that never answers; console events from a child session reach only subscribers of that session; closing the tab rejects a pending command with DEBUGGER_DETACHED; closing the connection detaches once, with no refused detach; chrome:// pages give PAGE_NOT_SUPPORTED; every frame has a loader ID.',
   async run() {
     const results: Record<string, unknown> = {};
 
@@ -72,6 +72,22 @@ defineCheck({
         (e: unknown) => (e instanceof LayerError ? e.code : String(e)),
       );
       assert(after === 'DEBUGGER_DETACHED', `command after detach: ${after}`);
+    });
+
+    // Close: the layer detaches once, so nothing is left for Chrome to refuse as an unhandled rejection.
+    await withTab(`${FIXTURE_ORIGIN}/frames-nested.html`, async tab => {
+      const refused: string[] = [];
+      const onRejection = (event: PromiseRejectionEvent) => refused.push(String(event.reason));
+      self.addEventListener('unhandledrejection', onRejection);
+      try {
+        const a = await attach(tab.tabId);
+        await a.close();
+        await sleep(500);
+      } finally {
+        self.removeEventListener('unhandledrejection', onRejection);
+      }
+      results.closeRejections = refused;
+      assert(!refused.some(r => /not attached/i.test(r)), `close left a refused detach: ${refused.join('; ')}`);
     });
 
     await withTab('chrome://version', async tab => {

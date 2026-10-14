@@ -88,6 +88,11 @@ export class TabScope {
       .map(([tab]) => Number(tab));
   }
 
+  /** Every tab that belongs to a conversation. */
+  async scopedTabs(): Promise<number[]> {
+    return Object.keys((await load()).tabs).map(Number);
+  }
+
   async originOf(tabId: number): Promise<ScopeTab['origin'] | null> {
     return (await load()).tabs[tabId]?.origin ?? null;
   }

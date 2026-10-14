@@ -1,10 +1,10 @@
-// Settings → General: the default mode and the turn cap, the interface and answer languages, the theme, and the
-// keyboard shortcut that opens the panel.
+// Settings → General: the default mode and the turn cap, the interface and answer languages, the theme and the page
+// border, and the keyboard shortcut that opens the panel.
 import { useEffect, useState } from 'react';
 import { DEFAULT_SETTINGS, settingsStorage } from '@src/store/settings';
 import type { Theme, UiLanguage } from '@src/store/settings';
 import { AutoNotice } from '@src/ui/auto-notice';
-import { Button, Input, Select } from '@src/ui/components';
+import { Button, Input, Select, Switch } from '@src/ui/components';
 import { useStorage } from '@src/ui/hooks';
 import { t } from '@src/ui/i18n';
 import { KeyboardIcon } from '@src/ui/icons';
@@ -131,7 +131,7 @@ export function GeneralSection() {
           </Select>
         </SettingsRow>
       </SettingsCard>
-      <SettingsCard title={t('general.appearance')}>
+      <SettingsCard title={t('general.appearance')} className="flex flex-col gap-6">
         <SettingsRow label={t('language.theme')}>
           <Select
             aria-label={t('language.theme')}
@@ -141,6 +141,13 @@ export function GeneralSection() {
             <option value="light">{t('theme.light')}</option>
             <option value="dark">{t('theme.dark')}</option>
           </Select>
+        </SettingsRow>
+        <SettingsRow label={t('general.pageBorder')} description={t('general.pageBorderHint')}>
+          <Switch
+            aria-label={t('general.pageBorder')}
+            checked={settings.pageBorder}
+            onChange={on => void settingsStorage.set(s => ({ ...s, pageBorder: on }))}
+          />
         </SettingsRow>
       </SettingsCard>
       <KeyboardShortcut />

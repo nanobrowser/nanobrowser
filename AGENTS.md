@@ -12,8 +12,8 @@ This repository is the next version of Nanobrowser, an AI web automation Chrome 
 ## Scope
 
 - **Built and maintained:** the browser control layer, a simple Chrome extension for testing it by hand (the test panel), fixture pages, unit tests, and the automated checks.
-- **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, three UI languages (English, Simplified Chinese, Traditional Chinese), and anonymous analytics (a daily count of users and usage counts, both on until the user turns them off) with no identifier.
-- **Not in the first release:** for example skills the model loads, site notes, saved memory, the in-page indicator, PDF and Office parsing, the text tool-call parser, scheduled tasks. Do not add any of these unless asked.
+- **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, three UI languages (English, Simplified Chinese, Traditional Chinese), a glowing border on the pages the agent works on (with a switch in Settings), anonymous analytics (a daily count of users and usage counts, both on until the user turns them off) with no identifier, and a card that asks a user who uses it often to rate it in the store.
+- **Not in the first release:** for example skills the model loads, site notes, saved memory, the in-page Stop pill, PDF and Office parsing, the text tool-call parser, scheduled tasks. Do not add any of these unless asked.
 - **Not in scope:** an MCP bridge, browsers other than Chrome and Edge, a planner and navigator design, several cooperating agents.
 
 ## Fixed design constraints
@@ -64,7 +64,7 @@ For the agent and the extension:
 - `src/browser-control/` - The layer
   - `protocol/` - Request and result types, zod schemas, error codes, tool catalogue
   - `core/` - Controller, sessions, refs, frames, perception, interaction, lifecycle
-  - `probe/` - The only in-page code; built to a string constant
+  - `probe/` - The layer's only in-page code; built to a string constant
   - `host/` - Puppeteer connection and frame adapter, `chrome.debugger` session wrapper, `chrome.tabs`
   - `index.ts` - The only entry other code may import
 - `src/test-panel/` - The layer's test panel (React); a developer-only entrypoint, opened on a tab with the `open-test-panel` command (unbound by default; bind it in `chrome://extensions/shortcuts`)

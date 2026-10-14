@@ -97,15 +97,6 @@ export class RunWriter {
     });
   }
 
-  /** An automatic screenshot, after its fixed line, in an app-owned message of its own. */
-  appScreenshot(data: string, mediaType: string, line: string) {
-    return appendEntry(this.conversationId, {
-      type: 'message',
-      message: { role: 'user', parts: [{ type: 'image', data, mediaType, note: line }] },
-      appOwned: { kind: 'screenshot' },
-    });
-  }
-
   /** Written, and awaited, before the call runs. */
   intent(toolCallId: string, tool: string, args: unknown): Promise<EntryOf<'intent'>> {
     return appendEntry(this.conversationId, { type: 'intent', toolCallId, tool, args });

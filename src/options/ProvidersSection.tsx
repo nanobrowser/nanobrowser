@@ -1,8 +1,8 @@
 // Settings → Providers: the default model and its reasoning effort, then voice input, whose voice model comes from an
-// OpenAI or Gemini provider, then the list of providers with their keys, base URLs and models. Test connection calls
+// OpenAI or Gemini provider, then the list of providers with their keys, base URLs and models. Test models calls
 // src/llm from this page; settings are written through chrome.storage, with no worker command.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { listModels } from '@src/llm';
 import type { ConnectionResult, ModelList, ProviderKind } from '@src/llm';
 import type { ReasoningEffort } from '@src/llm/catalogue';
@@ -20,10 +20,10 @@ import { newId } from '@src/store/conversations';
 import { Button, Input, Notice, Select } from '@src/ui/components';
 import { SettingsCard } from './SettingsCard';
 import { VoiceCard } from './VoiceCard';
-import { saveTest, testModel, wholeTestOnAdd } from './model-test';
+import { listProblem, saveTest, testModel, wholeTestOnAdd } from './model-test';
 import { effortRow } from '@src/side-panel/ModelMenu';
 import { useStorage } from '@src/ui/hooks';
-import { CheckIcon, ChevronIcon, CloseIcon, PlusIcon, TrashIcon } from '@src/ui/icons';
+import { CheckIcon, ChevronIcon, CloseIcon, EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from '@src/ui/icons';
 import { t } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 
@@ -65,6 +65,11 @@ function kindInfo(kind: ProviderKind) {
   return KINDS.find(k => k.kind === kind)!;
 }
 
+/** Whether a provider needs a key: its kind does, or it is a preset, a cloud service that always does. */
+function needsKey(provider: ProviderConfig): boolean {
+  return kindInfo(provider.kind).needsKey || PRESETS.some(p => p.baseUrl === provider.baseUrl);
+}
+
 function updateProvider(id: string, patch: Partial<ProviderConfig>): Promise<void> {
   return providersStorage.set(list => list.map(p => (p.id === id ? { ...p, ...patch } : p)));
 }
@@ -86,7 +91,6 @@ export function ProvidersSection() {
       name: preset?.label ?? info.label,
       baseUrl: preset?.baseUrl ?? info.baseUrl,
       models: [],
-      ...(LOCAL_KINDS.has(kind) ? { maxConcurrent: 1 } : {}),
     };
     await providersStorage.set(list => [...list, provider]);
   };
@@ -293,8 +297,9 @@ function Line({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /**
- * One provider in the list: its name and kind, Test connection (for all its models) and a bin, then its name, key,
- * address and request limit as compact lines, and its models as chips that show a remove icon on hover.
+ * One provider in the list: its name and kind, Test models (for all its models) and a bin, then its name, key and
+ * address as compact lines, and its models as chips that show a remove icon on hover. Saving a key lists the provider's
+ * models, so a key the provider refuses shows at once; Ollama and LM Studio, which take no key, list on List models.
  */
 function ProviderItem({ provider }: { provider: ProviderConfig }) {
   const keys = useStorage(keysStorage, EMPTY_KEYS);
@@ -303,7 +308,10 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   const [newModel, setNewModel] = useState('');
   const [listed, setListed] = useState<ModelList>({ models: [], hidden: [] });
   const [showAll, setShowAll] = useState(false);
+  const [listing, setListing] = useState(false);
   const [listError, setListError] = useState<{ message: string; originRefused: boolean } | null>(null);
+  // Counts the lists asked for, so only the latest one's answer is shown.
+  const listAsked = useRef(0);
   const [testingModels, setTestingModels] = useState<ReadonlySet<string>>(new Set());
   const [results, setResults] = useState<Record<string, ConnectionResult>>({});
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -311,15 +319,22 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   const key = keys[provider.id] ?? '';
   const name = provider.name.trim();
 
-  const fetchModels = async () => {
+  /** Lists the models with `apiKey`, the key just saved when called on saving it. */
+  const fetchModels = async (apiKey = key) => {
+    const asked = ++listAsked.current;
     setListError(null);
+    setListing(true);
     try {
-      const list = await listModels({ kind: provider.kind, apiKey: key, baseUrl: provider.baseUrl });
+      const list = await listModels({ kind: provider.kind, apiKey, baseUrl: provider.baseUrl });
+      if (asked !== listAsked.current) return;
       setListed(list);
       setShowAll(!list.models.length);
     } catch (error) {
-      const e = error as Error & { originRefused?: boolean };
-      setListError({ message: e.message, originRefused: !!e.originRefused && local });
+      if (asked !== listAsked.current) return;
+      setListed({ models: [], hidden: [] });
+      setListError(listProblem(error, local));
+    } finally {
+      if (asked === listAsked.current) setListing(false);
     }
   };
 
@@ -332,7 +347,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   };
 
   /**
-   * Tests models one at a time: `whole` for Test connection; `add` for a model added, a key saved or a base URL
+   * Tests models one at a time: `whole` for Test models; `add` for a model added, a key saved or a base URL
    * changed, which runs the whole test on a cloud endpoint and reads only the API on a local one. A kind that needs a
    * key waits for it. A queued test reads the provider and its key when its turn comes, and is skipped if the address
    * changed since it was queued, so a key never goes to an address it was not tested with.
@@ -352,7 +367,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
       if (
         fresh?.models.some(m => m.name === modelName) &&
         (fresh.baseUrl ?? '') === queuedAt &&
-        !(kindInfo(fresh.kind).needsKey && !usedKey)
+        !(needsKey(fresh) && !usedKey)
       ) {
         const test = await testModel(fresh, modelName, usedKey, mode === 'whole' || wholeTestOnAdd(fresh));
         const r = test.result;
@@ -378,7 +393,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   // The base URL as it was when its field was entered, to test again on leaving it changed.
   const urlAtFocus = useRef<string | null>(null);
 
-  const keyLabel = info.needsKey ? t('models.apiKey') : t('models.apiKeyOptional');
+  const keyLabel = needsKey(provider) ? t('models.apiKey') : t('models.apiKeyOptional');
   const problems = provider.models.flatMap(m => {
     const r = results[m.name];
     return r && !(r.ok && r.toolCalling) ? [{ name: m.name, result: r }] : [];
@@ -418,21 +433,28 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
         </Line>
         {provider.kind !== 'ollama' && provider.kind !== 'lmstudio' ? (
           <Line label={keyLabel}>
-            <DraftField
+            <KeyField
               label={keyLabel}
-              saveLabel={t('models.saveKey')}
               saved={key}
-              password
               onSave={value =>
                 void keysStorage
                   .set(k => ({ ...k, [provider.id]: value }))
-                  .then(() =>
+                  .then(() => {
+                    // An OpenAI-compatible endpoint lists only once it has an address.
+                    if (provider.kind !== 'openai-compatible' || provider.baseUrl) void fetchModels(value);
                     runTests(
                       provider.models.map(m => m.name),
                       'add',
-                    ),
-                  )
+                    );
+                  })
               }
+              onClear={() => {
+                // A list still running for the old key is dropped, and its refusal goes with it.
+                listAsked.current++;
+                setListing(false);
+                setListError(null);
+                void keysStorage.set(({ [provider.id]: _cleared, ...rest }) => rest);
+              }}
             />
           </Line>
         ) : null}
@@ -457,22 +479,6 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
                 }
                 urlAtFocus.current = null;
               }}
-            />
-          </Line>
-        ) : null}
-        {LOCAL_KINDS.has(provider.kind) ? (
-          <Line label={t('models.maxConcurrent')}>
-            <Input
-              aria-label={t('models.maxConcurrent')}
-              title={t('models.maxConcurrentHint')}
-              className="w-20"
-              type="number"
-              min={1}
-              max={8}
-              value={provider.maxConcurrent ?? 1}
-              onChange={e =>
-                void updateProvider(provider.id, { maxConcurrent: Math.max(1, Number(e.target.value) || 1) })
-              }
             />
           </Line>
         ) : null}
@@ -513,8 +519,16 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
             <Button variant="ghost" onClick={() => void fetchModels()}>
               {t('models.fetchModels')}
             </Button>
-            <ListedCount list={listed} showAll={showAll} onShowAll={() => setShowAll(true)} />
+            {listing ? (
+              <span className="text-nb-muted">{t('models.listing')}</span>
+            ) : (
+              <ListedCount list={listed} showAll={showAll} onShowAll={() => setShowAll(true)} />
+            )}
           </div>
+          {/* A name typed or picked is not kept until Add is pressed, which a user may not know. */}
+          {newModel.trim() && !provider.models.some(m => m.name === newModel.trim()) ? (
+            <p className="text-nb-muted">{t('models.addHint')}</p>
+          ) : null}
         </Line>
       </div>
       {listError ? (
@@ -543,19 +557,17 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
 
 /**
  * A field whose change is kept as a draft until it is saved with the check (or Enter) or dropped with the cross (or
- * Escape); the two buttons show only while the draft differs from the saved value. Used for the name and the key.
+ * Escape); the two buttons show only while the draft differs from the saved value. Used for the name.
  */
 function DraftField({
   label,
   saveLabel,
   saved,
-  password = false,
   onSave,
 }: {
   label: string;
   saveLabel: string;
   saved: string;
-  password?: boolean;
   onSave: (value: string) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
@@ -570,7 +582,6 @@ function DraftField({
       <Input
         aria-label={label}
         className="w-full sm:max-w-sm"
-        type={password ? 'password' : 'text'}
         autoComplete="off"
         value={draft ?? saved}
         onChange={e => setDraft(e.target.value)}
@@ -602,6 +613,124 @@ function DraftField({
           </button>
         </>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * The API key. Before it is saved it is a draft, hidden as it is typed, which the eye shows in plain text so it can be
+ * checked; the check (or Enter) saves it and the cross (or Escape) drops it. Once saved it is not shown and cannot be
+ * edited, only cleared with the red cross after the field, which shows on hover or keyboard focus, as a model chip's
+ * does; a new key is typed in its place.
+ */
+function KeyField({
+  label,
+  saved,
+  onSave,
+  onClear,
+}: {
+  label: string;
+  saved: string;
+  onSave: (value: string) => void;
+  onClear: () => void;
+}) {
+  const [draft, setDraft] = useState('');
+  if (saved) {
+    return (
+      <div className="group flex items-center gap-1">
+        <Input aria-label={label} className="w-full text-nb-muted sm:max-w-sm" readOnly value={'•'.repeat(16)} />
+        <button
+          type="button"
+          aria-label={t('models.clearKey')}
+          title={t('models.clearKey')}
+          className="rounded-md p-1.5 text-red-600 opacity-0 hover:bg-red-50 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent group-hover:opacity-100 dark:text-red-400 dark:hover:bg-red-950"
+          onClick={onClear}>
+          <CloseIcon size={16} />
+        </button>
+      </div>
+    );
+  }
+  const typed = draft.trim();
+  const save = () => {
+    if (!typed) return;
+    onSave(typed);
+    setDraft('');
+  };
+  return (
+    <div className="flex items-center gap-1">
+      <KeyInput
+        label={label}
+        className="w-full sm:max-w-sm"
+        value={draft}
+        onChange={setDraft}
+        onKeyDown={e => {
+          if (e.key === 'Enter') save();
+          else if (e.key === 'Escape' && draft) {
+            e.stopPropagation();
+            setDraft('');
+          }
+        }}
+      />
+      {typed ? (
+        <>
+          <button
+            type="button"
+            aria-label={t('models.saveKey')}
+            title={t('models.saveKey')}
+            className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent dark:text-emerald-400 dark:hover:bg-emerald-950"
+            onClick={save}>
+            <CheckIcon size={16} />
+          </button>
+          <button
+            type="button"
+            aria-label={t('common.cancel')}
+            title={t('common.cancel')}
+            className={ICON_BUTTON}
+            onClick={() => setDraft('')}>
+            <CloseIcon size={16} />
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/** A key being typed: hidden, with an eye inside the field's right end that shows it in plain text and hides it again. */
+export function KeyInput({
+  label,
+  className = '',
+  value,
+  onChange,
+  onKeyDown,
+}: {
+  label: string;
+  className?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+}) {
+  const [shown, setShown] = useState(false);
+  const toggle = shown ? t('models.hideKey') : t('models.showKey');
+  return (
+    <div className={`relative min-w-0 ${className}`}>
+      <Input
+        aria-label={label}
+        className="w-full pr-9"
+        type={shown ? 'text' : 'password'}
+        autoComplete="off"
+        spellCheck={false}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+      />
+      <button
+        type="button"
+        aria-label={toggle}
+        title={toggle}
+        className={`absolute right-1 top-1/2 -translate-y-1/2 ${ICON_BUTTON}`}
+        onClick={() => setShown(s => !s)}>
+        {shown ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+      </button>
     </div>
   );
 }

@@ -77,7 +77,7 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 | Cloud | Anthropic, OpenAI, Google Gemini, OpenRouter, xAI Grok, DeepSeek, Mistral, and any OpenAI-compatible endpoint |
 | Local | Ollama and LM Studio, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
 
-- **A model must support tool calling.** Test connection in Settings checks each model and marks the ones that cannot be used.
+- **A model must support tool calling.** Test models in Settings checks each model and marks the ones that cannot be used.
 - **Choose the model and the reasoning effort** in the panel, per conversation. Settings holds the defaults.
 - **Vision models** can also take screenshots of the page and read the images you attach.
 - **Local models** work best for simple, clear tasks. We currently recommend **Qwen3.8 27B**. Give them a context window of 16k tokens or more. Ollama needs `OLLAMA_ORIGINS` to allow the extension, and LM Studio needs CORS on; the provider card shows how when a request is refused.

@@ -35,12 +35,14 @@ export interface Settings {
   analyticsPing: boolean;
   /** The daily usage counts. */
   analyticsStats: boolean;
+  /** A glowing border on the pages a working run acts on. */
+  pageBorder: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   defaultMode: 'ask',
   defaultModel: null,
-  reasoning: 'low',
+  reasoning: 'medium',
   turnCap: 100,
   customInstructions: '',
   theme: 'system',
@@ -53,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   onboarded: false,
   analyticsPing: true,
   analyticsStats: true,
+  pageBorder: true,
 };
 
 /** Stored settings over the defaults, so a field added later has its default. */
@@ -79,7 +82,7 @@ export interface ModelEntry {
   overrides?: ProfileOverrides;
   /** Detected from a local server; only ever lowers the window. */
   detectedContext?: number;
-  /** Test connection found no tool calling; the model cannot be chosen for the agent. */
+  /** Test models found no tool calling; the model cannot be chosen for the agent. */
   noToolCalling?: boolean;
   /** What the model's API said at the last test; replaced whole at each test. */
   fromApi?: LearntFacts;
@@ -108,8 +111,6 @@ export interface ProviderConfig {
   name: string;
   baseUrl?: string;
   models: ModelEntry[];
-  /** Concurrent requests to a local server; 1 by default for local kinds. */
-  maxConcurrent?: number;
 }
 
 export const providersStorage = createStorage<ProviderConfig[]>('nb.providers', [], { liveUpdate: true });
@@ -205,7 +206,7 @@ export function usableModel(
   return null;
 }
 
-/** Whether a configured model reasons: what Test connection learnt, else the catalogue. */
+/** Whether a configured model reasons: what Test models learnt, else the catalogue. */
 export function capabilityOf(
   providers: ProviderConfig[],
   ref: ModelRef | null | undefined,

@@ -78,7 +78,7 @@ describe('moving providers', () => {
   });
 
   it('writes addresses as Settings stores them', () => {
-    expect(byId('ollama')).toMatchObject({ baseUrl: 'http://localhost:11434', maxConcurrent: 1 });
+    expect(byId('ollama')).toMatchObject({ baseUrl: 'http://localhost:11434' });
     expect(byId('grok')).toMatchObject({ name: 'xAI Grok', baseUrl: 'https://api.x.ai/v1' });
     // OpenRouter's address is fixed here.
     expect(byId('openrouter')?.baseUrl).toBeUndefined();

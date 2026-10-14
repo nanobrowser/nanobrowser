@@ -10,7 +10,7 @@ import { activeBranch, appendEntry, createConversation } from '@src/store/conver
 import { closeDb } from '@src/store/db';
 import en from '@src/ui/locales/en.json';
 import type { EntryOf } from '@src/store/types';
-import { AgentLoop, CUT_BEFORE_ANYTHING, IMAGES_DROPPED, REASONING_DROPPED } from '../loop';
+import { AgentLoop, CUT_BEFORE_ANYTHING, IMAGES_DROPPED, REASONING_DROPPED, STOPPED_BY_USER } from '../loop';
 import { summarise } from '../compaction';
 import type { ResolvedModel } from '../run';
 import { toolsForRun } from '../tools';
@@ -188,6 +188,7 @@ describe('a model that refuses images', () => {
 
   it("writes the catalogue's notice string", () => {
     expect(en['notice.imagesDropped']).toBe(IMAGES_DROPPED);
+    expect(en['notice.stopped']).toBe(STOPPED_BY_USER);
   });
 
   it('sends the request again without its images, goes on without vision, keeps it, with one notice', async () => {

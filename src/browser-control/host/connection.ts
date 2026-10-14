@@ -63,6 +63,8 @@ export class ChromeTabConnection implements TabAttachment {
   readonly topology: TopologyPort;
   readonly page: PagePort;
   #detached: DetachInfo | null = null;
+  /** Puppeteer is disconnected once: a second disconnect detaches again, and Chrome's refusal goes uncaught. */
+  #disconnected = false;
   #detachHandlers = new Set<(info: DetachInfo) => void>();
   #rejectDetached!: (error: Error) => void;
   /** Settles (rejects) when the tab detaches; raced against every pending command. */
@@ -172,8 +174,14 @@ export class ChromeTabConnection implements TabAttachment {
         console.error('[browser-control] detach handler failed', error);
       }
     }
-    // Let Puppeteer drop its state; its own detach call fails harmlessly.
-    void disconnectTab(this.puppeteer).catch(() => undefined);
+    // Let Puppeteer drop its state, unless close() already did.
+    void this.#disconnect().catch(() => undefined);
+  }
+
+  #disconnect(): Promise<void> {
+    if (this.#disconnected) return Promise.resolve();
+    this.#disconnected = true;
+    return disconnectTab(this.puppeteer);
   }
 
   onDetach(handler: (info: DetachInfo) => void): () => void {
@@ -185,7 +193,7 @@ export class ChromeTabConnection implements TabAttachment {
     if (this.#detached) return;
     connections.delete(this.tabId);
     try {
-      await disconnectTab(this.puppeteer);
+      await this.#disconnect();
     } finally {
       this.markDetached({ reason: 'closed_by_layer' });
     }

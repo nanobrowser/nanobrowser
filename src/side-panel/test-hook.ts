@@ -41,6 +41,14 @@ export function installTestHook(tabId: number, target: 'panel' | 'options' = 'pa
         if (message.submit) field.form?.requestSubmit();
         return sendResponse({ ok: true });
       }
+      case 'field': {
+        // A field's type, read-only state and value, by its label.
+        const field = document.querySelector<HTMLInputElement>(`input[aria-label="${message.label}"]`);
+        return sendResponse({
+          ok: !!field,
+          ...(field ? { type: field.type, readOnly: field.readOnly, value: field.value } : {}),
+        });
+      }
       case 'drop-files': {
         // Files dropped on the composer, as a user would drag them in.
         const transfer = new DataTransfer();

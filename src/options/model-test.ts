@@ -1,15 +1,25 @@
 // Testing one model, shared by Settings → Providers and the welcome page: the model's API first, then, for the whole
-// test, the probes of Test connection. What was learnt is stored on the model's entry, unless the provider's address
+// test, the probes of Test models. What was learnt is stored on the model's entry, unless the provider's address
 // changed meanwhile, since it describes the old server.
 import { detectContext, isCloudEndpoint, probeAsk, readModelInfo, testConnection } from '@src/llm';
 import type { ConnectionResult, LearntFacts } from '@src/llm';
 import { providersStorage } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
+import { t } from '@src/ui/i18n';
 
 export interface ModelTest {
   /** Absent when only the API was read. */
   result?: ConnectionResult;
   patch: Pick<ModelEntry, 'fromApi' | 'detectedContext' | 'noToolCalling'> & { tested?: Omit<LearntFacts, 'at'> };
+}
+
+/**
+ * What to show when listing a provider's models failed: the server-setup fix when a local server refused the extension,
+ * a plain line when the provider refused the key (401), else the provider's own reason.
+ */
+export function listProblem(error: unknown, local: boolean): { message: string; originRefused: boolean } {
+  const e = error as Error & { status?: number; originRefused?: boolean };
+  return { originRefused: !!e.originRefused && local, message: e.status === 401 ? t('models.keyRefused') : e.message };
 }
 
 /** Adding a model runs the whole test on a cloud endpoint, and reads only the API on a local one. */

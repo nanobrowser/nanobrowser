@@ -119,8 +119,16 @@ export function toModelMessages(branch: Entry[], options: ContextOptions): Model
     }
     out.push(message);
   };
+  // An image that belongs to a tool result travels in a user message after all of its reply's results: a user message
+  // between two results leaves the later call without a result, and the request is refused.
+  let images: UserPart[] = [];
+  const flushImages = () => {
+    if (images.length) push({ role: 'user', content: images } as ModelMessage);
+    images = [];
+  };
   for (const e of entries) {
     const m = e.message;
+    if (m.role !== 'tool') flushImages();
     if (m.role === 'user') {
       const content = userParts(m.parts, { keep });
       if (content.length) push({ role: 'user', content } as ModelMessage);
@@ -150,14 +158,15 @@ export function toModelMessages(branch: Entry[], options: ContextOptions): Model
           output: p.isError ? { type: 'error-text', value: p.text } : { type: 'text', value: p.text },
         }));
       if (content.length) push({ role: 'tool', content } as ModelMessage);
-      // An image that belongs to a tool result travels in a user message after it.
-      const images = userParts(
-        m.parts.filter(p => p.type === 'image'),
-        { keep },
+      images.push(
+        ...userParts(
+          m.parts.filter(p => p.type === 'image'),
+          { keep },
+        ),
       );
-      if (images.length) push({ role: 'user', content: images } as ModelMessage);
     }
   }
+  flushImages();
   return out;
 }
 

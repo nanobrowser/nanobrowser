@@ -209,7 +209,7 @@ describe('the first turn of a run', () => {
 });
 
 describe('screenshots for vision models', () => {
-  it('adds one after a navigation, after its fixed line', async () => {
+  it('takes none on its own after a navigation', async () => {
     const layer = new FakeLayer({
       navigate: () =>
         ok('nav', {
@@ -227,8 +227,8 @@ describe('screenshots for vision models', () => {
     );
     await loop.run();
     const second = JSON.stringify(scripted.calls[1]?.prompt ?? []);
-    expect(layer.calls.map(c => c.tool)).toContain('screenshot');
-    expect(second).toContain(PAGE_IMAGE_LINE);
+    expect(layer.calls.map(c => c.tool)).not.toContain('screenshot');
+    expect(second).not.toContain(PAGE_IMAGE_LINE);
   });
 });
 

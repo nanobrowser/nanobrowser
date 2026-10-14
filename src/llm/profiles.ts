@@ -108,7 +108,7 @@ export function resolveProfile(input: ProfileInput): ModelProfile {
 }
 
 /**
- * What Test connection's probes still need to find out: whether None is accepted, for a model that reasons or may, with
+ * What Test models's probes still need to find out: whether None is accepted, for a model that reasons or may, with
  * None's value through the row's map; and whether the model sees images, when that is a guess.
  */
 export function probeAsk(input: ProfileInput): {

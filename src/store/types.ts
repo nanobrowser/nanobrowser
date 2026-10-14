@@ -125,8 +125,8 @@ export type EntryBody =
       message: StoredMessage;
       /** For a tool result: the layer's structured result, beside the text the model saw. */
       result?: unknown;
-      /** A note, an automatic screenshot or the page header from the extension; never the user's words. */
-      appOwned?: { kind: 'notice' | 'screenshot' | 'header' };
+      /** A note or the page header from the extension; never the user's words. */
+      appOwned?: { kind: 'notice' | 'header' };
       meta?: MessageMeta;
     }
   | { type: 'ui'; kind: 'write-card' | 'handover' | 'notice' | 'download'; data: unknown }

@@ -17,6 +17,7 @@
 //   POST /__autorun/report        the final reports of an autorun build
 //   POST /__llm/v1/chat/completions  a fake OpenAI-compatible model: streams the next scripted reply, or echoes
 //   GET  /__llm/v1/models         lists the fake model, and one whose entry states its facts
+//                                 (refused with a 401, as a wrong key is, for the key `wrong-key`)
 //   POST /__llm/v1/audio/transcriptions  a fake OpenAI voice model: answers a fixed sentence for any WAV recording
 //   GET  /__llm/transcriptions    what the fake voice model received (model, language, file type, size), newest last
 //   POST /__llm/script            replaces the queue of scripted replies ({ replies: [...], rejectReasoning? }); with
@@ -264,6 +265,8 @@ async function handleLlm(req, res, path) {
   }
   if (path === '/__llm/requests') return send(res, 200, llm.requests);
   if (path === '/__llm/api/ps') return send(res, 200, { models: [{ name: 'fixture-model', context_length: 12288 }] });
+  if (path === '/__llm/v1/models' && req.headers.authorization === 'Bearer wrong-key')
+    return send(res, 401, { error: { message: 'Incorrect API key provided' } });
   if (path === '/__llm/v1/models')
     return send(res, 200, {
       object: 'list',

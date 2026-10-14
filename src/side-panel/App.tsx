@@ -22,9 +22,11 @@ import { HistoryDrawer } from './History';
 import { Cards, containsCardNumber } from './Cards';
 import { NoticeCard } from './NoticeCard';
 import { WhatsNewCard, useWhatsNew } from './WhatsNewCard';
+import { RatingCard, ratingMovedOn, useRatingCard } from './RatingCard';
 import { TabBar } from './TabBar';
 import { QueueList, RunBar } from './RunControls';
 import type { MessageKey } from '@src/ui/i18n';
+import type { PanelCommand } from '@src/ui/protocol';
 import en from '@src/ui/locales/en.json';
 import { installTestHook } from './test-hook';
 import type { SavedShortcut } from '@src/store/shortcuts';
@@ -211,6 +213,12 @@ export function App() {
     void settingsStorage.set(s => ({ ...s, defaultModel: next.model, reasoning: next.reasoning }));
   };
   const active = isActive(state.status);
+  const ratingCard = useRatingCard(state.conversationId, state.startedAt, active, !!whatsNew);
+  /** Sends a command the user gave that starts a run; with the rating card showing, it is their Maybe later. */
+  const startRun = (command: PanelCommand) => {
+    if (ratingCard) ratingMovedOn();
+    client?.send(command);
+  };
   const history = state.entries.filter(e => e.kind === 'user').map(e => (e as { text: string }).text);
 
   /** The mode for this conversation, or the next one; the first switch to Auto explains it once. */
@@ -291,7 +299,7 @@ export function App() {
     }
     setHeld(null);
     const chosenModel = extra.model && models.some(m => sameModel(m.ref, extra.model)) ? extra.model : model;
-    client.send({
+    startRun({
       type: 'send',
       tabId: client.tabId,
       conversationId: state.conversationId,
@@ -380,9 +388,9 @@ export function App() {
               ? {
                   idle: !active,
                   edit: (entryId, text) =>
-                    client.send({ type: 'edit', conversationId: state.conversationId!, entryId, text }),
-                  restart: entryId => client.send({ type: 'restart', conversationId: state.conversationId!, entryId }),
-                  retry: () => client.send({ type: 'retry', conversationId: state.conversationId! }),
+                    startRun({ type: 'edit', conversationId: state.conversationId!, entryId, text }),
+                  restart: entryId => startRun({ type: 'restart', conversationId: state.conversationId!, entryId }),
+                  retry: () => startRun({ type: 'retry', conversationId: state.conversationId! }),
                 }
               : undefined
           }
@@ -449,10 +457,8 @@ export function App() {
       />
       <RunBar
         status={state.status}
-        onContinue={() =>
-          state.conversationId && client?.send({ type: 'continue', conversationId: state.conversationId })
-        }
-        onResume={() => state.conversationId && client?.send({ type: 'resume', conversationId: state.conversationId })}
+        onContinue={() => state.conversationId && startRun({ type: 'continue', conversationId: state.conversationId })}
+        onResume={() => state.conversationId && startRun({ type: 'resume', conversationId: state.conversationId })}
       />
       <QueueList
         items={state.queue}
@@ -481,8 +487,9 @@ export function App() {
         history={history}
         notice={
           <>
-            {/* The What's new card comes first; the notices below still show under it. */}
+            {/* The What's new card comes first; the notices below still show under it. The rating card waits for it (useRatingCard). */}
             {whatsNew ? <WhatsNewCard release={whatsNew} /> : null}
+            {ratingCard ? <RatingCard /> : null}
             {attachError ? (
               <p className="text-xs text-amber-700 dark:text-amber-300" role="alert">
                 {attachError}
@@ -508,7 +515,7 @@ export function App() {
                     const text = held;
                     setHeld(null);
                     if (client && text)
-                      client.send({
+                      startRun({
                         type: 'send',
                         tabId: client.tabId,
                         conversationId: state.conversationId,

@@ -7,24 +7,17 @@ import type { ReactNode } from 'react';
 import { listModels, resolveProfile } from '@src/llm';
 import type { ModelList, ProviderKind } from '@src/llm';
 import { newId } from '@src/store/conversations';
-import {
-  DEFAULT_SETTINGS,
-  findModel,
-  keysStorage,
-  LOCAL_KINDS,
-  providersStorage,
-  settingsStorage,
-} from '@src/store/settings';
+import { DEFAULT_SETTINGS, findModel, keysStorage, providersStorage, settingsStorage } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
 import { Button, Input, Notice, Select, Switch } from '@src/ui/components';
 import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 import { applyTheme } from '@src/ui/theme';
-import { KINDS, ListedCount, OriginFix } from './ProvidersSection';
+import { KeyInput, KINDS, ListedCount, OriginFix } from './ProvidersSection';
 import { SettingsCard, SettingsRow } from './SettingsCard';
 import { BrowserFeaturesRow } from './BrowserFeaturesCard';
-import { testModel } from './model-test';
+import { listProblem, testModel } from './model-test';
 import { EdgeExtensionsIcon, ExtensionsIcon, Logo, PinIcon, SlantedPinIcon } from '@src/ui/icons';
 
 const STEPS: MessageKey[] = ['welcome.step.welcome', 'welcome.step.model', 'tips.title'];
@@ -228,8 +221,7 @@ function ModelSetup({ local }: { local: boolean }) {
       setShowAll(!list.models.length);
       setName(list.models[0] ?? list.hidden[0] ?? '');
     } catch (error) {
-      const e = error as Error & { originRefused?: boolean };
-      setProblem({ originRefused: !!e.originRefused && local, message: e.message });
+      setProblem(listProblem(error, local));
       // A cloud provider that cannot list models can still take a typed name.
       setFound(local ? null : { models: [], hidden: [] });
     } finally {
@@ -260,7 +252,6 @@ function ModelSetup({ local }: { local: boolean }) {
       name: info.label,
       ...(base ? { baseUrl: base } : {}),
       models: [],
-      ...(LOCAL_KINDS.has(kind) ? { maxConcurrent: 1 } : {}),
     };
     const at = new Date().toISOString();
     const entry: ModelEntry = {
@@ -318,14 +309,7 @@ function ModelSetup({ local }: { local: boolean }) {
         </SettingsRow>
       ) : (
         <SettingsRow label={t('models.apiKey')}>
-          <Input
-            aria-label={t('models.apiKey')}
-            className="w-72 max-w-full"
-            type="password"
-            autoComplete="off"
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-          />
+          <KeyInput label={t('models.apiKey')} className="w-72 max-w-full" value={apiKey} onChange={setApiKey} />
         </SettingsRow>
       )}
       <Button

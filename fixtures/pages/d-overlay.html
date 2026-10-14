@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>A border drawn over the page</title><link rel="stylesheet" href="/style.css">
+<style>
+  body { margin: 0; min-height: 100vh; }
+  .top { display: flex; justify-content: space-between; padding: 4px; }
+  .middle { display: flex; justify-content: space-between; align-items: center; padding: 4px; margin-top: 120px; }
+  .bottom { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: 4px; background: #f1f5f9; }
+  #note { margin: 16px; }
+</style></head>
+<body>
+<div class="top">
+  <a href="#home" id="home">Home</a>
+  <button type="button" id="account">Account</button>
+</div>
+<div class="middle">
+  <input type="text" id="search" aria-label="Search">
+  <button type="button" id="next">Next</button>
+</div>
+<section id="note-block" aria-label="Notes">
+  <button type="button" id="toggle">Toggle note</button>
+  <p id="note" hidden>A note.</p>
+</section>
+<div class="bottom">
+  <button type="button" id="nothing">Do nothing</button>
+  <button type="button" id="help">Help</button>
+</div>
+<script>
+  // Clicks per control, read by the scenarios.
+  window.clicks = {};
+  for (const id of ['home', 'account', 'next', 'nothing', 'help', 'toggle']) {
+    document.getElementById(id).addEventListener('click', e => {
+      if (id === 'home') e.preventDefault();
+      window.clicks[id] = (window.clicks[id] || 0) + 1;
+    });
+  }
+  document.getElementById('toggle').addEventListener('click', () => {
+    const note = document.getElementById('note');
+    note.hidden = !note.hidden;
+  });
+  document.getElementById('nothing').addEventListener('click', () => {});
+
+  // The element the extension draws while a run works on the page: on <html>, fixed over the whole viewport, taking no
+  // pointer events, hidden from accessibility, its content in a closed shadow root. Built here by the page's own script
+  // so the layer's scenarios can check it without the extension.
+  let root = null;
+  window.addOverlay = () => {
+    const host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.setAttribute('data-nanobrowser-border', '');
+    host.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483647';
+    root = host.attachShadow({ mode: 'closed' });
+    root.innerHTML = `<style>
+      .glow { position: absolute; inset: 0; transition: opacity 150ms; }
+      .edge { position: absolute; }
+      .t { top: 0; left: 0; right: 0; height: 16px; background: linear-gradient(to bottom, rgb(0 115 220 / 0.6), transparent); }
+      .b { bottom: 0; left: 0; right: 0; height: 16px; background: linear-gradient(to top, rgb(0 115 220 / 0.6), transparent); }
+      .l { top: 0; bottom: 0; left: 0; width: 16px; background: linear-gradient(to right, rgb(124 92 255 / 0.6), transparent); }
+      .r { top: 0; bottom: 0; right: 0; width: 16px; background: linear-gradient(to left, rgb(124 92 255 / 0.6), transparent); }
+    </style><div class="glow"><div class="edge t"></div><div class="edge b"></div><div class="edge l"></div><div class="edge r"></div></div>`;
+    document.documentElement.appendChild(host);
+    return 1;
+  };
+  // Fades the glow out and in, inside the shadow root, for `ms` milliseconds.
+  window.fadeFor = ms => {
+    const glow = root.querySelector('.glow');
+    const timer = setInterval(() => (glow.style.opacity = glow.style.opacity === '0' ? '1' : '0'), 20);
+    setTimeout(() => clearInterval(timer), ms);
+    return 1;
+  };
+</script>
+</body>
+</html>

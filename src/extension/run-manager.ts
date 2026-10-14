@@ -1,6 +1,6 @@
 // The RunManager: one run per active conversation, the panel commands, run records and statuses. The worker owns the
 // run; panels are views that can close and reopen.
-import { AgentLoop, REASONING_DROPPED } from '@src/agent/loop';
+import { AgentLoop, REASONING_DROPPED, STOPPED_BY_USER, STOPPED_NOTE } from '@src/agent/loop';
 import type { LoopEnd } from '@src/agent/loop';
 import type { HostPort } from '@src/agent/ports';
 import type { Session, UserStepDetails } from '@src/browser-control';
@@ -45,6 +45,7 @@ import { EMPTY_GUARDS, UNFINISHED, ZERO_USAGE, addUsage } from '@src/store/types
 import type { AttachmentRef, PanelCommand, PanelEventBody } from '@src/ui/protocol';
 import { createAgentSession, layerPort } from './agent-session';
 import { TabScope } from './bindings';
+import { PageBorder, injectBorder, listenForBorder } from './border';
 import { addPromptRoute, controllerReady } from './layer';
 import { Permissions } from './permissions';
 import { PromptBroker } from './prompt-broker';
@@ -58,12 +59,14 @@ import { clearShortcuts, isStartUrl } from '@src/store/shortcuts';
 import { OLD_KEYS, UPGRADE_KEY, deleteOldChats } from '@src/store/legacy';
 import { upgradeFromOldVersion } from './upgrade';
 import { WHATS_NEW_KEY } from '@src/store/whats-new';
+import { RATING_ANSWER_KEY, RATING_KEY, afterFinishedRun, ratingStorage } from '@src/store/rating';
 import type { ToolCallRequest } from '@src/llm';
 import type { DebtEntry } from '@src/agent/completion';
 import { Journal } from './journal';
 import type { Sink } from './journal';
 import { livePair, ModelUnavailable, resolveModel } from './models';
 import { count, deleteKeepingChoices, noteActivity, observe, runEnded, runModel, runStarted } from './analytics';
+import { endOf } from './analytics-payload';
 
 export interface PanelConnection {
   tabId: number | null;
@@ -90,6 +93,8 @@ export class RunManager {
   #modes = new Map<string, Conversation['mode']>();
   #records = new Map<string, RunRecord>();
   readonly scope: TabScope;
+  /** The glow on the pages a working run acts on. */
+  readonly border: PageBorder;
   /** Messages typed while the agent works: one queue per conversation, in the worker. */
   #queues = new Map<string, QueuedMessage[]>();
   /** The open panels, for what goes to one tab's panel only (a selection). */
@@ -107,6 +112,17 @@ export class RunManager {
       blocked: () => this.permissions.blockedSites(),
       changed: (conversationId, added, removed) => void this.#scopeChanged(conversationId, added, removed),
     });
+    this.border = new PageBorder({
+      conversationOf: tabId => this.scope.conversationOf(tabId),
+      tabsOf: conversationId => this.scope.tabsOf(conversationId),
+      scopedTabs: () => this.scope.scopedTabs(),
+      enabled: async () => ((await settingsStorage.get()) ?? DEFAULT_SETTINGS).pageBorder,
+      inject: injectBorder,
+    });
+    listenForBorder(this.border);
+    // A worker that stopped during a run leaves its pages with a border, and the extension id they check is still
+    // there: no run works at worker start, so every scoped tab loses it.
+    void this.border.start().catch(() => undefined);
     this.broker = new PromptBroker({
       emit: (conversationId, body) => this.emit(conversationId, body),
       waiting: (conversationId, open) => void this.#waiting(conversationId, open.length > 0),
@@ -132,6 +148,7 @@ export class RunManager {
 
   /** The scope changed: the panels get the new list, and a session in a run gains or loses the tab. */
   async #scopeChanged(conversationId: string, added: number[], removed: number[]): Promise<void> {
+    void this.border.tabsChanged(added, removed).catch(() => undefined);
     const session = this.#sessions.get(conversationId);
     if (session) {
       for (const tabId of added) if (!session.hasTab(tabId)) await session.share(tabId).catch(() => undefined);
@@ -723,6 +740,8 @@ export class RunManager {
         'nb.siteRules',
         UPGRADE_KEY,
         WHATS_NEW_KEY,
+        RATING_KEY,
+        RATING_ANSWER_KEY,
         ...OLD_KEYS,
       ]);
     });
@@ -1212,6 +1231,7 @@ export class RunManager {
     const conversation = await updateConversation(record.conversationId, { status });
     this.emit(record.conversationId, { type: 'run_status', status, reason, startedAt: record.startedAt });
     await this.scope.status(record.conversationId, status, conversation?.title ?? '');
+    void this.border.status(record.conversationId, status).catch(() => undefined);
   }
 
   /** Continue and Resume: a new run on the same context, opened by a note. */
@@ -1285,7 +1305,7 @@ export class RunManager {
           }),
           tools,
           mode: () => this.#modes.get(conversationId) ?? conversation.mode,
-          layer: layerPort(session),
+          layer: layerPort(session, this.border),
           host: this.#host(conversationId, session),
           signal: controller.signal,
           emit: event => this.emit(conversationId, event),
@@ -1310,6 +1330,10 @@ export class RunManager {
         record.debt = loop.debt;
         record.guards = loop.guards.state;
         if (end.status === 'failed' && end.reason) await this.#notice(conversationId, end.reason, 'error');
+        if (end.status === 'stopped') {
+          await this.#notice(conversationId, STOPPED_BY_USER, 'info');
+          await new RunWriter(conversationId, runId).appNote(STOPPED_NOTE);
+        }
         await this.#setStatus(record, end.status, end.reason);
         if (end.status !== 'stopped' && !(await this.#inView(conversationId))) {
           await notifyFinished(conversationId, end.outcome === 'success', (await this.scope.tabsOf(conversationId))[0]);
@@ -1321,6 +1345,10 @@ export class RunManager {
         await this.#setStatus(record, 'failed', message);
       } finally {
         runEnded(record, end ?? {});
+        // A run that finished well counts towards the card that asks for a store rating.
+        if (endOf(record.status, record.outcome) === 'success') {
+          void ratingStorage.set(u => afterFinishedRun(u, new Date(), conversationId)).catch(() => undefined);
+        }
         this.#runs.delete(conversationId);
         this.#records.delete(conversationId);
         this.broker.withdrawAll(conversationId);

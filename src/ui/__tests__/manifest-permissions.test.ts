@@ -14,12 +14,11 @@ describe('manifest permission lists', () => {
     expect([...product.optional_permissions].sort()).toEqual([...FOUR].sort());
   });
 
-  it('the product asks for neither scripting nor activeTab', () => {
+  it('the product requires scripting, for the page border, and does not ask for activeTab', () => {
     const product = permissionLists('product');
-    for (const p of ['scripting', 'activeTab']) {
-      expect(product.permissions).not.toContain(p);
-      expect(product.optional_permissions).not.toContain(p);
-    }
+    expect(product.permissions).toContain('scripting');
+    expect(product.permissions).not.toContain('activeTab');
+    expect(product.optional_permissions).not.toContain('activeTab');
   });
 
   it('the autorun build requires the four and has nothing optional', () => {
