@@ -1,5 +1,5 @@
 // The settings page. Each section reads and writes chrome.storage directly.
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { DEFAULT_SETTINGS, settingsStorage } from '@src/store/settings';
 import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
@@ -13,6 +13,7 @@ import { MemorySection } from './MemorySection';
 import { DataSection } from './DataSection';
 import { AboutSection } from './AboutSection';
 import { Logo } from '@src/ui/icons';
+import { websiteUrl } from '@src/ui/links';
 
 const SECTIONS: Array<{ id: string; label: MessageKey; render: () => JSX.Element }> = [
   { id: 'general', label: 'settings.nav.general', render: () => <GeneralSection /> },
@@ -64,14 +65,25 @@ export function App() {
             aria-label={t('settings.title')}
             className="flex shrink-0 flex-col gap-1 sm:sticky sm:top-8 sm:w-52 sm:self-start">
             {SECTIONS.map(s => (
-              <button
-                key={s.id}
-                type="button"
-                aria-current={s.id === section ? 'page' : undefined}
-                className={`rounded-lg px-3 py-2.5 text-left text-[15px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent ${s.id === section ? 'bg-nb-surface text-nb-fg' : 'text-nb-fg/80 hover:bg-nb-surface/60 hover:text-nb-fg'}`}
-                onClick={() => go(s.id)}>
-                {t(s.label)}
-              </button>
+              <Fragment key={s.id}>
+                {/* Help, a link to the website's help pages in a new tab, sits above About; it is not a section. */}
+                {s.id === 'about' ? (
+                  <a
+                    href={websiteUrl('/docs', 'settings')}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg px-3 py-2.5 text-left text-[15px] text-nb-fg/80 transition-colors hover:bg-nb-surface/60 hover:text-nb-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent">
+                    {t('settings.nav.help')}
+                  </a>
+                ) : null}
+                <button
+                  type="button"
+                  aria-current={s.id === section ? 'page' : undefined}
+                  className={`rounded-lg px-3 py-2.5 text-left text-[15px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent ${s.id === section ? 'bg-nb-surface text-nb-fg' : 'text-nb-fg/80 hover:bg-nb-surface/60 hover:text-nb-fg'}`}
+                  onClick={() => go(s.id)}>
+                  {t(s.label)}
+                </button>
+              </Fragment>
             ))}
           </nav>
           <main className="min-w-0 max-w-4xl flex-1">{active.render()}</main>

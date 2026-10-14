@@ -33,6 +33,7 @@ import type { SavedShortcut } from '@src/store/shortcuts';
 import { useShortcuts } from '@src/ui/shortcuts';
 import { AutoNotice } from '@src/ui/auto-notice';
 import { HistoryIcon, LogoMark, NewChatIcon, SettingsIcon } from '@src/ui/icons';
+import { websiteUrl } from '@src/ui/links';
 
 const NO_PROVIDERS: ProviderConfig[] = [];
 const NO_KEYS: Record<string, string> = {};
@@ -344,7 +345,16 @@ export function App() {
       {/* The header has no field of its own, so it is part of the panel; a line under it only above a conversation. */}
       <header
         className={`flex items-center gap-1 border-b px-2 py-1.5 ${empty && state.loaded ? 'border-transparent' : 'border-nb-border/60'}`}>
-        <LogoMark size={20} className="ml-1" />
+        {/* The mark opens the website in a new tab. */}
+        <a
+          href={websiteUrl('/', 'side-panel')}
+          target="_blank"
+          rel="noreferrer"
+          title={t('panel.website')}
+          aria-label={t('panel.website')}
+          className="ml-1 flex shrink-0 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent">
+          <LogoMark size={20} />
+        </a>
         {/* The title is for screen readers only; the header shows the mark and three buttons. */}
         <h1 className="sr-only">{conversation?.title || t('panel.newChat')}</h1>
         <span className="flex-1" />

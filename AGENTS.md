@@ -93,9 +93,9 @@ The extension:
 
 ## Toolchain
 
-The project is a single pnpm package built by WXT: Node 24 LTS, pnpm 10.34.6, WXT 0.21.4, TypeScript 6.0.3, Vitest 5.0.2, puppeteer-core ^25.12.0, zod 4.6.5, React 18.3.1.
+The project is a single pnpm package built by WXT: Node 24 LTS, pnpm 10.34.7, WXT 0.21.4, TypeScript 6.0.3, Vitest 5.0.4, puppeteer-core ^25.13.0, zod 4.6.7, React 18.3.1. A patch or minor update is taken once the checks pass; a major update is evaluated and decided on its own.
 
-pnpm 10.34.6 is pinned in `package.json` (`packageManager`). If the global `pnpm` is a different version, run the scripts through `corepack pnpm <script>`.
+pnpm 10.34.7 is pinned in `package.json` (`packageManager`). If the global `pnpm` is a different version, run the scripts through `corepack pnpm <script>`.
 
 - `pnpm install` - Install dependencies (also runs `wxt prepare`)
 - `pnpm dev` - WXT development mode; load `dist/` unpacked in Chrome
