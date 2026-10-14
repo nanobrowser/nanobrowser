@@ -1,14 +1,9 @@
 import { createRoot } from 'react-dom/client';
-import './index.css';
-import SidePanel from './SidePanel';
+import '@src/ui/index.css';
+import { watchSystemTheme } from '@src/ui/theme';
+import { App } from './App';
 
-function init() {
-  const appContainer = document.querySelector('#app-container');
-  if (!appContainer) {
-    throw new Error('Can not find #app-container');
-  }
-  const root = createRoot(appContainer);
-  root.render(<SidePanel />);
-}
-
-init();
+const container = document.querySelector('#app-container');
+if (!container) throw new Error('Cannot find #app-container');
+watchSystemTheme();
+createRoot(container).render(<App />);

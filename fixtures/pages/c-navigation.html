@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Navigation targets</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Links and forms that lead to the denied site (127.0.0.1)</h1>
+<p><a href="http://127.0.0.1:8787/network-landed.html">Partner site</a></p>
+<p><a href="http://127.0.0.1:8787/network-landed.html" target="_blank">Partner site in a new tab</a></p>
+<p><a href="javascript:void(0)" id="js-link">Script link</a> <a href="/network-landed.html">Allowed link</a></p>
+<form action="http://127.0.0.1:8787/submit" method="post" id="partner-form">
+  <label>Partner note <input type="text" name="note" value="hello"></label>
+  <button type="submit">Send to partner</button>
+</form>
+<p><button type="button" id="script-go">Go by script</button></p>
+<p><button type="button" id="popup-denied">Open denied popup</button> <button type="button" id="popup-allowed">Open allowed popup</button></p>
+<p class="note">script link clicks: <span id="js-clicks">0</span></p>
+<script>
+  window.jsClicks = 0;
+  document.getElementById('js-link').addEventListener('click', () => (document.getElementById('js-clicks').textContent = ++window.jsClicks));
+  document.getElementById('script-go').addEventListener('click', () => (location.href = 'http://127.0.0.1:8787/network-landed.html'));
+  document.getElementById('popup-denied').addEventListener('click', () => window.open('http://127.0.0.1:8787/index.html'));
+  document.getElementById('popup-allowed').addEventListener('click', () => window.open('/index.html'));
+</script>
+</body>
+</html>

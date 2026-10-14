@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Cross-site field</title></head>
+<body>
+<label>Cross field <input id="field" autofocus></label>
+<script>
+  const field = document.getElementById('field');
+  field.focus();
+  field.addEventListener('input', () => parent.postMessage(field.value, '*'));
+</script>
+</body>
+</html>

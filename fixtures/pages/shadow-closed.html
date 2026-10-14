@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Closed shadow root</title
+    ><link rel="stylesheet" href="/style.css"
+  /></head>
+  <body>
+    <h1>Closed shadow root</h1>
+    <p
+      >The widget below keeps its controls in a closed shadow root. Page script cannot reach them through
+      <code>shadowRoot</code>.</p
+    >
+    <closed-widget></closed-widget>
+    <p id="status" class="note">Not clicked</p>
+    <script>
+      customElements.define(
+        'closed-widget',
+        class extends HTMLElement {
+          constructor() {
+            super();
+            const root = this.attachShadow({ mode: 'closed' });
+            root.innerHTML = `
+        <style>div { border: 1px dashed #64748b; padding: 8px; }</style>
+        <div>
+          <label>Shadow field <input type="text" value="inside closed root"></label>
+          <button type="button">Shadow button</button>
+        </div>`;
+            root.querySelector('button').addEventListener('click', () => {
+              document.getElementById('status').textContent = 'Shadow button clicked';
+            });
+          }
+        },
+      );
+      console.assert(document.querySelector('closed-widget').shadowRoot === null, 'shadow root should be closed');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Network endpoints</title
+    ><link rel="stylesheet" href="/style.css"
+  /></head>
+  <body>
+    <h1>Network endpoints</h1>
+    <p><a id="redirect-link" href="/redirect?to=/network-landed.html">Go through a redirect</a></p>
+    <form id="post-form" method="post" action="/submit">
+      <label>Name <input type="text" name="name" value="Ada" /></label>
+      <button type="submit">Send</button>
+    </form>
+    <p><button type="button" id="slow-button">Slow request</button> <span id="slow-status" class="note">idle</span></p>
+    <script>
+      document.getElementById('slow-button').addEventListener('click', async () => {
+        const status = document.getElementById('slow-status');
+        status.textContent = 'waiting';
+        const response = await fetch('/api/slow?ms=800');
+        status.textContent = response.ok ? 'done' : 'failed';
+      });
+    </script>
+  </body>
+</html>

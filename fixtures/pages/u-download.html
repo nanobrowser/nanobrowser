@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Downloads</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<!-- Download fixtures: the ways a page starts a download. -->
+<h1>Downloads</h1>
+<p><a href="/download?name=nb-dl-attribute.txt" download>Download with the attribute</a></p>
+<p><a href="/download?name=nb-dl-header.txt">Download by the server's header</a></p>
+<form method="post" action="/download?name=nb-dl-form.txt"><button type="submit">Download by a form</button></form>
+<p><button type="button" id="blob">Download a page-made file</button></p>
+<script>
+  document.getElementById('blob').addEventListener('click', () => {
+    const url = URL.createObjectURL(new Blob(['made in the page\n'], { type: 'text/plain' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'nb-dl-blob.txt' });
+    document.body.append(a);
+    a.click();
+    a.remove();
+  });
+</script>
+</body>
+</html>

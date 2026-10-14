@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Sign in</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Sign in</h1>
+<form id="login">
+  <label>Email <input type="email" id="email" name="email"></label>
+  <label>Password <input type="password" id="password" name="password"></label>
+  <button type="submit">Sign in</button>
+</form>
+<p id="status" class="note">Signed out</p>
+<script>
+  document.getElementById('login').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    document.getElementById('login').remove();
+    document.querySelector('h1').textContent = 'Account';
+    document.getElementById('status').textContent = `Signed in as ${email}`;
+    const out = document.createElement('button');
+    out.type = 'button';
+    out.textContent = 'Sign out';
+    document.body.append(out);
+  });
+</script>
+</body>
+</html>

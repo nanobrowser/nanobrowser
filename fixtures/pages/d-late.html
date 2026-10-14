@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Changes at the last moment</title><link rel="stylesheet" href="/style.css">
+<style>#editor { border: 1px solid #94a3b8; padding: 8px; min-height: 40px; }</style></head>
+<body>
+<h1>Changes at the last moment</h1>
+<form id="checkout" action="/submit" method="post">
+  <p><button type="button" id="preview">Preview</button></p>
+</form>
+<form id="booking" action="/submit" method="post">
+  <p><label>Delivery date <input type="date" id="delivery" name="delivery" value="2026-01-01"></label>
+     <label>Tint <input type="color" id="tint" name="tint" value="#336699"></label>
+     <button type="submit" id="save">Save booking</button></p>
+</form>
+<p><button type="button" id="report">Report</button> <button type="button" id="other">Other</button></p>
+<div id="editor" contenteditable="true" role="textbox" aria-label="Editor">Notes <button type="button" id="inner" contenteditable="false">Pay now</button></div>
+<p><label>Card on file <select id="card" autocomplete="cc-number">
+  <option value="">Choose</option>
+  <option value="4111111111111111">Saved card</option>
+  <option value="5555555555554444">Saved card</option>
+</select></label></p>
+<p><label>First <input type="text" id="first"></label> <label>Second <input type="text" id="second"></label></p>
+<script>
+  window.effects = [];
+  const effect = name => window.effects.push(name);
+  const byId = id => document.getElementById(id);
+  for (const id of ['preview', 'report', 'other', 'inner']) byId(id).addEventListener('click', () => effect(id));
+  byId('checkout').addEventListener('submit', e => {
+    e.preventDefault();
+    effect('submit checkout');
+  });
+  byId('booking').addEventListener('submit', e => {
+    e.preventDefault();
+    effect(`submit booking ${byId('delivery').value}`);
+  });
+  const preview = byId('preview');
+  const becomePay = () => {
+    preview.type = 'submit';
+    preview.textContent = 'Pay now';
+  };
+  // Page behaviours the scenarios turn on. Each changes "Preview" into the form's "Pay now" submit button at a
+  // different moment of the action that activates it.
+  window.spaceDownBecomesPay = () => preview.addEventListener('keydown', e => e.key === ' ' && becomePay());
+  window.spaceDownAsksThenPay = () =>
+    preview.addEventListener('keydown', e => {
+      if (e.key !== ' ') return;
+      confirm('Continue?');
+      becomePay();
+    });
+  window.hoverBecomesPay = () => preview.addEventListener('mouseenter', becomePay);
+  window.pressBecomesPay = () => preview.addEventListener('mousedown', becomePay);
+  window.pressAsksThenPay = () =>
+    preview.addEventListener('mousedown', () => {
+      confirm('Continue?');
+      becomePay();
+    });
+  // The first click renames the button and leaves its type alone, so that click is still a plain "Preview" click;
+  // a click on the renamed button pays.
+  window.firstClickRenames = () =>
+    preview.addEventListener('click', () => {
+      if (preview.textContent === 'Pay now') effect('paid');
+      else preview.textContent = 'Pay now';
+    });
+  // The first key typed into the editor moves focus onto the button inside it.
+  window.firstKeyFocusesInner = () => byId('editor').addEventListener('keydown', () => byId('inner').focus(), { once: true });
+  // "Report" is renamed and hidden from the accessibility tree, or hidden for a moment and shown again renamed.
+  window.renameHidden = () => {
+    byId('report').textContent = 'Pay now';
+    byId('report').setAttribute('aria-hidden', 'true');
+  };
+  window.hideThenRename = () => {
+    byId('report').style.display = 'none';
+    byId('report').textContent = 'Pay now';
+    setTimeout(() => (byId('report').style.display = ''), 600);
+  };
+  // The page puts the first saved card back.
+  window.revertCard = () => byId('card').addEventListener('change', () => (byId('card').selectedIndex = 1));
+  // Hovering the second field covers it, so the click that would focus it is cancelled as it arrives.
+  window.secondCoversOnHover = () =>
+    byId('second').addEventListener('mouseenter', () => {
+      const r = byId('second').getBoundingClientRect();
+      const cover = document.createElement('div');
+      cover.id = 'cover';
+      cover.style.cssText = `position:fixed;z-index:10;background:#fecaca;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+      document.body.append(cover);
+    });
+</script>
+</body>
+</html>

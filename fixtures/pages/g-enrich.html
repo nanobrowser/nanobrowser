@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Set G: the classifier's enrichments (sign-in, one-time codes, card fields, grants, comments and searches), with
+     the cases that must not match beside the ones that must. window.hits counts what reached the page. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Account</title>
+    <script>
+      window.hits = [];
+      function hit(what) { window.hits.push(what); }
+    </script>
+  </head>
+  <body>
+    <h1>Account</h1>
+    <form id="login" method="post" onsubmit="event.preventDefault(); hit('login')">
+      <input aria-label="Email" name="email" />
+      <input aria-label="Password" type="password" name="password" />
+      <input aria-label="One-time code" name="otp" autocomplete="one-time-code" />
+      <input aria-label="Promo code" name="promo" />
+      <select aria-label="Saved card" name="card_number">
+        <option value="">Choose</option>
+        <option value="4242424242424242">Visa ending 4242</option>
+      </select>
+      <button type="submit">Sign in</button>
+    </form>
+    <p>
+      <button onclick="hit('authorize')">Authorize</button>
+      <button onclick="hit('allow')">Allow</button>
+      <button class="save" onclick="hit('save')">Save</button>
+    </p>
+    <div>
+      <textarea aria-label="Write a comment" onkeydown="if (event.key === 'Enter') hit('comment')"></textarea>
+      <input aria-label="Search the site" type="search" onkeydown="if (event.key === 'Enter') hit('search')" />
+      <input aria-label="Filter" placeholder="Search" onkeydown="if (event.key === 'Enter') hit('filter')" />
+    </div>
+    <form id="reply" onsubmit="event.preventDefault(); hit('reply')">
+      <textarea aria-label="Reply"></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </body>
+</html>

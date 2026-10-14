@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Wait targets</title
+    ><link rel="stylesheet" href="/style.css"
+  /></head>
+  <body>
+    <h1>Wait targets</h1>
+    <!-- "Start" stands for a request an SPA makes: 1.2 s later, "Continue" is rendered and "Old step" removed. -->
+    <p id="status">Idle</p>
+    <button id="start" type="button">Start</button>
+    <button id="old" type="button">Old step</button>
+    <div id="slot"></div>
+    <script>
+      document.getElementById('start').addEventListener('click', () => {
+        document.getElementById('status').textContent = 'Loading';
+        setTimeout(() => {
+          document.getElementById('old').remove();
+          const next = document.createElement('button');
+          next.type = 'button';
+          next.textContent = 'Continue';
+          document.getElementById('slot').append(next);
+          document.getElementById('status').textContent = 'Ready';
+        }, 1200);
+      });
+    </script>
+  </body>
+</html>

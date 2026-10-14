@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Cookie banner</title><link rel="stylesheet" href="/style.css">
+<style>
+  .banner { position: fixed; inset: 0 0 auto 0; height: 220px; background: #fef3c7; border-bottom: 2px solid #b45309; padding: 16px; }
+  #target { margin-top: 80px; }
+</style></head>
+<body>
+<h1>Cookie banner</h1>
+<button type="button" id="target">Accept terms</button>
+<p id="clicks" class="note">0 clicks</p>
+<div class="banner" role="dialog" aria-label="Cookie preferences">
+  We use cookies. <button type="button" id="dismiss">Dismiss</button>
+</div>
+<script>
+  window.clicks = 0;
+  document.getElementById('target').addEventListener('click', () => {
+    window.clicks++;
+    document.getElementById('clicks').textContent = `${window.clicks} clicks`;
+  });
+  document.getElementById('dismiss').addEventListener('click', () => document.querySelector('.banner').remove());
+</script>
+</body>
+</html>

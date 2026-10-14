@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Pointer events none</title><link rel="stylesheet" href="/style.css">
+<style>
+  .card { border: 1px solid #94a3b8; padding: 24px; width: 260px; cursor: pointer; }
+  .card button { pointer-events: none; }
+</style></head>
+<body>
+<h1>A button that takes no pointer events, inside a clickable card</h1>
+<div class="card" id="card" role="group" aria-label="Project card">
+  Project Apollo <button type="button" id="open">Open project</button>
+</div>
+<p class="note">card clicks: <span id="card-clicks">0</span>, button clicks: <span id="button-clicks">0</span></p>
+<script>
+  window.cardClicks = 0;
+  window.buttonClicks = 0;
+  document.getElementById('card').addEventListener('click', () => (document.getElementById('card-clicks').textContent = ++window.cardClicks));
+  document.getElementById('open').addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('button-clicks').textContent = ++window.buttonClicks;
+  });
+</script>
+</body>
+</html>

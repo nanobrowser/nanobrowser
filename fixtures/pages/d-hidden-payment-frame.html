@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Hidden payment frame</title
+    ><link rel="stylesheet" href="/style.css" />
+    <style>
+      #pay-frame {
+        border: 0;
+        width: 260px;
+        height: 40px;
+        display: block;
+      }
+    </style></head
+  >
+  <body>
+    <h1>Hidden payment frame</h1>
+    <!-- A payment frame behind a modal, hidden from accessibility and still rendered. -->
+    <div id="background" aria-hidden="true">
+      <iframe id="pay-frame" title="Payment frame" src="http://127.0.0.1:8787/d-card-frame.html"></iframe>
+    </div>
+    <!-- Filled secret fields that a scenario hides from accessibility, focuses and presses a key in. The
+         values are set by the scenario, never written here. -->
+    <form id="signin" action="/never" method="post">
+      <p id="pw-row"
+        ><label>Password <input type="password" id="pw" name="password" /></label
+      ></p>
+      <p id="pw-bare-row"><input type="password" id="pw-bare" name="pw2" /></p>
+      <p id="card-row"><input id="card" name="cardnumber" autocomplete="cc-number" /></p>
+      <p id="otp-row"><input id="otp" name="otp" autocomplete="one-time-code" /></p>
+      <button type="submit">Sign in</button>
+    </form>
+    <div id="modal" role="dialog" aria-modal="true" aria-label="Notice" hidden><p>Session notice</p></div>
+    <script>
+      window.submits = 0;
+      document.getElementById('signin').addEventListener('submit', event => {
+        event.preventDefault();
+        window.submits++;
+      });
+    </script>
+  </body>
+</html>

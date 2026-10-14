@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scrolling frame</title>
+    <style>
+      /* A classic scrollbar that takes layout width, as on Windows and Linux. */
+      html::-webkit-scrollbar {
+        width: 16px;
+      }
+      body {
+        margin: 0;
+        height: 600px;
+      }
+      #small {
+        position: absolute;
+        left: 216px;
+        top: 40px;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" id="small" aria-label="Tick"></button>
+    <script>
+      // The parent page counts what reaches this document.
+      document.addEventListener('mousedown', () => parent.postMessage('child-down', '*'), true);
+      document.getElementById('small').addEventListener('click', () => parent.postMessage('child-click', '*'));
+    </script>
+  </body>
+</html>

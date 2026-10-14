@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Masked names</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      #slotted {
+        cursor: pointer;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Masked names</h1>
+
+    <!-- A password shown as text that happens to be the label of a button. The value is set by the scenario. -->
+    <p>
+      <label>Password <input type="text" id="pw" name="password" /></label>
+      <button type="button" id="pay">Pay now</button>
+    </p>
+
+    <!-- Custom controls named from their content, which holds a card field. Values are set by the scenario. -->
+    <div role="radio" aria-checked="true" tabindex="0" id="by-card">
+      Pay by card <input id="card" autocomplete="cc-number" />
+    </div>
+    <div role="button" tabindex="0" id="only-field"><input id="card-only" autocomplete="cc-number" /></div>
+
+    <!-- A light-DOM row that holds a shadow widget, and a clickable custom element with slotted text. -->
+    <ul>
+      <li>Carol <span id="badge"></span> <button type="button" id="rename-carol">Rename</button></li>
+    </ul>
+    <span id="slotted">Open orders</span>
+
+    <!-- A checkbox whose click opens an alert. -->
+    <label><input type="checkbox" id="notify" /> Notify me</label>
+
+    <script>
+      window.counts = {};
+      const count = name => (window.counts[name] = (window.counts[name] ?? 0) + 1);
+      for (const id of ['pay', 'by-card', 'only-field', 'rename-carol', 'slotted'])
+        document.getElementById(id).addEventListener('click', () => count(id));
+      document.getElementById('badge').attachShadow({ mode: 'open' }).innerHTML =
+        '<style>b { color: green }</style><b>VIP member</b>';
+      document.getElementById('slotted').attachShadow({ mode: 'open' }).innerHTML =
+        '<i>shadow prefix </i><slot></slot>';
+      document.getElementById('notify').addEventListener('click', () => alert('Notifications are on'));
+    </script>
+  </body>
+</html>

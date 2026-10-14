@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Nanobrowser",
+  "version": "0.2.0",
+  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs",
+    "activeTab",
+    "debugger",
+    "unlimitedStorage",
+    "webNavigation",
+    "sidePanel"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "<all_urls>"],
+      "all_frames": true,
+      "js": ["content-scripts/content.js"]
+    }
+  ]
+}

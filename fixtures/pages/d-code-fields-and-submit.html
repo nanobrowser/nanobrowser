@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Code fields and submit</title
+    ><link rel="stylesheet" href="/style.css"
+  /></head>
+  <body>
+    <h1>Code fields and submit</h1>
+    <!-- Code fields named or labelled as such, without autocomplete metadata. -->
+    <form id="verify" onsubmit="return false;">
+      <p
+        ><label>Verification code <input id="vc" name="verification_code" inputmode="numeric" /></label
+      ></p>
+      <p
+        ><label>Authentication code <input id="ac" name="code_a" /></label
+      ></p>
+      <p
+        ><label>MFA code <input id="mc" name="code_m" /></label
+      ></p>
+      <p
+        ><label>Enter code <input id="vf" name="verifyCode" /></label
+      ></p>
+      <p
+        ><label>One-time password <input id="op" name="code_o" /></label
+      ></p>
+    </form>
+    <!-- Ordinary code fields: their values are printed. -->
+    <form id="checkout" onsubmit="return false;">
+      <p
+        ><label>Promo code <input id="promo" name="promo_code" /></label
+      ></p>
+      <p
+        ><label>Zip code <input id="zip" name="zip_code" /></label
+      ></p>
+      <p
+        ><label>Postal code <input id="postal" name="postal_code" /></label
+      ></p>
+    </form>
+    <!-- A form that stays on the page after it is submitted. -->
+    <form
+      id="signup"
+      onsubmit="
+        event.preventDefault();
+        window.signups++;
+      ">
+      <p
+        ><label>Email <input id="email" name="email" type="email" /></label
+      ></p>
+      <button type="submit">Create account</button>
+    </form>
+    <!-- A form whose submission navigates. -->
+    <form id="search" action="/network-landed.html" method="get">
+      <p
+        ><label>Search <input id="q" name="q" /></label
+      ></p>
+    </form>
+    <script>
+      window.signups = 0;
+    </script>
+  </body>
+</html>

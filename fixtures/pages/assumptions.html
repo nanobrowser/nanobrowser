@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Assumptions</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Assumptions</h1>
+<p class="note">Used by the assumption checks. Page handlers count events in <code>window.counts</code>.</p>
+<p><button type="button" id="counted">Counted button</button></p>
+<p><a id="guard-link" href="#navigated">Guarded link</a></p>
+<p><label><input type="checkbox" id="guard-check"> Guarded checkbox</label></p>
+<p><input type="text" id="text" aria-label="Text field"></p>
+<p><span id="lbl">Labelled by text</span> <button type="button" id="named" aria-label="Aria label text" aria-labelledby="lbl">Content text</button></p>
+<iframe id="inner" title="Same-process frame" src="/assumptions-inner.html" width="400" height="80"></iframe>
+<div style="height: 1600px"></div>
+<button type="button" id="bottom" onclick="this.textContent = 'Bottom clicked'">Bottom button</button>
+<iframe id="bottom-cross" title="Cross-site frame below the fold" src="http://127.0.0.1:8787/assumptions-inner.html" width="400" height="80"></iframe>
+<div style="height: 400px"></div>
+<script>
+  window.counts = { pointerdown: 0, mousedown: 0, mouseup: 0, click: 0, beforeinput: 0, input: 0, keydown: 0 };
+  for (const type of ['pointerdown', 'mousedown', 'mouseup', 'click']) {
+    for (const id of ['counted', 'guard-link', 'guard-check']) {
+      document.getElementById(id).addEventListener(type, () => window.counts[type]++);
+    }
+  }
+  for (const type of ['beforeinput', 'input', 'keydown']) {
+    document.getElementById('text').addEventListener(type, () => window.counts[type]++);
+  }
+</script>
+</body>
+</html>

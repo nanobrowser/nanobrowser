@@ -1,0 +1,27 @@
+import './registry';
+import './set-a';
+import './set-b';
+import './set-c';
+import './set-c-confirm';
+import './set-d';
+// Scenarios for reported cases, in sets C and D, one file per topic; each file's header says what it tests.
+import './keys-and-masking';
+import './focus-moves';
+import './page-changes-midway';
+import './turns-into-pay-now';
+import './toggles-and-nested-controls';
+import './masked-requests-and-screenshots';
+import './masked-rerendered-fields';
+import './masked-hidden-regions';
+import './code-fields-and-submit';
+import './wait-and-navigate-deadlines';
+import './wait-targets';
+import './hidden-payment-frame';
+import './clicks-dialogs-frames';
+import './drawn-over-pages';
+import './masked-names';
+import './set-g';
+import './set-f';
+import './set-g-loop';
+import './set-i';
+import './set-u';

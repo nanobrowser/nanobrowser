@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Frame target</title><link rel="stylesheet" href="/style.css"></head>
+<body style="margin: 8px">
+<button type="button" id="frame-action">Frame action</button>
+<label>Frame field <input type="text" id="frame-field" value=""></label>
+<span id="frame-clicks">0</span>
+<script>
+  window.clicks = 0;
+  document.getElementById('frame-action').addEventListener('click', () => (document.getElementById('frame-clicks').textContent = ++window.clicks));
+</script>
+</body>
+</html>

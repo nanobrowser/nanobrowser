@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- Set G: a button the page renames to "Pay now" between the decision and the click. -->
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Basket</title></head>
+  <body>
+    <p>Total: $45.00</p>
+    <button id="b" onmouseover="this.textContent = 'Pay now'" onclick="window.paid = true">Save basket</button>
+    <form method="post" onsubmit="event.preventDefault(); window.sent = (window.sent || 0) + 1">
+      <input aria-label="Name" name="name" />
+      <input aria-label="Email" name="email" />
+      <button type="submit">Send request</button>
+    </form>
+  </body>
+</html>

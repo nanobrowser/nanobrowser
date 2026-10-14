@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixtures</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <h1>Browser control fixtures</h1>
+    <p class="note">Served by <code>fixtures/server.mjs</code> on localhost, 127.0.0.1 and [::1], port 8787.</p>
+    <h2>Set A: structure and network</h2>
+    <ul>
+      <li><a href="/frames-nested.html">Cross-site iframes nested two deep</a></li>
+      <li><a href="/shadow-closed.html">Closed shadow root</a></li>
+      <li><a href="/large-table.html">Large table</a></li>
+      <li><a href="/network.html">Redirect, form post and slow request</a></li>
+    </ul>
+    <h2>Set B: observation</h2>
+    <ul>
+      <li><a href="/form.html">Roles, states, values, masked fields, frames</a></li>
+      <li><a href="/live-value.html">Values changed without DOM mutation</a></li>
+      <li><a href="/busy.html">A capture that fails (blocked main thread)</a></li>
+    </ul>
+    <h2>Set C: action</h2>
+    <ul>
+      <li><a href="/c-cookie-banner.html">A cookie banner covers the target</a></li>
+      <li><a href="/c-pointer-none.html">A button with pointer-events none in a clickable card</a></li>
+      <li><a href="/c-modal-over-frame.html">A parent-page modal over a cross-site iframe</a></li>
+      <li><a href="/c-states.html">Disabled, hidden, moving, renamed and re-rendered targets</a></li>
+      <li><a href="/c-hover-swap.html">Hovering replaces the target before the press</a></li>
+      <li><a href="/c-alert.html">A click handler that calls alert()</a></li>
+      <li><a href="/c-hover.html">Hover</a></li>
+      <li><a href="/c-text.html">Text and form controls</a></li>
+      <li><a href="/c-effects.html">Effects: requests, mutations, navigation, new tabs, messages</a></li>
+      <li><a href="/c-navigation.html">Links, forms and popups to a denied site</a></li>
+      <li><a href="/c-dialogs.html">Confirm, prompt and a later alert</a></li>
+      <li><a href="/c-sensitive.html">Submit, pay and delete actions</a></li>
+      <li><a href="/c-login.html">A login page for ask_user</a></li>
+    </ul>
+    <h2>Set D: enrichment</h2>
+    <ul>
+      <li><a href="/d-clickables.html">Non-semantic clickables and hidden checkboxes</a></li>
+      <li><a href="/d-long.html">A long page for the window and the budget</a></li>
+      <li><a href="/d-records.html">Records: reused rows, re-sorts, a page that changes by itself</a></li>
+      <li><a href="/d-fill.html">A five-field form for fill_form</a></li>
+      <li><a href="/d-keys.html">Keys and the gate: Enter by other names, a moving focus</a></li>
+      <li><a href="/d-secrets.html">Secrets: a password and a one-time code; <code>?fields=300</code> adds filled fields before a late code</a></li>
+      <li><a href="/d-results.html">Results: selects that revert, a button renamed after it was shown</a></li>
+      <li><a href="/d-guards.html">Guards: focus moved by the page during keys, into frames; an aria-labelledby default button</a></li>
+      <li><a href="/d-edges.html">Edges: keys with nothing focused, closed shadow focus, image submit, renamed refs, late form changes</a></li>
+      <li><a href="/d-late.html">Changes at the last moment: a button changed at keydown, on hover or at mousedown; focus inside the target; hidden from accessibility; a sensitive select</a></li>
+      <li><a href="/d-masked-requests-and-screenshots.html">Masked requests and screenshots: a submitter that overrides the method, a code in a request URL, card numbers in screenshots and listboxes</a></li>
+      <li><a href="/d-masked-rerendered-fields.html">Masked re-rendered fields: a re-rendered card field, a card field in an aria-hidden region, a card field that clears its input, a checkbox in a disabled fieldset's legend</a></li>
+      <li><a href="/d-layout-table.html">A layout table with separators (unit test payload)</a></li>
+      <li><a href="/d-deep.html">Elements nested 1,500 levels deep (?depth=N to change; Chrome stops answering at about 2,500)</a></li>
+    </ul>
+    <h2>Assumptions</h2>
+    <ul>
+      <li><a href="/assumptions.html">Assumption checks</a></li>
+    </ul>
+  </body>
+</html>

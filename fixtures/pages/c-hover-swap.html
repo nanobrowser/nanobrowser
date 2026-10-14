@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Hover swap</title><link rel="stylesheet" href="/style.css">
+<style>#slot button { width: 160px; height: 40px; }</style></head>
+<body>
+<h1>Hovering the target replaces it before the press (<code>?mode=cover</code>: puts another button over it)</h1>
+<div id="slot"><button type="button" id="original">Save draft</button></div>
+<p class="note">original clicks: <span id="original-clicks">0</span>, replacement clicks: <span id="replacement-clicks">0</span>, page mousedowns: <span id="downs">0</span></p>
+<script>
+  window.originalClicks = 0;
+  window.replacementClicks = 0;
+  window.downs = 0;
+  document.addEventListener('mousedown', () => (document.getElementById('downs').textContent = ++window.downs));
+  const original = document.getElementById('original');
+  original.addEventListener('click', () => (document.getElementById('original-clicks').textContent = ++window.originalClicks));
+  original.addEventListener('mouseenter', () => {
+    const replacement = document.createElement('button');
+    replacement.type = 'button';
+    replacement.textContent = 'Publish now';
+    replacement.addEventListener('click', () => (document.getElementById('replacement-clicks').textContent = ++window.replacementClicks));
+    if (new URLSearchParams(location.search).get('mode') === 'cover') {
+      // The target stays where it is, unchanged, under a button that takes the press.
+      const r = original.getBoundingClientRect();
+      replacement.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+      document.body.append(replacement);
+      return;
+    }
+    document.getElementById('slot').replaceChildren(replacement);
+  });
+</script>
+</body>
+</html>

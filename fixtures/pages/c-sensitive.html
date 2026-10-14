@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Sensitive actions</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Sensitive actions</h1>
+<table aria-label="Invoices">
+  <tr><th>Invoice</th><th>Amount</th><th>Action</th></tr>
+  <tr><td>INV-1042</td><td>Acme Corp</td><td><button type="button" class="row-delete" data-id="1042">Delete</button></td></tr>
+  <tr><td>INV-1043</td><td>Globex</td><td><button type="button" class="row-delete" data-id="1043">Delete</button></td></tr>
+</table>
+<div id="pay-row"><span>Total 49 credits</span> <button type="button" id="pay"><span aria-hidden="true">💳</span> Pay now</button></div>
+<form id="checkout" action="/submit" method="post">
+  <label>Card holder <input type="text" name="holder"></label>
+  <label>Coupon <input type="text" name="coupon"></label>
+  <button type="submit">Place order</button>
+</form>
+<form id="profile" action="/submit" method="post">
+  <label>Nickname <input type="text" name="nick"></label>
+  <label>City <input type="text" name="city"></label>
+</form>
+<p><button type="submit" form="profile" id="continue">Continue</button></p>
+<form id="note" action="/submit" method="post"><label>Quick note <input type="text" name="note"></label></form>
+<form role="search" id="search" action="/submit" method="get"><label>Search site <input type="search" name="q"></label></form>
+<div id="due"><span>Amount due: $15.00</span> <button type="button" id="confirm-due">Confirm</button></div>
+<p><button type="button" id="details">Show details</button> <button type="button" id="focus-delete" class="danger">Delete draft</button></p>
+<pre id="log" class="note"></pre>
+<script>
+  window.clicks = {};
+  window.submits = [];
+  const log = t => (document.getElementById('log').textContent += `${t}\n`);
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const key = b.id || `${b.className}:${b.dataset.id ?? ''}`;
+    window.clicks[key] = (window.clicks[key] ?? 0) + 1;
+    log(`click ${key}`);
+  });
+  for (const form of document.forms) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      window.submits.push(form.id);
+      log(`submit ${form.id}`);
+    });
+  }
+  // Re-renders the pay row with a fresh button of the same name (the scenario calls it while the user decides).
+  window.rerenderPay = () => {
+    document.getElementById('pay-row').innerHTML = '<span>Total 49 credits</span> <button type="button" id="pay"><span aria-hidden="true">💳</span> Pay now</button>';
+  };
+</script>
+</body>
+</html>

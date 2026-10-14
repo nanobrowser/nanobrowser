@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Effects</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Effects</h1>
+<section aria-label="Actions">
+  <p><button type="button" id="save-later">Save later</button> <span id="save-status"></span></p>
+  <p><button type="button" id="nothing">Do nothing</button></p>
+  <p><button type="button" id="toggle" aria-expanded="false" aria-controls="details">Toggle details</button></p>
+  <div id="details" hidden><p>Details shown.</p><p>More details.</p></div>
+  <p><button type="button" id="push">Change the URL</button></p>
+  <p><button type="button" id="go">Go to the landing page</button></p>
+  <p><button type="button" id="open">Open a new tab</button></p>
+  <p><button type="button" id="remove">Remove me</button></p>
+  <p><button type="button" id="message">Show a message later</button></p>
+  <p><button type="button" id="add-row">Add a row</button></p>
+  <ul id="rows" aria-label="Rows"></ul>
+  <div id="messages" aria-live="polite"></div>
+</section>
+<script>
+  const on = (id, fn) => document.getElementById(id).addEventListener('click', fn);
+  // The only effect is a request that starts a moment later.
+  on('save-later', () => setTimeout(() => fetch('/api/slow?ms=400'), 200));
+  on('toggle', e => {
+    const open = e.target.getAttribute('aria-expanded') === 'true';
+    e.target.setAttribute('aria-expanded', String(!open));
+    document.getElementById('details').hidden = open;
+  });
+  on('push', () => history.pushState({}, '', '#step-2'));
+  on('go', () => (location.href = '/network-landed.html'));
+  on('open', () => window.open('/index.html', '_blank'));
+  on('remove', e => e.target.remove());
+  let rowCount = 0;
+  on('add-row', () => {
+    const li = document.createElement('li');
+    li.innerHTML = `Row ${++rowCount} <button type="button">New row action ${rowCount}</button>`;
+    document.getElementById('rows').append(li);
+  });
+  on('message', () =>
+    setTimeout(() => {
+      const p = document.createElement('p');
+      p.textContent = 'Saved!';
+      document.getElementById('messages').append(p);
+    }, 600),
+  );
+</script>
+</body>
+</html>

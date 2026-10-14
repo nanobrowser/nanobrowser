@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Approval bound to the action</title><link rel="stylesheet" href="/style.css">
+<style>
+  .wrap { position: relative; display: inline-block; }
+  .cover { position: absolute; inset: 0; }
+  #details { display: inline-block; width: 40px; height: 28px; background: #cbd5e1; cursor: pointer; }
+  #card { display: flex; align-items: center; justify-content: center; width: 220px; height: 60px; border: 1px solid #94a3b8; cursor: pointer; }
+  #card button { width: 160px; height: 40px; }
+  #notes { display: flex; align-items: center; justify-content: center; width: 260px; height: 60px; border: 1px solid #94a3b8; }
+  #notes button { width: 200px; height: 40px; }
+</style></head>
+<body>
+<h1>Approval bound to the action</h1>
+<p><span class="wrap" id="wrap"><button type="button" id="preview">Preview</button></span>
+   <span id="details" aria-label="Show details"></span></p>
+<ul><li id="row"><span id="row-text">Invoice A</span> <button type="button" id="row-delete">Delete</button></li></ul>
+<div id="card" aria-label="Preview card" role="button" tabindex="0"><button type="button" id="card-pay">Pay</button></div>
+<div id="notes" contenteditable="true" role="textbox" aria-label="Notes"><button type="button" id="notes-pay" contenteditable="false">Pay now</button></div>
+<form id="payment" action="/submit" method="post">
+  <p><label>Payment note <input type="text" id="note" name="note"></label>
+     <label><input type="checkbox" id="save-card" name="save"> Save card</label>
+     <button type="submit" id="pay">Pay $5</button></p>
+</form>
+<p><label><input type="checkbox" id="delete-account"> Delete account</label></p>
+<p><label>Code <select id="otp" autocomplete="one-time-code">
+  <option value="">Choose</option>
+  <option value="482913">482913</option>
+  <option value="771045">771045</option>
+</select></label></p>
+<p><label>Pickup slot <select id="slot">
+  <option value="">Choose</option>
+  <option value="193847">193847</option>
+  <option value="564738">564738</option>
+</select></label></p>
+<script>
+  window.effects = [];
+  const effect = name => window.effects.push(name);
+  const byId = id => document.getElementById(id);
+  for (const id of ['preview', 'card', 'card-pay', 'notes-pay']) byId(id).addEventListener('click', () => effect(id));
+  byId('details').addEventListener('click', () => effect(`details ${byId('details').getAttribute('aria-label')}`));
+  byId('row-delete').addEventListener('click', () => effect(`delete ${byId('row-text').textContent}`));
+  byId('delete-account').addEventListener('change', e => effect(`delete-account ${e.target.checked}`));
+  byId('save-card').addEventListener('change', e => effect(`save-card ${e.target.checked}`));
+  byId('payment').addEventListener('submit', e => {
+    e.preventDefault();
+    effect(`paid ${byId('pay').textContent}`);
+  });
+  // Page behaviours the scenarios turn on.
+  // The first click on "Preview" puts a separate "Pay now" button over it; a second click lands on that button.
+  window.firstClickCovers = () =>
+    byId('preview').addEventListener(
+      'click',
+      () => {
+        const cover = document.createElement('button');
+        cover.type = 'button';
+        cover.id = 'cover';
+        cover.className = 'cover';
+        cover.textContent = 'Pay now';
+        cover.addEventListener('click', () => effect('paid cover'));
+        byId('wrap').append(cover);
+      },
+      { once: true },
+    );
+  // Hovering the clickable "Show details" box renames it "Pay now" through its aria-label.
+  window.hoverRenamesLabel = () =>
+    byId('details').addEventListener('mouseenter', () => byId('details').setAttribute('aria-label', 'Pay now'));
+  // Hovering the row's "Delete" button makes the row show another record.
+  window.hoverSwapsRow = () =>
+    byId('row-delete').addEventListener('mouseenter', () => (byId('row-text').textContent = 'Invoice B'));
+  // The page changes the select into a one-time-code field and puts the first slot back.
+  window.slotBecomesSecret = () =>
+    byId('slot').addEventListener('change', () => {
+      byId('slot').setAttribute('autocomplete', 'one-time-code');
+      byId('slot').selectedIndex = 1;
+    });
+</script>
+</body>
+</html>

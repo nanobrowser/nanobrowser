@@ -1,0 +1,226 @@
+[
+  {
+    "kind": "anthropic",
+    "modelName": "claude-opus-5-5",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "anthropic",
+    "modelName": "claude-sonnet-5-5",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "anthropic",
+    "modelName": "claude-haiku-5-5",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "anthropic",
+    "modelName": "claude-fable-5-1",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "anthropic",
+    "modelName": "claude-haiku-4-5-20251001",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "anthropic",
+    "modelName": "claude-sonnet-4-6",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "o4-mini",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-5-mini",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-5.5",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-6-luna",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-6-sol",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-6.1-sol",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-4.1-mini",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-3.1-pro-preview",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-3-flash-preview",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-flash-latest",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-2.5-flash",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "deepseek/deepseek-v4.1-flash",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "moonshotai/kimi-k3",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "z-ai/glm-5.3",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "x-ai/grok-4.3",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "x-ai/grok-4.6",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "qwen/qwen3.8-flash",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "mistralai/mistral-large-2512",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "ollama",
+    "modelName": "qwen3.8:27b-mlx"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-3.8-flash",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-3.6-flash",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "gemini",
+    "modelName": "gemini-flash-lite-latest",
+    "keyEnv": "GEMINI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-5.6-sol",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-6-astra",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "anthropic",
+    "modelName": "claude-opus-4-8",
+    "keyEnv": "ANTHROPIC_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "mistralai/mistral-large-4-0",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-5.2-pro",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-5.4-pro",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openai",
+    "modelName": "gpt-5.5-pro",
+    "keyEnv": "OPENAI_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "x-ai/grok-4.7",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "deepseek/deepseek-v4-pro-0813",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "z-ai/glm-5.3-flash",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "z-ai/glm-5.3-flashx",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "z-ai/glm-5.3-prime",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "qwen/qwen3.8-max-0902",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "qwen/qwen3.8-max-prime",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "qwen/qwen3.8-2.4t-a95b",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "qwen/qwen3.8-27b",
+    "keyEnv": "OPENROUTER_API_KEY"
+  },
+  {
+    "kind": "openrouter",
+    "modelName": "qwen/qwen3.8-omni-flash",
+    "keyEnv": "OPENROUTER_API_KEY"
+  }
+]

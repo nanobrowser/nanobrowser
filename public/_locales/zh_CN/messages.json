@@ -1,0 +1,17 @@
+{
+  "extName": {
+    "message": "Nanobrowser"
+  },
+  "extDescription": {
+    "message": "在你的浏览器中工作的 AI 智能体，位于页面旁的侧边栏中"
+  },
+  "actionTitle": {
+    "message": "打开 Nanobrowser"
+  },
+  "commandOpenPanel": {
+    "message": "打开 Nanobrowser 侧边栏"
+  },
+  "menuAskAboutSelection": {
+    "message": "向 Nanobrowser 询问这段内容"
+  }
+}

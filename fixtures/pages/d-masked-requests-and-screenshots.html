@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head
+    ><meta charset="utf-8" /><title>Masked requests and screenshots</title
+    ><link rel="stylesheet" href="/style.css" />
+    <style>
+      input {
+        font: 16px monospace;
+        width: 240px;
+        height: 28px;
+      }
+      #pay-frame {
+        border: 0;
+        width: 260px;
+        height: 40px;
+        display: block;
+      }
+    </style></head
+  >
+  <body>
+    <h1>Masked requests and screenshots</h1>
+    <form id="signup" action="/signup-get" method="get">
+      <label>Email <input type="email" id="email" name="email" /></label>
+      <button type="submit" id="continue" formmethod="post" formaction="/signup-post">Continue</button>
+    </form>
+    <p
+      ><label>Verification code <input type="text" id="code" name="code" autocomplete="one-time-code" /></label
+    ></p>
+    <p
+      ><label>Name on card <input type="text" id="holder" name="holder" value="Alice Example" /></label
+    ></p>
+    <p
+      ><label>Card number <input type="text" id="cardnum" name="cardnumber" autocomplete="cc-number" /></label
+    ></p>
+    <iframe id="pay-frame" title="Payment frame" src="http://127.0.0.1:8787/d-card-frame.html"></iframe>
+    <p
+      ><label
+        >Saved cards
+        <select id="saved" size="3" autocomplete="cc-number">
+          <option value="a">4111 1111 1111 1111</option>
+          <option value="b">5555555555554444</option>
+          <option value="c">Visa ending 1111</option>
+        </select></label
+      >
+      <label
+        >Backup code
+        <select id="backup" size="2" autocomplete="one-time-code">
+          <option value="482913">482913</option>
+          <option value="771045">771045</option>
+        </select></label
+      ></p
+    >
+    <script>
+      window.effects = [];
+      const byId = id => document.getElementById(id);
+      byId('cardnum').value = '4111111111111111';
+      byId('signup').addEventListener('submit', e => {
+        e.preventDefault();
+        window.effects.push(
+          `submitted ${(e.submitter?.getAttribute('formmethod') || byId('signup').method).toUpperCase()}`,
+        );
+      });
+      // The page checks the code as soon as six digits are in, with the code in the query string.
+      byId('code').addEventListener('input', () => {
+        const value = byId('code').value;
+        if (value.length === 6) fetch(`/verify?otp=${encodeURIComponent(value)}`).catch(() => undefined);
+      });
+    </script>
+  </body>
+</html>

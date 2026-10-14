@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Set G: every route to a hand-over the layer refuses with USER_STEP, plus the
+     controls that must stay plain. window.hits counts what reached the page. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Checkout</title>
+    <script>
+      window.hits = [];
+      function hit(what) { window.hits.push(what); }
+    </script>
+  </head>
+  <body>
+    <h1>Checkout</h1>
+    <p>Total: $1,299.00</p>
+    <button onclick="hit('pay')">Pay now</button>
+    <a href="#checkout" onclick="hit('checkout-link')">Proceed to checkout</a>
+    <button onclick="hit('continue')">Continue shopping</button>
+
+    <form id="card" onsubmit="event.preventDefault(); hit('card-submit')">
+      <input aria-label="Name on card" name="name" />
+      <input aria-label="Note" name="note" />
+      <button type="submit">Place order</button>
+    </form>
+
+    <form id="search" role="search" onsubmit="event.preventDefault(); hit('search')">
+      <input type="search" aria-label="Search products" name="q" />
+      <button type="submit">Search</button>
+    </form>
+
+    <p>
+      <button onclick="window.answer = prompt('What is your name?'); hit('prompt:' + window.answer)">Ask my name</button>
+      <button onclick="hit('confirm:' + confirm('Keep going?'))">Confirm something</button>
+    </p>
+    <p><a href="http://127.0.0.1:8787/network-landed.html" onclick="hit('blocked-link')">A link to the blocked site</a></p>
+    <form action="http://127.0.0.1:8787/submit" method="post">
+      <input aria-label="Blocked form field" name="x" value="1" />
+      <button type="submit">Send to the blocked site</button>
+    </form>
+  </body>
+</html>

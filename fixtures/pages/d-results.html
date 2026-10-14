@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Results that must be true</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<h1>Results that must be true</h1>
+<p><label>Status <select id="status"><option>Pending</option><option>Paid</option></select></label></p>
+<p><label>Later status <select id="later"><option>Pending</option><option>Paid</option></select></label></p>
+<ul aria-label="Documents">
+  <li>Draft report <button type="button" id="doc-action">Preview</button></li>
+</ul>
+<p><button type="button" id="other">Other action</button></p>
+<pre id="log" class="note"></pre>
+<script>
+  window.clicks = [];
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b && e.isTrusted) window.clicks.push(b.id);
+  });
+  // A page that refuses the change: at once for the first select, 200 ms later for the second.
+  document.getElementById('status').addEventListener('change', e => (e.target.value = 'Pending'));
+  document.getElementById('later').addEventListener('change', e => setTimeout(() => (e.target.value = 'Pending'), 200));
+</script>
+</body>
+</html>

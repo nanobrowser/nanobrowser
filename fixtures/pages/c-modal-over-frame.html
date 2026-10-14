@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Modal over a cross-site frame</title><link rel="stylesheet" href="/style.css">
+<style>
+  .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.35); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 40px; }
+  .modal > div { background: white; padding: 16px; }
+</style></head>
+<body>
+<h1>A parent-page modal covers a cross-site iframe</h1>
+<iframe title="Payment frame" src="http://127.0.0.1:8787/c-frame-target.html" width="480" height="140"></iframe>
+<div class="modal" id="modal">
+  <div role="dialog" aria-label="Parent modal">Please confirm first. <button type="button" id="close">Close</button></div>
+</div>
+<script>
+  document.getElementById('close').addEventListener('click', () => document.getElementById('modal').remove());
+</script>
+</body>
+</html>

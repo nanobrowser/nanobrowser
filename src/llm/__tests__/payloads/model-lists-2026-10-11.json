@@ -1,0 +1,4635 @@
+{
+  "_note": "Recorded on 2026-10-11 and trimmed to the fields the model list reads; OpenRouter's supported_parameters keep only 'tools'.",
+  "openai": {
+    "data": [
+      {
+        "id": "tts-1",
+        "created": 1681940951
+      },
+      {
+        "id": "gpt-5-mini",
+        "created": 1754425928
+      },
+      {
+        "id": "gpt-5-mini-2025-08-07",
+        "created": 1754425867,
+        "shutdown_date": "2026-12-11"
+      },
+      {
+        "id": "gpt-5.4-2026-03-05",
+        "created": 1772654062
+      },
+      {
+        "id": "gpt-3.5-turbo-0125",
+        "created": 1706048358,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-5-nano",
+        "created": 1754426384
+      },
+      {
+        "id": "gpt-5.1-codex",
+        "created": 1762988221,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-5.4-mini",
+        "created": 1773451123
+      },
+      {
+        "id": "o1-pro",
+        "created": 1742251791,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "o4-mini-2025-04-16",
+        "created": 1744133506,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-4-turbo-2024-04-09",
+        "created": 1712601677,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-realtime-2.1-mini",
+        "created": 1782254706
+      },
+      {
+        "id": "gpt-realtime-2025-08-28",
+        "created": 1756271773
+      },
+      {
+        "id": "omni-moderation-2024-09-26",
+        "created": 1732734466
+      },
+      {
+        "id": "gpt-live-transcribe",
+        "created": 1785168034
+      },
+      {
+        "id": "gpt-5.6-luna",
+        "created": 1782228658
+      },
+      {
+        "id": "omni-moderation-latest",
+        "created": 1731689265
+      },
+      {
+        "id": "gpt-realtime-2",
+        "created": 1778006032
+      },
+      {
+        "id": "gpt-5-search-api",
+        "created": 1759514629
+      },
+      {
+        "id": "gpt-5.5-2026-04-23",
+        "created": 1776839241
+      },
+      {
+        "id": "gpt-5.5-pro",
+        "created": 1776894349
+      },
+      {
+        "id": "gpt-4o-mini-transcribe-2025-03-20",
+        "created": 1765610545,
+        "shutdown_date": "2027-01-20"
+      },
+      {
+        "id": "gpt-audio-2025-08-28",
+        "created": 1756256146
+      },
+      {
+        "id": "gpt-4o-2024-11-20",
+        "created": 1739331543
+      },
+      {
+        "id": "gpt-5.1",
+        "created": 1762800673
+      },
+      {
+        "id": "whisper-1",
+        "created": 1677532384,
+        "shutdown_date": "2027-02-26"
+      },
+      {
+        "id": "gpt-5-pro",
+        "created": 1759469822
+      },
+      {
+        "id": "gpt-realtime-whisper",
+        "created": 1778012060
+      },
+      {
+        "id": "gpt-realtime",
+        "created": 1756271701,
+        "shutdown_date": "2027-01-20"
+      },
+      {
+        "id": "tts-1-hd",
+        "created": 1699046015
+      },
+      {
+        "id": "gpt-realtime-1.5",
+        "created": 1771461469
+      },
+      {
+        "id": "gpt-5.2-pro",
+        "created": 1765343983
+      },
+      {
+        "id": "gpt-5-chat-latest",
+        "created": 1754073306,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4o-mini-transcribe-2025-12-15",
+        "created": 1765610407
+      },
+      {
+        "id": "gpt-5-pro-2025-10-06",
+        "created": 1759469707,
+        "shutdown_date": "2026-12-11"
+      },
+      {
+        "id": "gpt-5.6-sol",
+        "created": 1782228018
+      },
+      {
+        "id": "gpt-5.4-mini-2026-03-17",
+        "created": 1773451076
+      },
+      {
+        "id": "chat-latest",
+        "created": 1777704602
+      },
+      {
+        "id": "gpt-5.4-pro-2026-03-05",
+        "created": 1772659657
+      },
+      {
+        "id": "gpt-realtime-translate",
+        "created": 1777950216
+      },
+      {
+        "id": "gpt-5.4-pro",
+        "created": 1772659601
+      },
+      {
+        "id": "gpt-realtime-mini-2025-12-15",
+        "created": 1765612007
+      },
+      {
+        "id": "gpt-4o-mini-tts",
+        "created": 1742403959
+      },
+      {
+        "id": "gpt-5.1-codex-max",
+        "created": 1763671532,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4o-mini-search-preview",
+        "created": 1741391161
+      },
+      {
+        "id": "gpt-5-2025-08-07",
+        "created": 1754075360,
+        "shutdown_date": "2026-12-11"
+      },
+      {
+        "id": "tts-1-1106",
+        "created": 1699053241
+      },
+      {
+        "id": "gpt-5.2-pro-2025-12-11",
+        "created": 1765343959
+      },
+      {
+        "id": "gpt-audio-mini-2025-10-06",
+        "created": 1759512137,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-5.5-pro-2026-04-23",
+        "created": 1776894470
+      },
+      {
+        "id": "babbage-002",
+        "created": 1692634615,
+        "shutdown_date": "2026-09-28"
+      },
+      {
+        "id": "text-embedding-3-large",
+        "created": 1705953180
+      },
+      {
+        "id": "gpt-4o-2024-05-13",
+        "created": 1715368132,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-4-turbo",
+        "created": 1712361441,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-4o-2024-08-06",
+        "created": 1722814719
+      },
+      {
+        "id": "o3",
+        "created": 1744225308
+      },
+      {
+        "id": "gpt-4o-mini-search-preview-2025-03-11",
+        "created": 1741390858,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4.1-nano",
+        "created": 1744321707,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-image-2",
+        "created": 1776399795
+      },
+      {
+        "id": "gpt-3.5-turbo-16k",
+        "created": 1683758102
+      },
+      {
+        "id": "text-embedding-ada-002",
+        "created": 1671217299
+      },
+      {
+        "id": "gpt-realtime-2.1",
+        "created": 1782254687
+      },
+      {
+        "id": "gpt-4.1",
+        "created": 1744316542
+      },
+      {
+        "id": "gpt-5.5",
+        "created": 1776824847
+      },
+      {
+        "id": "tts-1-hd-1106",
+        "created": 1699053533
+      },
+      {
+        "id": "gpt-5.4",
+        "created": 1772691852
+      },
+      {
+        "id": "o4-mini-deep-research",
+        "created": 1749685485,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4o-search-preview-2025-03-11",
+        "created": 1771905621,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "text-embedding-3-small",
+        "created": 1705948997
+      },
+      {
+        "id": "gpt-4o-transcribe-diarize",
+        "created": 1750798887,
+        "shutdown_date": "2027-02-26"
+      },
+      {
+        "id": "gpt-5-codex",
+        "created": 1757527818,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-5.1-2025-11-13",
+        "created": 1762800353
+      },
+      {
+        "id": "gpt-4-0613",
+        "created": 1686588896,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-4o-search-preview",
+        "created": 1771905534
+      },
+      {
+        "id": "gpt-image-1.5",
+        "created": 1764030620,
+        "shutdown_date": "2026-12-01"
+      },
+      {
+        "id": "o3-mini-2025-01-31",
+        "created": 1738010200,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-audio-1.5",
+        "created": 1771550885
+      },
+      {
+        "id": "o3-2025-04-16",
+        "created": 1744133301,
+        "shutdown_date": "2026-12-11"
+      },
+      {
+        "id": "gpt-5.3-chat-latest",
+        "created": 1772236571,
+        "shutdown_date": "2026-08-10"
+      },
+      {
+        "id": "gpt-5.2-2025-12-11",
+        "created": 1765313028
+      },
+      {
+        "id": "chatgpt-image-latest",
+        "created": 1765925279,
+        "shutdown_date": "2026-12-01"
+      },
+      {
+        "id": "gpt-3.5-turbo",
+        "created": 1677610602,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "sora-2",
+        "created": 1759708615,
+        "shutdown_date": "2026-09-24"
+      },
+      {
+        "id": "gpt-4.1-mini",
+        "created": 1744318173
+      },
+      {
+        "id": "gpt-4o-mini",
+        "created": 1721172741
+      },
+      {
+        "id": "davinci-002",
+        "created": 1692634301,
+        "shutdown_date": "2026-09-28"
+      },
+      {
+        "id": "o3-mini",
+        "created": 1737146383,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-5.4-nano",
+        "created": 1773450870
+      },
+      {
+        "id": "gpt-audio-mini-2025-12-15",
+        "created": 1765760008
+      },
+      {
+        "id": "o4-mini-deep-research-2025-06-26",
+        "created": 1750866121,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "o1-pro-2025-03-19",
+        "created": 1742251504,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-5.2-chat-latest",
+        "created": 1765344352,
+        "shutdown_date": "2026-08-10"
+      },
+      {
+        "id": "gpt-image-2-2026-04-21",
+        "created": 1776399994
+      },
+      {
+        "id": "gpt-4o-mini-transcribe",
+        "created": 1742068596,
+        "shutdown_date": "2027-02-26"
+      },
+      {
+        "id": "computer-use-preview-2025-03-11",
+        "created": 1741377021,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-3.5-turbo-instruct",
+        "created": 1692901427,
+        "shutdown_date": "2026-09-28"
+      },
+      {
+        "id": "sora-2-pro",
+        "created": 1759708663,
+        "shutdown_date": "2026-09-24"
+      },
+      {
+        "id": "gpt-5",
+        "created": 1754425777
+      },
+      {
+        "id": "gpt-transcribe",
+        "created": 1785168027
+      },
+      {
+        "id": "gpt-4.1-nano-2025-04-14",
+        "created": 1744321025,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "o1-2024-12-17",
+        "created": 1734326976,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-4o-mini-tts-2025-12-15",
+        "created": 1765610837
+      },
+      {
+        "id": "gpt-image-1",
+        "created": 1745517030,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-audio",
+        "created": 1756339249,
+        "shutdown_date": "2027-01-20"
+      },
+      {
+        "id": "gpt-5.3-codex",
+        "created": 1770537915
+      },
+      {
+        "id": "gpt-5-search-api-2025-10-14",
+        "created": 1760043960
+      },
+      {
+        "id": "gpt-realtime-mini",
+        "created": 1759517133,
+        "shutdown_date": "2027-01-20"
+      },
+      {
+        "id": "gpt-image-1-mini",
+        "created": 1758845821,
+        "shutdown_date": "2026-12-01"
+      },
+      {
+        "id": "gpt-5.6-terra",
+        "created": 1782228459
+      },
+      {
+        "id": "gpt-3.5-turbo-instruct-0914",
+        "created": 1694122472
+      },
+      {
+        "id": "gpt-audio-mini",
+        "created": 1759512027,
+        "shutdown_date": "2027-01-20"
+      },
+      {
+        "id": "gpt-4.1-mini-2025-04-14",
+        "created": 1744317547
+      },
+      {
+        "id": "gpt-5.2-codex",
+        "created": 1766164985,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4.1-2025-04-14",
+        "created": 1744315746
+      },
+      {
+        "id": "gpt-4o-mini-2024-07-18",
+        "created": 1721172717
+      },
+      {
+        "id": "gpt-5-nano-2025-08-07",
+        "created": 1754426303,
+        "shutdown_date": "2026-12-11"
+      },
+      {
+        "id": "computer-use-preview",
+        "created": 1734655677,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "o4-mini",
+        "created": 1744225351,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-5.1-codex-mini",
+        "created": 1763007109,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4o-transcribe",
+        "created": 1742068463,
+        "shutdown_date": "2027-02-26"
+      },
+      {
+        "id": "gpt-5.1-chat-latest",
+        "created": 1762547951,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-4o",
+        "created": 1715367049
+      },
+      {
+        "id": "gpt-image-2.5-sunburst-2026-09-08",
+        "created": 1788851010
+      },
+      {
+        "id": "gpt-image-2.5-flare",
+        "created": 1788563147
+      },
+      {
+        "id": "gpt-6.1-sol",
+        "created": 1790552874
+      },
+      {
+        "id": "gpt-3.5-turbo-1106",
+        "created": 1698959748,
+        "shutdown_date": "2026-09-28"
+      },
+      {
+        "id": "gpt-6-luna",
+        "created": 1789406102
+      },
+      {
+        "id": "gpt-6-sol",
+        "created": 1789405937
+      },
+      {
+        "id": "gpt-4o-mini-tts-2025-03-20",
+        "created": 1765610731,
+        "shutdown_date": "2026-07-23"
+      },
+      {
+        "id": "gpt-5.2",
+        "created": 1765313051
+      },
+      {
+        "id": "o1",
+        "created": 1734375816,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-5.4-nano-2026-03-17",
+        "created": 1773450837
+      },
+      {
+        "id": "gpt-4",
+        "created": 1687882411,
+        "shutdown_date": "2026-10-23"
+      },
+      {
+        "id": "gpt-6-astra",
+        "created": 1787853604
+      },
+      {
+        "id": "gpt-live-1",
+        "created": 1788889407
+      },
+      {
+        "id": "gpt-image-2.5-sunburst",
+        "created": 1788563162
+      },
+      {
+        "id": "gpt-image-2.5-flare-2026-09-08",
+        "created": 1788851006
+      }
+    ]
+  },
+  "anthropic": {
+    "data": [
+      {
+        "id": "claude-haiku-5-5",
+        "created_at": "2026-10-07T18:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-sonnet-5-5",
+        "created_at": "2026-09-28T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-opus-5-5",
+        "created_at": "2026-09-21T16:24:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-fable-5-1",
+        "created_at": "2026-08-28T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-opus-5",
+        "created_at": "2026-07-24T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-sonnet-5",
+        "created_at": "2026-06-29T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-fable-5",
+        "created_at": "2026-06-07T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-opus-4-8",
+        "created_at": "2026-05-28T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-opus-4-7",
+        "created_at": "2026-04-14T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-sonnet-4-6",
+        "created_at": "2026-02-17T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-opus-4-6",
+        "created_at": "2026-02-04T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-opus-4-5-20251101",
+        "created_at": "2025-11-24T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-haiku-4-5-20251001",
+        "created_at": "2025-10-15T00:00:00Z",
+        "lifecycle": "active"
+      },
+      {
+        "id": "claude-sonnet-4-5-20250929",
+        "created_at": "2025-09-29T00:00:00Z",
+        "lifecycle": "active"
+      }
+    ]
+  },
+  "gemini": {
+    "models": [
+      {
+        "name": "models/gemini-2.5-flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-pro",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-flash-preview-tts",
+        "supportedGenerationMethods": ["countTokens", "generateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-pro-preview-tts",
+        "supportedGenerationMethods": ["countTokens", "generateContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemma-4-26b-a4b-it",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemma-4-31b-it",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemini-flash-latest",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-flash-lite-latest",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-pro-latest",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-flash-lite",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-flash-image",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3-flash-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-pro-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-pro-preview-customtools",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-lite-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-lite",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3-pro-image-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3-pro-image",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/nano-banana-pro-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-image-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-image",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-lite-image",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-nano-banana-2.1",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.5-flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.5-flash-lite",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-omni-flash-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemini-omni-1.1-flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemini-3.5-transcribe",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemini-3.6-flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.7-flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.8-flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/lyria-3-clip-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/lyria-3-pro-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/lyria-3.5",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-tts-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.8-flash-tts",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.8-flash-lite-tts",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-robotics-er-2-preview",
+        "supportedGenerationMethods": ["generateContent", "countTokens", "createCachedContent", "batchGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-computer-use-preview-10-2025",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/antigravity-preview-05-2026",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/antigravity-preview-09-2026",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/antigravity-preview-latest",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/deep-research-max-preview-04-2026",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/deep-research-preview-04-2026",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/deep-research-pro-preview-12-2025",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
+      },
+      {
+        "name": "models/gemini-embedding-001",
+        "supportedGenerationMethods": ["embedContent", "countTextTokens", "countTokens", "asyncBatchEmbedContent"]
+      },
+      {
+        "name": "models/gemini-embedding-2-preview",
+        "supportedGenerationMethods": ["embedContent", "countTextTokens", "countTokens", "asyncBatchEmbedContent"]
+      },
+      {
+        "name": "models/gemini-embedding-2",
+        "supportedGenerationMethods": ["embedContent", "countTextTokens", "countTokens", "asyncBatchEmbedContent"]
+      },
+      {
+        "name": "models/aqa",
+        "supportedGenerationMethods": ["generateAnswer"]
+      },
+      {
+        "name": "models/veo-3.1-generate-preview",
+        "supportedGenerationMethods": ["predictLongRunning"]
+      },
+      {
+        "name": "models/veo-3.1-fast-generate-preview",
+        "supportedGenerationMethods": ["predictLongRunning"]
+      },
+      {
+        "name": "models/veo-3.1-lite-generate-preview",
+        "supportedGenerationMethods": ["predictLongRunning"]
+      },
+      {
+        "name": "models/gemini-3.5-transcribe-live",
+        "supportedGenerationMethods": ["bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-flash-native-audio-latest",
+        "supportedGenerationMethods": ["countTokens", "bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-flash-native-audio-preview-09-2025",
+        "supportedGenerationMethods": ["countTokens", "bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-2.5-flash-native-audio-preview-12-2025",
+        "supportedGenerationMethods": ["countTokens", "bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.1-flash-live-preview",
+        "supportedGenerationMethods": ["bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.8-live",
+        "supportedGenerationMethods": ["bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.8-live-extended-thinking",
+        "supportedGenerationMethods": ["bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-robotics-er-2-streaming-preview",
+        "supportedGenerationMethods": ["bidiGenerateContent"]
+      },
+      {
+        "name": "models/gemini-3.5-live-translate-preview",
+        "supportedGenerationMethods": ["bidiGenerateContent"]
+      },
+      {
+        "name": "models/lyria-realtime-exp",
+        "supportedGenerationMethods": ["bidiGenerateMusic"]
+      }
+    ]
+  },
+  "openrouter": {
+    "data": [
+      {
+        "id": "stepfun/step-5-preview",
+        "created": 1791462849,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-haiku-5.5",
+        "created": 1791397883,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-haiku-5.5:batch",
+        "created": 1791397883,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-nano-banana-2.1",
+        "created": 1791300825,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-large-4-0",
+        "created": 1791294122,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inclusionai/ling-3.1-flash",
+        "created": 1790950024,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "apodex/apodex-1.1-mini:free",
+        "created": 1790875335,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "unbiased/pareto-26.10-preview",
+        "created": 1790863623,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6.1-sol-pro",
+        "created": 1790702886,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6.1-sol-pro:batch",
+        "created": 1790702886,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6.1-sol",
+        "created": 1790702882,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6.1-sol:batch",
+        "created": 1790702882,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-5.5",
+        "created": 1790618686,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-5.5:batch",
+        "created": 1790618686,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "typesafe/jev-router",
+        "created": 1790363560,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perceptron/perceptron-mk1.5",
+        "created": 1790352661,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "fireworks/ember-1",
+        "created": 1790208461,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.3-prime",
+        "created": 1790199651,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.8-max-prime",
+        "created": 1790191228,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "aion-labs/aion-3.5-mini",
+        "created": 1790170962,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "aion-labs/aion-3.5",
+        "created": 1790170961,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "upstage/solar-mini4",
+        "created": 1790160358,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "cohere/command-a-plus",
+        "created": 1790102896,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-luna-pro",
+        "created": 1790100791,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-luna-pro:batch",
+        "created": 1790100791,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-luna",
+        "created": 1790100786,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-luna:batch",
+        "created": 1790100786,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-sol-pro",
+        "created": 1790100781,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-sol-pro:batch",
+        "created": 1790100781,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-sol",
+        "created": 1790100775,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-sol:batch",
+        "created": 1790100775,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-5.5",
+        "created": 1790094732,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-5.5:batch",
+        "created": 1790094732,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/switchyard",
+        "created": 1790025947,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "xiaomi/mimo-v2.6-pro-ultraspeed",
+        "created": 1790021267,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "xiaomi/mimo-v2.6-flash",
+        "created": 1790021264,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "xiaomi/mimo-v2.6-pro",
+        "created": 1790021259,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.7",
+        "created": 1790007541,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.8-omni-flash",
+        "created": 1789959954,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "prism-ml/ternary-bonsai-2-27b",
+        "created": 1789754046,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.3-flashx",
+        "created": 1789744020,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "unbiased/pareto",
+        "created": 1789686178,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~deepseek/deepseek-pro-latest",
+        "created": 1789399174,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~deepseek/deepseek-flash-latest",
+        "created": 1789399150,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inference-net/schematron-v2-turbo",
+        "created": 1789176949,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inference-net/schematron-v2-small",
+        "created": 1789176933,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~openai/gpt-astra-latest",
+        "created": 1789130932,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~openai/gpt-sol-latest",
+        "created": 1789130928,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~openai/gpt-terra-latest",
+        "created": 1789130925,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~openai/gpt-luna-latest",
+        "created": 1789130922,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "sakana/fugu-ultra-v2",
+        "created": 1789105383,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "sakana/fugu-max",
+        "created": 1789104771,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inclusionai/ling-3.0-flash-vl",
+        "created": 1789056114,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4.1-flash",
+        "created": 1789021285,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4.1-flash:batch",
+        "created": 1789021285,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inception/mercury-2.5",
+        "created": 1788892137,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nex-agi/nex-n2.5-mini",
+        "created": 1788890061,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nex-agi/nex-n2.5-pro",
+        "created": 1788890050,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-astra",
+        "created": 1788552838,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-astra:batch",
+        "created": 1788552838,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-astra-pro",
+        "created": 1788552835,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-6-astra-pro:batch",
+        "created": 1788552835,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inclusionai/ling-3.0-flash-sante",
+        "created": 1788545946,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.8-max-0902",
+        "created": 1788469704,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta/muse-spark-1.3-contributor",
+        "created": 1788381519,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta/muse-spark-1.3",
+        "created": 1788378359,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.8-flash",
+        "created": 1788362056,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.8-flash:batch",
+        "created": 1788362056,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-fable-5.1",
+        "created": 1788285838,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-fable-5.1:batch",
+        "created": 1788285838,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "ibm-granite/granite-4.2-8b",
+        "created": 1788206780,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hy4-preview",
+        "created": 1787897375,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inclusionai/ling-3.0-flash-fin",
+        "created": 1787846290,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~z-ai/glm-flash-latest",
+        "created": 1787817633,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.8-flash",
+        "created": 1787773060,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.3-flash",
+        "created": 1787752741,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.3-flash:batch",
+        "created": 1787752741,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta/muse-spark-1.2-contributor",
+        "created": 1787336476,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4-flash-vision-exp",
+        "created": 1787311563,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hy-mt2-1.8b",
+        "created": 1787231581,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hy-mt2-30b-a3b",
+        "created": 1787231561,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~z-ai/glm-latest",
+        "created": 1787151053,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hy-mt2-7b",
+        "created": 1787148797,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.3",
+        "created": 1787086655,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.3:batch",
+        "created": 1787086655,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.8-27b",
+        "created": 1786722910,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "dots-studio/dots-3-note-preview:free",
+        "created": 1786680361,
+        "expiration_date": "2026-12-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.7-flash",
+        "created": 1786640581,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.7-flash:batch",
+        "created": 1786640581,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance-seed/seed-2-1-turbo",
+        "created": 1786552176,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.8-2.4t-a95b",
+        "created": 1786551702,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance-seed/seed-2.0-code",
+        "created": 1786550701,
+        "expiration_date": "2026-11-11",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4-pro-0813",
+        "created": 1786549364,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.6",
+        "created": 1786548957,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "liquid/lfm-2.5-2.6b:free",
+        "created": 1786470519,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3.5-lightning",
+        "created": 1786452751,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3.5-lightning:free",
+        "created": 1786452751,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "sakana/sakana-namazu",
+        "created": 1786410129,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "upstage/solar-pro4",
+        "created": 1786371636,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta/muse-glimmer-30b",
+        "created": 1786302394,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta/muse-spark-1.2",
+        "created": 1785959287,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~deepseek/deepseek-v4-flash-latest",
+        "created": 1785606009,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4-flash-0731",
+        "created": 1785478908,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thinkingmachines/inkling-small",
+        "created": 1785443117,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thinkingmachines/inkling-small:free",
+        "created": 1785443117,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.7-flash",
+        "created": 1785190561,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-5",
+        "created": 1784912544,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-5:batch",
+        "created": 1784912544,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inclusionai/ling-3.0-flash",
+        "created": 1784818580,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "poolside/laguna-s-2.1",
+        "created": 1784652683,
+        "expiration_date": "2026-10-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "poolside/laguna-s-2.1:free",
+        "created": 1784652683,
+        "expiration_date": "2026-10-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.6-flash",
+        "created": 1784646733,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.6-flash:batch",
+        "created": 1784646733,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.5-flash-lite",
+        "created": 1784646726,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.5-flash-lite:batch",
+        "created": 1784646726,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meituan/longcat-2.0",
+        "created": 1784554658,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thinkingmachines/inkling",
+        "created": 1784325956,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thinkingmachines/inkling:free",
+        "created": 1784325956,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openrouter/auto-beta",
+        "created": 1784311165,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text", "image"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k3",
+        "created": 1784215858,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k3:batch",
+        "created": 1784215858,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta/muse-spark-1.1",
+        "created": 1784215741,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-luna-pro",
+        "created": 1783590867,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-luna-pro:batch",
+        "created": 1783590867,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-luna",
+        "created": 1783590864,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-luna:batch",
+        "created": 1783590864,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-terra-pro",
+        "created": 1783590861,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-terra-pro:batch",
+        "created": 1783590861,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-terra",
+        "created": 1783590857,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-terra:batch",
+        "created": 1783590857,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-sol-pro",
+        "created": 1783590854,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-sol-pro:batch",
+        "created": 1783590854,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-sol",
+        "created": 1783590850,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.6-sol:batch",
+        "created": 1783590850,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.5",
+        "created": 1783523154,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~x-ai/grok-latest",
+        "created": 1783519360,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "aion-labs/aion-3.0-mini",
+        "created": 1783443096,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "aion-labs/aion-3.0",
+        "created": 1783443095,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hy3",
+        "created": 1783344048,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "poolside/laguna-xs-2.1",
+        "created": 1783002429,
+        "expiration_date": "2026-10-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "poolside/laguna-xs-2.1:free",
+        "created": 1783002429,
+        "expiration_date": "2026-10-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-5",
+        "created": 1782843083,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-5:batch",
+        "created": 1782843083,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-flash-lite-image",
+        "created": 1782837225,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "sakana/fugu-ultra",
+        "created": 1782276303,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-flash-image",
+        "created": 1781754065,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "google/gemini-3-pro-image",
+        "created": 1781754054,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "cohere/north-mini-code:free",
+        "created": 1781723748,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.2",
+        "created": 1781631930,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openrouter/fusion",
+        "created": 1781371647,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2.7-code",
+        "created": 1781266361,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~anthropic/claude-fable-latest",
+        "created": 1781029944,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-fable-5",
+        "created": 1781007515,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-fable-5:batch",
+        "created": 1781007515,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3.5-content-safety",
+        "created": 1780581864,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3.5-content-safety:free",
+        "created": 1780581864,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-ultra-550b-a55b",
+        "created": 1780551208,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "created": 1780551208,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.7-plus",
+        "created": 1780491783,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m3",
+        "created": 1780245374,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "stepfun/step-3.7-flash",
+        "created": 1779985069,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.8",
+        "created": 1779905091,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.8:batch",
+        "created": 1779905091,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.7-max",
+        "created": 1779376861,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-build-0.1",
+        "created": 1779298123,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.5-flash",
+        "created": 1779193800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.5-flash:batch",
+        "created": 1779193800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perceptron/perceptron-mk1",
+        "created": 1778597029,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-flash-lite",
+        "created": 1778168828,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-flash-lite:batch",
+        "created": 1778168828,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-chat-latest",
+        "created": 1778000212,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.3",
+        "created": 1777591821,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.3:batch",
+        "created": 1777591821,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-medium-3-5",
+        "created": 1777570439,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-medium-3-5:batch",
+        "created": 1777570439,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "created": 1777393095,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~anthropic/claude-haiku-latest",
+        "created": 1777318492,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~openai/gpt-mini-latest",
+        "created": 1777318471,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~google/gemini-pro-latest",
+        "created": 1777318451,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~moonshotai/kimi-latest",
+        "created": 1777318428,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~google/gemini-flash-latest",
+        "created": 1777318398,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "~anthropic/claude-sonnet-latest",
+        "created": 1777318368,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-plus-20260420",
+        "created": 1777261368,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.6-flash",
+        "created": 1777261362,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.6-35b-a3b",
+        "created": 1777260255,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.6-27b",
+        "created": 1777255064,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.5-pro",
+        "created": 1777051896,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.5-pro:batch",
+        "created": 1777051896,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.5",
+        "created": 1777051893,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.5:batch",
+        "created": 1777051893,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4-pro",
+        "created": 1777000679,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4-flash",
+        "created": 1777000666,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hy3-preview",
+        "created": 1776878150,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "xiaomi/mimo-v2.5-pro",
+        "created": 1776874273,
+        "expiration_date": "2026-10-21",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "xiaomi/mimo-v2.5",
+        "created": 1776874269,
+        "expiration_date": "2026-10-21",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-image-2",
+        "created": 1776797528,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "~anthropic/claude-opus-latest",
+        "created": 1776795361,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openrouter/pareto-code",
+        "created": 1776747900,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2.6",
+        "created": 1776699402,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.7",
+        "created": 1776351100,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.7:batch",
+        "created": 1776351100,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5.1",
+        "created": 1775578025,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-4-26b-a4b-it",
+        "created": 1775227989,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-4-26b-a4b-it:free",
+        "created": 1775227989,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-4-31b-it",
+        "created": 1775148486,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-4-31b-it:free",
+        "created": 1775148486,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.6-plus",
+        "created": 1775133557,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5v-turbo",
+        "created": 1775061458,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "arcee-ai/trinity-large-thinking",
+        "created": 1775058318,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.20-multi-agent",
+        "created": 1774979158,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "x-ai/grok-4.20",
+        "created": 1774979019,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/lyria-3-pro-preview",
+        "created": 1774907286,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text", "audio"]
+        }
+      },
+      {
+        "id": "google/lyria-3-clip-preview",
+        "created": 1774907255,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text", "audio"]
+        }
+      },
+      {
+        "id": "rekaai/reka-edge",
+        "created": 1774026965,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m2.7",
+        "created": 1773836697,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-nano",
+        "created": 1773748187,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-nano:batch",
+        "created": 1773748187,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-mini",
+        "created": 1773748178,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-mini:batch",
+        "created": 1773748178,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-small-2603",
+        "created": 1773695685,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-small-2603:batch",
+        "created": 1773695685,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5-turbo",
+        "created": 1773583573,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-super-120b-a12b",
+        "created": 1773245239,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-super-120b-a12b:free",
+        "created": 1773245239,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance-seed/seed-2.0-lite",
+        "created": 1773157231,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-9b",
+        "created": 1773152396,
+        "expiration_date": "2026-10-21",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-pro",
+        "created": 1772734366,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4-pro:batch",
+        "created": 1772734366,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4",
+        "created": 1772734352,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.4:batch",
+        "created": 1772734352,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "inception/mercury-2",
+        "created": 1772636275,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-flash-lite-preview",
+        "created": 1772512673,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance-seed/seed-2.0-mini",
+        "created": 1772131107,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-flash-image-preview",
+        "created": 1772119558,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-35b-a3b",
+        "created": 1772053822,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-27b",
+        "created": 1772053810,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-122b-a10b",
+        "created": 1772053789,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-flash-02-23",
+        "created": 1772053776,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-pro-preview-customtools",
+        "created": 1772045923,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.3-codex",
+        "created": 1771959164,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "aion-labs/aion-2.0",
+        "created": 1771881306,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-pro-preview",
+        "created": 1771509627,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3.1-pro-preview:batch",
+        "created": 1771509627,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-4.6",
+        "created": 1771342990,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-4.6:batch",
+        "created": 1771342990,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-plus-02-15",
+        "created": 1771229416,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-397b-a17b",
+        "created": 1771223018,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m2.5",
+        "created": 1770908502,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-5",
+        "created": 1770829182,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.6",
+        "created": 1770219050,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.6:batch",
+        "created": 1770219050,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-coder-next",
+        "created": 1770164101,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openrouter/free",
+        "created": 1769917427,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "stepfun/step-3.5-flash",
+        "created": 1769728337,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2.5",
+        "created": 1769487076,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "upstage/solar-pro-3",
+        "created": 1769481200,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m2-her",
+        "created": 1769177239,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "writer/palmyra-x5",
+        "created": 1769003823,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-audio",
+        "created": 1768862569,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text", "audio"]
+        }
+      },
+      {
+        "id": "openai/gpt-audio-mini",
+        "created": 1768859419,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text", "audio"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.7-flash",
+        "created": 1768833913,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.2-codex",
+        "created": 1768409315,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance-seed/seed-1.6-flash",
+        "created": 1766505011,
+        "expiration_date": "2026-11-11",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance-seed/seed-1.6",
+        "created": 1766504997,
+        "expiration_date": "2026-11-11",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m2.1",
+        "created": 1766454997,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.7",
+        "created": 1766378014,
+        "expiration_date": "2026-12-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3-flash-preview",
+        "created": 1765987078,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3-flash-preview:batch",
+        "created": 1765987078,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-nano-30b-a3b",
+        "created": 1765731275,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.2-chat",
+        "created": 1765389783,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.2-pro",
+        "created": 1765389780,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.2-pro:batch",
+        "created": 1765389780,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.2",
+        "created": 1765389775,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.2:batch",
+        "created": 1765389775,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/devstral-2512",
+        "created": 1765285419,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "relace/relace-search",
+        "created": 1765213560,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.6v",
+        "created": 1765207462,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openrouter/bodybuilder",
+        "created": 1764903653,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.1-codex-max",
+        "created": 1764878934,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "amazon/nova-2-lite-v1",
+        "created": 1764696672,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/ministral-14b-2512",
+        "created": 1764681735,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/ministral-8b-2512",
+        "created": 1764681654,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/ministral-8b-2512:batch",
+        "created": 1764681654,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/ministral-3b-2512",
+        "created": 1764681560,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-large-2512",
+        "created": 1764624472,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-large-2512:batch",
+        "created": 1764624472,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v3.2",
+        "created": 1764594642,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.5",
+        "created": 1764010580,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.5:batch",
+        "created": 1764010580,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-3-pro-image-preview",
+        "created": 1763653797,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.1",
+        "created": 1763060305,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.1:batch",
+        "created": 1763060305,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.1-codex",
+        "created": 1763060298,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5.1-codex-mini",
+        "created": 1763057820,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2-thinking",
+        "created": 1762440622,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "amazon/nova-premier-v1",
+        "created": 1761950332,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perplexity/sonar-pro-search",
+        "created": 1761854366,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/voxtral-small-24b-2507",
+        "created": 1761835144,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-oss-safeguard-20b",
+        "created": 1761752836,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m2",
+        "created": 1761252093,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "ibm-granite/granite-4.0-h-micro",
+        "created": 1760927695,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-image-mini",
+        "created": 1760624583,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-haiku-4.5",
+        "created": 1760547638,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-haiku-4.5:batch",
+        "created": 1760547638,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-vl-8b-instruct",
+        "created": 1760463308,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-image",
+        "created": 1760447986,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash-image",
+        "created": 1759870431,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["image", "text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-vl-30b-a3b-thinking",
+        "created": 1759794479,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-vl-30b-a3b-instruct",
+        "created": 1759794476,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-pro",
+        "created": 1759776663,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-pro:batch",
+        "created": 1759776663,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.6",
+        "created": 1759235576,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-4.5",
+        "created": 1759161676,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-4.5:batch",
+        "created": 1759161676,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v3.2-exp",
+        "created": 1759150481,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thedrummer/cydonia-24b-v4.1",
+        "created": 1758931878,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "relace/relace-apply-3",
+        "created": 1758891572,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-vl-235b-a22b-instruct",
+        "created": 1758668687,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v3.1-terminus",
+        "created": 1758548275,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-coder-flash",
+        "created": 1758115536,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-next-80b-a3b-thinking",
+        "created": 1757612284,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-next-80b-a3b-instruct",
+        "created": 1757612213,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2-0905",
+        "created": 1757021147,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nousresearch/hermes-4-405b",
+        "created": 1756235463,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-chat-v3.1",
+        "created": 1755779628,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-medium-3.1",
+        "created": 1755095639,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-medium-3.1:batch",
+        "created": 1755095639,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.5v",
+        "created": 1754922288,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5",
+        "created": 1754587413,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5:batch",
+        "created": 1754587413,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-mini",
+        "created": 1754587407,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-mini:batch",
+        "created": 1754587407,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-nano",
+        "created": 1754587402,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-5-nano:batch",
+        "created": 1754587402,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-oss-120b",
+        "created": 1754414231,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-oss-120b:batch",
+        "created": 1754414231,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-oss-20b",
+        "created": 1754414229,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-oss-20b:batch",
+        "created": 1754414229,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.1",
+        "created": 1754411591,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.1:batch",
+        "created": 1754411591,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/codestral-2508",
+        "created": 1754079630,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/codestral-2508:batch",
+        "created": 1754079630,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-coder-30b-a3b-instruct",
+        "created": 1753972379,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-30b-a3b-instruct-2507",
+        "created": 1753806965,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.5",
+        "created": 1753471347,
+        "expiration_date": "2026-12-31",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "z-ai/glm-4.5-air",
+        "created": 1753471258,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-235b-a22b-thinking-2507",
+        "created": 1753449557,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-coder",
+        "created": 1753230546,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "bytedance/ui-tars-1.5-7b",
+        "created": 1753205056,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash-lite",
+        "created": 1753200276,
+        "expiration_date": "2026-10-20",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash-lite:batch",
+        "created": 1753200276,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-235b-a22b-2507",
+        "created": 1753119555,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2",
+        "created": 1752263252,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "cognitivecomputations/dolphin-mistral-24b-venice-edition",
+        "created": 1752094966,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "tencent/hunyuan-a13b-instruct",
+        "created": 1751987664,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "morph/morph-v3-large",
+        "created": 1751910858,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "morph/morph-v3-fast",
+        "created": 1751910002,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-small-3.2-24b-instruct",
+        "created": 1750443016,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-m1",
+        "created": 1750200414,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash",
+        "created": 1750172488,
+        "expiration_date": "2026-10-20",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash:batch",
+        "created": 1750172488,
+        "expiration_date": "2026-10-20",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-pro",
+        "created": 1750169544,
+        "expiration_date": "2026-10-20",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-pro:batch",
+        "created": 1750169544,
+        "expiration_date": "2026-10-20",
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o3-pro",
+        "created": 1749598352,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemini-2.5-pro-preview",
+        "created": 1749137257,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-r1-0528",
+        "created": 1748455170,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-4",
+        "created": 1747930371,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-medium-3",
+        "created": 1746627341,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-guard-4-12b",
+        "created": 1745975193,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-30b-a3b",
+        "created": 1745878604,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-14b",
+        "created": 1745876478,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen3-32b",
+        "created": 1745875945,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o4-mini-high",
+        "created": 1744824212,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o3",
+        "created": 1744823457,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o3:batch",
+        "created": 1744823457,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o4-mini",
+        "created": 1744820942,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o4-mini:batch",
+        "created": 1744820942,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4.1",
+        "created": 1744651385,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4.1:batch",
+        "created": 1744651385,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4.1-mini",
+        "created": 1744651381,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4.1-mini:batch",
+        "created": 1744651381,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4.1-nano",
+        "created": 1744651369,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4.1-nano:batch",
+        "created": 1744651369,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-4-maverick",
+        "created": 1743881822,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-4-scout",
+        "created": 1743881519,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-chat-v3-0324",
+        "created": 1742824755,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o1-pro",
+        "created": 1742423211,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-small-3.1-24b-instruct",
+        "created": 1742238937,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-3-4b-it",
+        "created": 1741905510,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-3-12b-it",
+        "created": 1741902625,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "cohere/command-a",
+        "created": 1741894342,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "rekaai/reka-flash-3",
+        "created": 1741812813,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-3-27b-it",
+        "created": 1741756359,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thedrummer/skyfall-36b-v2",
+        "created": 1741636566,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perplexity/sonar-reasoning-pro",
+        "created": 1741313308,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perplexity/sonar-pro",
+        "created": 1741312423,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perplexity/sonar-deep-research",
+        "created": 1741311246,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-saba",
+        "created": 1739803239,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o3-mini-high",
+        "created": 1739372611,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "aion-labs/aion-rp-llama-3.1-8b",
+        "created": 1738696718,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen2.5-vl-72b-instruct",
+        "created": 1738410311,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen-plus",
+        "created": 1738409840,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o3-mini",
+        "created": 1738351721,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o3-mini:batch",
+        "created": 1738351721,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-small-24b-instruct-2501",
+        "created": 1738255409,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "perplexity/sonar",
+        "created": 1738013808,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-r1",
+        "created": 1737381095,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "minimax/minimax-01",
+        "created": 1736915462,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "microsoft/phi-4",
+        "created": 1736489872,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "deepseek/deepseek-chat",
+        "created": 1735241320,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "sao10k/l3.3-euryale-70b",
+        "created": 1734535928,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/o1",
+        "created": 1734459999,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "cohere/command-r7b-12-2024",
+        "created": 1734158152,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-3.3-70b-instruct",
+        "created": 1733506137,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "amazon/nova-lite-v1",
+        "created": 1733437363,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "amazon/nova-micro-v1",
+        "created": 1733437237,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "amazon/nova-pro-v1",
+        "created": 1733436303,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o-2024-11-20",
+        "created": 1732127594,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-large-2407",
+        "created": 1731978415,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen-2.5-coder-32b-instruct",
+        "created": 1731368400,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "thedrummer/unslopnemo-12b",
+        "created": 1731103448,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "anthracite-org/magnum-v4-72b",
+        "created": 1729555200,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen-2.5-7b-instruct",
+        "created": 1729036800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-3.2-1b-instruct",
+        "created": 1727222400,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-3.2-3b-instruct",
+        "created": 1727222400,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "qwen/qwen-2.5-72b-instruct",
+        "created": 1726704000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "cohere/command-r-08-2024",
+        "created": 1724976000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "cohere/command-r-plus-08-2024",
+        "created": 1724976000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "sao10k/l3.1-euryale-70b",
+        "created": 1724803200,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nousresearch/hermes-3-llama-3.1-70b",
+        "created": 1723939200,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "nousresearch/hermes-3-llama-3.1-405b",
+        "created": 1723766400,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "sao10k/l3-lunaris-8b",
+        "created": 1723507200,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o-2024-08-06",
+        "created": 1722902400,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-3.1-70b-instruct",
+        "created": 1721692800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "meta-llama/llama-3.1-8b-instruct",
+        "created": 1721692800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-nemo",
+        "created": 1721347200,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o-mini",
+        "created": 1721260800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o-mini-2024-07-18",
+        "created": 1721260800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o-mini:batch",
+        "created": 1721260800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "google/gemma-2-27b-it",
+        "created": 1720828800,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o",
+        "created": 1715558400,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o-2024-05-13",
+        "created": 1715558400,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4o:batch",
+        "created": 1715558400,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mixtral-8x22b-instruct",
+        "created": 1713312000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "microsoft/wizardlm-2-8x22b",
+        "created": 1713225600,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4-turbo",
+        "created": 1712620800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4-turbo:batch",
+        "created": 1712620800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mistralai/mistral-large",
+        "created": 1708905600,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-3.5-turbo-0613",
+        "created": 1706140800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openrouter/auto",
+        "created": 1699401600,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text", "image"]
+        }
+      },
+      {
+        "id": "openai/gpt-3.5-turbo-instruct",
+        "created": 1695859200,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-3.5-turbo-16k",
+        "created": 1693180800,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "mancer/weaver",
+        "created": 1690934400,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "undi95/remm-slerp-l2-13b",
+        "created": 1689984000,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "gryphe/mythomax-l2-13b",
+        "created": 1688256000,
+        "supported_parameters": [],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-3.5-turbo",
+        "created": 1685232000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-3.5-turbo:batch",
+        "created": 1685232000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      },
+      {
+        "id": "openai/gpt-4",
+        "created": 1685232000,
+        "supported_parameters": ["tools"],
+        "architecture": {
+          "output_modalities": ["text"]
+        }
+      }
+    ]
+  },
+  "ollama": {
+    "models": [
+      {
+        "name": "qwen3.8:27b-mlx"
+      },
+      {
+        "name": "nomic-embed-text:latest"
+      }
+    ]
+  }
+}

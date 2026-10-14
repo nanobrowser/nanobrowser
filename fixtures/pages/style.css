@@ -1,0 +1,27 @@
+body {
+  font:
+    15px/1.4 system-ui,
+    sans-serif;
+  margin: 16px;
+  color: #1e293b;
+}
+h1 {
+  font-size: 20px;
+}
+iframe {
+  border: 1px solid #94a3b8;
+  display: block;
+  margin: 8px 0;
+}
+table {
+  border-collapse: collapse;
+}
+td,
+th {
+  border: 1px solid #cbd5e1;
+  padding: 2px 6px;
+}
+.note {
+  color: #64748b;
+  font-size: 13px;
+}
