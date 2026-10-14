@@ -36,6 +36,8 @@
   "models.clearKey": "清除密钥",
   "models.saveName": "保存名称",
   "models.baseUrl": "服务器地址",
+  "models.region": "区域",
+  "models.bedrockKey": "访问密钥 ID 和私有密钥，用冒号隔开。Bedrock API 密钥可以单独粘贴。",
   "models.addModel": "添加模型",
   "models.addHint": "点击“添加”保存这个模型。",
   "models.modelNamePlaceholder": "模型名称",

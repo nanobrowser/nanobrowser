@@ -36,6 +36,8 @@
   "models.clearKey": "Clear key",
   "models.saveName": "Save name",
   "models.baseUrl": "Server address",
+  "models.region": "Region",
+  "models.bedrockKey": "Access key ID and secret, separated by a colon. A Bedrock API key can be pasted on its own.",
   "models.addModel": "Add a model",
   "models.addHint": "Click Add to save this model.",
   "models.modelNamePlaceholder": "Model name",

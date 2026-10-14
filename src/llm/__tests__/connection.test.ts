@@ -148,6 +148,23 @@ describe('the probes', () => {
 });
 
 describe('listModels', () => {
+  it('lists Bedrock text models with a bearer key', async () => {
+    const fetch = vi.fn(async (url: string, init: RequestInit) => {
+      expect(url).toBe('https://bedrock.eu-west-1.amazonaws.com/foundation-models');
+      expect((init.headers as Record<string, string>).authorization).toBe('Bearer bedrock-key');
+      return Response.json({
+        modelSummaries: [
+          { modelId: 'amazon.nova-lite-v1:0', inputModalities: ['TEXT'], outputModalities: ['TEXT'] },
+          { modelId: 'amazon.titan-embed-text-v2:0', inputModalities: ['TEXT'], outputModalities: ['EMBEDDING'] },
+        ],
+      });
+    }) as unknown as typeof globalThis.fetch;
+    expect(await listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'eu-west-1' }, fetch)).toEqual({
+      models: ['amazon.nova-lite-v1:0'],
+      hidden: [],
+    });
+  });
+
   it('reads Ollama tags from the server address, with or without /v1', async () => {
     const fetch = vi.fn(async (url: string) => {
       expect(url).toBe('http://localhost:11434/api/tags');
