@@ -167,6 +167,27 @@ export function getDefaultReasoningEffort(providerType: ProviderTypeEnum | undef
   }
 }
 
+/** Retired DeepSeek chat/flash names that now resolve to deepseek-flash (API retired 2026). */
+const RETIRED_DEEPSEEK_MODELS = new Set([
+  'deepseek-chat',
+  'deepseek-reasoner',
+  'deepseek-v4-flash',
+  'deepseek-v4-flash-vision-exp',
+]);
+
+const DEEPSEEK_FLASH_MODEL = 'deepseek-flash';
+
+/** Map a retired DeepSeek model id to deepseek-flash; leave others unchanged. */
+export function migrateRetiredDeepSeekModelName(modelName: string): string {
+  return RETIRED_DEEPSEEK_MODELS.has(modelName) ? DEEPSEEK_FLASH_MODEL : modelName;
+}
+
+/** Migrate and dedupe a provider modelNames list in order. */
+export function migrateRetiredDeepSeekModelNames(modelNames: string[]): string[] {
+  const migrated = modelNames.map(migrateRetiredDeepSeekModelName);
+  return [...new Set(migrated)];
+}
+
 // Helper function to ensure backward compatibility for provider configs
 function ensureBackwardCompatibility(providerId: string, config: ProviderConfig): ProviderConfig {
   // Log input config
@@ -212,6 +233,15 @@ function ensureBackwardCompatibility(providerId: string, config: ProviderConfig)
   // Ensure createdAt exists
   if (!updatedConfig.createdAt) {
     updatedConfig.createdAt = new Date('03/04/2025').getTime();
+  }
+
+  // Migrate retired DeepSeek model names in saved provider lists
+  if (
+    updatedConfig.type === ProviderTypeEnum.DeepSeek &&
+    updatedConfig.modelNames &&
+    updatedConfig.modelNames.length > 0
+  ) {
+    updatedConfig.modelNames = migrateRetiredDeepSeekModelNames(updatedConfig.modelNames);
   }
 
   // Log output config
