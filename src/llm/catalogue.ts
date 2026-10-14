@@ -8,7 +8,7 @@ export type ReasoningSupport = 'none' | 'optional' | 'always';
 /** The one setting the user sees. */
 export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
 
-/** What the SDK's `reasoning` option accepts; the compiler holds the list to the SDK's type. */
+/** The `reasoning` values the extension may send (never the SDK's `max`); the compiler holds each to the SDK's type. */
 export const WIRE_EFFORTS = [
   'none',
   'minimal',

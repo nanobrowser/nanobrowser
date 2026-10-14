@@ -103,7 +103,7 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 
 ## 🔧 Build from Source
 
-1. **Prerequisites:** [Node.js](https://nodejs.org/) 24 LTS and [pnpm](https://pnpm.io/installation) 10 (`corepack` switches to the pinned 10.34.6).
+1. **Prerequisites:** [Node.js](https://nodejs.org/) 24 LTS and [pnpm](https://pnpm.io/installation) 10 (`corepack` switches to the pinned 10.34.7).
 
 2. **Clone and build:**
 
