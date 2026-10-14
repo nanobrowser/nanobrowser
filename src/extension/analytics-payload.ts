@@ -15,6 +15,7 @@ export const PROVIDER_KINDS: readonly ProviderKind[] = [
   'ollama',
   'lmstudio',
   'openrouter',
+  'bedrock',
 ];
 export const BROWSERS = ['chrome', 'edge', 'other'] as const;
 export const LANGUAGES = ['en', 'zh_CN', 'zh_TW'] as const;

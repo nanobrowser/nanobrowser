@@ -1,6 +1,14 @@
 // Test models and model lists for the Models page. Called from the options page directly: the page needs no
 // worker command.
-import { CHAT_COMPLETIONS_KINDS, createModel, DEFAULT_BASE_URLS, openAICompatibleBaseUrl } from './providers';
+import { AwsClient } from 'aws4fetch';
+import {
+  CHAT_COMPLETIONS_KINDS,
+  bedrockRegion,
+  createModel,
+  DEFAULT_BASE_URLS,
+  openAICompatibleBaseUrl,
+  parseBedrockKey,
+} from './providers';
 import type { CreateModelOptions, ModelSpec } from './providers';
 import { isOriginRefused } from './errors';
 import { refusesImages, refusesReasoning, streamTurn } from './stream';
@@ -214,6 +222,56 @@ export async function listModels(
       const server = (spec.baseUrl?.trim() || DEFAULT_BASE_URLS.ollama!).replace(/\/+$/, '').replace(/\/v1$/, '');
       const body = await get(`${server}/api/tags`);
       entries = ((body.models as ListEntry[]) ?? []).map(m => [String(m.name), m]);
+      break;
+    }
+    case 'bedrock': {
+      const region = bedrockRegion(spec.baseUrl);
+      const url = `https://bedrock.${region}.amazonaws.com/foundation-models`;
+      const creds = parseBedrockKey(spec.apiKey);
+      let response: Response;
+      try {
+        if (creds.apiKey) {
+          response = await fetchFn(url, { headers: { authorization: `Bearer ${creds.apiKey}` } });
+        } else if (creds.accessKeyId && creds.secretAccessKey) {
+          const aws = new AwsClient({
+            accessKeyId: creds.accessKeyId,
+            secretAccessKey: creds.secretAccessKey,
+            ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
+            service: 'bedrock',
+            region,
+          });
+          response = await fetchFn(await aws.sign(url));
+        } else {
+          throw new Error('Bedrock needs an API key, or an access key id and secret separated by a colon.');
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message.startsWith('Bedrock needs')) throw error;
+        throw Object.assign(new Error(`Could not reach bedrock.${region}.amazonaws.com`), {
+          originRefused: isOriginRefused(error),
+        });
+      }
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: unknown } | null;
+        const reason = typeof body?.message === 'string' ? body.message : response.statusText;
+        throw Object.assign(new Error(`${response.status} ${reason}`.trim()), {
+          status: response.status,
+          originRefused: response.status === 403,
+        });
+      }
+      const body = (await response.json()) as {
+        modelSummaries?: Array<{ modelId?: string; inputModalities?: string[]; outputModalities?: string[] }>;
+      };
+      entries = (body.modelSummaries ?? [])
+        .filter(model => {
+          const id = model.modelId ?? '';
+          if (!id) return false;
+          const input = model.inputModalities;
+          const output = model.outputModalities;
+          if (input && !input.includes('TEXT')) return false;
+          if (output && !output.includes('TEXT')) return false;
+          return true;
+        })
+        .map((model): [string, ListEntry] => [String(model.modelId), {}]);
       break;
     }
     default: {

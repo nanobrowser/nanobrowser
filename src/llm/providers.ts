@@ -1,13 +1,14 @@
 // Provider factories, ported from the current Nanobrowser's src/background/llm/providers.ts and reduced to the
 // providers of the first release. The loop runs tools itself, so a model handle is only a model, its call settings and
 // its provider options.
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 
 export type ProviderKind =
-  'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter';
+  'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter' | 'bedrock';
 
 /** Everything needed to call one model. The key is passed in; src/llm never reads storage. */
 export interface ModelSpec {
@@ -56,6 +57,36 @@ export const CHAT_COMPLETIONS_KINDS: readonly ProviderKind[] = [
  * The OpenAI-compatible endpoint of an Ollama or LM Studio server: `/v1` is added unless the address ends with it,
  * so the user can type the server's address (ported).
  */
+/** AWS region for Bedrock. A bare region, or a runtime URL that contains one. */
+export function bedrockRegion(baseUrl?: string): string {
+  const text = baseUrl?.trim() || 'us-east-1';
+  const fromHost = /bedrock(?:-runtime)?\.([a-z0-9-]+)\.amazonaws\.com/i.exec(text)?.[1];
+  if (fromHost) return fromHost;
+  const bare = text.replace(/^https?:\/\//, '').split(/[/?]/)[0];
+  return bare || 'us-east-1';
+}
+
+/**
+ * A Bedrock API key is used as a bearer token. An access key id and secret, and an optional
+ * session token, are written in one field separated by colons.
+ */
+export function parseBedrockKey(apiKey?: string): {
+  apiKey?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
+} {
+  const raw = apiKey?.trim() ?? '';
+  if (!raw) return {};
+  const first = raw.indexOf(':');
+  if (first === -1) return { apiKey: raw };
+  const accessKeyId = raw.slice(0, first).trim();
+  const rest = raw.slice(first + 1);
+  const second = rest.indexOf(':');
+  if (second === -1) return { accessKeyId, secretAccessKey: rest };
+  return { accessKeyId, secretAccessKey: rest.slice(0, second), sessionToken: rest.slice(second + 1) };
+}
+
 export function openAICompatibleBaseUrl(kind: ProviderKind, baseUrl?: string): string | undefined {
   const fallback = DEFAULT_BASE_URLS[kind];
   // OpenRouter's address is fixed: the card has no field for it.
@@ -99,6 +130,12 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
         model: openai.responses(modelName),
         providerOptions: { openai: { strictJsonSchema: false, store: false } },
       };
+    }
+    case 'bedrock': {
+      const region = bedrockRegion(spec.baseUrl);
+      const creds = parseBedrockKey(apiKey);
+      const bedrock = createAmazonBedrock({ region, ...creds, fetch });
+      return { spec, model: bedrock(modelName) };
     }
     default: {
       // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.

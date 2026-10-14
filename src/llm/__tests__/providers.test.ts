@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createModel, openAICompatibleBaseUrl } from '../providers';
+import { bedrockRegion, createModel, openAICompatibleBaseUrl, parseBedrockKey } from '../providers';
 import type { ModelSpec } from '../providers';
 import { streamTurn } from '../stream';
 
@@ -120,6 +120,27 @@ describe('providers', () => {
     expect(r.url).toBe('http://10.0.0.2:8000/v1/chat/completions');
   });
 
+  it('Bedrock API key: bearer auth on the regional runtime', async () => {
+    const r = await capture({
+      kind: 'bedrock',
+      modelName: 'amazon.nova-lite-v1:0',
+      apiKey: 'bedrock-key',
+      baseUrl: 'eu-west-1',
+    });
+    expect(r.url).toContain('bedrock-runtime.eu-west-1.amazonaws.com');
+    expect(r.headers.get('authorization')).toBe('Bearer bedrock-key');
+  });
+
+  it('Bedrock access key: SigV4 on the regional runtime', async () => {
+    const r = await capture({
+      kind: 'bedrock',
+      modelName: 'amazon.nova-lite-v1:0',
+      apiKey: 'AKIAIOSFODNN7EXAMPLE:wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+    });
+    expect(r.url).toContain('bedrock-runtime.us-east-1.amazonaws.com');
+    expect(r.headers.get('authorization')).toMatch(/^AWS4-HMAC-SHA256 /);
+  });
+
   it('OpenRouter sends its headers', async () => {
     const r = await capture({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5', apiKey: 'or' });
     expect(r.url).toBe('https://openrouter.ai/api/v1/chat/completions');
@@ -132,6 +153,19 @@ describe('helpers', () => {
     expect(openAICompatibleBaseUrl('ollama')).toBe('http://localhost:11434/v1');
     expect(openAICompatibleBaseUrl('ollama', 'http://box:11434/')).toBe('http://box:11434/v1');
     expect(openAICompatibleBaseUrl('lmstudio', 'http://localhost:1234/v1')).toBe('http://localhost:1234/v1');
+  });
+
+  it('reads a Bedrock region and splits an access key from a bearer key', () => {
+    expect(bedrockRegion()).toBe('us-east-1');
+    expect(bedrockRegion('eu-central-1')).toBe('eu-central-1');
+    expect(bedrockRegion('https://bedrock-runtime.ap-southeast-2.amazonaws.com')).toBe('ap-southeast-2');
+    expect(parseBedrockKey('bedrock-api-key')).toEqual({ apiKey: 'bedrock-api-key' });
+    expect(parseBedrockKey('AKIAEXAMPLE:secret')).toEqual({ accessKeyId: 'AKIAEXAMPLE', secretAccessKey: 'secret' });
+    expect(parseBedrockKey('ASIAEXAMPLE:secret:session')).toEqual({
+      accessKeyId: 'ASIAEXAMPLE',
+      secretAccessKey: 'secret',
+      sessionToken: 'session',
+    });
   });
 
   it("keeps OpenRouter's fixed address, whatever an older card stored", () => {
