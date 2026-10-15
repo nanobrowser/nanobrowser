@@ -552,7 +552,10 @@ export class RunManager {
         return this.#subscribe(connection, command.tabId, null);
       }
       case 'set-mode':
+        // A mode chosen in the composer is the default for new conversations too.
+        if (!(await getConversation(command.conversationId))) return;
         await this.#setMode(command.conversationId, command.mode);
+        await settingsStorage.set(s => ({ ...s, defaultMode: command.mode }));
         return;
       case 'set-model':
         await this.#setModel(command.conversationId, { model: command.model, reasoning: command.reasoning });

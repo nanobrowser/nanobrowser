@@ -233,7 +233,7 @@
   "msg.retry": "重试",
   "settings.nav.permissions": "权限",
   "agent.defaultMode": "默认模式",
-  "agent.defaultModeHint": "新对话以此模式开始。",
+  "agent.defaultModeHint": "新对话以此模式开始。可以在输入框旁更改。",
   "agent.turnCap": "最大轮次",
   "agent.turnCapHint": "智能体完成一个任务最多走的步数。达到这个数后，它会停下来问你是否继续。",
   "perm.neverAllowed": "付款、授予访问权限，以及输入密码、银行卡号或验证码，无论如何设置都会交给你完成。智能体不一定每次都能识别出来，请留意它的操作。",

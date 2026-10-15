@@ -222,11 +222,18 @@ export function App() {
   };
   const history = state.entries.filter(e => e.kind === 'user').map(e => (e as { text: string }).text);
 
-  /** The mode for this conversation, or the next one; the first switch to Auto explains it once. */
+  /**
+   * The mode for this conversation, or the next one; the latest choice is the default for new conversations too. The
+   * first switch to Auto explains it once.
+   */
   const changeMode = (next: PermissionMode) => {
     if (next === 'auto' && !settings.autoNoticeShown) setAutoNotice(true);
-    if (state.conversationId) client?.send({ type: 'set-mode', conversationId: state.conversationId, mode: next });
-    else setDraftMode(next);
+    if (state.conversationId) {
+      client?.send({ type: 'set-mode', conversationId: state.conversationId, mode: next });
+      return;
+    }
+    setDraftMode(next);
+    void settingsStorage.set(s => ({ ...s, defaultMode: next }));
   };
   const keys = useRef({ changeMode, mode });
   keys.current = { changeMode, mode };
