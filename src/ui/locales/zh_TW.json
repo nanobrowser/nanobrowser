@@ -233,7 +233,7 @@
   "msg.retry": "重試",
   "settings.nav.permissions": "權限",
   "agent.defaultMode": "預設模式",
-  "agent.defaultModeHint": "新對話會以此模式開始。",
+  "agent.defaultModeHint": "新對話會以此模式開始。可以在輸入框旁變更。",
   "agent.turnCap": "最大回合數",
   "agent.turnCapHint": "代理程式完成一項任務最多執行的步數。達到這個數字後，它會停下來詢問你是否繼續。",
   "perm.neverAllowed": "付款、授予存取權，以及輸入密碼、信用卡號或驗證碼，無論如何設定都會交給你完成。代理程式不一定每次都能辨識出來，請留意它的操作。",

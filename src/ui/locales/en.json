@@ -233,7 +233,7 @@
   "msg.retry": "Retry",
   "settings.nav.permissions": "Permissions",
   "agent.defaultMode": "Default mode",
-  "agent.defaultModeHint": "New conversations start in this mode.",
+  "agent.defaultModeHint": "New conversations start in this mode. You can change it in the composer.",
   "agent.turnCap": "Maximum turns",
   "agent.turnCapHint": "The most steps the agent takes on one task. When it reaches this number, it stops and asks whether to go on.",
   "perm.neverAllowed": "Payments, granting access, and entering passwords, card numbers or codes are always left to you, whatever the setting. The agent may not spot every one, so keep an eye on what it does.",

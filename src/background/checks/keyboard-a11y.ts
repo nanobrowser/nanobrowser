@@ -65,7 +65,7 @@ defineCheck({
       await statusIs(id, 'Done');
       const live = (await panelLayout(id)).live;
 
-      // Ctrl+Shift+P: Auto, with its notice once, then back to Ask.
+      // Ctrl+Shift+P: Auto, with its notice once, then back to Ask; each choice is the default for new conversations.
       await key(id, { key: 'P', ctrl: true, shift: true });
       await sleep(300);
       const toAuto = await panelLayout(id);
@@ -73,9 +73,11 @@ defineCheck({
       await panel(id, 'click', { label: 'Got it' });
       await sleep(200);
       const noticeStored = (await settingsNow())?.autoNoticeShown === true;
+      const autoIsDefault = (await settingsNow())?.defaultMode === 'auto';
       await key(id, { key: 'P', ctrl: true, shift: true });
       await sleep(300);
       const backToAsk = (await panelLayout(id)).mode;
+      const askIsDefault = (await settingsNow())?.defaultMode === 'ask';
 
       // Esc stops a run.
       await scriptReplies([{ text: 'too late', delayMs: 5000 }]);
@@ -121,6 +123,7 @@ defineCheck({
         autoNotice: notice,
         noticeStored,
         modeBack: backToAsk === 'ask',
+        modeIsDefault: autoIsDefault && askIsDefault,
         escStops: started && stopped,
         panelReflows: panelZoomed.scrollWidth <= panelZoomed.clientWidth + 1 && panelZoomed.innerWidth <= 210,
         optionsReflow: optionsZoomed.scrollWidth <= optionsZoomed.clientWidth + 1,

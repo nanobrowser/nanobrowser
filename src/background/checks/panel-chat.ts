@@ -14,12 +14,13 @@ export const FIXTURE_PROVIDER = {
   models: [{ name: 'fixture-model', overrides: { contextWindow: 32768 } }],
 };
 
+/** The fixture model as the default, and Ask as the default mode, which a check that chose Auto may have left. */
 export async function seedFixtureModel(): Promise<void> {
   await fetch(`${FIXTURES}/__llm/reset`, { method: 'POST' });
   const stored = (await chrome.storage.local.get('nb.settings'))['nb.settings'] ?? {};
   await chrome.storage.local.set({
     'nb.providers': [FIXTURE_PROVIDER],
-    'nb.settings': { ...stored, defaultModel: { providerId: 'fixture', model: 'fixture-model' } },
+    'nb.settings': { ...stored, defaultMode: 'ask', defaultModel: { providerId: 'fixture', model: 'fixture-model' } },
   });
 }
 
