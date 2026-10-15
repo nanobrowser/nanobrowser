@@ -168,11 +168,9 @@ function TakeoverCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unkn
   const d = prompt.data;
   return (
     <Frame title={t('card.takeover.title')} tone="agent">
-      <Line muted>{t('card.takeover.notDetected')}</Line>
-      <blockquote className="border-l-2 border-nb-sky pl-2">{plain(d.message)}</blockquote>
+      <Line>{plain(d.message)}</Line>
       <Line>{t('card.onSite', { site: plain(d.site) || t('card.noSite') })}</Line>
       <Line muted>{t('card.takeover.secrets')}</Line>
-      <Line muted>{t('card.checkAddress')}</Line>
       <Buttons>
         <button type="button" className={primary} onClick={() => answer({ outcome: 'continue' })}>
           {t('card.done')}

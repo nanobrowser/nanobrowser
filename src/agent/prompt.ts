@@ -72,7 +72,9 @@ function toolGuide(tools: string[]): string {
   if (has('read')) lines.push('- read returns a page or an element as Markdown, for reading text.');
   if (has('fill_form')) lines.push('- fill_form sets several fields in order and can activate a submit control.');
   if (has('ask_user'))
-    lines.push('- ask_user asks the user a question (kind "input") or hands them a step (kind "takeover").');
+    lines.push(
+      '- ask_user asks the user a question (kind "input") or hands them a step (kind "takeover"). For a takeover, the message says only what the user should do now, in a short plain sentence, e.g. "Sign in to GitHub in this tab, then press Done." Do not repeat the task or say what you will do after.',
+    );
   lines.push(
     '',
     'Example: the user asks for the price of the first result. snapshot → read the price from the outline → done(success, "The first result costs …").',

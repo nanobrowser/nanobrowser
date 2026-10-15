@@ -22,10 +22,9 @@ describe('cards', () => {
         site: 'evil.example',
       }),
     );
-    expect(html).toMatch(/<h2[^>]*>The agent asks you to take over<\/h2>/);
-    expect(html).toContain('Nanobrowser did not detect a protected step here. This request was written by the agent.');
+    expect(html).toMatch(/<h2[^>]*>Please do this step yourself<\/h2>/);
     expect(html).toContain('on evil.example');
-    expect(html).toContain('Check the address before you enter anything.');
+    expect(html).toContain('Check the address before you enter a password or a code.');
   });
 
   it('a detected payment opens the other card, with no Approve', () => {

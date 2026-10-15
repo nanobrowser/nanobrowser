@@ -10,7 +10,7 @@ const tabOfNotification = new Map<string, number>();
 const NEEDS: Record<string, (site: string) => string> = {
   'write-card': site => `Nanobrowser asks before it changes something on ${site}.`,
   handover: site => `Nanobrowser needs you: a step on ${site} is yours to do.`,
-  'ask-takeover': site => `Nanobrowser asks you to take over on ${site}.`,
+  'ask-takeover': site => `Nanobrowser needs you to do a step on ${site}.`,
   'ask-input': () => 'Nanobrowser has a question for you.',
   'save-file': () => 'Nanobrowser asks before it saves a file.',
   confirm: () => 'Nanobrowser has a question for you.',
