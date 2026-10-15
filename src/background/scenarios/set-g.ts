@@ -586,8 +586,8 @@ scenario(
 
 scenario(
   'G-6.5-save-and-reply',
-  'A script-driven Save, and Send in a one-textarea form, ask',
-  '"Save" is submission vocabulary; the single-field search rule',
+  'A script-driven Save and Create, and Send in a one-textarea form, ask; a cookie banner’s Reject all does not',
+  '"Save" and "create" are submission vocabulary; the single-field search rule; the cookie-banner exception',
   async ctx => {
     const seen = scriptedUser('decline');
     const a = await agentSession(ctx, ENRICH, {
@@ -596,13 +596,20 @@ scenario(
     const snap = await a.call('snapshot');
     const save = await a.call('click', { target: { ref: refOf(snap, /button "Save"/) } });
     const send = await a.call('click', { target: { ref: refOf(snap, /button "Send"/) } });
+    const create = await a.call('click', { target: { ref: refOf(snap, /button "Create"/) } });
+    const reject = await a.call('click', { target: { ref: refOf(snap, /button "Reject all"/) } });
+    const h = await hits(a.tabId);
     return outcome(
-      'two cards, both submit; both declined',
-      `cards ${seen.map(c => c.category).join(',')}; ${save.error?.code} ${send.error?.code}`,
-      seen.length === 2 &&
+      'three cards (Save, Send, Create), all submit and declined; a cookie banner’s Reject all: no card, clicked',
+      `cards ${seen.map(c => c.category).join(',')}; ${save.error?.code} ${send.error?.code} ${create.error?.code}; reject ${reject.ok}; hits ${JSON.stringify(h)}`,
+      seen.length === 3 &&
         seen.every(c => c.category === 'submit') &&
         save.error?.code === 'USER_DECLINED' &&
-        send.error?.code === 'USER_DECLINED',
+        send.error?.code === 'USER_DECLINED' &&
+        create.error?.code === 'USER_DECLINED' &&
+        reject.ok &&
+        h.includes('reject-all') &&
+        !h.includes('create'),
     );
   },
 );
