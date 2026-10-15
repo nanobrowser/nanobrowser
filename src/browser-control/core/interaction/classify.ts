@@ -60,9 +60,25 @@ export const DELETE_WORDS = vocabulary(
   ['删除', '移除', '清空', '注销', '取消订阅'],
 );
 export const SUBMIT_WORDS = vocabulary(
-  ['submit', 'send', 'publish', 'post', 'confirm', 'apply', 'sign up', 'register', 'save', 'update'],
-  ['提交', '发送', '发布', '确认', '保存', '更新'],
+  [
+    'submit',
+    'send',
+    'publish',
+    'post',
+    'confirm',
+    'apply',
+    'sign up',
+    'register',
+    'save',
+    'update',
+    'create',
+    'approve',
+    'reject',
+  ],
+  ['提交', '发送', '发布', '确认', '保存', '更新', '创建', '批准', '拒绝', '驳回'],
 );
+/** A cookie banner's refusal ("Reject all", "Reject cookies"), which is not a write although "reject" is. */
+export const COOKIE_REJECT = /cookie|^reject\s+all$|^(?:拒绝所有|全部拒绝|拒绝全部)$/i;
 /** Granting access: protected, like a payment. */
 export const GRANT_WORDS = vocabulary(
   ['authorize', 'authorise', 'allow access', 'grant access', 'give access'],
@@ -166,7 +182,7 @@ export function classify(input: ClassifyInput): Classification {
       reason: `it submits its form (${facts.form.method.toUpperCase()} ${quote(facts.form.action)})`,
     };
   }
-  if (SUBMIT_WORDS.test(name) && !facts.form?.search)
+  if (SUBMIT_WORDS.test(name) && !facts.form?.search && !COOKIE_REJECT.test(name))
     return { category: 'submit', reason: `the name ${quote(name)} is submission vocabulary` };
   return { category: null, reason: 'not submit, pay or delete' };
 }

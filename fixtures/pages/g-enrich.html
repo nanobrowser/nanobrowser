@@ -27,7 +27,11 @@
       <button onclick="hit('authorize')">Authorize</button>
       <button onclick="hit('allow')">Allow</button>
       <button class="save" onclick="hit('save')">Save</button>
+      <button onclick="hit('create')">Create</button>
     </p>
+    <div class="cookie-banner">
+      We use cookies. <button onclick="hit('reject-all')">Reject all</button>
+    </div>
     <div>
       <textarea aria-label="Write a comment" onkeydown="if (event.key === 'Enter') hit('comment')"></textarea>
       <input aria-label="Search the site" type="search" onkeydown="if (event.key === 'Enter') hit('search')" />

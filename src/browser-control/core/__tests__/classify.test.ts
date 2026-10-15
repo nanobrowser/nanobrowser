@@ -161,4 +161,36 @@ describe('enrichments', () => {
     );
     expect(classify({ mode: 'activate', name: '保存', role: 'button', facts: plain }).category).toBe('submit');
   });
+
+  it('"create", "approve" and "reject" are submission vocabulary', () => {
+    expect(activate('Create')).toBe('submit');
+    expect(activate('Create issue')).toBe('submit');
+    expect(activate('Approve')).toBe('submit');
+    expect(activate('Reject')).toBe('submit');
+    expect(activate('Reject all changes')).toBe('submit');
+    expect(activate('创建')).toBe('submit');
+    expect(activate('批准')).toBe('submit');
+    expect(activate('驳回')).toBe('submit');
+    expect(activate('Recreate')).toBeNull();
+    // On a consent page, "Approve" is still a grant.
+    expect(
+      classify({ mode: 'activate', name: 'Approve', role: 'button', facts: plain, url: 'https://id.example/oauth' })
+        .category,
+    ).toBe('grant');
+  });
+
+  it("a cookie banner's refusal is not a write", () => {
+    expect(activate('Reject all')).toBeNull();
+    expect(activate('Reject All')).toBeNull();
+    expect(activate('Reject cookies')).toBeNull();
+    expect(activate('Reject non-essential cookies')).toBeNull();
+    expect(activate('拒绝所有')).toBeNull();
+    expect(activate('拒绝 Cookie')).toBeNull();
+    // Only the word list is set aside: a refusal that submits its form still asks.
+    expect(activate('Reject all', { submitter: true, form: form() })).toBe('submit');
+  });
+
+  it('Enter in a form whose default button is "Create" submits it', () => {
+    expect(enter({ form: form({ defaultButton: { name: 'Create', disabled: false } }) })).toBe('submit');
+  });
 });
