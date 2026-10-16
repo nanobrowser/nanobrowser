@@ -26,11 +26,13 @@
     "clean": "rimraf dist dist-zip .wxt .output"
   },
   "dependencies": {
+    "@ai-sdk/amazon-bedrock": "5.0.107",
     "@ai-sdk/anthropic": "4.0.79",
     "@ai-sdk/google": "4.0.94",
     "@ai-sdk/openai": "4.0.92",
     "@radix-ui/react-dialog": "^1.3.1",
     "ai": "7.0.138",
+    "aws4fetch": "1.0.20",
     "idb": "^8.0.4",
     "puppeteer-core": "^25.13.0",
     "react": "18.3.1",
