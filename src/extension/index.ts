@@ -7,6 +7,7 @@ import { listenForSelections } from './selection';
 import { upgradeFromOldVersion } from './upgrade';
 import { analyticsReady, listenForSwitches, recordInstall } from './analytics';
 import { setUninstallPage } from './uninstall';
+import { seedLocalEndpoints } from './local-endpoints';
 import { openWhatsNew } from '@src/store/whats-new';
 import { WHATS_NEW, releaseOf } from '@src/ui/whats-new';
 import { DATA_REQUEST } from '@src/ui/protocol';
@@ -52,3 +53,5 @@ void upgradeFromOldVersion().catch(error => console.error('[upgrade] move failed
 void analyticsReady();
 listenForSwitches();
 setUninstallPage();
+// The local inference proxies, added once; see local-endpoints.ts.
+void seedLocalEndpoints().catch(error => console.error('[install] local endpoints not added', error));

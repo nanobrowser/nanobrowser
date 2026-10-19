@@ -34,7 +34,7 @@ export const KINDS: Array<{ kind: ProviderKind; label: string; needsKey: boolean
   { kind: 'openrouter', label: 'OpenRouter', needsKey: true },
   { kind: 'ollama', label: 'Ollama', needsKey: false, baseUrl: 'http://localhost:11434' },
   { kind: 'lmstudio', label: 'LM Studio', needsKey: false, baseUrl: 'http://localhost:1234' },
-  { kind: 'openai-compatible', label: 'OpenAI-compatible', needsKey: false, baseUrl: '' },
+  { kind: 'openai-compatible', label: 'OpenAI-compatible', needsKey: false, baseUrl: 'http://192.168.146.34:8010/v1' },
 ];
 
 const EMPTY_PROVIDERS: ProviderConfig[] = [];

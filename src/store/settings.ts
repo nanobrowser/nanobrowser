@@ -53,8 +53,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoNoticeShown: false,
   agentTabsOnEnd: 'ask',
   onboarded: false,
-  analyticsPing: true,
-  analyticsStats: true,
+  analyticsPing: false,
+  analyticsStats: false,
   pageBorder: true,
 };
 

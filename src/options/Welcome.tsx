@@ -9,7 +9,7 @@ import type { ModelList, ProviderKind } from '@src/llm';
 import { newId } from '@src/store/conversations';
 import { DEFAULT_SETTINGS, findModel, keysStorage, providersStorage, settingsStorage } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
-import { Button, Input, Notice, Select, Switch } from '@src/ui/components';
+import { Button, Input, Notice, Select } from '@src/ui/components';
 import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
@@ -190,7 +190,8 @@ function ModelStep() {
   );
 }
 
-const LOCAL: ProviderKind[] = ['ollama', 'lmstudio'];
+// Our OpenAI-compatible proxies first (the address defaults to ether-10), then the local servers.
+const LOCAL: ProviderKind[] = ['openai-compatible', 'ollama', 'lmstudio'];
 // The cloud providers in the welcome page's order, OpenAI first.
 const CLOUD: ProviderKind[] = ['openai', 'anthropic', 'gemini', 'openrouter'];
 
@@ -383,7 +384,6 @@ const TIPS: Array<{ title: MessageKey; body: MessageKey }> = [
 ];
 
 function TipsStep() {
-  const settings = useStorage(settingsStorage, DEFAULT_SETTINGS);
   return (
     <>
       <p>{t('tips.intro')}</p>
@@ -398,15 +398,6 @@ function TipsStep() {
       {/* Its own button: Open the panel uses its click to open the side panel. Skipping it is fine. */}
       <SettingsCard>
         <BrowserFeaturesRow />
-      </SettingsCard>
-      <SettingsCard>
-        <SettingsRow label={t('welcome.help')} description={t('welcome.helpHint')}>
-          <Switch
-            aria-label={t('welcome.help')}
-            checked={settings.analyticsStats}
-            onChange={on => void settingsStorage.set(s => ({ ...s, analyticsStats: on }))}
-          />
-        </SettingsRow>
       </SettingsCard>
     </>
   );

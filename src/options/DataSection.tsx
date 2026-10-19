@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Notice } from '@src/ui/components';
 import { SettingsCard } from './SettingsCard';
-import { PrivacyCard } from './PrivacyCard';
 import { t } from '@src/ui/i18n';
 import { DATA_REQUEST } from '@src/ui/protocol';
 import { useStorage } from '@src/ui/hooks';
@@ -82,7 +81,6 @@ export function DataSection() {
       />
       <SettingsCard title={t('data.conversations')} description={t('data.conversationsHint')} />
       <PreviousCard onDeleted={measure} />
-      <PrivacyCard />
       <SettingsCard title={t('data.everything')} description={t('data.everythingHint')} className="flex flex-col gap-2">
         {deleted ? <Notice tone="ok">{t('data.deleted')}</Notice> : null}
         {confirming ? (

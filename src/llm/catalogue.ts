@@ -229,6 +229,7 @@ export function isCloudEndpoint(kind: ProviderKind, baseUrl?: string): boolean {
     const [a, b] = ip;
     return !(
       a === 10 ||
+      (a === 100 && b >= 64 && b < 128) ||
       a === 127 ||
       a === 0 ||
       (a === 169 && b === 254) ||

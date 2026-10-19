@@ -29,7 +29,6 @@ import './panel-shortcuts';
 import './panel-instructions';
 import './welcome';
 import './upgrade';
-import './analytics';
 import './appearance';
 import './languages';
 import './keyboard-a11y';
