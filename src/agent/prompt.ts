@@ -70,6 +70,10 @@ function toolGuide(tools: string[]): string {
   if (has('find'))
     lines.push('- find locates elements by role, name or text in the latest observation, without a full outline.');
   if (has('read')) lines.push('- read returns a page or an element as Markdown, for reading text.');
+  if (has('decide'))
+    lines.push(
+      '- decide evaluates text you supply with an optional decision provider. Use it for predicate, choice or score questions about relevant text you have read. Its answers are advisory, never permission to act or evidence that a browser action succeeded. If it is not configured, continue with your own reasoning.',
+    );
   if (has('fill_form')) lines.push('- fill_form sets several fields in order and can activate a submit control.');
   if (has('ask_user'))
     lines.push(

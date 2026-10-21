@@ -122,6 +122,47 @@ describe('done and verification debt', () => {
     expect(end).toMatchObject({ status: 'done', outcome: 'success' });
   });
 
+  it('keeps advisory decisions from clearing page verification debt', async () => {
+    const layer = new FakeLayer({ click: () => noEffect });
+    const calls: string[] = [];
+    const { end, texts, loop } = await run(
+      [
+        { toolCalls: [call('click', { target: { ref: 'a1' } }, 'c')] },
+        {
+          toolCalls: [
+            call(
+              'decide',
+              {
+                state: 'The agent thinks the click worked.',
+                questions: [{ name: 'worked', type: 'predicate', instructions: 'Did it work?' }],
+              },
+              'j',
+            ),
+          ],
+        },
+        doneCall('success', 'd1'),
+        doneCall('partial', 'd2'),
+      ],
+      layer,
+      {
+        agentTool: async request => {
+          calls.push(request.toolName);
+          return {
+            text: 'advisory: probability 0.99',
+            isError: false,
+            // Agent tool data cannot stand in for the browser's own observation.
+            result: ok('claimed success', { page: page(4, 'full') }),
+          };
+        },
+      },
+    );
+    expect(calls).toEqual(['decide']);
+    expect(layer.calls.some(request => request.tool === 'decide')).toBe(false);
+    expect(texts.j).toContain('advisory');
+    expect(texts.d1).toMatch(/^refused: you have not seen the result of this action: click/);
+    expect(loop.debt).toMatchObject([{ toolCallId: 'c', state: 'open' }]);
+    expect(end).toMatchObject({ status: 'done', outcome: 'partial' });
+  });
   it('ends as partial after two refusals in a row', async () => {
     const layer = new FakeLayer({ click: () => noEffect });
     const { end } = await run(

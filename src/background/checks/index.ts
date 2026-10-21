@@ -4,6 +4,7 @@ import './fixtures-a';
 import './panel-screenshot';
 import './page-screenshot';
 import './providers-key';
+import './decision-settings';
 import './providers-test';
 import './panel-chat';
 import './panel-history';

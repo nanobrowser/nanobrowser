@@ -462,5 +462,17 @@
   "models.noReasoning": "does not reason",
   "notice.reasoningDropped": "This model did not take the reasoning setting; continuing without it.",
   "notice.imagesDropped": "This model did not take images; continuing without them.",
-  "notice.stopped": "Stopped · What should Nanobrowser do instead?"
+  "notice.stopped": "Stopped · What should Nanobrowser do instead?",
+  "decisions.title": "Decision models",
+  "decisions.description": "Answer yes/no, choice and rubric questions for the agent.",
+  "decisions.provider": "Decision provider",
+  "decisions.off": "Off",
+  "decisions.model": "Model: {model}",
+  "decisions.keyRequired": "Save an API key from this provider to enable decision calls.",
+  "decisions.keySaved": "Your key is saved in this browser and excluded from exports.",
+  "decisions.privacy": "When enabled, the agent sends only the state and questions it supplies to this provider.",
+  "act.decide": "Ask a decision model",
+  "decisions.apiKey": "Decision API key",
+  "decisions.saveKey": "Save decision key",
+  "decisions.clearKey": "Clear decision key"
 }

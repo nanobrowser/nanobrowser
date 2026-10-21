@@ -32,8 +32,9 @@ To work, Nanobrowser sends data directly from your browser to the AI providers y
 
 - **Your model provider** (for example Anthropic, OpenAI, Google, OpenRouter, or a local server such as Ollama): your messages, your attachments, the content of the tabs the agent works in, and, for models that can see images, screenshots of those tabs.
 - **Your voice model provider** (OpenAI or Google), only if you turn on voice input: the audio of each recording. Recordings are not kept.
+- **Your decision model provider** (TypeSafe's Jev or OpenAI Decisions), only if you configure it in Settings → Providers: the text and questions the agent supplies to the `decide` tool. This can include page content the agent has read. The tool sends no screenshots or attachments directly, and reads no pages itself. Its answers are stored in the conversation. Decision calls go directly to the selected service, using its own API key.
 
-How these providers handle your data is governed by their own privacy policies. If you use a local model, the data stays on your computer.
+How these providers handle your data is governed by their own privacy policies. Data sent to a local model stays on your computer; optional voice or decision calls still go to the provider chosen for that feature.
 
 ## API keys
 
@@ -49,6 +50,7 @@ When Nanobrowser updates from its earlier version, it moves your providers and A
 
 - Delete a conversation at any time, or delete all your data in Settings → Data. Your two choices about what is sent stay as you set them.
 - Turn off the daily count and the usage counts at any time in Settings → Data; what was counted and not yet sent is deleted at once.
+- Turn off decision models in Settings → Providers to stop further decision calls, or clear a decision provider's key there.
 - Uninstall the extension to remove all its local data.
 
 ## Changes to this policy
@@ -59,4 +61,4 @@ We may update this policy. Changes are published in the GitHub repository.
 
 Questions or concerns? Contact us at cws@felight.xyz.
 
-Last updated: October 13, 2026
+Last updated: October 21, 2026

@@ -6,6 +6,8 @@ import type { HostPort } from '@src/agent/ports';
 import type { Session, UserStepDetails } from '@src/browser-control';
 import { agentSystemPrompt } from '@src/agent/prompt';
 import { toolsForRun } from '@src/agent/tools';
+import { runDecision } from '@src/agent/decide';
+import { DECISION_KEY_IDS } from '@src/llm/decisions';
 import { toDisplay } from '@src/agent/display';
 import {
   activeBranch,
@@ -26,7 +28,7 @@ import {
   titleFrom,
   updateConversation,
 } from '@src/store/conversations';
-import { DEFAULT_SETTINGS, getLive, removeLive, setLive, settingsStorage } from '@src/store/settings';
+import { DEFAULT_SETTINGS, getLive, keysStorage, removeLive, setLive, settingsStorage } from '@src/store/settings';
 import { NOTE_LABEL, RunWriter } from '@src/agent/records';
 import { planRestore, RESTART_NOTE, takenOver } from '@src/agent/restore';
 import { runCompaction } from '@src/agent/compaction';
@@ -989,7 +991,7 @@ export class RunManager {
   }
 
   /**
-   * The agent tools the worker runs: `save_file`. It follows the mode: in Ask mode the Save file card asks; in Auto
+   * The worker runs `decide` as an advisory read and `save_file` under the file policy. In Ask mode the Save file card asks; in Auto
    * mode the file is saved. Either way an existing file is never overwritten. Saving needs Chrome's downloads
    * permission, which only a user's click can allow: until it is allowed, the card asks in Auto mode too, and the file
    * is never saved without it.
@@ -999,6 +1001,13 @@ export class RunManager {
     call: ToolCallRequest,
     signal: AbortSignal,
   ): Promise<{ text: string; isError: boolean }> {
+    if (call.toolName === 'decide') {
+      const settings = await settingsStorage.get();
+      const provider = settings.decisionProvider;
+      const keys = await keysStorage.get();
+      const apiKey = provider === 'jev' || provider === 'openai' ? keys[DECISION_KEY_IDS[provider]] : undefined;
+      return runDecision((call.input ?? {}) as Record<string, unknown>, { provider, apiKey }, { signal });
+    }
     if (call.toolName !== 'save_file') return { text: `error: ${call.toolName} is not available.`, isError: true };
     const args = (call.input ?? {}) as Record<string, unknown>;
     const check = checkSave(args);

@@ -462,5 +462,17 @@
   "models.noReasoning": "不推理",
   "notice.reasoningDropped": "此模型不接受推理设置；将不使用该设置继续。",
   "notice.imagesDropped": "此模型不接受图片；将不使用图片继续。",
-  "notice.stopped": "已停止 · 接下来要 Nanobrowser 做什么？"
+  "notice.stopped": "已停止 · 接下来要 Nanobrowser 做什么？",
+  "decisions.title": "决策模型",
+  "decisions.description": "为智能体回答是非、选择和评分标准问题。",
+  "decisions.provider": "决策服务商",
+  "decisions.off": "关闭",
+  "decisions.model": "模型：{model}",
+  "decisions.keyRequired": "保存此服务商的 API 密钥后，即可调用决策模型。",
+  "decisions.keySaved": "密钥保存在此浏览器中，不会包含在导出文件中。",
+  "decisions.privacy": "启用后，智能体仅向此服务商发送调用时提供的状态和问题。",
+  "act.decide": "询问决策模型",
+  "decisions.apiKey": "决策 API 密钥",
+  "decisions.saveKey": "保存决策密钥",
+  "decisions.clearKey": "清除决策密钥"
 }
