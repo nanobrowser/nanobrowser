@@ -23,6 +23,9 @@ import { learnFrom, turnEffort } from './run';
 import type { ResolvedModel } from './run';
 import { allTools, DONE_TOOL, kindOf, PAGE_ACTIONS } from './tools';
 import type { AgentTool, ToolKind } from './tools';
+import { JevRuntime, jevStateKey } from './jev';
+import type { JevLoopOptions } from './jev';
+import type { JevObservation } from './jev-candidates';
 
 /** Every tool result is capped; a cut keeps a boundary's end marker. */
 export const RESULT_CAP = 8_000;
@@ -56,6 +59,7 @@ export interface Request {
 }
 
 export interface LoopOptions {
+  jev?: JevLoopOptions;
   conversationId: string;
   runId: string;
   /** When the run began, stored with each reply for the activity block's elapsed time. */
@@ -113,6 +117,8 @@ export interface CallOutcome {
   image?: { data: string; mediaType: string; note: string; thumb?: string };
   /** The call met a step that is the user's, and the user was handed it. */
   handover?: boolean;
+  jevBlocked?: boolean;
+  jevStop?: string;
 }
 
 const SKIP_CONTROL = 'skipped: `done` and `ask_user` end a reply; call them alone or last.';
@@ -142,7 +148,7 @@ function targetRef(args: Record<string, unknown>): string | undefined {
 /** Whether a result ends the batch. */
 export function stopsBatch(call: ToolCallRequest, outcome: CallOutcome): boolean {
   const r = outcome.result;
-  if (outcome.isError || outcome.handover) return true;
+  if (outcome.isError || outcome.handover || outcome.jevBlocked) return true;
   if (!r) return false;
   if (!r.ok) return true;
   const receipt = r.receipt;
@@ -163,6 +169,7 @@ export function stopsBatch(call: ToolCallRequest, outcome: CallOutcome): boolean
 
 export class AgentLoop {
   readonly writer: RunWriter;
+  readonly jev?: JevRuntime;
   #usage: Usage = ZERO_USAGE;
   #turns = 0;
   #toolNames: Set<string>;
@@ -198,6 +205,7 @@ export class AgentLoop {
 
   constructor(readonly options: LoopOptions) {
     this.writer = new RunWriter(options.conversationId, options.runId);
+    if (options.jev) this.jev = new JevRuntime(options.jev, options.runId, options.signal);
     this.guards = new Guards(options.restore?.guards);
     if (options.restore) this.#debt = options.restore.debt.map(d => ({ ...d }));
     this.#toolNames = new Set(options.tools.map(t => t.name));
@@ -413,6 +421,7 @@ export class AgentLoop {
       this.options.signal,
     );
     if (!result.ok) return;
+    this.jev?.observe(result);
     this.#seen.set(active.tabId, active.url);
     // Kept within budget: a share of the window, at 4 characters a token.
     const budget = Math.max(2_000, Math.min(30_000, this.options.model.profile.contextWindow * 4 * 0.2));
@@ -516,9 +525,11 @@ export class AgentLoop {
   /** After a call: hand-overs, guards, verification debt and the result cap. */
   async afterToolCall(given: CallOutcome): Promise<CallOutcome> {
     let outcome = given;
+    if (!given.skipped) this.jev?.execution(given.call, given.result);
     if (outcome.result?.error?.code === 'USER_STEP' && outcome.result.error.details)
       outcome = await this.#handOver(outcome);
-    else if (!outcome.skipped && !outcome.done) outcome = await this.#promptDialog(outcome);
+    else if ((!outcome.skipped || outcome.jevBlocked) && !outcome.done && !this.options.signal.aborted)
+      outcome = await this.#promptDialog(outcome);
     const page = outcome.result?.page;
     if (page) this.#seen.set(page.tabId, page.url);
     const notes: string[] = [];
@@ -684,6 +695,20 @@ export class AgentLoop {
       }
       return { call, kind, text: refusal(open), isError: true };
     }
+    if (outcomeArg === 'success' && this.jev) {
+      const gate = await this.jev.completion(this.jev.pages.get(this.#activeTab ?? -1) ?? null, args, () =>
+        this.#jevRefresh(),
+      );
+      if (!gate.allowed || this.hasSteering())
+        return {
+          call,
+          kind,
+          text: gate.text ?? 'The user sent a new message; reconsider completion.',
+          isError: true,
+          jevBlocked: true,
+          jevStop: gate.stop,
+        };
+    }
     this.#doneRefusals = 0;
     const lost = unverifiedLines(this.#debt);
     if (lost.length) summary = `${summary}\n\n${lost.map(l => `- ${l}`).join('\n')}`;
@@ -710,6 +735,9 @@ export class AgentLoop {
   /** After a turn: whether the run ends. */
   async finishTurn(reply: TurnResult, outcomes: CallOutcome[]): Promise<LoopEnd | null> {
     await this.writer.run({ turns: this.#turns, debt: this.#debt, guards: this.guards.state });
+    const jevStop = outcomes.find(o => o.jevStop)?.jevStop;
+    if (jevStop)
+      return { status: 'stopped', outcome: 'partial', reason: jevStop, usage: this.#usage, turns: this.#turns };
     const done = outcomes.find(o => o.done)?.done;
     if (done) {
       const status: RunStatus = done.outcome === 'failed' ? 'failed' : 'done';
@@ -717,7 +745,23 @@ export class AgentLoop {
     }
     if (this.#guardStop) return this.salvage(this.#guardStop.reason, `guard_${this.#guardStop.guard}`);
     if (!reply.toolCalls.length) {
-      if (!this.#mutated) return { status: 'done', outcome: 'success', usage: this.#usage, turns: this.#turns };
+      if (!this.#mutated) {
+        if (this.jev) {
+          const gate = await this.jev.completion(
+            this.jev.pages.get(this.#activeTab ?? -1) ?? null,
+            { summary: reply.text },
+            () => this.#jevRefresh(),
+          );
+          if (this.hasSteering()) return null;
+          if (!gate.allowed) {
+            await this.writer.appNote(gate.text ?? 'Jev could not verify completion.');
+            return gate.stop
+              ? { status: 'stopped', outcome: 'partial', reason: gate.stop, usage: this.#usage, turns: this.#turns }
+              : null;
+          }
+        }
+        return { status: 'done', outcome: 'success', usage: this.#usage, turns: this.#turns };
+      }
       // Plain text after a mutation: one note, then partial.
       this.#plainEndings++;
       if (this.#plainEndings >= 2) {
@@ -780,13 +824,14 @@ export class AgentLoop {
         if (signal.aborted) return this.#end({ status: 'stopped' });
         await this.#deliverSteering();
         await this.storeHeader();
+        const selected = await this.#jevSelect();
         const request = await this.prepareRequest();
         const check = await this.prepareNextTurn(request);
         if (check.stop) return this.#end({ status: 'failed', outcome: 'failed', reason: check.stop, cause: 'context' });
         this.#turns++;
         emit({ type: 'turn_start', turn: this.#turns });
         const sent = check.request ?? request;
-        const reply = await this.#stream(sent);
+        const reply = selected ? await this.#selectedReply(selected) : await this.#stream(sent);
         emit({ type: 'turn_end', turn: this.#turns });
         if (reply === 'aborted') return this.#end({ status: 'stopped' });
         // A server that reports more input than the window truncated the request silently: the reply was written from a
@@ -853,6 +898,7 @@ export class AgentLoop {
   async #deliverSteering(): Promise<void> {
     const texts = this.options.takeSteering?.() ?? [];
     for (const text of texts) {
+      this.jev?.steer(text);
       const entry = await this.writer.userMessage(text);
       this.options.emit({ type: 'message_end', entry: { kind: 'user', id: entry.id, text, at: entry.at } });
     }
@@ -1066,6 +1112,29 @@ export class AgentLoop {
     if (refused) return this.afterToolCall(refused);
     // The intent record is on disk before anything is dispatched.
     await this.writer.intent(call.toolCallId, call.toolName, args);
+    if (this.jev && (kind === 'mutate' || kind === 'state')) {
+      const page = await this.#jevRefresh(args);
+      if (!page)
+        return this.afterToolCall({
+          call,
+          kind,
+          text: 'Jev could not establish the current page; nothing was dispatched.',
+          isError: true,
+          skipped: true,
+          jevBlocked: true,
+        });
+      const gate = await this.jev.action(call, page, () => this.#jevRefresh(args));
+      if (!gate.allowed || this.hasSteering())
+        return this.afterToolCall({
+          call,
+          kind,
+          text: gate.text ?? 'Jev stopped this action because the user sent a new message.',
+          isError: true,
+          skipped: true,
+          jevBlocked: true,
+          jevStop: gate.stop,
+        });
+    }
     let outcome: CallOutcome;
     if (call.toolName === 'done') {
       outcome = await this.#judgeDone(call, kind, args);
@@ -1101,5 +1170,68 @@ export class AgentLoop {
       outcome = { call, kind, text: result.text, isError: !result.ok, result };
     }
     return this.afterToolCall(outcome);
+  }
+  /** An internal read is retained as bounded evidence, never as a decision's claim that an action succeeded. */
+  async #jevRefresh(args: Record<string, unknown> = {}): Promise<JevObservation | null> {
+    if (!this.jev || this.options.signal.aborted) return null;
+    const tabs = await this.options.layer.tabs();
+    const ref = targetRef(args);
+    const observed = ref ? [...this.jev.pages.values()].find(page => page.outline.includes(`[${ref}]`)) : undefined;
+    const tabId = typeof args.tabId === 'number' ? args.tabId : (observed?.tabId ?? tabs.activeTabId);
+    if (tabId === null || tabId === undefined) return null;
+    const tab = tabs.tabs.find(item => item.tabId === tabId);
+    if (!tab) return null;
+    if (!/^https?:/i.test(tab.url))
+      return {
+        tabId,
+        rev: this.options.layer.tabInfo(tabId)?.rev ?? 0,
+        url: tab.url,
+        title: tab.title,
+        outline: '',
+        complete: false,
+      };
+    const result = await this.options.layer.call(
+      'snapshot',
+      { tabId, mode: 'all', window: 'near' },
+      this.options.signal,
+    );
+    if (!result.ok || !result.page) return null;
+    this.jev.observe(result);
+    await this.writer.appNote(
+      `Jev read-only evidence refresh:\n${cutText(result.text, RESULT_CAP, '… evidence was truncated.')}`,
+    );
+    return this.jev.pages.get(tabId) ?? null;
+  }
+  /** Experimental actions are explicit assistant calls, so their intents and results use the ordinary audit path. */
+  async #selectedReply(call: ToolCallRequest): Promise<TurnResult> {
+    const id = newId();
+    const text = 'Jev selected one bounded action from the observed page refs.';
+    this.options.emit({ type: 'message_start', id });
+    const entry = await this.writer.message(
+      {
+        role: 'assistant',
+        parts: [
+          { type: 'text', text },
+          { type: 'tool-call', toolCallId: call.toolCallId, toolName: call.toolName, input: call.input },
+        ],
+      },
+      { id },
+    );
+    this.options.emit({ type: 'message_end', entry: assistantDisplay(entry) });
+    this.#replyId = id;
+    return { text, toolCalls: [call], finish: 'tool-calls', usage: null, durationMs: 0, attempts: 0 };
+  }
+
+  async #jevSelect(): Promise<ToolCallRequest | null> {
+    if (!this.jev?.options.experimental || this.hasSteering() || this.#debt.some(item => item.state === 'open'))
+      return null;
+    const page = await this.#jevRefresh();
+    if (!page?.complete || this.options.layer.tabInfo(page.tabId)?.pending.length) return null;
+    const key = await jevStateKey(page);
+    const action = await this.jev.select(page, this.#toolNames);
+    if (!action || this.hasSteering() || this.options.signal.aborted) return null;
+    const fresh = await this.#jevRefresh({ tabId: page.tabId });
+    if (!fresh || key !== (await jevStateKey(fresh))) return null;
+    return { toolCallId: newId(), toolName: action.name, input: action.parameters };
   }
 }

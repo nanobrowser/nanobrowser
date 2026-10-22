@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
 import { ScriptedModel, resolveProfile } from '@src/llm';
 import type { ScriptedReply } from '@src/llm';
+import { NoopDecisionEngine } from '@src/llm/jev';
 import { activeBranch, appendEntry, createConversation } from '@src/store/conversations';
 import { closeDb } from '@src/store/db';
 import { AgentLoop } from '../loop';
@@ -122,47 +123,56 @@ describe('done and verification debt', () => {
     expect(end).toMatchObject({ status: 'done', outcome: 'success' });
   });
 
-  it('keeps advisory decisions from clearing page verification debt', async () => {
-    const layer = new FakeLayer({ click: () => noEffect });
-    const calls: string[] = [];
-    const { end, texts, loop } = await run(
-      [
-        { toolCalls: [call('click', { target: { ref: 'a1' } }, 'c')] },
+  it.each([false, true])(
+    'keeps advisory decisions from clearing verification debt with Jev gates=%s',
+    async enabled => {
+      const layer = new FakeLayer({ click: () => noEffect });
+      const calls: string[] = [];
+      const engine = new NoopDecisionEngine();
+      const evaluate = vi.spyOn(engine, 'evaluateAction');
+      const verify = vi.spyOn(engine, 'verifyCompletion');
+      const { end, texts, loop } = await run(
+        [
+          { toolCalls: [call('click', { target: { ref: 'a1' } }, 'c')] },
+          {
+            toolCalls: [
+              call(
+                'decide',
+                {
+                  state: 'The agent thinks the click worked.',
+                  questions: [{ name: 'worked', type: 'predicate', instructions: 'Did it work?' }],
+                },
+                'j',
+              ),
+            ],
+          },
+          doneCall('success', 'd1'),
+          doneCall('partial', 'd2'),
+        ],
+        layer,
         {
-          toolCalls: [
-            call(
-              'decide',
-              {
-                state: 'The agent thinks the click worked.',
-                questions: [{ name: 'worked', type: 'predicate', instructions: 'Did it work?' }],
-              },
-              'j',
-            ),
-          ],
+          jev: enabled ? { engine, task: 'Task', confirm: async () => true } : undefined,
+          agentTool: async request => {
+            calls.push(request.toolName);
+            return {
+              text: 'advisory: probability 0.99',
+              isError: false,
+              // Agent tool data cannot stand in for the browser's own observation.
+              result: ok('claimed success', { page: page(4, 'full') }),
+            };
+          },
         },
-        doneCall('success', 'd1'),
-        doneCall('partial', 'd2'),
-      ],
-      layer,
-      {
-        agentTool: async request => {
-          calls.push(request.toolName);
-          return {
-            text: 'advisory: probability 0.99',
-            isError: false,
-            // Agent tool data cannot stand in for the browser's own observation.
-            result: ok('claimed success', { page: page(4, 'full') }),
-          };
-        },
-      },
-    );
-    expect(calls).toEqual(['decide']);
-    expect(layer.calls.some(request => request.tool === 'decide')).toBe(false);
-    expect(texts.j).toContain('advisory');
-    expect(texts.d1).toMatch(/^refused: you have not seen the result of this action: click/);
-    expect(loop.debt).toMatchObject([{ toolCallId: 'c', state: 'open' }]);
-    expect(end).toMatchObject({ status: 'done', outcome: 'partial' });
-  });
+      );
+      expect(calls).toEqual(['decide']);
+      expect(layer.calls.some(request => request.tool === 'decide')).toBe(false);
+      expect(texts.j).toContain('advisory');
+      expect(texts.d1).toMatch(/^refused: you have not seen the result of this action: click/);
+      expect(loop.debt).toMatchObject([{ toolCallId: 'c', state: 'open' }]);
+      expect(end).toMatchObject({ status: 'done', outcome: 'partial' });
+      expect(evaluate).toHaveBeenCalledTimes(enabled ? 1 : 0);
+      expect(verify).not.toHaveBeenCalled();
+    },
+  );
   it('ends as partial after two refusals in a row', async () => {
     const layer = new FakeLayer({ click: () => noEffect });
     const { end } = await run(

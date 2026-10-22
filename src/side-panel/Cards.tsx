@@ -245,6 +245,27 @@ function ConfirmCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unkno
   );
 }
 
+function JevCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unknown) => void }) {
+  const action = prompt.data.action as { name?: unknown; parameters?: unknown } | undefined;
+  return (
+    <Frame title={t('jev.confirm.title')} tone="write">
+      <Line>{plain(action?.name)}</Line>
+      <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-lg bg-nb-surface p-2 font-mono text-[11px]">
+        {plain(JSON.stringify(action?.parameters ?? {}))}
+      </pre>
+      <Line muted>{t('jev.confirm.policy')}</Line>
+      <Buttons>
+        <button type="button" className={primary} onClick={() => answer('approve')}>
+          {t('jev.confirm.approve')}
+        </button>
+        <button type="button" className={secondary} onClick={() => answer('reject')}>
+          {t('jev.confirm.reject')}
+        </button>
+      </Buttons>
+    </Frame>
+  );
+}
+
 /** Saving a file needs these, and Open and Show in folder on the saved file need the second. */
 const SAVE_PERMISSIONS = ['downloads', 'downloads.open'] as const;
 
@@ -309,6 +330,8 @@ export function Cards({ prompts, answer }: { prompts: OpenPrompt[]; answer: (id:
             return <InputCard key={p.id} prompt={p} answer={reply} />;
           case 'confirm':
             return <ConfirmCard key={p.id} prompt={p} answer={reply} />;
+          case 'jev-confirm':
+            return <JevCard key={p.id} prompt={p} answer={reply} />;
           case 'save-file':
             return <SaveFileCard key={p.id} prompt={p} answer={reply} />;
           default:

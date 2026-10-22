@@ -90,7 +90,9 @@ In Settings → Providers → Decision models, choose **Jev** or **OpenAI Decisi
 
 The agent's `decide` tool can ask up to 20 questions about supplied text in one call: whether a statement is true, which of a fixed set of choices fits, or how the text scores against a rubric. Results include probabilities and, where available, confidence. For example, ask the agent to classify the reviews on a page by topic or score a shortlist against your criteria. These services assist the chat model; they do not replace it. Their answers cannot approve browser actions or replace checking the page after an action.
 
-Only the text and questions supplied to `decide` go to the selected decision provider. It does not read another page or send screenshots. Decision API keys are stored locally, separately from chat provider keys, and are excluded from exports. Turn the decision provider off to stop further decision calls.
+Only the text and questions supplied to `decide` go to the selected decision provider. It does not read another page or send screenshots. Decision API keys are stored locally, separately from chat provider keys, and are excluded from exports. Set the decision provider to **Off** to stop further advisory calls.
+
+The separate **Jev** card enables automatic action checks, completion checks, optional model routing and experimental click proposals in the same agent loop. It is off by default, uses its own saved TypeSafe key, and keeps the ordinary browser permission and verification rules. See [Jev configuration and behavior](docs/jev.md). The two cards have independent keys and controls: choosing Jev for `decide` does not enable automatic checks, and turning Decision models off does not disable automatic Jev. Turn off **Enable Jev** and save its settings to disable those checks for subsequent runs; use **Stop** to end an active run.
 
 ## 💡 Try these
 

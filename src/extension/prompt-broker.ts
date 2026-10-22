@@ -94,6 +94,13 @@ export class PromptBroker {
     return true;
   }
 
+  /** A tab that left the conversation cannot keep an approval waiting or accept a later answer. */
+  withdrawForTab(tabId: number, kind?: OpenPrompt['kind']): void {
+    for (const waiting of [...this.#open.values()]) {
+      if (waiting.prompt.tabId !== tabId || (kind !== undefined && waiting.prompt.kind !== kind)) continue;
+      if (this.#close(waiting.prompt.id, 'withdrawn')) waiting.resolve('withdrawn');
+    }
+  }
   /** Withdraws every card of a conversation (Stop, delete). */
   withdrawAll(conversationId: string): void {
     for (const w of [...this.#open.values()]) {

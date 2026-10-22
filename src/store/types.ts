@@ -129,7 +129,7 @@ export type EntryBody =
       appOwned?: { kind: 'notice' | 'header' };
       meta?: MessageMeta;
     }
-  | { type: 'ui'; kind: 'write-card' | 'handover' | 'notice' | 'download'; data: unknown }
+  | { type: 'ui'; kind: 'write-card' | 'handover' | 'notice' | 'download' | 'jev-decision'; data: unknown }
   | { type: 'intent'; toolCallId: string; tool: string; args: unknown }
   | { type: 'context_edit'; targetId: string; replacement: string | null }
   | {

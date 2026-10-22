@@ -1,5 +1,6 @@
 // The optional decision APIs: opt in explicitly, keep keys as drafts until saved, and isolate each provider's key.
 import { DECISION_KEY_IDS } from '@src/llm/decisions';
+import { JEV_KEY_ID } from '@src/store/jev';
 import { defineCheck } from './registry';
 import { assert, sleep, waitForLoad } from './helpers';
 
@@ -30,7 +31,7 @@ defineCheck({
     await chrome.storage.local.set({
       'nb.settings': { uiLanguage: 'en', onboarded: true },
       'nb.providers': [],
-      'nb.keys': { 'ordinary-provider': 'ordinary-test-key' },
+      'nb.keys': { 'ordinary-provider': 'ordinary-test-key', [JEV_KEY_ID]: 'automatic-jev-test-key' },
     });
     const tab = await chrome.tabs.create({ url: chrome.runtime.getURL('/options.html#providers'), active: true });
     try {
@@ -107,6 +108,7 @@ defineCheck({
       const clearedKeys = await storedKeys();
       assert(!(DECISION_KEY_IDS.jev in clearedKeys), 'clearing Jev removes its key');
       assert(clearedKeys['ordinary-provider'] === 'ordinary-test-key', 'clearing decision keys preserves other keys');
+      assert(clearedKeys[JEV_KEY_ID] === 'automatic-jev-test-key', 'advisory settings preserve the automatic Jev key');
       await choose('');
       assert(!(await keyField()).ok, 'Off hides the decision key field');
       await chrome.tabs.reload(tab.id!);
@@ -120,6 +122,7 @@ defineCheck({
         providers: ['jev', 'openai'],
         draftIsolation: true,
         keyIsolation: true,
+        automaticJevKeyPreserved: true,
         persistedOff: true,
       };
     } finally {

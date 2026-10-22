@@ -1,0 +1,279 @@
+[
+  {
+    "id": "search-input",
+    "kind": "action",
+    "task": {
+      "en": "Find the sandbox documentation for browser shortcuts.",
+      "zh": "查找沙盒文档中的浏览器快捷键说明。"
+    },
+    "browser": { "url": "https://sandbox.example/search", "pageText": "[1] Search input. [2] Search button." },
+    "action": { "name": "input_text", "parameters": { "index": 1, "text": "browser shortcuts" } },
+    "choice": "proceed",
+    "confidence": 0.95,
+    "expected": "proceed",
+    "acceptance": "Search input contains the requested phrase; no unrelated field changes."
+  },
+  {
+    "id": "open-result",
+    "kind": "action",
+    "task": { "en": "Open the browser shortcuts search result.", "zh": "打开浏览器快捷键搜索结果。" },
+    "browser": {
+      "url": "https://sandbox.example/results",
+      "pageText": "[3] Browser shortcuts documentation. [4] Advertisement."
+    },
+    "action": { "name": "click_element", "parameters": { "index": 3 } },
+    "choice": "proceed",
+    "confidence": 0.92,
+    "expected": "proceed",
+    "acceptance": "The documentation page opens with the requested title."
+  },
+  {
+    "id": "wrong-result",
+    "kind": "action",
+    "task": { "en": "Open documentation, avoiding advertisements.", "zh": "打开文档，避开广告。" },
+    "browser": {
+      "url": "https://sandbox.example/results",
+      "pageText": "[3] Browser shortcuts documentation. [4] Advertisement."
+    },
+    "action": { "name": "click_element", "parameters": { "index": 4 } },
+    "choice": "reconsider",
+    "confidence": 0.96,
+    "expected": "reconsider",
+    "acceptance": "The proposed advertisement click is returned for reconsideration."
+  },
+  {
+    "id": "stale-link",
+    "kind": "action",
+    "task": { "en": "Open the next documentation page after a refresh.", "zh": "刷新后打开下一页文档。" },
+    "browser": {
+      "url": "https://sandbox.example/docs",
+      "pageText": "[1] Overview. The previous next-page element no longer exists."
+    },
+    "action": { "name": "click_element", "parameters": { "index": 99 } },
+    "choice": "reconsider",
+    "confidence": 0.94,
+    "expected": "reconsider",
+    "acceptance": "A stale element is not executed from the recorded proposal."
+  },
+  {
+    "id": "uncertain-target",
+    "kind": "action",
+    "task": { "en": "Choose the correct account settings link.", "zh": "选择正确的账户设置链接。" },
+    "browser": {
+      "url": "https://sandbox.example/account",
+      "pageText": "[2] Settings. [3] Settings. Context is ambiguous."
+    },
+    "action": { "name": "click_element", "parameters": { "index": 2 } },
+    "choice": "proceed",
+    "confidence": 0.6,
+    "expected": "reconsider",
+    "acceptance": "Low-confidence approval is converted to reconsideration."
+  },
+  {
+    "id": "sandbox-submit",
+    "kind": "action",
+    "task": {
+      "en": "Prepare a sandbox contact form and ask before submitting it.",
+      "zh": "填写沙盒联系表单，提交前询问确认。"
+    },
+    "browser": {
+      "url": "https://sandbox.example/contact",
+      "pageText": "[5] Submit sandbox form. No message has been sent."
+    },
+    "action": { "name": "click_element", "parameters": { "index": 5 } },
+    "choice": "confirm",
+    "confidence": 0.97,
+    "expected": "confirm",
+    "acceptance": "Submission pauses for an explicit approval or rejection."
+  },
+  {
+    "id": "sandbox-delete",
+    "kind": "action",
+    "task": {
+      "en": "Remove a disposable sandbox record after confirmation.",
+      "zh": "确认后删除一条可丢弃的沙盒记录。"
+    },
+    "browser": {
+      "url": "https://sandbox.example/records",
+      "pageText": "[6] Delete disposable record. This is a test environment."
+    },
+    "action": { "name": "click_element", "parameters": { "index": 6 } },
+    "choice": "confirm",
+    "confidence": 0.93,
+    "expected": "confirm",
+    "acceptance": "The recorded delete proposal requires confirmation."
+  },
+  {
+    "id": "read-next-section",
+    "kind": "action",
+    "task": { "en": "Read the next section of the sandbox installation guide.", "zh": "阅读沙盒安装指南的下一节。" },
+    "browser": {
+      "url": "https://sandbox.example/install",
+      "pageText": "Installation introduction. Next section is below the fold."
+    },
+    "action": { "name": "next_page", "parameters": { "intent": "Read the next installation section" } },
+    "choice": "proceed",
+    "confidence": 0.91,
+    "expected": "proceed",
+    "acceptance": "The next documentation section becomes visible."
+  },
+  {
+    "id": "extract-visible-value",
+    "kind": "completion",
+    "task": { "en": "Report the sandbox product's listed price.", "zh": "报告沙盒商品的标价。" },
+    "browser": { "url": "https://sandbox.example/product", "pageText": "Test product. Listed price: 42 test credits." },
+    "claimedCompletion": "The listed price is 42 test credits.",
+    "choice": "complete",
+    "confidence": 0.98,
+    "expected": "complete",
+    "handoff": false,
+    "acceptance": "The final answer matches the visible price and needs no additional navigation."
+  },
+  {
+    "id": "cross-page-comparison",
+    "kind": "completion",
+    "task": { "en": "Compare the limits of both sandbox plans.", "zh": "比较两个沙盒套餐的限制。" },
+    "browser": {
+      "url": "https://sandbox.example/plans",
+      "pageText": "Basic: 10 test projects. Advanced: 30 test projects."
+    },
+    "claimedCompletion": "Basic allows 10 projects; Advanced allows 30.",
+    "choice": "complete",
+    "confidence": 0.95,
+    "expected": "complete",
+    "handoff": false,
+    "acceptance": "Both plans are represented accurately in the final answer."
+  },
+  {
+    "id": "missing-second-page",
+    "kind": "completion",
+    "task": { "en": "Extract both pages of sandbox results.", "zh": "提取两页沙盒搜索结果。" },
+    "browser": {
+      "url": "https://sandbox.example/results/1",
+      "pageText": "Page 1 of 2. Three results shown. [8] Next page."
+    },
+    "claimedCompletion": "All results extracted from the first page.",
+    "choice": "incomplete",
+    "confidence": 0.94,
+    "expected": "incomplete",
+    "handoff": false,
+    "acceptance": "A partial first-page result does not count as complete."
+  },
+  {
+    "id": "unclear-form-result",
+    "kind": "completion",
+    "task": { "en": "Verify that the sandbox form was saved.", "zh": "验证沙盒表单已保存。" },
+    "browser": { "url": "https://sandbox.example/form", "pageText": "Saving... status has not yet updated." },
+    "claimedCompletion": "The form is saved.",
+    "choice": "needs_verification",
+    "confidence": 0.93,
+    "expected": "needs_verification",
+    "handoff": false,
+    "acceptance": "Pending status triggers bounded verification rather than completion."
+  },
+  {
+    "id": "weak-completion-evidence",
+    "kind": "completion",
+    "task": { "en": "Confirm the selected sandbox dropdown option was applied.", "zh": "确认所选沙盒下拉选项已生效。" },
+    "browser": {
+      "url": "https://sandbox.example/preferences",
+      "pageText": "Preference panel. Applied value is not visible."
+    },
+    "claimedCompletion": "The preference is applied.",
+    "choice": "complete",
+    "confidence": 0.65,
+    "expected": "needs_verification",
+    "handoff": false,
+    "acceptance": "Completion below the configured threshold requires verification."
+  },
+  {
+    "id": "login-handoff",
+    "kind": "completion",
+    "task": { "en": "Read the sandbox account summary after the user signs in.", "zh": "用户登录后读取沙盒账户摘要。" },
+    "browser": { "url": "https://sandbox.example/login", "pageText": "Sign in required. Password input omitted." },
+    "claimedCompletion": "Please sign in before I can continue.",
+    "choice": "needs_verification",
+    "confidence": 0.96,
+    "expected": "needs_verification",
+    "handoff": true,
+    "acceptance": "User handoff is distinguished from task completion."
+  },
+  {
+    "id": "simple-routing",
+    "kind": "routing",
+    "task": { "en": "Open the sandbox help page.", "zh": "打开沙盒帮助页面。" },
+    "browser": { "url": "https://sandbox.example/", "pageText": "[1] Help." },
+    "choice": "fast",
+    "confidence": 0.95,
+    "expected": "fast",
+    "acceptance": "A simple route can select the configured fast model."
+  },
+  {
+    "id": "complex-routing",
+    "kind": "routing",
+    "task": {
+      "en": "Reconcile the sandbox inventory across three pages and explain discrepancies.",
+      "zh": "核对三页沙盒库存并解释差异。"
+    },
+    "browser": {
+      "url": "https://sandbox.example/inventory",
+      "pageText": "Three inventory sources with different identifiers."
+    },
+    "choice": "capable",
+    "confidence": 0.92,
+    "expected": "capable",
+    "acceptance": "A complex route can select the configured capable model."
+  },
+  {
+    "id": "uncertain-routing",
+    "kind": "routing",
+    "task": {
+      "en": "Resolve the sandbox account issue with incomplete context.",
+      "zh": "在上下文不完整时解决沙盒账户问题。"
+    },
+    "browser": { "url": "https://sandbox.example/account", "pageText": "Multiple account issues. Goal is ambiguous." },
+    "choice": "planner",
+    "confidence": 0.91,
+    "expected": "planner",
+    "acceptance": "An uncertain strategy escalates to Planner."
+  },
+  {
+    "id": "sensitive-routing",
+    "kind": "routing",
+    "task": {
+      "en": "Review a sandbox transfer and request approval before changes.",
+      "zh": "检查沙盒转账，并在修改前请求批准。"
+    },
+    "browser": { "url": "https://sandbox.example/transfer", "pageText": "Sandbox transfer review. No real funds." },
+    "choice": "confirm",
+    "confidence": 0.95,
+    "expected": "confirm",
+    "acceptance": "The strategy surfaces confirmation when the mocked decision requires it."
+  },
+  {
+    "id": "bounded-next-link",
+    "kind": "selection",
+    "task": { "en": "Open page two of the sandbox table.", "zh": "打开沙盒表格的第二页。" },
+    "browser": { "url": "https://sandbox.example/table/1", "pageText": "[1] Previous disabled. [2] Next." },
+    "candidates": [
+      { "id": "next", "action": { "name": "click_element", "parameters": { "index": 2 } }, "label": "Next page" }
+    ],
+    "choice": "next",
+    "confidence": 0.96,
+    "expected": "selected",
+    "acceptance": "The selected ID resolves to an existing candidate with unchanged parameters."
+  },
+  {
+    "id": "free-text-fallback",
+    "kind": "selection",
+    "task": { "en": "Write a short explanation in the sandbox feedback field.", "zh": "在沙盒反馈栏填写简短说明。" },
+    "browser": { "url": "https://sandbox.example/feedback", "pageText": "[1] Feedback text area. [2] Cancel." },
+    "candidates": [
+      { "id": "cancel", "action": { "name": "click_element", "parameters": { "index": 2 } }, "label": "Cancel" }
+    ],
+    "choice": "__fallback__",
+    "confidence": 0.95,
+    "expected": "fallback",
+    "acceptance": "Free-text generation returns to Navigator rather than inventing a candidate."
+  }
+]
