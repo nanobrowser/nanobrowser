@@ -20,6 +20,8 @@ import { newId } from '@src/store/conversations';
 import { Button, Input, Notice, Select } from '@src/ui/components';
 import { SettingsCard } from './SettingsCard';
 import { VoiceCard } from './VoiceCard';
+import { DecisionSettingsCard } from './DecisionSettingsCard';
+import { JevCard } from './JevCard';
 import { listProblem, saveTest, testModel, wholeTestOnAdd } from './model-test';
 import { effortRow } from '@src/side-panel/ModelMenu';
 import { useStorage } from '@src/ui/hooks';
@@ -149,6 +151,8 @@ export function ProvidersSection() {
         ) : null}
       </SettingsCard>
       <VoiceCard />
+      <DecisionSettingsCard />
+      <JevCard />
       <SettingsCard title={t('settings.nav.providers')} className="flex flex-col gap-4">
         <Notice tone="ok">{t('models.keysNote')}</Notice>
         {providers.length ? (

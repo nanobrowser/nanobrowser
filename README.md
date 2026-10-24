@@ -29,7 +29,7 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 ## 🔥 Why Nanobrowser?
 
 - **Free.** No subscription and no hidden costs. Use your own API key or a local model, and pay only for what you use.
-- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose. A daily count of users and usage counts are sent without an ID and never include your pages or sites; see [PRIVACY.md](PRIVACY.md).
+- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model and optional decision provider you choose. A daily count of users and usage counts are sent without an ID and never include your pages or sites; see [PRIVACY.md](PRIVACY.md).
 - **Flexible LLM.** Choose from many cloud providers, or run a model on your own computer, and switch whenever you like. No lock-in.
 - **Open source.** All the code is public, so you can see exactly how it works and change it to fit your needs.
 
@@ -43,6 +43,7 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 - **Save results**: the agent can save its work, like a CSV table or a Markdown report, to your Downloads folder. Chrome asks you the first time.
 - **Shortcuts**: save a prompt you use often and start it by typing `/`. You can give it a start page and a model.
 - **Voice input**: speak instead of typing, with OpenAI's or Gemini's voice model.
+- **Decision models**: let the agent ask Jev or OpenAI Decisions for probabilities, classifications and rubric scores about text it has read.
 - **Memory**: tell the agent what to keep in mind in every chat, like who you are or how you like your answers.
 - **Long tasks**: when a chat gets long, older steps are summed up automatically so the task can go on. Your own messages are always kept in full.
 - **Chat history**: go back to any chat, edit a message and run it again from there, or export the chat as Markdown.
@@ -82,6 +83,16 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 - **Vision models** can also take screenshots of the page and read the images you attach.
 - **Local models** work best for simple, clear tasks. We currently recommend **Qwen3.8 27B**. Give them a context window of 16k tokens or more. Ollama needs `OLLAMA_ORIGINS` to allow the extension, and LM Studio needs CORS on; the provider card shows how when a request is refused.
 - **Voice input** uses OpenAI's or Gemini's voice model with your key from that provider.
+
+### Decision models
+
+In Settings → Providers → Decision models, choose **Jev** or **OpenAI Decisions** and save that service's API key. This is off until you configure it. Jev uses TypeSafe's `jev-latest` through its [System One API](https://docs.typesafe.ai/api/system-one); OpenAI uses `gpt-6-luna` through its [Decisions API](https://developers.openai.com/api/docs/guides/decisions).
+
+The agent's `decide` tool can ask up to 20 questions about supplied text in one call: whether a statement is true, which of a fixed set of choices fits, or how the text scores against a rubric. Results include probabilities and, where available, confidence. For example, ask the agent to classify the reviews on a page by topic or score a shortlist against your criteria. These services assist the chat model; they do not replace it. Their answers cannot approve browser actions or replace checking the page after an action.
+
+Only the text and questions supplied to `decide` go to the selected decision provider. It does not read another page or send screenshots. Decision API keys are stored locally, separately from chat provider keys, and are excluded from exports. Set the decision provider to **Off** to stop further advisory calls.
+
+The separate **Jev** card enables automatic action checks, completion checks, optional model routing and experimental click proposals in the same agent loop. It is off by default, uses its own saved TypeSafe key, and keeps the ordinary browser permission and verification rules. See [Jev configuration and behavior](docs/jev.md). The two cards have independent keys and controls: choosing Jev for `decide` does not enable automatic checks, and turning Decision models off does not disable automatic Jev. Turn off **Enable Jev** and save its settings to disable those checks for subsequent runs; use **Stop** to end an active run.
 
 ## 💡 Try these
 
