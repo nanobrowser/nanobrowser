@@ -277,6 +277,7 @@
   "composer.removeAttachment": "移除 {name}",
   "composer.attachTooLarge": "{name} 大於 25 MB。",
   "composer.attachFailed": "無法附加 {name}。",
+  "composer.attachFull": "一則訊息最多可新增 {count} 個檔案和截圖。請先移除一個再新增。",
   "composer.add": "新增",
   "composer.screenshot": "擷取此分頁畫面",
   "act.thumbnail": "代理程式看到的螢幕截圖",

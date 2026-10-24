@@ -1,7 +1,7 @@
 // Attachments in the panel: files dropped on the composer are written to the blob store, shown as chips, checked again
 // and moved to the conversation on send. A text file reaches the model inside the boundary with its label; a PDF is
 // refused; an image is not sent to a model without vision. The canary, in the file's name and text, never stands
-// outside a boundary or a quote.
+// outside a boundary or a quote. A message takes at most 16 files and screenshots: the 17th dropped is refused with a notice.
 import { getBlob, listBlobs } from '@src/store/conversations';
 import { defineCheck } from './registry';
 import { sleep, waitForLoad } from './helpers';
@@ -13,7 +13,8 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
 defineCheck({
   name: 'panel-attach',
   title: 'Attachments in the panel',
-  description: 'Drops a text file, an image and a PDF on the composer, sends, and checks the request and the canary.',
+  description:
+    'Drops a text file, an image and a PDF on the composer, sends, and checks the request and the canary; then drops 17 files.',
   async run() {
     await seedFixtureModel();
     const tab = await chrome.tabs.create({ url: chrome.runtime.getURL('/sidepanel.html'), active: true });
@@ -53,6 +54,16 @@ defineCheck({
       const scope = (await chrome.storage.session.get('nb.scope'))['nb.scope'] as
         { tabs: Record<string, { conversationId: string }> } | undefined;
       const conversationBlobs = await listBlobs(scope?.tabs[id]?.conversationId ?? '');
+      // Seventeen files at once: sixteen become chips, the last is refused.
+      await panel(id, 'drop-files', {
+        files: Array.from({ length: 17 }, (_, i) => ({
+          name: `many-${String(i + 1).padStart(2, '0')}.txt`,
+          type: 'text/plain',
+          text: 'x',
+        })),
+      });
+      await sleep(500);
+      const many = (await panel(id, 'read')).body as string;
       const report = {
         chipsShown: /notes\.md/.test(chips) && /pixel\.png/.test(chips),
         pdfRefused: /PDF and Office files cannot be read/.test(chips) && !/report\.pdf\s*\d/.test(chips),
@@ -66,6 +77,8 @@ defineCheck({
         chipsOnMessage: /Kq7Canary notes\.md/.test(after.transcript),
         movedToConversation:
           conversationBlobs.length === 2 && (await getBlob(conversationBlobs[0].id))?.conversationId !== '',
+        sixteenKept: /many-16\.txt/.test(many) && !/many-17\.txt/.test(many),
+        fullNotice: /A message can have up to 16 files and screenshots/.test(many),
         leaks: canaryLeaks(userText),
         image: await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }),
       };

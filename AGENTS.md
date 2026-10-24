@@ -93,7 +93,7 @@ The extension:
 
 ## Toolchain
 
-The project is a single pnpm package built by WXT: Node 24 LTS, pnpm 10.34.7, WXT 0.21.4, TypeScript 6.0.3, Vitest 5.0.4, puppeteer-core ^25.13.0, zod 4.6.7, React 18.3.1. A patch or minor update is taken once the checks pass; a major update is evaluated and decided on its own.
+The project is a single pnpm package built by WXT: Node 24 LTS, pnpm 10.34.7, WXT 0.21.4, TypeScript 6.0.3, Vitest 5.0.5, puppeteer-core ^25.16.0, zod 4.6.7, React 18.3.1. A patch or minor update is taken once the checks pass; a major update is evaluated and decided on its own.
 
 pnpm 10.34.7 is pinned in `package.json` (`packageManager`). If the global `pnpm` is a different version, run the scripts through `corepack pnpm <script>`.
 
@@ -109,7 +109,6 @@ pnpm 10.34.7 is pinned in `package.json` (`packageManager`). If the global `pnpm
 - `pnpm install-chrome` - Install the current stable Chrome for Testing (never beta or canary) into `~/.cache/puppeteer`, then ask to remove every other build there so only that one is kept (nothing is removed without a terminal to ask in). Run it after cloning and to update Chrome; `pnpm autorun` starts only the build recorded there as stable (or `CHROME_PATH`)
 - `pnpm clean-chrome` - Ask, then remove the whole `~/.cache/puppeteer` (shared with other projects that use Puppeteer; they download their browser again)
 - `pnpm autorun <check>[,<check>...] [--args <json>] [--scale <n>] [--product-permissions]` - Build an autorun copy of the extension into `.output/autorun`, start the fixture server and Chrome for Testing (headless, plain process, no external CDP, `--use-mock-keychain`), run the named checks in the extension and print the reports. `--scale 2` runs Chrome with that device scale factor, as on a Retina display. The autorun copy requires the Chrome permissions the product only asks for (tab groups, notifications, downloads); `--product-permissions` builds with the product's permission lists into `.output/autorun-product`, for the `without-permissions` check. `pnpm autorun permission-warnings` checks that the product's manifest adds no install warning to the old version's; run it before every release. Results go to `fixtures/.results/` (ignored by git)
-- `pnpm upgrade-test [--old <path>] [--no-build]` - The update from the old Nanobrowser (0.2) by hand: build it (`../nanobrowser` by default) and this version, open Chrome for Testing in a window (`--use-mock-keychain`) with the old build loaded from `.output/upgrade/ext`, then, on Enter, put this version's build in the same folder for a Reload in `chrome://extensions`, which Chrome reports as an update
 
 CI (`.github/workflows/ci.yml`) runs `prettier --check`, `pnpm lint`, `pnpm type-check`, `pnpm test` and `pnpm build` on every push and pull request, on Ubuntu with Node 24 and the pinned pnpm. Its actions are pinned to a commit, and its token can only read. The browser checks (`pnpm autorun`) and the checks that call real models (the evaluations, the model smoke run) are not in CI: they are run by hand, before a merge that touches what they cover and before a release.
 

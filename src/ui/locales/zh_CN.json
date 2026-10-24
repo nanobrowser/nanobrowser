@@ -277,6 +277,7 @@
   "composer.removeAttachment": "移除 {name}",
   "composer.attachTooLarge": "{name} 大于 25 MB。",
   "composer.attachFailed": "无法附加 {name}。",
+  "composer.attachFull": "一条消息最多可添加 {count} 个文件和截图。请先移除一个再添加。",
   "composer.add": "添加",
   "composer.screenshot": "截取此标签页",
   "act.thumbnail": "智能体看到的截图",

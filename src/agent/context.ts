@@ -3,7 +3,9 @@
 // message with several parts, so roles alternate on the wire and a note is still a part of its own.
 import type { ModelMessage } from '@src/llm';
 import type { Entry, EntryOf, MessagePart, StoredMessage } from '@src/store/types';
+import { MAX_FILES } from '@src/store/attachments';
 import { applyCompaction, latestCompaction } from './compaction';
+import { NOTE_LABEL } from './records';
 
 type UserPart = { type: 'text'; text: string } | { type: 'image'; image: string; mediaType: string };
 type AssistantPart =
@@ -19,8 +21,6 @@ type ToolPart = {
 export interface ContextOptions {
   /** Images are removed for models without vision. */
   vision: boolean;
-  /** Only the newest image is kept. */
-  keepImages?: number;
   /** Actions still unverified: the ledger marks their lines. */
   unverified?: ReadonlySet<string>;
 }
@@ -55,11 +55,18 @@ function elide(message: StoredMessage, stub: string): StoredMessage {
   };
 }
 
-function userParts(parts: MessagePart[], images: { keep: Set<MessagePart> }): UserPart[] {
+/** A file the user attached, as sent: an image, or a text file's content (not the note that lists them). */
+const isFile = (p: MessagePart) =>
+  p.type === 'image' || (p.type === 'text' && p.attached?.kind === 'file' && !p.text.startsWith(NOTE_LABEL));
+
+function userParts(parts: MessagePart[], sent: { keep: Set<MessagePart>; drop?: Set<MessagePart> }): UserPart[] {
   const out: UserPart[] = [];
   for (const p of parts) {
-    if (p.type === 'text') out.push({ type: 'text', text: p.text });
-    else if (p.type === 'image' && images.keep.has(p)) {
+    if (p.type === 'text') {
+      // A file left out by the cap keeps a stub; the note that lists the files still has its name and id.
+      const left = p.attached && sent.drop?.has(p);
+      out.push({ type: 'text', text: left ? `[file ${p.attached!.label}: content left out]` : p.text });
+    } else if (p.type === 'image' && sent.keep.has(p)) {
       out.push({ type: 'text', text: p.note });
       out.push({ type: 'image', image: p.data, mediaType: p.mediaType });
     }
@@ -100,15 +107,31 @@ export function groupResults(entries: Array<EntryOf<'message'>>): Array<EntryOf<
   return out;
 }
 
+/** How many of the newest screenshots are sent; older ones are left out. */
+export const KEEP_SCREENSHOTS = 3;
+
 /** Converts a branch to the AI SDK's messages. */
 export function toModelMessages(branch: Entry[], options: ContextOptions): ModelMessage[] {
   let entries = groupResults(messageEntries(branch));
   const compaction = latestCompaction(branch);
   if (compaction) entries = applyCompaction(entries, compaction, options.unverified ?? new Set());
-  // Images to keep: the newest ones, and none for a model without vision.
-  const allImages = entries.flatMap(e => e.message.parts.filter(p => p.type === 'image'));
-  const keepCount = options.vision ? (options.keepImages ?? 1) : 0;
-  const keep = new Set<MessagePart>(keepCount ? allImages.slice(-keepCount) : []);
+  // Files and screenshots to send: every file the user attached and the newest screenshots, at most MAX_FILES of them
+  // together, the newest; no image for a model without vision. A screenshot belongs to a tool result. A text file
+  // already elided is a stub and does not count.
+  const elided = new Set(branch.flatMap(e => (e.type === 'context_edit' ? [e.targetId] : [])));
+  const found = entries.flatMap(e =>
+    e.message.parts
+      .filter(p => isFile(p) && (p.type === 'image' ? options.vision : !elided.has(e.id)))
+      .map(p => ({ p, screenshot: e.message.role === 'tool' })),
+  );
+  const shots = new Set(found.filter(i => i.screenshot).slice(-KEEP_SCREENSHOTS));
+  const keep = new Set<MessagePart>(
+    found
+      .filter(i => !i.screenshot || shots.has(i))
+      .slice(-MAX_FILES)
+      .map(i => i.p),
+  );
+  const drop = new Set(found.filter(i => i.p.type === 'text' && !keep.has(i.p)).map(i => i.p));
 
   const out: ModelMessage[] = [];
   const push = (message: ModelMessage) => {
@@ -130,7 +153,7 @@ export function toModelMessages(branch: Entry[], options: ContextOptions): Model
     const m = e.message;
     if (m.role !== 'tool') flushImages();
     if (m.role === 'user') {
-      const content = userParts(m.parts, { keep });
+      const content = userParts(m.parts, { keep, drop });
       if (content.length) push({ role: 'user', content } as ModelMessage);
     } else if (m.role === 'assistant') {
       const content: AssistantPart[] = [];

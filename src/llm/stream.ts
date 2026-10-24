@@ -36,7 +36,8 @@ export interface ToolCallRequest {
   providerOptions?: Record<string, unknown>;
 }
 
-export type TurnFinish = 'stop' | 'length' | 'tool-calls' | 'content-filter' | 'error' | 'other' | 'aborted';
+export type TurnFinish =
+  'stop' | 'length' | 'tool-calls' | 'content-filter' | 'error' | 'interrupted' | 'other' | 'aborted';
 
 export interface TurnResult {
   text: string;

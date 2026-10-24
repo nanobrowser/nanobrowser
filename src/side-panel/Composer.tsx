@@ -8,6 +8,7 @@ import { Recorder, toWav } from '@src/ui/voice';
 import { t } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 import type { SavedShortcut } from '@src/store/shortcuts';
+import { MAX_FILES } from '@src/store/attachments';
 import { TabPicker } from './TabBar';
 import { NoticeCard } from './NoticeCard';
 import { ModeMenu } from '@src/ui/mode-menu';
@@ -365,6 +366,8 @@ export function Composer({
   latest.current = { transcribe, finish: finishRecording, start: startRecording };
   // Files go with a new message; a queued message carries text only.
   const canAttach = !!onAttach && !active && !noModel;
+  // A full message takes no more files until one is removed; a drop or paste then says so.
+  const full = files.length >= MAX_FILES;
 
   useEffect(() => {
     if (draft) {
@@ -536,7 +539,8 @@ export function Composer({
                   aria-label={t('composer.add')}
                   aria-haspopup="menu"
                   aria-expanded={menu}
-                  disabled={!canAttach}
+                  disabled={!canAttach || full}
+                  title={full ? t('composer.attachFull', { count: MAX_FILES }) : undefined}
                   className="flex size-7 items-center justify-center rounded-lg text-nb-muted transition-colors hover:bg-nb-surface hover:text-nb-fg disabled:opacity-40 disabled:hover:bg-transparent"
                   onClick={() => setMenu(open => !open)}>
                   <PlusIcon size={18} />

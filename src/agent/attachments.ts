@@ -8,7 +8,7 @@ import type { MessagePart, StoredBlob } from '@src/store/types';
 import { note } from './records';
 import type { AgentTool } from './tools';
 
-export { attachmentKind, MAX_CONVERSATION, MAX_FILE } from '@src/store/attachments';
+export { attachmentKind, MAX_CONVERSATION, MAX_FILE, MAX_FILES } from '@src/store/attachments';
 
 /** The fixed line before an attached image. */
 export const ATTACHED_IMAGE_LINE =

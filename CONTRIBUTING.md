@@ -11,7 +11,7 @@ Thank you for your interest in contributing to Nanobrowser! Every contribution h
 
 ## Local development
 
-Use Node.js 24 LTS (v24.11.0 or higher, see `engines` in `package.json`) and pnpm 10. The exact pnpm version is pinned in `package.json`: run `corepack enable` once, or use `corepack pnpm <script>`, and the pinned version is used.
+Use Node.js 24 LTS (v24.22.1 or higher, see `engines` in `package.json`) and pnpm 10. The exact pnpm version is pinned in `package.json`: run `corepack enable` once, or use `corepack pnpm <script>`, and the pinned version is used.
 
 ```bash
 corepack enable # skip if pnpm 10 is already installed

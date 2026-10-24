@@ -478,7 +478,10 @@ export class AgentLoop {
     });
   }
 
-  /** Keeps only the newest image and none for models without vision (done in toModelMessages). */
+  /**
+   * Keeps the user's files and the newest screenshots, 16 at most together, and no images for models without vision
+   * (done in toModelMessages).
+   */
   transformContext(messages: ModelMessage[]): ModelMessage[] {
     return messages;
   }

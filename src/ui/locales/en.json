@@ -277,6 +277,7 @@
   "composer.removeAttachment": "Remove {name}",
   "composer.attachTooLarge": "{name} is larger than 25 MB.",
   "composer.attachFailed": "{name} could not be attached.",
+  "composer.attachFull": "A message can have up to {count} files and screenshots. Remove one to add another.",
   "composer.add": "Add",
   "composer.screenshot": "Screenshot of this tab",
   "act.thumbnail": "The screenshot the agent saw",
