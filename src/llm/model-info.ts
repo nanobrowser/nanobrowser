@@ -40,6 +40,7 @@ export function factsFrom(record: Json): ApiFacts {
   );
   if (contextWindow) facts.contextWindow = contextWindow;
   const maxOutput = positive(
+	record.max_model_len,
     record.max_tokens,
     record.outputTokenLimit,
     record.max_output_tokens,
