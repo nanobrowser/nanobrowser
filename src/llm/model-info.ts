@@ -127,7 +127,9 @@ export async function readModelInfo(
     case 'lmstudio': {
       const root = (openAICompatibleBaseUrl(kind, spec.baseUrl) ?? '').replace(/\/v1$/, '');
       const model = fromList(await get(`${root}/api/v0/models`));
-      record = model ? { type: model.type } : null;
+      // The type decides vision; the maximum context keeps a model outside the catalogue from falling back to the
+      // 16k local default. Detection still lowers it to the loaded window.
+      record = model ? { type: model.type, max_context_length: model.max_context_length } : null;
       break;
     }
     default: {

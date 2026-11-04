@@ -33,4 +33,16 @@ describe('model profiles', () => {
     ).toBe(2048);
     expect(requestOutputLimit(resolveProfile({ kind: 'anthropic', modelName: 'claude-sonnet-5-5' }))).toBe(16_384);
   });
+
+  it("lets a local server's reported maximum raise the default for a model outside the catalogue", () => {
+    const at = new Date().toISOString();
+    const base = {
+      kind: 'lmstudio' as const,
+      modelName: 'recursivesi/flint',
+      fromApi: { contextWindow: 262_144, at },
+    };
+    expect(resolveProfile({ ...base, detectedContext: 262_144 }).contextWindow).toBe(262_144);
+    // The loaded window still lowers it when the server loaded less than the model supports.
+    expect(resolveProfile({ ...base, detectedContext: 8192 }).contextWindow).toBe(8192);
+  });
 });

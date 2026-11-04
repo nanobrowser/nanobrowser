@@ -150,4 +150,20 @@ describe('readModelInfo', () => {
       reasons: true,
     });
   });
+
+  it("reads LM Studio's maximum context window, so a model outside the catalogue is not capped at the local default", async () => {
+    const fetch = answer({
+      data: [
+        { id: 'other-model', type: 'llm', max_context_length: 8192, loaded_context_length: 8192 },
+        { id: 'recursivesi/flint', type: 'llm', max_context_length: 262_144, loaded_context_length: 262_144 },
+      ],
+    });
+    expect(
+      await readModelInfo(
+        { kind: 'lmstudio', modelName: 'recursivesi/flint', baseUrl: 'http://localhost:1234/v1' },
+        fetch,
+      ),
+    ).toEqual({ vision: false, contextWindow: 262_144 });
+    expect((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe('http://localhost:1234/api/v0/models');
+  });
 });
