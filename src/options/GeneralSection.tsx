@@ -1,7 +1,7 @@
 // Settings → General: the default mode and the turn cap, the interface and answer languages, the theme and the page
 // border, and the keyboard shortcut that opens the panel.
 import { useEffect, useState } from 'react';
-import { DEFAULT_SETTINGS, settingsStorage } from '@src/store/settings';
+import { AUTO_CONTINUE_MAX, DEFAULT_SETTINGS, TURN_CAP_MAX, settingsStorage } from '@src/store/settings';
 import type { Theme, UiLanguage } from '@src/store/settings';
 import { AutoNotice } from '@src/ui/auto-notice';
 import { Button, Input, Select, Switch } from '@src/ui/components';
@@ -105,12 +105,37 @@ export function GeneralSection() {
             aria-label={t('agent.turnCap')}
             type="number"
             min={5}
-            max={500}
-            className="w-24"
+            max={TURN_CAP_MAX}
+            className="w-24 disabled:opacity-50"
+            disabled={settings.unlimitedTurns}
             value={settings.turnCap}
             onChange={e => {
               const n = Math.round(Number(e.target.value));
-              if (Number.isFinite(n) && n >= 1) void settingsStorage.set(s => ({ ...s, turnCap: Math.min(500, n) }));
+              if (Number.isFinite(n) && n >= 1)
+                void settingsStorage.set(s => ({ ...s, turnCap: Math.min(TURN_CAP_MAX, n) }));
+            }}
+          />
+        </SettingsRow>
+        <SettingsRow label={t('agent.unlimitedTurns')} description={t('agent.unlimitedTurnsHint')}>
+          <Switch
+            aria-label={t('agent.unlimitedTurns')}
+            checked={settings.unlimitedTurns}
+            onChange={on => void settingsStorage.set(s => ({ ...s, unlimitedTurns: on }))}
+          />
+        </SettingsRow>
+        <SettingsRow label={t('agent.autoContinue')} description={t('agent.autoContinueHint')}>
+          <Input
+            aria-label={t('agent.autoContinue')}
+            type="number"
+            min={0}
+            max={AUTO_CONTINUE_MAX}
+            className="w-24 disabled:opacity-50"
+            disabled={settings.unlimitedTurns}
+            value={settings.autoContinue}
+            onChange={e => {
+              const n = Math.round(Number(e.target.value));
+              if (Number.isFinite(n) && n >= 0)
+                void settingsStorage.set(s => ({ ...s, autoContinue: Math.min(AUTO_CONTINUE_MAX, n) }));
             }}
           />
         </SettingsRow>

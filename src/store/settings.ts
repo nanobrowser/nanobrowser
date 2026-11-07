@@ -16,6 +16,10 @@ export interface Settings {
   /** The effort for new conversations on a model that reasons; the latest choice in a picker. */
   reasoning: ReasoningEffort;
   turnCap: number;
+  /** No turn limit: the run goes on until done, Stop, or a guard. */
+  unlimitedTurns: boolean;
+  /** How many times a run that reached the turn limit continues by itself; 0 asks each time. */
+  autoContinue: number;
   /** Custom instructions; at most CUSTOM_INSTRUCTIONS_MAX characters reach the prompt. */
   customInstructions: string;
   theme: Theme;
@@ -39,11 +43,16 @@ export interface Settings {
   pageBorder: boolean;
 }
 
+export const TURN_CAP_MAX = 10000;
+export const AUTO_CONTINUE_MAX = 100;
+
 export const DEFAULT_SETTINGS: Settings = {
   defaultMode: 'ask',
   defaultModel: null,
   reasoning: 'medium',
   turnCap: 100,
+  unlimitedTurns: false,
+  autoContinue: 0,
   customInstructions: '',
   theme: 'system',
   uiLanguage: 'auto',

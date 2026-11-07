@@ -234,6 +234,15 @@ describe('guards', () => {
     const { end } = await run([read('a'), read('b'), doneCall('partial', 's', 'Half way.')], layer, { turnCap: 2 });
     expect(end).toMatchObject({ status: 'capped', outcome: 'partial', summary: 'Half way.' });
   });
+
+  it('has no turn limit when the cap is Infinity', async () => {
+    const layer = new FakeLayer();
+    const read = (id: string) => ({ toolCalls: [call('read', { ref: id }, id)] });
+    const reads = Array.from({ length: 105 }, (_, i) => read(`r${i}`));
+    const { end } = await run([...reads, doneCall('success', 's', 'All read.')], layer, { turnCap: Infinity });
+    expect(end.status).not.toBe('capped');
+    expect(end.turns).toBeGreaterThan(105);
+  }, 30_000);
 });
 
 describe('the hand-over', () => {

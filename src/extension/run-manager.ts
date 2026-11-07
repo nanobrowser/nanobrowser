@@ -97,6 +97,8 @@ export class RunManager {
   readonly border: PageBorder;
   /** Messages typed while the agent works: one queue per conversation, in the worker. */
   #queues = new Map<string, QueuedMessage[]>();
+  /** How many times each conversation's run continued by itself past the turn limit since the user last started it. */
+  #autoContinues = new Map<string, number>();
   /** The open panels, for what goes to one tab's panel only (a selection). */
   readonly connections = new Set<PanelConnection>();
   /** Selections for a tab whose panel is not open yet, delivered when it subscribes. */
@@ -1242,10 +1244,11 @@ export class RunManager {
   }
 
   /** Continue and Resume: a new run on the same context, opened by a note. */
-  async #continue(conversationId: string, from: RunStatus, note: string): Promise<void> {
+  async #continue(conversationId: string, from: RunStatus, note: string, auto = false): Promise<void> {
     if (this.#runs.has(conversationId)) return;
     const previous = await getRun(conversationId);
     if (previous?.status !== from) return;
+    if (!auto) this.#autoContinues.delete(conversationId);
     await this.#start(conversationId, { note, restore: previous });
   }
 
@@ -1259,6 +1262,8 @@ export class RunManager {
    * awaits, so a choice made while the run starts applies to the next run.
    */
   #launch(conversationId: string, restore?: RunRecord, pair?: LivePair): void {
+    // A run the user starts afresh gets the full count of automatic continues again.
+    if (!restore) this.#autoContinues.delete(conversationId);
     const starting = pair ? Promise.resolve(pair) : livePair(conversationId);
     starting.catch(() => undefined);
     const controller = new AbortController();
@@ -1316,7 +1321,7 @@ export class RunManager {
           host: this.#host(conversationId, session),
           signal: controller.signal,
           emit: event => this.emit(conversationId, event),
-          turnCap: settings.turnCap,
+          turnCap: settings.unlimitedTurns ? Infinity : settings.turnCap,
           thumbnail,
           agentTool: (call, signal) => this.#agentTool(conversationId, call, signal),
           restore: restore ? { debt: restore.debt as DebtEntry[], guards: restore.guards } : undefined,
@@ -1363,6 +1368,7 @@ export class RunManager {
         await this.#closeSession(conversationId);
         // A message queued as the run was ending is sent now, as the next message. Stop gave the queue back already.
         if (!controller.signal.aborted) await this.#sendQueued(conversationId);
+        if (!controller.signal.aborted && record.status === 'capped') await this.#autoContinue(conversationId);
         // `/compact` that reached the run after its last turn is done now.
         if (loopRef?.compactionPending && !this.#runs.has(conversationId)) await this.#compact(conversationId);
       }
@@ -1370,6 +1376,21 @@ export class RunManager {
     this.#runs.set(conversationId, { runId, controller, done });
     void this.#watchdog();
     void done.then(() => this.#watchdog());
+  }
+
+  /** At the turn limit, Continue is pressed for the user as many times as Settings allows. */
+  async #autoContinue(conversationId: string): Promise<void> {
+    if (this.#runs.has(conversationId)) return;
+    const settings = (await settingsStorage.get()) ?? DEFAULT_SETTINGS;
+    const used = this.#autoContinues.get(conversationId) ?? 0;
+    if (used >= settings.autoContinue) return;
+    this.#autoContinues.set(conversationId, used + 1);
+    await this.#continue(
+      conversationId,
+      'capped',
+      `the turn limit was reached and the run continues automatically (${used + 1} of ${settings.autoContinue}); go on with the task.`,
+      true,
+    );
   }
 
   async #sendQueued(conversationId: string): Promise<void> {
