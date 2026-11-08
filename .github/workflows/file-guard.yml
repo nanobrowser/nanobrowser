@@ -28,13 +28,14 @@ jobs:
           set -euo pipefail
           # The paths only the maintainer changes, as one extended regular expression matched against each path:
           # whatever tools run or load on their own. First the common part: dotfiles and dot-folders (CI, tool
-          # settings), vendored dependencies, package manifests and lock files, compiler and tool configs, build files
+          # settings), vendored dependencies, package manifests and lock files (but the root package.json and
+          # pnpm-lock.yaml, where a pull request may change the dependencies), compiler and tool configs, build files
           # and shell scripts, and the instructions to AI tools with their variants (CLAUDE.local.md). Then this
           # repository's own: the extension's permission list, which decides what the install asks the user for; the
           # entrypoints and WXT's local modules, which WXT loads in Node at install and build; the fixture server,
           # its scripts and data, and the baseline of the permission-warnings check; script, pages, styles and
           # WebAssembly copied into the package as is; the type declarations at the root; and the licence.
-          denied='(^|/)\.|(^|/)(node_modules|vendor)/|(^|/)(package|package-lock|npm-shrinkwrap|composer|tsconfig[^/]*|jsconfig)\.json$|(^|/)(package\.yaml|package\.json5|yarn\.lock|pnpm-lock\.yaml|pnpm-workspace\.yaml|bun\.lockb?|composer\.lock)$|(^|/)[^/]*\.config\.[^/]*$|(^|/)(Makefile|Dockerfile|Justfile)$|\.sh$|(^|/)(CLAUDE|AGENTS|GEMINI)[^/]*\.md$|^src/ui/manifest-permissions\.ts$|^(entrypoints|modules|fixtures/upgrade)/|^fixtures/[^/]*$|^public/.+\.(m?js|cjs|x?html?|css|wasm)$|^[^/]*\.d\.ts$|^LICENSE$'
+          denied='(^|/)\.|(^|/)(node_modules|vendor)/|/(package\.json|pnpm-lock\.yaml)$|(^|/)(package-lock|npm-shrinkwrap|composer|tsconfig[^/]*|jsconfig)\.json$|(^|/)(package\.yaml|package\.json5|yarn\.lock|pnpm-workspace\.yaml|bun\.lockb?|composer\.lock)$|(^|/)[^/]*\.config\.[^/]*$|(^|/)(Makefile|Dockerfile|Justfile)$|\.sh$|(^|/)(CLAUDE|AGENTS|GEMINI)[^/]*\.md$|^src/ui/manifest-permissions\.ts$|^(entrypoints|modules|fixtures/upgrade)/|^fixtures/[^/]*$|^public/.+\.(m?js|cjs|x?html?|css|wasm)$|^[^/]*\.d\.ts$|^LICENSE$'
           # A path as a JSON string with plain ASCII characters only: an escaped control character, a quote, or any
           # other character (hidden, bidirectional, non-ASCII) fails it. LC_ALL=C makes the ranges match byte by byte;
           # nocasematch keeps a case-insensitive file system from turning a name off the list into one on it.
@@ -55,7 +56,11 @@ jobs:
               # %q prints any unusual byte as an escape, so nothing hidden reaches the log.
               if ! [[ $p =~ $plain ]]; then printf 'unusual path: %q\n' "$p"; continue; fi
               p=${p:1:-1}
-              if [[ $p =~ $denied ]]; then echo "$p"; fi
+              if [[ $p =~ $denied ]]; then echo "$p"; continue; fi
+              # The root package.json and pnpm-lock.yaml are open only by their exact names; [ compares bytes.
+              if [[ $p =~ ^(package\.json|pnpm-lock\.yaml)$ ]] && [ "$p" != package.json ] && [ "$p" != pnpm-lock.yaml ]; then
+                echo "$p"
+              fi
             done <paths
           )
 

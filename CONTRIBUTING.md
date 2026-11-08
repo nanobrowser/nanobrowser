@@ -15,7 +15,7 @@ These files are left to the maintainers, and a pull request may not change them:
 
 - anywhere in the tree:
   - anything whose name, or the name of a folder it is in, starts with a dot (CI under `.github/`, tool and editor settings), and anything under a `node_modules/` or `vendor/` folder;
-  - package manifests and lock files: `package.json`, `package.yaml`, `package.json5`, `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`, `composer.json`, `composer.lock`;
+  - package manifests and lock files: `package.json` and `pnpm-lock.yaml` in any folder but the root (see Dependencies below), `package.yaml`, `package.json5`, `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-workspace.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`, `composer.json`, `composer.lock`;
   - compiler and tool configs: `tsconfig*.json`, `jsconfig.json`, and any `*.config.*` file;
   - build files and scripts: `Makefile`, `Dockerfile`, `Justfile`, and any shell script (`*.sh`);
   - instructions to AI tools: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, and any other `.md` file whose name starts with one of those words, such as `CLAUDE.local.md`;
@@ -29,7 +29,19 @@ Names are matched in any letter case: `Package.JSON` counts as `package.json`.
 
 File names use only ASCII letters, digits and `.`, `_`, `@`, `+`, `-`, and a pull request may not add or change a symlink or change 300 files or more.
 
-A required check, `file-guard`, fails a pull request that changes one of these files, and it is not merged until those files are dropped from it. Everything else may be changed in a pull request, for example the code, styles and data under `src/`, images and locale files under `public/`, the test pages under `fixtures/pages/`, and `README.md`, `CONTRIBUTING.md`, `PRIVACY.md` and `SECURITY.md`. If your change needs one of the maintainers' files, for example a new or updated dependency, a configuration file, an entrypoint, the fixture server or CI, open an issue that describes it, and a maintainer makes that part.
+A required check, `file-guard`, fails a pull request that changes one of these files, and it is not merged until those files are dropped from it. Everything else may be changed in a pull request, for example the code, styles and data under `src/`, images and locale files under `public/`, the test pages under `fixtures/pages/`, and `README.md`, `CONTRIBUTING.md`, `PRIVACY.md` and `SECURITY.md`. If your change needs one of the maintainers' files, for example a configuration file, an entrypoint, the fixture server or CI, open an issue that describes it, and a maintainer makes that part.
+
+### Dependencies
+
+A pull request may add, update or remove a dependency:
+
+- change only `dependencies` and `devDependencies` in the root `package.json`; its other fields (`scripts`, `pnpm`, `engines`, `packageManager` and the rest) are left to the maintainers;
+- use a version from the npm registry, written `1.2.3` or `^1.2.3` (no Git, URL, `file:`, `link:` or `npm:` alias);
+- commit the `pnpm-lock.yaml` that `pnpm install` writes, with its settings and overrides as they are;
+- take versions published at least 32 hours ago (`minimum-release-age` in `.npmrc`);
+- for a new runtime dependency, add it with its licence to the list in Settings → About (`src/options/licences.ts`); a unit test checks it.
+
+Say in the pull request why the dependency is needed. The maintainers decide whether a new one is taken, and a version with a known high or critical advisory is not.
 
 ## Local development
 
