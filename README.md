@@ -6,7 +6,7 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nanobrowser)
 [![Twitter](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/nanobrowser_ai)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/NN3ABHggMK)
+[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/Be9BQ6KPdm)
 [![DeepWiki][deepwiki-badge]](https://deepwiki.com/nanobrowser/nanobrowser)
 [![Sponsor](https://img.shields.io/badge/Sponsor-ff69b4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/alexchenzl)
 
@@ -158,7 +158,7 @@ If you find a security vulnerability, please **do not** disclose it in public is
 
 ## 💬 Community
 
-- [Discord](https://discord.gg/NN3ABHggMK): chat with the team and the community
+- [Discord](https://discord.gg/Be9BQ6KPdm): chat with the team and the community
 - [X](https://x.com/nanobrowser_ai): updates and announcements
 - [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions): ideas and questions
 
