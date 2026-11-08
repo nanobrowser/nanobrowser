@@ -1,5 +1,6 @@
-# Checks every push and pull request: formatting, lint, types, unit tests and a build.
-# The browser checks (pnpm autorun) and the checks that call real models are run by hand before a release.
+# Checks every push and pull request: formatting, lint, types, unit tests and a build. On a pull request from a fork it
+# runs once a maintainer approves the run. The browser checks (pnpm autorun) and the checks that call real models are
+# run by hand, before a merge that touches what they cover and before a release.
 name: CI
 
 on:

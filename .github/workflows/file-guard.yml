@@ -1,0 +1,71 @@
+# Fails a pull request that changes a path only the maintainer changes, or a path with unusual characters.
+# It runs from the default branch (pull_request_target), so a pull request cannot change it, and it never checks out
+# or runs the pull request's code: it reads the change from the event's base commit to its head commit through the
+# API, and sets the commit status file-guard on that head commit, which the ruleset on the default branch requires.
+name: File guard
+
+on:
+  pull_request_target:
+    branches: [master]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Check the changed paths
+        run: |
+          set -euo pipefail
+          # The paths only the maintainer changes, as one extended regular expression matched against each path:
+          # whatever tools run or load on their own. First the common part: dotfiles and dot-folders (CI, tool
+          # settings), vendored dependencies, package manifests and lock files, compiler and tool configs, build files
+          # and shell scripts, and the instructions to AI tools with their variants (CLAUDE.local.md). Then this
+          # repository's own: the extension's permission list, which decides what the install asks the user for; the
+          # entrypoints and WXT's local modules, which WXT loads in Node at install and build; the fixture server,
+          # its scripts and data, and the baseline of the permission-warnings check; script, pages, styles and
+          # WebAssembly copied into the package as is; the type declarations at the root; and the licence.
+          denied='(^|/)\.|(^|/)(node_modules|vendor)/|(^|/)(package|package-lock|npm-shrinkwrap|composer|tsconfig[^/]*|jsconfig)\.json$|(^|/)(package\.yaml|package\.json5|yarn\.lock|pnpm-lock\.yaml|pnpm-workspace\.yaml|bun\.lockb?|composer\.lock)$|(^|/)[^/]*\.config\.[^/]*$|(^|/)(Makefile|Dockerfile|Justfile)$|\.sh$|(^|/)(CLAUDE|AGENTS|GEMINI)[^/]*\.md$|^src/ui/manifest-permissions\.ts$|^(entrypoints|modules|fixtures/upgrade)/|^fixtures/[^/]*$|^public/.+\.(m?js|cjs|x?html?|css|wasm)$|^[^/]*\.d\.ts$|^LICENSE$'
+          # A path as a JSON string with plain ASCII characters only: an escaped control character, a quote, or any
+          # other character (hidden, bidirectional, non-ASCII) fails it. LC_ALL=C makes the ranges match byte by byte;
+          # nocasematch keeps a case-insensitive file system from turning a name off the list into one on it.
+          export LC_ALL=C
+          shopt -s nocasematch
+          plain='^"[A-Za-z0-9._@+-][A-Za-z0-9._@+/-]*"$'
+
+          # The change between the two commits of this event, so a later push cannot change what was checked.
+          gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" >compare.json
+          count=$(jq '.files | length' compare.json)
+          # Every changed path, and the old path of a renamed file, one JSON string per line.
+          jq -r '.files[] | (.filename, (.previous_filename // empty)) | @json' compare.json >paths
+
+          problems=$(
+            # The compare endpoint lists at most 300 files, so a change that reaches that may hold more.
+            [ "$count" -lt 300 ] || echo "the change lists $count files, the most the API returns; split it up"
+            while IFS= read -r p; do
+              # %q prints any unusual byte as an escape, so nothing hidden reaches the log.
+              if ! [[ $p =~ $plain ]]; then printf 'unusual path: %q\n' "$p"; continue; fi
+              p=${p:1:-1}
+              if [[ $p =~ $denied ]]; then echo "$p"; fi
+            done <paths
+          )
+
+          set_status() {
+            gh api -X POST "repos/$REPO/statuses/$HEAD_SHA" \
+              -f state="$1" -f context=file-guard -f description="$2" >/dev/null
+          }
+          if [ -n "$problems" ]; then
+            printf 'This pull request changes paths only the maintainer changes:\n%s\n' "$problems"
+            set_status failure 'Changes paths only the maintainer changes; see the job log'
+            exit 1
+          fi
+          set_status success 'Changes no path only the maintainer changes'

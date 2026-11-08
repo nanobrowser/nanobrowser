@@ -150,7 +150,7 @@ Contributions of all kinds are welcome:
 
 - **Share prompts and use cases** on our [Discord server](https://discord.gg/NN3ABHggMK).
 - **Give feedback** on how Nanobrowser works for you, on [Discord](https://discord.gg/NN3ABHggMK) or in [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions).
-- **Contribute code**: read [CONTRIBUTING.md](CONTRIBUTING.md), then open a pull request for a bug fix, a feature or the documentation.
+- **Contribute code**: read [CONTRIBUTING.md](CONTRIBUTING.md), then open a pull request for a bug fix or a feature. [CONTRIBUTING.md](CONTRIBUTING.md#what-a-pull-request-may-not-change) says which files a pull request may not change; ask for a change to one of them in an issue.
 
 ## 🔒 Security
 
