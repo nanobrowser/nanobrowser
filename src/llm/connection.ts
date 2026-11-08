@@ -3,6 +3,8 @@
 import { AwsClient } from 'aws4fetch';
 import {
   CHAT_COMPLETIONS_KINDS,
+  bedrockEndpoint,
+  bedrockProblem,
   bedrockRegion,
   createModel,
   DEFAULT_BASE_URLS,
@@ -154,7 +156,8 @@ type ListEntry = Record<string, unknown>;
 
 /**
  * Whether a listed model is hidden: its vendor marks it deprecated, its entry says the agent cannot use it, or its name
- * is a specialist model's. Each field is read only where a vendor sends it.
+ * is a specialist model's. Each field is read only where a vendor sends it. Bedrock runs a model by its own id only
+ * when it lists ON_DEMAND; the others run through an inference profile or provisioned throughput.
  */
 function hiddenEntry(name: string, m: ListEntry): boolean {
   const deprecated =
@@ -163,7 +166,8 @@ function hiddenEntry(name: string, m: ListEntry): boolean {
   const methods = m.supportedGenerationMethods;
   const unusable =
     (Array.isArray(params) && !params.includes('tools')) ||
-    (Array.isArray(methods) && !methods.includes('generateContent'));
+    (Array.isArray(methods) && !methods.includes('generateContent')) ||
+    (Array.isArray(m.inferenceTypesSupported) && !m.inferenceTypesSupported.includes('ON_DEMAND'));
   return deprecated || unusable || NOT_CHAT.test(name);
 }
 
@@ -225,41 +229,48 @@ export async function listModels(
       break;
     }
     case 'bedrock': {
-      const region = bedrockRegion(spec.baseUrl);
-      const url = `https://bedrock.${region}.amazonaws.com/foundation-models`;
+      const problem = bedrockProblem(spec.baseUrl, spec.apiKey);
+      if (problem) throw new Error(problem);
+      const region = bedrockRegion(spec.baseUrl)!;
+      const url = `${bedrockEndpoint('bedrock', region)}/foundation-models`;
       const creds = parseBedrockKey(spec.apiKey);
       let response: Response;
       try {
         if (creds.apiKey) {
           response = await fetchFn(url, { headers: { authorization: `Bearer ${creds.apiKey}` } });
-        } else if (creds.accessKeyId && creds.secretAccessKey) {
+        } else {
           const aws = new AwsClient({
-            accessKeyId: creds.accessKeyId,
-            secretAccessKey: creds.secretAccessKey,
+            accessKeyId: creds.accessKeyId!,
+            secretAccessKey: creds.secretAccessKey!,
             ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
             service: 'bedrock',
             region,
           });
           response = await fetchFn(await aws.sign(url));
-        } else {
-          throw new Error('Bedrock needs an API key, or an access key id and secret separated by a colon.');
         }
       } catch (error) {
-        if (error instanceof Error && error.message.startsWith('Bedrock needs')) throw error;
         throw Object.assign(new Error(`Could not reach bedrock.${region}.amazonaws.com`), {
           originRefused: isOriginRefused(error),
         });
       }
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: unknown } | null;
-        const reason = typeof body?.message === 'string' ? body.message : response.statusText;
+        const body = (await response.json().catch(() => null)) as { message?: unknown; Message?: unknown } | null;
+        const text = body?.message ?? body?.Message;
+        const reason = typeof text === 'string' ? text : response.statusText;
         throw Object.assign(new Error(`${response.status} ${reason}`.trim()), {
           status: response.status,
-          originRefused: response.status === 403,
+          // An AWS 403 is a refused key or a missing permission, never the browser's origin.
+          originRefused: false,
         });
       }
       const body = (await response.json()) as {
-        modelSummaries?: Array<{ modelId?: string; inputModalities?: string[]; outputModalities?: string[] }>;
+        modelSummaries?: Array<{
+          modelId?: string;
+          inputModalities?: string[];
+          outputModalities?: string[];
+          inferenceTypesSupported?: string[];
+          modelLifecycle?: { status?: string };
+        }>;
       };
       entries = (body.modelSummaries ?? [])
         .filter(model => {
@@ -271,7 +282,17 @@ export async function listModels(
           if (output && !output.includes('TEXT')) return false;
           return true;
         })
-        .map((model): [string, ListEntry] => [String(model.modelId), {}]);
+        .map((model): [string, ListEntry] => {
+          const status = model.modelLifecycle?.status;
+          return [
+            String(model.modelId),
+            {
+              ...(model.inferenceTypesSupported ? { inferenceTypesSupported: model.inferenceTypesSupported } : {}),
+              // ACTIVE or LEGACY.
+              ...(typeof status === 'string' ? { lifecycle: status.toLowerCase() } : {}),
+            },
+          ];
+        });
       break;
     }
     default: {

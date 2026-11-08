@@ -74,7 +74,7 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 
 | Kind | Providers |
 | --- | --- |
-| Cloud | Anthropic, OpenAI, Google Gemini, OpenRouter, xAI Grok, DeepSeek, Mistral, and any OpenAI-compatible endpoint |
+| Cloud | Anthropic, OpenAI, Google Gemini, AWS Bedrock, OpenRouter, xAI Grok, DeepSeek, Mistral, and any OpenAI-compatible endpoint |
 | Local | Ollama and LM Studio, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
 
 - **A model must support tool calling.** Test models in Settings checks each model and marks the ones that cannot be used.

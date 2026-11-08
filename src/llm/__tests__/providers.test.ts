@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { bedrockRegion, createModel, openAICompatibleBaseUrl, parseBedrockKey } from '../providers';
+import { bedrockProblem, bedrockRegion, createModel, openAICompatibleBaseUrl, parseBedrockKey } from '../providers';
 import type { ModelSpec } from '../providers';
 import { streamTurn } from '../stream';
 
@@ -127,7 +127,7 @@ describe('providers', () => {
       apiKey: 'bedrock-key',
       baseUrl: 'eu-west-1',
     });
-    expect(r.url).toContain('bedrock-runtime.eu-west-1.amazonaws.com');
+    expect(new URL(r.url).origin).toBe('https://bedrock-runtime.eu-west-1.amazonaws.com');
     expect(r.headers.get('authorization')).toBe('Bearer bedrock-key');
   });
 
@@ -137,8 +137,48 @@ describe('providers', () => {
       modelName: 'amazon.nova-lite-v1:0',
       apiKey: 'AKIAIOSFODNN7EXAMPLE:wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
     });
-    expect(r.url).toContain('bedrock-runtime.us-east-1.amazonaws.com');
+    expect(new URL(r.url).origin).toBe('https://bedrock-runtime.us-east-1.amazonaws.com');
     expect(r.headers.get('authorization')).toMatch(/^AWS4-HMAC-SHA256 /);
+  });
+
+  it('Bedrock ignores AWS endpoint and key settings in the environment', async () => {
+    vi.stubEnv('AWS_ENDPOINT_URL_BEDROCK_RUNTIME', 'https://elsewhere.example');
+    vi.stubEnv('AWS_ENDPOINT_URL', 'https://elsewhere.example');
+    vi.stubEnv('AWS_BEARER_TOKEN_BEDROCK', 'environment-token');
+    try {
+      const signed = await capture({
+        kind: 'bedrock',
+        modelName: 'amazon.nova-lite-v1:0',
+        apiKey: 'AKIAIOSFODNN7EXAMPLE:wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        baseUrl: 'eu-west-1',
+      });
+      expect(new URL(signed.url).origin).toBe('https://bedrock-runtime.eu-west-1.amazonaws.com');
+      expect(signed.headers.get('authorization')).toMatch(/^AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE\//);
+      const bearer = await capture({ kind: 'bedrock', modelName: 'amazon.nova-lite-v1:0', apiKey: 'bedrock-key' });
+      expect(new URL(bearer.url).origin).toBe('https://bedrock-runtime.us-east-1.amazonaws.com');
+      expect(bearer.headers.get('authorization')).toBe('Bearer bedrock-key');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('Bedrock: a region that is not one, or a key with a part missing, fails before any request', async () => {
+    for (const spec of [
+      { baseUrl: 'evil.example#', apiKey: 'bedrock-key' },
+      { baseUrl: 'eu-west-1', apiKey: ':secret' },
+      { baseUrl: 'eu-west-1', apiKey: '' },
+    ]) {
+      const { fetch, requests } = captureFetch();
+      const result = await streamTurn({
+        chat: createModel({ kind: 'bedrock', modelName: 'amazon.nova-lite-v1:0', ...spec }, { fetch }),
+        system: 'You are a test.',
+        messages: [{ role: 'user', content: 'hi' }],
+        tools,
+        retry: { attempts: 1, baseMs: 0, maxMs: 0 },
+      });
+      expect(requests).toEqual([]);
+      expect(result.error?.message).toMatch(/^(The Bedrock region|Bedrock needs)/);
+    }
   });
 
   it('OpenRouter sends its headers', async () => {
@@ -159,6 +199,25 @@ describe('helpers', () => {
     expect(bedrockRegion()).toBe('us-east-1');
     expect(bedrockRegion('eu-central-1')).toBe('eu-central-1');
     expect(bedrockRegion('https://bedrock-runtime.ap-southeast-2.amazonaws.com')).toBe('ap-southeast-2');
+    expect(bedrockRegion(' US-GOV-WEST-1 ')).toBe('us-gov-west-1');
+    // Only a region reaches the host name: anything else would send the key to another host.
+    for (const text of ['evil.example#', 'us-east-1.evil.example', 'us-east-1#', 'https://us-east-1', 'eu-west-1/x']) {
+      expect(bedrockRegion(text)).toBeUndefined();
+    }
+    expect(bedrockRegion('https://bedrock-runtime.eu-west-1.amazonaws.com.evil.example')).toBeUndefined();
+    // Regions whose endpoints are not under amazonaws.com.
+    for (const text of ['cn-north-1', 'us-iso-east-1', 'us-isob-east-1', 'eu-isoe-west-1', 'eusc-de-east-1']) {
+      expect(bedrockRegion(text)).toBeUndefined();
+    }
+    expect(bedrockProblem('eu-west-1', 'AKIAEXAMPLE:secret')).toBeUndefined();
+    expect(bedrockProblem('eu-west-1', 'AKIAEXAMPLE:')).toMatch(/^Bedrock needs/);
+    expect(bedrockProblem('eu west 1', 'bedrock-key')).toMatch(/^The Bedrock region/);
+    expect(parseBedrockKey('ASIAEXAMPLE:secret:')).toEqual({ accessKeyId: 'ASIAEXAMPLE', secretAccessKey: 'secret' });
+    expect(parseBedrockKey(' ASIAEXAMPLE : secret : session ')).toEqual({
+      accessKeyId: 'ASIAEXAMPLE',
+      secretAccessKey: 'secret',
+      sessionToken: 'session',
+    });
     expect(parseBedrockKey('bedrock-api-key')).toEqual({ apiKey: 'bedrock-api-key' });
     expect(parseBedrockKey('AKIAEXAMPLE:secret')).toEqual({ accessKeyId: 'AKIAEXAMPLE', secretAccessKey: 'secret' });
     expect(parseBedrockKey('ASIAEXAMPLE:secret:session')).toEqual({

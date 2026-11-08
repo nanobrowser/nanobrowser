@@ -52,8 +52,9 @@ const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [
 ];
 
 /**
- * The Add a provider list: the vendors' own APIs (OpenAI, Anthropic, then Google Gemini), with the presets among them
- * as providers of their own, then OpenRouter, the local servers and any other OpenAI-compatible endpoint.
+ * The Add a provider list: the vendors' own APIs (OpenAI, Anthropic, Google Gemini, then AWS Bedrock), with the
+ * presets among them as providers of their own, then OpenRouter, the local servers and any other OpenAI-compatible
+ * endpoint.
  */
 const VENDORS: ProviderKind[] = ['openai', 'anthropic', 'gemini', 'bedrock'];
 const CHOICES: Array<{ value: string; label: string }> = [
@@ -394,12 +395,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   // The base URL as it was when its field was entered, to test again on leaving it changed.
   const urlAtFocus = useRef<string | null>(null);
 
-  const keyLabel =
-    provider.kind === 'bedrock'
-      ? t('models.bedrockKey')
-      : needsKey(provider)
-        ? t('models.apiKey')
-        : t('models.apiKeyOptional');
+  const keyLabel = needsKey(provider) ? t('models.apiKey') : t('models.apiKeyOptional');
   const problems = provider.models.flatMap(m => {
     const r = results[m.name];
     return r && !(r.ok && r.toolCalling) ? [{ name: m.name, result: r }] : [];
@@ -462,6 +458,9 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
                 void keysStorage.set(({ [provider.id]: _cleared, ...rest }) => rest);
               }}
             />
+            {provider.kind === 'bedrock' ? (
+              <span className="text-sm text-nb-muted">{t('models.bedrockKey')}</span>
+            ) : null}
           </Line>
         ) : null}
         {local || provider.kind === 'bedrock' ? (
