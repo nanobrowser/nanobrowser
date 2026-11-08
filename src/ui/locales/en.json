@@ -51,6 +51,7 @@
   "models.testOk": "Connected. The model called the test tool ({ms} ms).",
   "models.testNoTools": "Connected, but the model did not call the test tool. It is marked \"no tool calling\" and cannot run the agent.",
   "models.fix.lmstudio": "LM Studio refused the request. Turn on \"Enable CORS\" in LM Studio's Developer settings, then try again.",
+  "models.fix.freellmapi": "FreeLLMAPI refused the request. Ensure the FreeLLMAPI service is running on http://127.0.0.1:3001 and that CORS allows requests from Chrome extensions. In the FreeLLMAPI dashboard, go to Settings → Network and add chrome-extension://* to Allowed Origins.",
   "models.fix.generic": "The server refused the request or could not be reached. Check the address, and allow requests from browser extensions (CORS) on the server.",
   "models.fix.ollama": "Ollama refused the request from the extension. Allow extension origins and restart Ollama:",
   "models.fix.ollama.mac": "launchctl setenv OLLAMA_ORIGINS \"chrome-extension://*\"\n(then quit and reopen Ollama)",

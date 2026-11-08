@@ -51,6 +51,7 @@
   "models.testOk": "已連線。模型呼叫了測試工具（{ms} 毫秒）。",
   "models.testNoTools": "已連線，但模型沒有呼叫測試工具。它被標示為「不支援工具呼叫」，無法執行代理程式。",
   "models.fix.lmstudio": "LM Studio 拒絕了請求。請在 LM Studio 的開發人員設定中開啟「Enable CORS」，然後再試一次。",
+  "models.fix.freellmapi": "FreeLLMAPI 拒絕了請求。請確保 FreeLLMAPI 服務運行在 http://127.0.0.1:3001，且 CORS 允許來自瀏覽器擴充功能的請求。在 FreeLLMAPI 儀表板的 Settings → Network 中新增 chrome-extension://* 到允許的來源。",
   "models.fix.generic": "伺服器拒絕了請求或無法連線。請檢查位址，並在伺服器上允許來自瀏覽器擴充功能的請求（CORS）。",
   "models.fix.ollama": "Ollama 拒絕了來自擴充功能的請求。請允許擴充功能來源並重新啟動 Ollama：",
   "models.fix.ollama.mac": "launchctl setenv OLLAMA_ORIGINS \"chrome-extension://*\"\n（然後結束並重新開啟 Ollama）",

@@ -22,8 +22,11 @@ export function listProblem(error: unknown, local: boolean): { message: string; 
   return { originRefused: !!e.originRefused && local, message: e.status === 401 ? t('models.keyRefused') : e.message };
 }
 
-/** Adding a model runs the whole test on a cloud endpoint, and reads only the API on a local one. */
-export const wholeTestOnAdd = (provider: ProviderConfig) => isCloudEndpoint(provider.kind, provider.baseUrl);
+/** Adding a model runs the whole test on a cloud endpoint, and reads only the API on a local one.
+ * FreeLLM (FreeLLMAPI) is a local router but should be fully tested like a cloud endpoint. */
+export const wholeTestOnAdd = (provider: ProviderConfig) => 
+  isCloudEndpoint(provider.kind, provider.baseUrl) || 
+  (provider.kind === 'openai-compatible' && provider.baseUrl?.includes('127.0.0.1:3001'));
 
 export async function testModel(
   provider: ProviderConfig,

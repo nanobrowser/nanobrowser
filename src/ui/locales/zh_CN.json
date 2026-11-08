@@ -51,6 +51,7 @@
   "models.testOk": "已连接。模型调用了测试工具（{ms} 毫秒）。",
   "models.testNoTools": "已连接，但模型没有调用测试工具。它被标记为“不支持工具调用”，无法运行智能体。",
   "models.fix.lmstudio": "LM Studio 拒绝了请求。请在 LM Studio 的开发者设置中打开“Enable CORS”，然后重试。",
+  "models.fix.freellmapi": "FreeLLMAPI 拒绝了请求。请确保 FreeLLMAPI 服务运行在 http://127.0.0.1:3001，且 CORS 允许来自 Chrome 扩展的请求。在 FreeLLMAPI 仪表盘的 Settings → Network 中添加 chrome-extension://* 到允许的来源。",
   "models.fix.generic": "服务器拒绝了请求或无法连接。请检查地址，并在服务器上允许来自浏览器扩展的请求（CORS）。",
   "models.fix.ollama": "Ollama 拒绝了来自扩展的请求。请允许扩展来源并重启 Ollama：",
   "models.fix.ollama.mac": "launchctl setenv OLLAMA_ORIGINS \"chrome-extension://*\"\n（然后退出并重新打开 Ollama）",

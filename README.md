@@ -75,12 +75,13 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 | Kind | Providers |
 | --- | --- |
 | Cloud | Anthropic, OpenAI, Google Gemini, OpenRouter, xAI Grok, DeepSeek, Mistral, and any OpenAI-compatible endpoint |
-| Local | Ollama and LM Studio, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
+| Local | Ollama and LM Studio, FreeLLMAPI, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
 
 - **A model must support tool calling.** Test models in Settings checks each model and marks the ones that cannot be used.
 - **Choose the model and the reasoning effort** in the panel, per conversation. Settings holds the defaults.
 - **Vision models** can also take screenshots of the page and read the images you attach.
 - **Local models** work best for simple, clear tasks. We currently recommend **Qwen3.8 27B**. Give them a context window of 16k tokens or more. Ollama needs `OLLAMA_ORIGINS` to allow the extension, and LM Studio needs CORS on; the provider card shows how when a request is refused.
+- **FreeLLM (FreeLLMAPI)** runs the [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) router locally at `http://127.0.0.1:3001` and routes to free LLM pools (AI Horde, OVH, Kilobyte) and free-tier cloud providers (Groq, Google, OpenRouter) at zero cost. Install the router, get the unified API key from its dashboard, and add FreeLLM as a provider.
 - **Voice input** uses OpenAI's or Gemini's voice model with your key from that provider.
 
 ## 💡 Try these

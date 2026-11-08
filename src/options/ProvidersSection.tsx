@@ -48,6 +48,7 @@ const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [
   { id: 'xai', label: 'xAI Grok', baseUrl: 'https://api.x.ai/v1' },
   { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
   { id: 'mistral', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1' },
+  { id: 'freellmapi', label: 'FreeLLM', baseUrl: 'http://127.0.0.1:3001/v1' },
 ];
 
 /**
@@ -533,7 +534,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
       </div>
       {listError ? (
         listError.originRefused ? (
-          <OriginFix kind={provider.kind} />
+          <OriginFix kind={provider.kind} baseUrl={provider.baseUrl} />
         ) : (
           <Notice tone="error">{listError.message}</Notice>
         )
@@ -544,7 +545,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
             <span className="font-mono">{model}</span>: {t('models.testNoTools')}
           </Notice>
         ) : result.originRefused ? (
-          <OriginFix key={model} kind={provider.kind} />
+          <OriginFix key={model} kind={provider.kind} baseUrl={provider.baseUrl} />
         ) : (
           <Notice key={model} tone="error">
             <span className="font-mono">{model}</span>: {result.error}
@@ -812,8 +813,11 @@ export function ListedCount({
   );
 }
 
-export function OriginFix({ kind }: { kind: ProviderKind }) {
+export function OriginFix({ kind, baseUrl }: { kind: ProviderKind; baseUrl?: string }) {
   if (kind === 'lmstudio') return <Notice tone="warn">{t('models.fix.lmstudio')}</Notice>;
+  if (baseUrl && (baseUrl.includes('127.0.0.1:3001') || baseUrl.includes('freellmapi'))) {
+    return <Notice tone="warn">{t('models.fix.freellmapi')}</Notice>;
+  }
   if (kind !== 'ollama') return <Notice tone="warn">{t('models.fix.generic')}</Notice>;
   const key: MessageKey = `models.fix.ollama.${platform()}`;
   return (
