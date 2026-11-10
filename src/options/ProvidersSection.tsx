@@ -1,7 +1,7 @@
 // Settings → Providers: the default model and its reasoning effort, then voice input, whose voice model comes from an
 // OpenAI or Gemini provider, then the list of providers with their keys, base URLs and models. Test models calls
 // src/llm from this page; settings are written through chrome.storage, with no worker command.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { listModels } from '@src/llm';
 import type { ConnectionResult, ModelList, ProviderKind } from '@src/llm';
@@ -15,7 +15,7 @@ import {
   settingsStorage,
   withBaseUrl,
 } from '@src/store/settings';
-import type { ModelEntry, ProviderConfig } from '@src/store/settings';
+import type { ModelEntry, ProviderConfig, Settings } from '@src/store/settings';
 import { newId } from '@src/store/conversations';
 import { Button, Input, Notice, Select } from '@src/ui/components';
 import { SettingsCard } from './SettingsCard';
@@ -49,7 +49,10 @@ const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [
   { id: 'xai', label: 'xAI Grok', baseUrl: 'https://api.x.ai/v1' },
   { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
   { id: 'mistral', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1' },
+  { id: 'zai', label: 'Z.ai', baseUrl: 'https://api.z.ai/api/paas/v4' },
 ];
+
+export { PRESETS };
 
 /**
  * The Add a provider list: the vendors' own APIs (OpenAI, Anthropic, Google Gemini, then AWS Bedrock), with the
@@ -97,18 +100,6 @@ export function ProvidersSection() {
     await providersStorage.set(list => [...list, provider]);
   };
 
-  const choices = providers.flatMap(p =>
-    p.models
-      .filter(m => !m.noToolCalling)
-      .map(m => ({ value: `${p.id}\u0000${m.name}`, label: `${p.name} · ${m.name}` })),
-  );
-  const current = settings.defaultModel
-    ? `${settings.defaultModel.providerId}\u0000${settings.defaultModel.model}`
-    : '';
-  // The effort for new conversations, the one place it is set outside the composer, offered as the picker's row is for
-  // this model: none for a model that does not reason, Low to High for one that cannot stop.
-  const effort = current ? effortRow(capabilityOf(providers, settings.defaultModel), settings.reasoning) : null;
-
   return (
     <section className="flex flex-col gap-6">
       <h2 className="sr-only">{t('settings.nav.providers')}</h2>
@@ -116,39 +107,7 @@ export function ProvidersSection() {
         title={t('models.defaultModel')}
         description={t('models.defaultModelHint')}
         className="flex flex-wrap items-center gap-x-8 gap-y-3">
-        <label className="flex min-w-0 max-w-full items-center gap-3">
-          <span className="text-nb-muted">{t('models.model')}</span>
-          <Select
-            aria-label={t('models.defaultModel')}
-            className="min-w-0 sm:max-w-xs"
-            value={current}
-            onChange={e => {
-              const [providerId, model] = e.target.value.split('\u0000');
-              void settingsStorage.set(s => ({ ...s, defaultModel: providerId ? { providerId, model } : null }));
-            }}>
-            <option value="">{t('models.none')}</option>
-            {choices.map(c => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </Select>
-        </label>
-        {effort ? (
-          <label className="flex items-center gap-3">
-            <span className="text-nb-muted">{t('agent.reasoning')}</span>
-            <Select
-              aria-label={t('agent.reasoning')}
-              value={effort.shown}
-              onChange={e => void settingsStorage.set(s => ({ ...s, reasoning: e.target.value as ReasoningEffort }))}>
-              {effort.pills.map(value => (
-                <option key={value} value={value}>
-                  {t(`reasoning.${value}`)}
-                </option>
-              ))}
-            </Select>
-          </label>
-        ) : null}
+        <DefaultModelFields providers={providers} settings={settings} />
       </SettingsCard>
       <VoiceCard />
       <SettingsCard title={t('settings.nav.providers')} className="flex flex-col gap-4">
@@ -166,11 +125,148 @@ export function ProvidersSection() {
   );
 }
 
+/** Whether a kind lists its models at a base URL the user typed, where a missing address cannot be asked. */
+function isLooseKind(kind: ProviderKind): boolean {
+  return LOCAL_KINDS.has(kind) || kind === 'openai-compatible';
+}
+
+/**
+ * The default model's fields: the provider first, then its model. Choosing a provider lists that provider's models
+ * from its API (with its saved key); choosing a model saves it on the provider's card when it is new and makes it the
+ * default, so the choice is kept even before the model has been tested. The reasoning effort follows the model, as
+ * the composer's picker does.
+ */
+function DefaultModelFields({ providers, settings }: { providers: ProviderConfig[]; settings: Settings }) {
+  const keys = useStorage(keysStorage, EMPTY_KEYS);
+  // The provider the user picked; until then, the default model's provider, else the first.
+  const [pickedId, setPickedId] = useState('');
+  const provider =
+    providers.find(p => p.id === pickedId) ??
+    providers.find(p => p.id === settings.defaultModel?.providerId) ??
+    providers[0] ??
+    null;
+
+  const [listed, setListed] = useState<ModelList | null>(null);
+  const [listing, setListing] = useState(false);
+  const [listError, setListError] = useState<{ message: string; originRefused: boolean } | null>(null);
+  const asked = useRef(0);
+
+  // The listing's inputs, as values: the effect runs again when any of them changes.
+  const kind = provider?.kind;
+  const baseUrl = provider?.baseUrl ?? '';
+  const apiKey = provider ? (keys[provider.id] ?? '') : '';
+  const spec = useMemo(() => (kind ? { kind, apiKey, baseUrl } : null), [kind, apiKey, baseUrl]);
+
+  useEffect(() => {
+    // An OpenAI-compatible endpoint lists only once it has an address.
+    if (!spec || (spec.kind === 'openai-compatible' && !spec.baseUrl)) return;
+    const id = ++asked.current;
+    setListing(true);
+    setListError(null);
+    (async () => {
+      try {
+        const list = await listModels(spec);
+        if (asked.current !== id) return;
+        setListed(list);
+      } catch (error) {
+        if (asked.current !== id) return;
+        setListed(null);
+        setListError(listProblem(error, isLooseKind(spec.kind)));
+      } finally {
+        if (asked.current === id) setListing(false);
+      }
+    })();
+  }, [spec]);
+
+  const chooseModel = async (model: string) => {
+    if (!provider) return;
+    if (!model) {
+      await settingsStorage.set(s => ({ ...s, defaultModel: null }));
+      return;
+    }
+    if (!provider.models.some(m => m.name === model)) {
+      await providersStorage.set(list =>
+        list.map(p => (p.id === provider.id ? { ...p, models: [...p.models, { name: model }] } : p)),
+      );
+    }
+    await settingsStorage.set(s => ({ ...s, defaultModel: { providerId: provider.id, model } }));
+  };
+
+  // The saved default, when it belongs to the provider shown.
+  const current = provider && settings.defaultModel?.providerId === provider.id ? settings.defaultModel.model : '';
+  // The provider's own models first (they carry what the tests learnt), then the API's list without doubles; the
+  // hidden ones only when the list has no others, so the select never looks empty of what the server really offers.
+  const options = Array.from(
+    new Set([
+      ...(provider?.models.map(m => m.name) ?? []),
+      ...(listed ? (listed.models.length ? listed.models : [...listed.models, ...listed.hidden]) : []),
+    ]),
+  );
+  // The effort for new conversations, the one place it is set outside the composer, offered as the picker's row is for
+  // this model: none for a model that does not reason, Low to High for one that cannot stop.
+  const effort = settings.defaultModel
+    ? effortRow(capabilityOf(providers, settings.defaultModel), settings.reasoning)
+    : null;
+
+  return (
+    <>
+      <label className="flex min-w-0 max-w-full items-center gap-3">
+        <span className="text-nb-muted">{t('models.provider')}</span>
+        <Select
+          aria-label={t('models.provider')}
+          className="min-w-0 sm:max-w-xs"
+          value={provider?.id ?? ''}
+          onChange={e => setPickedId(e.target.value)}>
+          {!providers.length ? <option value="">{t('models.none')}</option> : null}
+          {providers.map(p => (
+            <option key={p.id} value={p.id}>
+              {p.name.trim() || kindInfo(p.kind).label}
+            </option>
+          ))}
+        </Select>
+      </label>
+      <label className="flex min-w-0 max-w-full items-center gap-3">
+        <span className="text-nb-muted">{t('models.model')}</span>
+        <Select
+          aria-label={t('models.defaultModel')}
+          className="min-w-0 sm:max-w-xs"
+          value={current}
+          disabled={!provider}
+          onChange={e => void chooseModel(e.target.value)}>
+          <option value="">{t('models.none')}</option>
+          {options.map(name => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </Select>
+        {listing ? <span className="text-nb-muted">{t('models.listing')}</span> : null}
+      </label>
+      {listError && !listError.originRefused ? <Notice tone="error">{listError.message}</Notice> : null}
+      {listError && listError.originRefused ? <OriginFix kind={provider!.kind} /> : null}
+      {effort ? (
+        <label className="flex items-center gap-3">
+          <span className="text-nb-muted">{t('agent.reasoning')}</span>
+          <Select
+            aria-label={t('agent.reasoning')}
+            value={effort.shown}
+            onChange={e => void settingsStorage.set(s => ({ ...s, reasoning: e.target.value as ReasoningEffort }))}>
+            {effort.pills.map(value => (
+              <option key={value} value={value}>
+                {t(`reasoning.${value}`)}
+              </option>
+            ))}
+          </Select>
+        </label>
+      ) : null}
+    </>
+  );
+}
+
 /**
  * "Add a provider": the menu of kinds and presets, then the button, centred under the providers and set apart from
  * the last one by more space.
- */
-function AddProvider({ onAdd }: { onAdd: (choice: string) => void }) {
+ */ function AddProvider({ onAdd }: { onAdd: (choice: string) => void }) {
   const [choice, setChoice] = useState<string>(CHOICES[0].value);
   return (
     <div className="mt-4 flex items-center gap-8 self-center">

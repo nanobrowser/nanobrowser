@@ -14,7 +14,7 @@ import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 import { applyTheme } from '@src/ui/theme';
-import { KeyInput, KINDS, ListedCount, OriginFix } from './ProvidersSection';
+import { KeyInput, KINDS, ListedCount, OriginFix, PRESETS } from './ProvidersSection';
 import { SettingsCard, SettingsRow } from './SettingsCard';
 import { BrowserFeaturesRow } from './BrowserFeaturesCard';
 import { listProblem, testModel } from './model-test';
@@ -191,15 +191,38 @@ function ModelStep() {
 }
 
 const LOCAL: ProviderKind[] = ['ollama', 'lmstudio'];
-// The cloud providers in the welcome page's order, OpenAI first.
-const CLOUD: ProviderKind[] = ['openai', 'anthropic', 'gemini', 'openrouter'];
+
+/** A cloud choice: a vendor's own API, or a preset endpoint that speaks chat completions, as on the settings page. */
+interface CloudChoice {
+  value: string;
+  label: string;
+  kind: ProviderKind;
+  baseUrl?: string;
+}
+
+/**
+ * The cloud choices, the settings page's list: the vendors' own APIs, then the presets, then OpenRouter. Bedrock is
+ * left out: its region field has no place in the three steps of the welcome page.
+ */
+const CLOUD: CloudChoice[] = [
+  ...(['openai', 'anthropic', 'gemini', 'openrouter'] as ProviderKind[]).map(kind => ({
+    value: kind,
+    label: KINDS.find(k => k.kind === kind)!.label,
+    kind,
+  })),
+  ...PRESETS.map(p => ({ value: p.id, label: p.label, kind: 'openai-compatible' as ProviderKind, baseUrl: p.baseUrl })),
+];
 
 /** Connect to a server or a provider, pick a model, test its tool calling and make it the default. */
 function ModelSetup({ local }: { local: boolean }) {
-  const kinds = (local ? LOCAL : CLOUD).map(kind => KINDS.find(k => k.kind === kind)!);
-  const [kind, setKind] = useState<ProviderKind>(kinds[0].kind);
-  const info = kinds.find(k => k.kind === kind)!;
-  const [baseUrl, setBaseUrl] = useState(info.baseUrl ?? '');
+  const choices: CloudChoice[] = local
+    ? LOCAL.map(kind => ({ value: kind, label: KINDS.find(k => k.kind === kind)!.label, kind }))
+    : CLOUD;
+  const [choice, setChoice] = useState(choices[0].value);
+  const sel = choices.find(c => c.value === choice)!;
+  const kind = sel.kind;
+  // A preset's address is fixed; a local server's is typed.
+  const [baseUrl, setBaseUrl] = useState(sel.baseUrl ?? '');
   const [apiKey, setApiKey] = useState('');
   const [found, setFound] = useState<ModelList | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -208,7 +231,7 @@ function ModelSetup({ local }: { local: boolean }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<{ originRefused: boolean; message: string } | null>(null);
   const [result, setResult] = useState<{ model: string; toolCalling: boolean; window?: number } | null>(null);
-  const base = local ? baseUrl.trim() : undefined;
+  const base = local ? baseUrl.trim() : sel.baseUrl;
 
   const connect = async () => {
     setBusy(true);
@@ -249,7 +272,7 @@ function ModelSetup({ local }: { local: boolean }) {
     const provider: ProviderConfig = existing ?? {
       id: newId(),
       kind,
-      name: info.label,
+      name: sel.label,
       ...(base ? { baseUrl: base } : {}),
       models: [],
     };
@@ -282,18 +305,18 @@ function ModelSetup({ local }: { local: boolean }) {
       <SettingsRow label={serverLabel}>
         <Select
           aria-label={serverLabel}
-          value={kind}
+          value={choice}
           onChange={e => {
-            const next = e.target.value as ProviderKind;
-            setKind(next);
-            setBaseUrl(KINDS.find(k => k.kind === next)?.baseUrl ?? '');
+            const next = choices.find(c => c.value === e.target.value)!;
+            setChoice(next.value);
+            setBaseUrl(next.baseUrl ?? '');
             setFound(null);
             setProblem(null);
             setResult(null);
           }}>
-          {kinds.map(k => (
-            <option key={k.kind} value={k.kind}>
-              {k.label}
+          {choices.map(c => (
+            <option key={c.value} value={c.value}>
+              {c.label}
             </option>
           ))}
         </Select>
