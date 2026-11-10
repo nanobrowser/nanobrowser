@@ -76,8 +76,8 @@ defineCheck({
       await sleep(200);
       if ((await storedName()) !== 'My Claude') failures.push('Cancel changed the stored name');
 
-      // The Add a provider menu: OpenAI, Anthropic and Google Gemini first, and opened above its button when the
-      // button is at the bottom of the window, so the whole menu shows.
+      // The Add a provider menu: OpenAI, Anthropic, Google Gemini and AWS Bedrock first, and opened above its button
+      // when the button is at the bottom of the window, so the whole menu shows.
       await chrome.tabs.setZoom(tab.id!, 1);
       await sleep(300);
       if (!(await options('click', { label: 'Add a provider: OpenAI', scroll: true })).ok)
@@ -87,7 +87,8 @@ defineCheck({
         body: string;
         menu: { top: number; bottom: number; height: number } | null;
       };
-      if (!read.body.includes('OpenAI\nAnthropic\nGoogle Gemini\nxAI Grok')) failures.push('the menu order is wrong');
+      if (!read.body.includes('OpenAI\nAnthropic\nGoogle Gemini\nAWS Bedrock\nxAI Grok'))
+        failures.push('the menu order is wrong');
       if (!read.menu || read.menu.top < 0 || read.menu.bottom > read.menu.height)
         failures.push(`the menu does not fit the window: ${JSON.stringify(read.menu)}`);
       const menuImage = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });

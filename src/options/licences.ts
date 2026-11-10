@@ -1,11 +1,13 @@
 // The open-source packages the extension ships (Settings → About): every runtime dependency of package.json, with its
 // licence. A unit test keeps this list in step with package.json.
 export const LICENCES: Array<{ name: string; licence: string; url: string }> = [
+  { name: '@ai-sdk/amazon-bedrock', licence: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
   { name: '@ai-sdk/anthropic', licence: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
   { name: '@ai-sdk/google', licence: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
   { name: '@ai-sdk/openai', licence: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
   { name: '@radix-ui/react-dialog', licence: 'MIT', url: 'https://github.com/radix-ui/primitives' },
   { name: 'ai', licence: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
+  { name: 'aws4fetch', licence: 'MIT', url: 'https://github.com/mhart/aws4fetch' },
   { name: 'idb', licence: 'ISC', url: 'https://github.com/jakearchibald/idb' },
   { name: 'puppeteer-core', licence: 'Apache-2.0', url: 'https://github.com/puppeteer/puppeteer' },
   { name: 'react', licence: 'MIT', url: 'https://github.com/facebook/react' },

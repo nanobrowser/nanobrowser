@@ -32,6 +32,7 @@ export const KINDS: Array<{ kind: ProviderKind; label: string; needsKey: boolean
   { kind: 'openai', label: 'OpenAI', needsKey: true },
   { kind: 'gemini', label: 'Google Gemini', needsKey: true },
   { kind: 'openrouter', label: 'OpenRouter', needsKey: true },
+  { kind: 'bedrock', label: 'AWS Bedrock', needsKey: true, baseUrl: 'us-east-1' },
   { kind: 'ollama', label: 'Ollama', needsKey: false, baseUrl: 'http://localhost:11434' },
   { kind: 'lmstudio', label: 'LM Studio', needsKey: false, baseUrl: 'http://localhost:1234' },
   { kind: 'openai-compatible', label: 'OpenAI-compatible', needsKey: false, baseUrl: '' },
@@ -51,10 +52,11 @@ const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [
 ];
 
 /**
- * The Add a provider list: the vendors' own APIs (OpenAI, Anthropic, then Google Gemini), with the presets among them
- * as providers of their own, then OpenRouter, the local servers and any other OpenAI-compatible endpoint.
+ * The Add a provider list: the vendors' own APIs (OpenAI, Anthropic, Google Gemini, then AWS Bedrock), with the
+ * presets among them as providers of their own, then OpenRouter, the local servers and any other OpenAI-compatible
+ * endpoint.
  */
-const VENDORS: ProviderKind[] = ['openai', 'anthropic', 'gemini'];
+const VENDORS: ProviderKind[] = ['openai', 'anthropic', 'gemini', 'bedrock'];
 const CHOICES: Array<{ value: string; label: string }> = [
   ...VENDORS.map(kind => ({ value: kind, label: kindInfo(kind).label })),
   ...PRESETS.map(p => ({ value: p.id, label: p.label })),
@@ -456,15 +458,18 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
                 void keysStorage.set(({ [provider.id]: _cleared, ...rest }) => rest);
               }}
             />
+            {provider.kind === 'bedrock' ? (
+              <span className="text-sm text-nb-muted">{t('models.bedrockKey')}</span>
+            ) : null}
           </Line>
         ) : null}
-        {local ? (
-          <Line label={t('models.baseUrl')}>
+        {local || provider.kind === 'bedrock' ? (
+          <Line label={provider.kind === 'bedrock' ? t('models.region') : t('models.baseUrl')}>
             <Input
-              aria-label={t('models.baseUrl')}
+              aria-label={provider.kind === 'bedrock' ? t('models.region') : t('models.baseUrl')}
               className="w-full sm:max-w-sm"
               value={provider.baseUrl ?? ''}
-              placeholder={info.baseUrl || 'http://localhost:8000/v1'}
+              placeholder={provider.kind === 'bedrock' ? 'us-east-1' : info.baseUrl || 'http://localhost:8000/v1'}
               onChange={e => {
                 const baseUrl = e.target.value;
                 void providersStorage.set(list => list.map(p => (p.id === provider.id ? withBaseUrl(p, baseUrl) : p)));

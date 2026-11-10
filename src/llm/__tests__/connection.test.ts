@@ -148,6 +148,89 @@ describe('the probes', () => {
 });
 
 describe('listModels', () => {
+  it('lists Bedrock text models with a bearer key', async () => {
+    const fetch = vi.fn(async (url: string, init: RequestInit) => {
+      expect(url).toBe('https://bedrock.eu-west-1.amazonaws.com/foundation-models');
+      expect((init.headers as Record<string, string>).authorization).toBe('Bearer bedrock-key');
+      return Response.json({
+        modelSummaries: [
+          { modelId: 'amazon.nova-lite-v1:0', inputModalities: ['TEXT'], outputModalities: ['TEXT'] },
+          { modelId: 'amazon.titan-embed-text-v2:0', inputModalities: ['TEXT'], outputModalities: ['EMBEDDING'] },
+        ],
+      });
+    }) as unknown as typeof globalThis.fetch;
+    expect(await listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'eu-west-1' }, fetch)).toEqual({
+      models: ['amazon.nova-lite-v1:0'],
+      hidden: [],
+    });
+  });
+
+  it('hides Bedrock models that do not run on demand by their own id, and legacy ones', async () => {
+    const text = { inputModalities: ['TEXT'], outputModalities: ['TEXT'] };
+    const fetch = vi.fn(async () =>
+      Response.json({
+        modelSummaries: [
+          {
+            modelId: 'amazon.nova-pro-v1:0',
+            ...text,
+            inferenceTypesSupported: ['ON_DEMAND'],
+            modelLifecycle: { status: 'ACTIVE' },
+          },
+          {
+            modelId: 'anthropic.claude-sonnet-4-5-20250929-v1:0',
+            ...text,
+            inferenceTypesSupported: ['INFERENCE_PROFILE'],
+          },
+          { modelId: 'anthropic.claude-3-sonnet-20240229-v1:0:28k', ...text, inferenceTypesSupported: ['PROVISIONED'] },
+          {
+            modelId: 'anthropic.claude-v2:1',
+            ...text,
+            inferenceTypesSupported: ['ON_DEMAND'],
+            modelLifecycle: { status: 'LEGACY' },
+          },
+        ],
+      }),
+    ) as unknown as typeof globalThis.fetch;
+    expect(await listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'eu-west-1' }, fetch)).toEqual({
+      models: ['amazon.nova-pro-v1:0'],
+      hidden: [
+        'anthropic.claude-sonnet-4-5-20250929-v1:0',
+        'anthropic.claude-3-sonnet-20240229-v1:0:28k',
+        'anthropic.claude-v2:1',
+      ],
+    });
+  });
+
+  it('refuses a Bedrock region that is not one without a request', async () => {
+    const fetch = vi.fn() as unknown as typeof globalThis.fetch;
+    await expect(
+      listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'evil.example#' }, fetch),
+    ).rejects.toThrow('The Bedrock region must be an AWS region');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reports a Bedrock 403 with AWS's message, as the key or permission, not the origin", async () => {
+    const fetch = vi.fn(async () =>
+      Response.json({ Message: 'not authorized to perform: bedrock:ListFoundationModels' }, { status: 403 }),
+    ) as unknown as typeof globalThis.fetch;
+    await expect(
+      listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'eu-west-1' }, fetch),
+    ).rejects.toMatchObject({
+      message: '403 not authorized to perform: bedrock:ListFoundationModels',
+      status: 403,
+      originRefused: false,
+    });
+  });
+
+  it('reads the error text AWS sends as message too', async () => {
+    const fetch = vi.fn(async () =>
+      Response.json({ message: 'The security token included in the request is invalid.' }, { status: 403 }),
+    ) as unknown as typeof globalThis.fetch;
+    await expect(listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'eu-west-1' }, fetch)).rejects.toThrow(
+      '403 The security token included in the request is invalid.',
+    );
+  });
+
   it('reads Ollama tags from the server address, with or without /v1', async () => {
     const fetch = vi.fn(async (url: string) => {
       expect(url).toBe('http://localhost:11434/api/tags');

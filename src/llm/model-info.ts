@@ -102,6 +102,7 @@ export async function readModelInfo(
   let record: Json | null = null;
   switch (kind) {
     case 'openai':
+    case 'bedrock':
       return null;
     case 'anthropic':
       record = await get(`${spec.baseUrl || 'https://api.anthropic.com/v1'}/models/${id}`, {
