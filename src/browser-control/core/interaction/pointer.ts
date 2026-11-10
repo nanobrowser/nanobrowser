@@ -9,7 +9,7 @@ import type { CdpPort, FrameRecord } from '../ports';
 import type { Point } from '../geometry';
 import { assertAsShown } from './resolve';
 import type { ResolvedTarget } from './resolve';
-import { afterInput, assertJudged } from './gate';
+import { afterInput, assertGatePermission, assertJudged } from './gate';
 import type { GateResult } from './gate';
 import { preflightNavigation } from './preflight';
 import { sendWithheld } from './withheld';
@@ -133,6 +133,7 @@ async function stillJudged(ctx: ToolContext, target: ResolvedTarget, gate: GateR
     'the click',
   );
   await preflightNavigation(ctx, target.frame, target.objectId, 'activate', target.description);
+  await assertGatePermission(ctx, gate);
 }
 
 /** A check that reads the page, unless a dialog opens first: the page is then blocked and cannot answer. */

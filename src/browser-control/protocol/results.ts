@@ -20,7 +20,7 @@ export interface PageState {
 }
 
 export type Mechanism = 'pointer' | 'keyboard' | 'insert-text' | 'set-value' | 'select-option' | 'file-input';
-export type SensitiveCategory = 'submit' | 'pay' | 'delete' | 'grant' | 'upload' | 'script';
+export type SensitiveCategory = 'submit' | 'pay' | 'delete' | 'grant' | 'upload' | 'script' | 'secret' | 'prompt';
 
 export interface ActionReceipt {
   action: string;

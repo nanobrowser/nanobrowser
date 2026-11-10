@@ -12,11 +12,18 @@ import { dispatchClick } from '../interaction/pointer';
 import type { DialogInfo } from '../interaction/pointer';
 import { KeyGuard, KeyPresser } from '../interaction/key-guard';
 import type { GuardedElement, KeyGuardOptions } from '../interaction/key-guard';
-import { isSensitiveState, listedOption, looksLikeCardNumber, MASK, quotedOption } from '../perception/masking';
+import {
+  isSecretField,
+  isSensitiveState,
+  listedOption,
+  looksLikeCardNumber,
+  MASK,
+  quotedOption,
+} from '../perception/masking';
 import { assertNoModal, recordDialog, withTarget, sensitivity } from './act';
 import { withEvidence } from '../interaction/evidence';
 import { focusedElement, preflightNavigation } from '../interaction/preflight';
-import { afterInput, assertJudged, confirmGate, gateTarget } from '../interaction/gate';
+import { afterInput, assertGatePermission, assertJudged, confirmGate, gateTarget } from '../interaction/gate';
 import type { GateResult } from '../interaction/gate';
 import { dispatchedKey, keyMode, splitChord, typedMode } from '../interaction/keys';
 import type { KeyMode } from '../interaction/keys';
@@ -201,6 +208,18 @@ async function recheck(
     objectId = await probe.resolve(judged.frame, judged.backendNodeId);
     const state = await probe.call<ProbeState>(judged.frame, objectId, 'state');
     const mode = modeOf(state);
+    if (
+      ctx.session.handover &&
+      judged.gate.textInput &&
+      isSecretField(state, judged.name) &&
+      !judged.gate.protectedStep
+    ) {
+      throw new LayerError(
+        'TARGET_CHANGED',
+        'The field became secret after the action was judged. Nothing was dispatched.',
+      );
+    }
+    await assertGatePermission(ctx, judged.gate);
     if (mode === 'none') return;
     const live = await liveName(ctx, judged.frame, objectId, judged.backendNodeId, judged.role);
     await assertJudged(
@@ -219,6 +238,7 @@ async function recheck(
       next,
     );
     await preflightNavigation(ctx, judged.frame, objectId, mode, judged.description);
+    await assertGatePermission(ctx, judged.gate);
   } catch (error) {
     throw afterInput(error, delivered, what);
   } finally {
@@ -239,6 +259,7 @@ async function enterOn(
   const { cdp } = await ctx.attach();
   await cdp.send(target.frame.sessionId, 'DOM.focus', { backendNodeId: target.record.backendNodeId });
   const options: KeyGuardOptions = {
+    beforeSend: () => assertGatePermission(ctx, gate),
     delivered: true,
     progress: arrived => (arrived ? 'Enter reached it.' : notSent),
   };
@@ -278,6 +299,7 @@ async function setText(
   if (args.submit) await preflightNavigation(ctx, target.frame, target.objectId, 'enter', target.description);
   checkCancelled(ctx);
   const options: KeyGuardOptions = {
+    beforeSend: () => assertGatePermission(ctx, gate),
     delivered: true,
     progress: arrived =>
       arrived === 0
@@ -295,6 +317,7 @@ async function setText(
         await probe.call(target.frame, target.objectId, 'selectContents');
         ctx.tab().actionSeq++;
         const dialog = await keys.unit(async () => {
+          await recheck(ctx, judgedOf(target, 'set', gate), () => 'none', true, 'The value was not inserted.');
           if (value === '') {
             await cdp.send(undefined, 'Input.dispatchKeyEvent', {
               type: 'rawKeyDown',
@@ -410,6 +433,7 @@ async function setSelect(
   const hide = sensitive(target, await stateOf(ctx, target));
   let requested: SelectedOption[] = [];
   const { evidence } = await withEvidence(ctx, target, args.expect, {}, async () => {
+    await recheck(ctx, judgedOf(target, 'set', gate), () => 'none', false, 'The option was not selected.');
     const result = await ctx.tab().probe!.call<OptionResult>(target.frame, target.objectId, 'selectOption', values);
     if (!result.ok) {
       // Each requested value is checked on its own: the problem can be several of them joined.
@@ -472,6 +496,8 @@ async function setNative(
   let got = '';
   const { evidence } = await withEvidence(ctx, target, args.expect, { masked: sensitiveRequest(value) }, async () => {
     ctx.tab().actionSeq++;
+    await recheck(ctx, judgedOf(target, 'set', gate), () => 'none', false, 'The value was not set.');
+    if (sensitive(target, before)) rememberSecret(ctx.tab().secrets, value);
     got = await ctx.tab().probe!.call<string>(target.frame, target.objectId, 'setNativeValue', value);
     if (!args.submit) return {};
     return enterOn(ctx, target, gate, 'The value was set; Enter was not sent.');
@@ -816,15 +842,22 @@ export async function type(ctx: ToolContext, args: TypeArgs): Promise<ToolOutcom
       gate = gated.gate;
       judged = gated.focused;
     }
-    const masked = sensitiveRequest(args.text) || (target ? sensitive(target, await stateOf(ctx, target)) : false);
+    const masked =
+      gate.protectedStep?.reason === 'secret' ||
+      sensitiveRequest(args.text) ||
+      (target ? sensitive(target, await stateOf(ctx, target)) : false);
     if (masked) rememberSecret(ctx.tab().secrets, args.text);
     if (target && mode === 'enter')
       await preflightNavigation(ctx, target.frame, target.objectId, 'enter', target.description);
     checkCancelled(ctx);
     const arm = () =>
       target
-        ? KeyGuard.arm(ctx, guardedOf(target), { ...options, delivered: true })
-        : armFocusedGuard(ctx, judged, 'type', options);
+        ? KeyGuard.arm(ctx, guardedOf(target), {
+            ...options,
+            delivered: true,
+            beforeSend: () => assertGatePermission(ctx, gate),
+          })
+        : armFocusedGuard(ctx, judged, 'type', { ...options, beforeSend: () => assertGatePermission(ctx, gate) });
     // What a key does is judged again before each newline or space, and before the submitting Enter.
     const again: Judged | null = target
       ? judgedOf(target, 'type', gate)
@@ -847,7 +880,7 @@ export async function type(ctx: ToolContext, args: TypeArgs): Promise<ToolOutcom
         ctx.tab().actionSeq++;
         for (let i = 0; i < chars.length; i++) {
           const key = dispatchedKey(chars[i]);
-          if (again && (key === 'Enter' || key === 'Space')) {
+          if (again && (gate.textInput || key === 'Enter' || key === 'Space')) {
             await recheck(
               ctx,
               again,
@@ -974,6 +1007,7 @@ export async function press(ctx: ToolContext, args: PressArgs): Promise<ToolOutc
     // The key is guarded to the element the gate judged: a focus handler that moved focus, or a page that moves
     // it during the key, gets nothing.
     const options: KeyGuardOptions = {
+      beforeSend: () => assertGatePermission(ctx, gate),
       delivered: false,
       progress: (arrived, sent) =>
         arrived ? `${args.keys} reached it.` : sent ? `${args.keys} did not reach it.` : `${args.keys} was not sent.`,
@@ -981,7 +1015,10 @@ export async function press(ctx: ToolContext, args: PressArgs): Promise<ToolOutc
     const arm = () =>
       target
         ? KeyGuard.arm(ctx, guardedOf(target), options)
-        : armFocusedGuard(ctx, judged, `press ${args.keys}`, options);
+        : armFocusedGuard(ctx, judged, `press ${args.keys}`, {
+            ...options,
+            beforeSend: () => assertGatePermission(ctx, gate),
+          });
     const again: Judged | null = target
       ? judgedOf(target, `press ${args.keys}`, gate)
       : judged && { ...judged, action: `press ${args.keys}`, gate };

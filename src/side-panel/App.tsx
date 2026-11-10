@@ -86,6 +86,7 @@ export function App() {
   const [state, dispatch] = useReducer(reduce, INITIAL);
   // Mode, model and effort chosen before the first message of a new conversation.
   const [draftMode, setDraftMode] = useState<PermissionMode | null>(null);
+  const [draftSensitiveActions, setDraftSensitiveActions] = useState<boolean | null>(null);
   const [draftPair, setDraftPair] = useState<LivePair | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const shortcuts = useShortcuts();
@@ -200,6 +201,14 @@ export function App() {
 
   const conversation = state.conversation;
   const mode: PermissionMode = conversation?.mode ?? draftMode ?? settings.defaultMode;
+  const allowSensitiveActions = state.conversationId
+    ? conversation?.allowSensitiveActions === true
+    : (draftSensitiveActions ?? settings.defaultAllowSensitiveActions === true);
+  const changeSensitiveActions = (allow: boolean) => {
+    if (state.conversationId)
+      client?.send({ type: 'set-sensitive-actions', conversationId: state.conversationId, allow });
+    else setDraftSensitiveActions(allow);
+  };
   // The conversation's live pair, the draft of a new chat, or one made from the settings. A model that is no longer
   // configured falls back to the default model, then to the first one there is.
   const fallback = pickModel(models, settings.defaultModel);
@@ -280,6 +289,7 @@ export function App() {
     }
     setConfirmNewChat(false);
     setDraftMode(null);
+    setDraftSensitiveActions(null);
     setDraftPair(null);
     setPendingTabs([]);
     if (client) client.send({ type: 'new-chat', tabId: client.tabId });
@@ -328,6 +338,7 @@ export function App() {
         ...quotes.map(q => ({ kind: 'selection' as const, ...q })),
       ],
       mode: extra.mode ?? mode,
+      ...(!state.conversationId ? { allowSensitiveActions } : {}),
       model: chosenModel,
       reasoning,
       ...(extra.startUrl ? { startUrl: extra.startUrl } : {}),
@@ -508,6 +519,8 @@ export function App() {
       <Composer
         active={active}
         mode={mode}
+        allowSensitiveActions={allowSensitiveActions}
+        onSensitiveActions={changeSensitiveActions}
         model={model}
         models={models}
         noModel={providersRead && !models.length}
@@ -550,6 +563,7 @@ export function App() {
                         attachments: [],
                         context: [],
                         mode,
+                        ...(!state.conversationId ? { allowSensitiveActions } : {}),
                         model,
                         reasoning,
                       });

@@ -168,6 +168,8 @@ export interface Conversation {
   /** The current leaf of the active branch. */
   leafId: string | null;
   mode: PermissionMode;
+  /** Missing on older records: protected actions stay with the user. */
+  allowSensitiveActions?: boolean;
   /** The tabs of its group at the last run. */
   tabs: number[];
   /** The last run's status, for History's badge. */

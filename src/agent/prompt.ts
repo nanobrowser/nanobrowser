@@ -1,5 +1,4 @@
-// The system prompt. Short and stable, so the prompt prefix stays cached:
-// the page header is the only part of a request that changes every turn.
+// The system prompt stays stable unless the user changes permission for sensitive actions.
 import { CUSTOM_INSTRUCTIONS_MAX } from '@src/store/types';
 export interface PromptOptions {
   /** Answer in this language; 'auto' follows the user's message. */
@@ -8,6 +7,8 @@ export interface PromptOptions {
   tools?: string[];
   /** The user's custom instructions; at most CUSTOM_INSTRUCTIONS_MAX characters are sent. */
   customInstructions?: string;
+  /** The conversation may execute protected actions under Ask/Auto and site rules. */
+  allowSensitiveActions?: boolean;
 }
 
 /** The contract for untrusted content. */
@@ -58,11 +59,17 @@ const ROLE = `You are Nanobrowser, an agent that works in the user's own Chrome,
 - Finish with done: outcome "success" only when you have seen the result of every action you took; otherwise "partial" or "failed". The summary is your answer to the user. A question that needed no action can be answered in plain text.
 - A reply without a tool call ends the run: never reply only to say what you will do next; make the call.`;
 
-const PERMISSIONS = `## What the user decides
+function permissions(allowSensitiveActions: boolean): string {
+  return `## What the user decides
 
 - Some actions ask the user first (submitting, sending, deleting, uploading), depending on the user's settings. A declined action or a blocked site is the user's answer, not an error to work around: carry on without it, or ask the user.
-- Payments, granting access to an account, typing a password, a card number or a code, and answering a page's prompt dialog are the user's steps. Prepare everything around them; when you reach one, the extension hands it to the user and tells you when they are done. Do not try to do it another way.
+${
+  allowSensitiveActions
+    ? '- The user enabled sensitive actions for this conversation. You may make payments, grant account access, enter passwords, card numbers or codes you already have, and answer page prompt dialogs through the tools. These actions follow Ask/Auto mode and site rules. Use handle_dialog with the intended answer to answer a page prompt. A refusal still applies: do not try another way.'
+    : "- Payments, granting access to an account, typing a password, a card number or a code, and answering a page's prompt dialog are the user's steps. Prepare everything around them; when you reach one, the extension hands it to the user and tells you when they are done. Do not try to do it another way."
+}
 - A CAPTCHA or another "verify you are human" check is the user's to solve: ask them with ask_user, kind "takeover".`;
+}
 
 function toolGuide(tools: string[]): string {
   const has = (t: string) => tools.includes(t);
@@ -89,7 +96,12 @@ function toolGuide(tools: string[]): string {
 
 /** The agent's prompt. */
 export function agentSystemPrompt(options: PromptOptions = {}): string {
-  const sections = [ROLE, CONTRACT, PERMISSIONS, toolGuide(options.tools ?? [])];
+  const sections = [
+    ROLE,
+    CONTRACT,
+    permissions(options.allowSensitiveActions === true),
+    toolGuide(options.tools ?? []),
+  ];
   const custom = options.customInstructions?.trim().slice(0, CUSTOM_INSTRUCTIONS_MAX).trim();
   if (custom) {
     // The user's own words, from Settings → Memory; no tool writes them.

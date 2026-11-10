@@ -10,6 +10,7 @@ import type {
   WriteDecision,
   WriteQuestion,
 } from '@src/browser-control';
+import { decideWrite } from '@src/store/settings';
 import { setResponder } from '../prompts';
 import type { OpenPrompt } from '../prompts';
 import { FIXTURE_CROSS_ORIGIN, FIXTURE_ORIGIN } from '../fixtures-config';
@@ -681,6 +682,171 @@ scenario(
       'navigate succeeds in the same tab, which can then be observed',
       `navigate ${nav.ok ? 'ok' : nav.error?.code}; snapshot ${snap.ok}; url ${url}`,
       nav.ok && snap.ok && url === `${FIXTURE_ORIGIN}/index.html`,
+    );
+  },
+);
+
+// Opted-in protected actions use the same write policy as ordinary writes.
+for (const [mode, rule] of [
+  ['ask', undefined],
+  ['auto', undefined],
+  ['auto', 'ask'],
+  ['ask', 'allow'],
+] as const) {
+  scenario(
+    `G-6.6-sensitive-${mode}-${rule ?? 'default'}`,
+    `Sensitive actions in ${mode} with ${rule ?? 'no site rule'}`,
+    'pay, grant, secret and prompt follow mode and site policy',
+    async ctx => {
+      const cards = scriptedUser('approve');
+      const questions: WriteQuestion[] = [];
+      const asks = decideWrite(mode, rule) === 'ask';
+      const config: SessionConfig = {
+        allowSensitiveActions: () => true,
+        decideWrite: q => {
+          questions.push(q);
+          return { decision: decideWrite(mode, rule), by: rule ? 'site-rule' : 'auto', canRemember: rule !== 'ask' };
+        },
+      };
+      const shop = await agentSession(ctx, PAGE, config);
+      const pay = await shop.call('click', { target: { ref: refOf(await shop.call('snapshot'), /button "Pay now"/) } });
+      const account = await agentSession(ctx, ENRICH, config);
+      const snap = await account.call('snapshot');
+      const grant = await account.call('click', { target: { ref: refOf(snap, /button "Authorize"/) } });
+      const secret = await account.call('set', {
+        target: { ref: refOf(snap, /textbox "Password"/) },
+        value: 'fixture-password',
+      });
+      const secretSet = await evaluate<boolean>(
+        account.tabId,
+        undefined,
+        'document.querySelector("[name=password]").value === "fixture-password"',
+      );
+      await shop.call('click', { target: { ref: refOf(await shop.call('snapshot'), /button "Ask my name"/) } });
+      const answer = await shop.call('handle_dialog', { accept: true, promptText: 'fixture-answer' });
+      const answered = await evaluate<boolean>(shop.tabId, undefined, 'window.answer === "fixture-answer"');
+      const categories = [...new Set(questions.map(q => q.category))].sort();
+      return outcome(
+        'all four protected actions run, using the chosen policy without exposing entered values',
+        `ok ${[pay, grant, secret, answer].map(r => r.ok)}; cards ${cards.length}; categories ${categories}; secret set ${secretSet}; prompt answered ${answered}`,
+        [pay, grant, secret, answer].every(r => r.ok) &&
+          (await hits(shop.tabId)).includes('pay') &&
+          (await hits(account.tabId)).includes('authorize') &&
+          secretSet &&
+          answered &&
+          JSON.stringify(categories) === JSON.stringify(['grant', 'pay', 'prompt', 'secret']) &&
+          cards.length === (asks ? 4 : 0) &&
+          cards.every(c => c.canRemember === (rule !== 'ask')) &&
+          !JSON.stringify([secret, answer, cards]).includes('fixture-password') &&
+          !JSON.stringify([secret, answer, cards]).includes('fixture-answer'),
+      );
+    },
+  );
+}
+
+scenario(
+  'G-6.6-sensitive-input-paths',
+  'Enabled Auto permits checkout, secret input and final submission',
+  'checkout, Enter, set, type, printable key, select and fill_form',
+  async ctx => {
+    const cards = scriptedUser('decline');
+    const config: SessionConfig = {
+      allowSensitiveActions: () => true,
+      decideWrite: policy({ decision: 'run', by: 'auto', canRemember: true }).decideWrite,
+    };
+    const shop = await agentSession(ctx, PAGE, config);
+    const checkout = await shop.call('click', {
+      target: { ref: refOf(await shop.call('snapshot'), /link "Proceed to checkout"/) },
+    });
+    const name = refOf(await shop.call('snapshot'), /textbox "Name on card"/);
+    const enter = await shop.call('press', { target: { ref: name }, keys: 'Enter' });
+    const order = await shop.call('fill_form', {
+      fields: [{ target: { ref: name }, value: 'Fixture Buyer' }],
+      submit: { ref: refOf(await shop.call('snapshot'), /button "Place order"/) },
+    });
+    const account = await agentSession(ctx, ENRICH, config);
+    const snap = await account.call('snapshot');
+    const password = refOf(snap, /textbox "Password"/);
+    const code = refOf(snap, /textbox "One-time code"/);
+    const set = await account.call('set', { target: { ref: password }, value: 'fixture-password' });
+    const typed = await account.call('type', { target: { ref: code }, text: '654321' });
+    await evaluate(account.tabId, undefined, 'document.querySelector("[name=password]").focus()');
+    const press = await account.call('press', { keys: 'z' });
+    const card = await account.call('set', {
+      target: { ref: refOf(snap, /combobox "Saved card"/) },
+      value: 'Visa ending 4242',
+    });
+    const form = await account.call('fill_form', {
+      fields: [
+        { target: { ref: refOf(await account.call('snapshot'), /textbox "Password"/) }, value: 'fixture-replacement' },
+        { target: { ref: code }, value: '123456' },
+      ],
+    });
+    const valuesSet = await evaluate<boolean>(
+      account.tabId,
+      undefined,
+      'document.querySelector("[name=password]").value === "fixture-replacement" && document.querySelector("[name=otp]").value === "123456" && document.querySelector("select").value === "4242424242424242"',
+    );
+    const results = [checkout, enter, order, set, typed, press, card, form];
+    return outcome(
+      'all input paths execute without cards and values stay masked',
+      `ok ${results.map(r => r.ok)}; cards ${cards.length}; values set ${valuesSet}`,
+      results.every(r => r.ok) &&
+        cards.length === 0 &&
+        valuesSet &&
+        (await hits(shop.tabId)).includes('checkout-link') &&
+        (await hits(shop.tabId)).includes('card-submit') &&
+        !JSON.stringify(results).includes('fixture-password') &&
+        !JSON.stringify(results).includes('fixture-replacement') &&
+        !JSON.stringify(results).includes('4242424242424242'),
+    );
+  },
+);
+
+scenario(
+  'G-6.6-revoke-pending',
+  'Disabling sensitive actions invalidates a pending payment approval',
+  'live toggle off before approval prevents dispatch',
+  async ctx => {
+    let allowed = true;
+    const cards = scriptedUser('approve', 0, async () => {
+      allowed = false;
+    });
+    const a = await agentSession(ctx, PAGE, {
+      allowSensitiveActions: () => allowed,
+      decideWrite: policy({ decision: 'ask', canRemember: true }).decideWrite,
+    });
+    const result = await a.call('click', { target: { ref: refOf(await a.call('snapshot'), /button "Pay now"/) } });
+    return outcome(
+      'USER_STEP after approval, with no payment input',
+      `${result.error?.code}; cards ${cards.length}; delivered ${result.error?.delivered}`,
+      result.error?.code === 'USER_STEP' &&
+        result.error.delivered === false &&
+        cards.length === 1 &&
+        !(await hits(a.tabId)).includes('pay'),
+    );
+  },
+);
+
+scenario(
+  'G-6.6-policy-change',
+  'A payment cannot retain Auto permission after policy changes to Ask',
+  'live write policy recheck before input',
+  async ctx => {
+    let calls = 0;
+    const a = await agentSession(ctx, PAGE, {
+      allowSensitiveActions: () => true,
+      decideWrite: () => ({ decision: ++calls === 1 ? 'run' : 'ask', by: 'auto', canRemember: true }),
+    });
+    const result = await a.call('click', { target: { ref: refOf(await a.call('snapshot'), /button "Pay now"/) } });
+    return outcome(
+      'TARGET_CHANGED, no payment dispatched under stale Auto permission',
+      `${result.error?.code}; policy calls ${calls}; delivered ${result.error?.delivered}`,
+      result.error?.code === 'TARGET_CHANGED' &&
+        result.error.delivered === true &&
+        result.error.message.includes('no press was sent') &&
+        calls > 1 &&
+        !(await hits(a.tabId)).includes('pay'),
     );
   },
 );

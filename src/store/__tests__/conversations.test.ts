@@ -29,6 +29,19 @@ afterEach(async () => {
 });
 
 describe('conversations', () => {
+  it('keeps sensitive actions off unless this conversation opts in', async () => {
+    const old = await createConversation({ mode: 'auto' });
+    const enabled = await createConversation({ mode: 'ask', allowSensitiveActions: true });
+    expect(old.allowSensitiveActions).toBe(false);
+    expect((await getConversation(enabled.id))?.allowSensitiveActions).toBe(true);
+    const first = await appendEntry(enabled.id, { type: 'message', message: user('first') });
+    await appendEntry(enabled.id, { type: 'message', message: user('second') });
+    await setLeaf(enabled.id, first.id);
+    expect((await getConversation(enabled.id))?.allowSensitiveActions).toBe(true);
+    await updateConversation(enabled.id, { allowSensitiveActions: false });
+    expect((await getConversation(enabled.id))?.allowSensitiveActions).toBe(false);
+  });
+
   it('appends entries as a tree and reads the active branch', async () => {
     const c = await createConversation({ mode: 'ask' });
     const a = await appendEntry(c.id, { type: 'message', message: user('first') });

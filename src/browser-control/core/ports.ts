@@ -123,7 +123,7 @@ export interface ConfirmRequest {
   id: string;
   tabId: number;
   /** 'action' when the confirmation policy is 'always' and the action is not submit, pay or delete. */
-  category: 'submit' | 'pay' | 'delete' | 'grant' | 'upload' | 'script' | 'action';
+  category: 'submit' | 'pay' | 'delete' | 'grant' | 'upload' | 'script' | 'secret' | 'prompt' | 'action';
   action: string;
   /** For example 'button "Delete" in row "INV-1042 Acme Corp"'. */
   target: string;
@@ -146,7 +146,7 @@ export interface ConfirmRequest {
 
 /** A write the gate classified, put to the host's policy. */
 export interface WriteQuestion {
-  category: 'submit' | 'delete' | 'upload';
+  category: 'submit' | 'delete' | 'upload' | 'pay' | 'grant' | 'secret' | 'prompt';
   site: string;
   tabId: number;
 }

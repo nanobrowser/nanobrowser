@@ -15,6 +15,7 @@ import { watchDialog } from './pointer';
 import { releaseActivates } from './keys';
 import { sendWithheld } from './withheld';
 import { quote } from '../text';
+import { afterInput } from './gate';
 
 /** A guard lasts this long after the last renewal. */
 const LIFETIME_MS = 4_000;
@@ -34,6 +35,8 @@ export interface KeyGuardOptions {
   progress: (arrived: number, sent: number) => string;
   /** Input already reached the page before the first key (the field was clicked to focus it). */
   delivered: boolean;
+  /** Live permission check after guard reads, before the next input. */
+  beforeSend?: () => Promise<void>;
 }
 
 export class KeyGuard {
@@ -118,6 +121,15 @@ export class KeyGuard {
    */
   async unit(send: () => Promise<void>): Promise<DialogInfo | undefined> {
     await this.#check(false);
+    try {
+      await this.options.beforeSend?.();
+    } catch (error) {
+      throw afterInput(
+        error,
+        this.options.delivered || this.#sent > 0,
+        this.options.progress(this.#arrived, this.#sent),
+      );
+    }
     this.#sent++;
     return this.#race(send);
   }

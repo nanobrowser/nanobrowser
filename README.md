@@ -59,9 +59,14 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 | --- | --- | --- |
 | Read pages, click links, scroll, move between tabs | Goes ahead | Goes ahead |
 | Submit, send, delete or upload | Asks you first | Goes ahead |
-| Pay, enter a password or code, grant access | Hands the step to you | Hands the step to you |
+| Pay, enter a password or code, grant access (sensitive actions off) | Hands the step to you | Hands the step to you |
 
 You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in both modes) or **Block** (the agent may not use it), in Settings → Permissions.
+
+**Allow sensitive actions** is off by default. Enable it beside Ask/Auto in a conversation to let the agent make payments, grant account access, enter passwords, card details or codes, and answer page prompts. These actions then follow Ask/Auto and site rules. Auto can perform them without another confirmation. Pages without an identifiable site still require approval.
+
+Settings → Permissions sets the default for new conversations. Existing conversations keep their choice. Turning the conversation setting off prevents subsequent sensitive actions, including actions still awaiting approval. Turning it on does not repeat an action that was handed to you. Secret values remain masked in page results.
+
 
 > [!NOTE]
 > **You are always in charge.**

@@ -155,6 +155,8 @@ export function pickModel(models: ModelChoice[], ...wanted: Array<ModelRef | nul
 export function Composer({
   active,
   mode,
+  allowSensitiveActions = false,
+  onSensitiveActions,
   model,
   models,
   reasoning = 'none',
@@ -183,6 +185,8 @@ export function Composer({
 }: {
   active: boolean;
   mode: PermissionMode;
+  allowSensitiveActions?: boolean;
+  onSensitiveActions?: (allow: boolean) => void;
   model: ModelRef | null;
   models: ModelChoice[];
   /** The conversation's reasoning effort, shown in the model picker. */
@@ -530,7 +534,7 @@ export function Composer({
             }
           }}
         />
-        <div className="flex items-center gap-1.5 px-2 pb-2 max-[279px]:gap-1">
+        <div className="flex flex-wrap items-center gap-1.5 px-2 pb-2 max-[279px]:gap-1">
           {onAttach ? (
             <>
               <div className="relative shrink-0">
@@ -598,6 +602,17 @@ export function Composer({
             onMode={onMode}
             title={t('composer.modeShortcut', { keys: /Mac/i.test(navigator.userAgent) ? '⌘⇧P' : 'Ctrl+Shift+P' })}
           />
+          {onSensitiveActions ? (
+            <button
+              type="button"
+              aria-label={t('perm.sensitiveActions')}
+              aria-pressed={allowSensitiveActions}
+              title={t('perm.sensitiveActionsHint')}
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent ${allowSensitiveActions ? 'border-nb-auto/60 bg-nb-auto/10 text-nb-auto' : 'border-nb-border text-nb-muted'}`}
+              onClick={() => onSensitiveActions(!allowSensitiveActions)}>
+              {t(allowSensitiveActions ? 'composer.sensitiveOn' : 'composer.sensitiveOff')}
+            </button>
+          ) : null}
           <ModelMenu
             models={models}
             model={model}
