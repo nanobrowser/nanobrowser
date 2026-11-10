@@ -14,6 +14,7 @@ import { addFirstShortcuts } from './first-run';
 import { WHATS_NEW_KEY } from '@src/store/whats-new';
 import type { WhatsNewState } from '@src/store/whats-new';
 import { WHATS_NEW, releaseOf } from '@src/ui/whats-new';
+import { upgradeJevSettings } from './jev-upgrade';
 
 // ---- Providers ----
 
@@ -263,9 +264,11 @@ let running: Promise<void> | null = null;
 
 /** Runs the move when the old version's data is there. Safe to call on every worker start, and more than once. */
 export function upgradeFromOldVersion(): Promise<void> {
-  running ??= move().finally(() => {
-    running = null;
-  });
+  running ??= move()
+    .then(() => upgradeJevSettings())
+    .finally(() => {
+      running = null;
+    });
   return running;
 }
 

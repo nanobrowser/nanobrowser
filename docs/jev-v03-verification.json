@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "validatedAt": "2026-10-22",
+  "extensionVersion": "0.3.0",
+  "scope": "local offline validation of the v0.3 migration; no publication or live-provider acceptance",
+  "source": {
+    "validatedSnapshot": "5c4b18cf1c66171399d9db0f073b2edd71888852",
+    "baseMaster": "f1e912d7c9e859eec6638702be920c78a8eff0ea",
+    "originalDevelopBackup": "f31af691f71eaa227a6c01ccd05716e353ad8215",
+    "buildAndTestInputsSha256": "6618f28749767524c1338ca0c382c7cc40629a068a5dccc8c89ece7197d6bc67"
+  },
+  "repository": {
+    "formatting": "pass",
+    "lint": "pass",
+    "typeCheck": "pass",
+    "unitTests": {
+      "passed": 924,
+      "skipped": 4,
+      "failed": 0
+    },
+    "build": "pass"
+  },
+  "offlineFixtures": {
+    "taskRecords": 20,
+    "languages": 2,
+    "controlCases": 40,
+    "corpusIntegrityTests": 1,
+    "engineEvaluations": 80,
+    "mockedFetchCalls": 40,
+    "externalApiCalls": 0,
+    "fixtureGitBlob": "cfdc84716093928bf2b2cabcbfe4f5ba8a242548"
+  },
+  "productionPackage": {
+    "file": "nanobrowser-0.3.0.zip",
+    "sha256": "43c05c225d06fcbf22d608cabb4c6d3123ebf63b84680f35cd4eb0897678eacd",
+    "entries": 33,
+    "allEntryCrcsValid": true,
+    "matchesProductionBuild": true,
+    "mv3": true
+  },
+  "browser": {
+    "chrome": "154.0.8037.57",
+    "buildVariant": "separate autorun build from the validated source; not the installed production ZIP",
+    "transport": "chrome.debugger inside the extension; no remote CDP",
+    "rawReport": "2026-10-22T01-59-56-448Z-jev-settings+jev-loop+panel-run+panel-cards+upgrade+providers-key.json",
+    "rawReportSha256": "fa23af33b966698db16dd2660a273b8b1c24fc6c60dc21723e2c6d40f4781253",
+    "checks": [
+      {
+        "name": "jev-settings",
+        "ok": true,
+        "durationMs": 4065
+      },
+      {
+        "name": "jev-loop",
+        "ok": true,
+        "durationMs": 5434
+      },
+      {
+        "name": "panel-run",
+        "ok": true,
+        "durationMs": 4641
+      },
+      {
+        "name": "panel-cards",
+        "ok": true,
+        "durationMs": 2446
+      },
+      {
+        "name": "upgrade",
+        "ok": true,
+        "durationMs": 1367
+      },
+      {
+        "name": "providers-key",
+        "ok": true,
+        "durationMs": 3809
+      }
+    ],
+    "jevAssertions": {
+      "product": {
+        "missingKeyNoModelRequest": true,
+        "explicitCardReject": true,
+        "targetCloseWithdraws": true,
+        "lateApprovalIgnored": true
+      },
+      "disabledNoApiCalls": true,
+      "batchActionsGated": true,
+      "deniedNoDispatch": true,
+      "completionRefreshBounded": true,
+      "unchangedCompletionCached": true,
+      "incompleteAttempts": 3,
+      "incompleteEvaluations": 1,
+      "selectedUsesBrowserPermissions": true
+    },
+    "screenshots": [
+      {
+        "file": "2026-10-22T01-59-56-448Z-jev-settings+jev-loop+panel-run+panel-cards+upgrade+providers-key-1.png",
+        "sha256": "31d6a70465c6f559cb4c3311f96ab2752bd1e999617720e474f33f67d31fb946"
+      },
+      {
+        "file": "2026-10-22T01-59-56-448Z-jev-settings+jev-loop+panel-run+panel-cards+upgrade+providers-key-2.png",
+        "sha256": "5dce6e6647fd1ede745da32e2e73a01fd2cac0adbbede95540f7e57f80924108"
+      },
+      {
+        "file": "2026-10-22T01-59-56-448Z-jev-settings+jev-loop+panel-run+panel-cards+upgrade+providers-key-3.png",
+        "sha256": "ddfe56d137ae515143c7e9140ca70bebe27ebacb2c6618c8da0f5baf130f7879"
+      },
+      {
+        "file": "2026-10-22T01-59-56-448Z-jev-settings+jev-loop+panel-run+panel-cards+upgrade+providers-key-4.png",
+        "sha256": "8448712b74d3b6fa534374c32f884b3b66ca0a9c6349b298374328a71aadb393"
+      },
+      {
+        "file": "2026-10-22T01-59-56-448Z-jev-settings+jev-loop+panel-run+panel-cards+upgrade+providers-key-6.png",
+        "sha256": "3386e0bcf5405437f73beb34f571dbdfabc3b1050377ed422fe187fea6670660"
+      }
+    ]
+  },
+  "externalProviderCalls": 0,
+  "liveLatencyAndCost": "not measured"
+}

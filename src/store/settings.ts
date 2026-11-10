@@ -1,6 +1,7 @@
 // Settings, provider configurations and API keys in chrome.storage.local. Keys sit under a key of their own: they
 // are never exported and never logged.
 import type { ProviderKind } from '../llm/providers';
+import type { DecisionProvider } from '../llm/decisions';
 import { resolveProfile } from '../llm/profiles';
 import type { LearntFacts } from '../llm/profiles';
 import type { ReasoningEffort, ReasoningSupport } from '../llm/catalogue';
@@ -13,6 +14,8 @@ export type Theme = 'system' | 'light' | 'dark';
 export interface Settings {
   defaultMode: PermissionMode;
   defaultModel: ModelRef | null;
+  /** An optional decision API for bounded questions; null keeps decision calls disabled. */
+  decisionProvider: DecisionProvider | null;
   /** The effort for new conversations on a model that reasons; the latest choice in a picker. */
   reasoning: ReasoningEffort;
   turnCap: number;
@@ -42,6 +45,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   defaultMode: 'ask',
   defaultModel: null,
+  decisionProvider: null,
   reasoning: 'medium',
   turnCap: 100,
   customInstructions: '',

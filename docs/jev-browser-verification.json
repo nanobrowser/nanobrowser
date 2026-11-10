@@ -1,0 +1,685 @@
+{
+  "version": "0.2.3",
+  "extensionPath": "/home/runner/work/nanobrowser/nanobrowser/.git/jev-browser-package/run-iVwVVJ",
+  "archivePath": "/home/runner/work/nanobrowser/nanobrowser/release-artifacts/nanobrowser-jev.zip",
+  "archiveSha256": "09cdde04fd874184dd7afb6f17b4c6a1c0f4edf8c0b5698360131acc8b33e3c4",
+  "browser": "Chrome/154.0.8037.97",
+  "mode": "Actual packaged extension pages, service worker and DOM executor; mocked Jev and LLM transport",
+  "liveJevVerified": false,
+  "startedAt": "2026-10-08T15:45:58.717Z",
+  "tests": [
+    {
+      "name": "extension service worker and settings save/reload",
+      "status": "passed",
+      "elapsedMs": 1738,
+      "extensionId": "gbahoeaajbppmgeceilagmojalmjmfml",
+      "storagePersisted": true
+    },
+    {
+      "name": "Jev disabled preserves Navigator execution",
+      "status": "passed",
+      "elapsedMs": 5590,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 0,
+      "completionEvaluations": 0,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        }
+      ]
+    },
+    {
+      "name": "proceed executes click and verifies completion",
+      "status": "passed",
+      "elapsedMs": 8467,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "reconsider prevents clicks and pauses after bounded retries",
+      "status": "passed",
+      "elapsedMs": 3603,
+      "navigatorCalls": 2,
+      "plannerCalls": 1,
+      "actionEvaluations": 2,
+      "completionEvaluations": 0,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "confirm waits for explicit approval before executing",
+      "status": "passed",
+      "elapsedMs": 11035,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "reject prevents execution and exposes pause controls",
+      "status": "passed",
+      "elapsedMs": 2134,
+      "navigatorCalls": 1,
+      "plannerCalls": 1,
+      "actionEvaluations": 1,
+      "completionEvaluations": 0,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "cancelling pending approval clears it without executing",
+      "status": "passed",
+      "elapsedMs": 1850,
+      "navigatorCalls": 1,
+      "plannerCalls": 1,
+      "actionEvaluations": 1,
+      "completionEvaluations": 0,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "completion gate refreshes once then pauses unverified claim",
+      "status": "passed",
+      "elapsedMs": 2063,
+      "navigatorCalls": 0,
+      "plannerCalls": 1,
+      "actionEvaluations": 0,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "state change expires user approval without a click",
+      "status": "passed",
+      "elapsedMs": 5257,
+      "navigatorCalls": 2,
+      "plannerCalls": 1,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "resume after rejection regenerates an action and clears pause controls",
+      "status": "passed",
+      "elapsedMs": 12265,
+      "navigatorCalls": 2,
+      "plannerCalls": 3,
+      "actionEvaluations": 2,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "routing selects fast execution strategy",
+      "status": "passed",
+      "elapsedMs": 8438,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "jev",
+          "operation": "route",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-fast"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-fast"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "routing selects capable execution strategy",
+      "status": "passed",
+      "elapsedMs": 8468,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "jev",
+          "operation": "route",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-capable"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-capable"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "routing selects planner execution strategy",
+      "status": "passed",
+      "elapsedMs": 8365,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "jev",
+          "operation": "route",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "routing confirmation prevents browser actions until approval",
+      "status": "passed",
+      "elapsedMs": 11541,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 0,
+      "mockedRequests": [
+        {
+          "service": "jev",
+          "operation": "route",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "System-1 chooses bounded action then falls back for completion",
+      "status": "passed",
+      "elapsedMs": 8954,
+      "navigatorCalls": 1,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 2,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "selection",
+          "model": "jev-latest"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "jev",
+          "operation": "selection",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    },
+    {
+      "name": "System-1 fallback preserves generative Navigator path",
+      "status": "passed",
+      "elapsedMs": 8465,
+      "navigatorCalls": 2,
+      "plannerCalls": 2,
+      "actionEvaluations": 1,
+      "completionEvaluations": 2,
+      "selectionEvaluations": 2,
+      "mockedRequests": [
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "selection",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "action",
+          "model": "jev-latest"
+        },
+        {
+          "service": "jev",
+          "operation": "selection",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "navigator_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        },
+        {
+          "service": "llm",
+          "operation": "planner_output",
+          "model": "fixture-model"
+        },
+        {
+          "service": "jev",
+          "operation": "completion,handoff",
+          "model": "jev-latest"
+        }
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-08T15:47:54.684Z"
+}

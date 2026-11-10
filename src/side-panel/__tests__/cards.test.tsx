@@ -15,6 +15,15 @@ const card = (kind: OpenPrompt['kind'], data: Record<string, unknown>): OpenProm
 const render = (p: OpenPrompt) => renderToStaticMarkup(<Cards prompts={[p]} answer={() => undefined} />);
 
 describe('cards', () => {
+  it('Jev approval has explicit action choices and preserves browser permission checks', () => {
+    const html = render(card('jev-confirm', { action: { name: 'click', parameters: { ref: 'e7' } } }));
+    expect(html).toContain('Jev asks for approval');
+    expect(html).toContain('Approve this action');
+    expect(html).toContain('Reject this action');
+    expect(html).toContain('Browser permission checks still apply.');
+    expect(html).toContain('e7');
+    expect(html).not.toContain('Always allow');
+  });
   it('a take-over the agent asks for keeps its own title, even when the agent copies the detected-step title', () => {
     const html = render(
       card('ask-takeover', {
