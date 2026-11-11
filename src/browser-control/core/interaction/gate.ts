@@ -33,6 +33,7 @@ export interface GateInput {
   textInput?: boolean;
   /** A category fixed by the tool rather than classified: `upload` is always a write. */
   category?: SensitiveCategory;
+  reason?: string;
 }
 
 export interface GateResult {
@@ -47,6 +48,9 @@ export interface GateResult {
   basis?: string;
   /** Under a host write policy: how the write was allowed. */
   allowedBy?: 'user' | 'site-rule' | 'auto';
+  /** Protected action and site judged by this gate, retained for the dispatch check. */
+  protectedStep?: UserStepDetails;
+  textInput?: boolean;
 }
 
 /** A classification with what it rests on: the category, its reason (names, amount) and, for a submission, where. */
@@ -131,6 +135,7 @@ export async function assertJudged(
   gate: GateResult,
   next: string,
 ): Promise<void> {
+  await assertGatePermission(ctx, gate);
   if (ctx.session.confirmPolicy === 'never') return;
   const now = await classifyOn(ctx, input);
   if (now.category && now.category !== gate.category) {
@@ -160,6 +165,33 @@ export function afterInput(error: unknown, delivered: boolean, sent: string): un
   });
 }
 
+/** Rechecks protected-action permission after waiting and immediately before dispatch. */
+export async function assertGatePermission(ctx: ToolContext, gate: GateResult): Promise<void> {
+  const step = gate.protectedStep;
+  if (!step) return;
+  const assertEnabled = () => {
+    if (!ctx.session.allowSensitiveActions()) {
+      throw new LayerError(
+        'USER_STEP',
+        `${step.target} is the user's step: sensitive actions were disabled. Nothing was dispatched.`,
+        { details: step },
+      );
+    }
+  };
+  assertEnabled();
+  await ctx.session.checkTabSite(ctx.tab().tabId);
+  const site = siteOf((await ctx.controller.host.tabs.get(ctx.tab().tabId))?.url ?? '');
+  if (site !== step.site)
+    throw new LayerError('TARGET_CHANGED', 'The site changed after the action was judged. Nothing was dispatched.');
+  if (!gate.confirmedByUser && ctx.session.decideWrite && gate.category && gate.category !== 'script') {
+    const decision = await ctx.session.decideWrite({ category: gate.category, site, tabId: ctx.tab().tabId });
+    if (decision.decision !== 'run') {
+      throw new LayerError('TARGET_CHANGED', 'The write policy now requires approval. Nothing was dispatched.');
+    }
+  }
+  assertEnabled();
+}
+
 export async function confirmGate(ctx: ToolContext, input: GateInput): Promise<GateResult> {
   const session = ctx.session;
   const policy = session.confirmPolicy;
@@ -168,47 +200,77 @@ export async function confirmGate(ctx: ToolContext, input: GateInput): Promise<G
   let basis: string | undefined;
   if (input.category) {
     category = input.category;
-    reason = 'an upload sends a file to the site';
+    reason = input.reason ?? (category === 'upload' ? 'an upload sends a file to the site' : `a ${category} action`);
   } else if (input.mode !== 'none') {
     const result = await classifyOn(ctx, { ...input, mode: input.mode });
     category = result.category ?? undefined;
     reason = result.reason;
     basis = result.basis;
   }
-  // Protected steps are the user's, decided before any policy is asked.
+  const tabUrl = (await ctx.controller.host.tabs.get(ctx.tab().tabId))?.url ?? '';
+  const site = siteOf(tabUrl);
+  let protectedStep: UserStepDetails | undefined;
   if (session.handover && input.textInput && input.objectId) {
     const state = await ctx.tab().probe!.call<ProbeState>(input.frame, input.objectId, 'state');
     if (isSecretField(state, input.name)) {
-      const url = (await ctx.controller.host.tabs.get(ctx.tab().tabId))?.url ?? '';
+      protectedStep = { reason: 'secret', target: input.description, site };
+      if (!session.allowSensitiveActions()) {
+        throw new LayerError(
+          'USER_STEP',
+          `${input.description} is a secret field (a password, a card number, a security code or a one-time code). Typing into it is the user's step: nothing was sent.`,
+          { details: protectedStep },
+        );
+      }
+      if (!category) {
+        category = 'secret';
+        reason = 'input into a password, card or code field';
+      }
+    }
+  }
+  if (
+    session.handover &&
+    (category === 'pay' || category === 'grant' || category === 'secret' || category === 'prompt')
+  ) {
+    protectedStep ??= { reason: category, target: input.description, site };
+    if (!session.allowSensitiveActions()) {
+      const kind = category === 'pay' ? 'a payment' : category === 'grant' ? 'an access grant' : `a ${category} action`;
       throw new LayerError(
         'USER_STEP',
-        `${input.description} is a secret field (a password, a card number, a security code or a one-time code). Typing into it is the user's step: nothing was sent.`,
-        { details: { reason: 'secret', target: input.description, site: siteOf(url) } satisfies UserStepDetails },
+        `${input.description} is ${kind} (${reason}). It is the user's step: nothing was dispatched.`,
+        { details: protectedStep },
       );
     }
   }
-  if (session.handover && (category === 'pay' || category === 'grant')) {
-    const payUrl = (await ctx.controller.host.tabs.get(ctx.tab().tabId))?.url ?? '';
-    throw new LayerError(
-      'USER_STEP',
-      `${input.description} is ${category === 'pay' ? 'a payment' : 'an access grant'} (${reason}). It is the user's step: nothing was dispatched.`,
-      { details: { reason: category, target: input.description, site: siteOf(payUrl) } satisfies UserStepDetails },
-    );
-  }
-  const tabUrl = (await ctx.controller.host.tabs.get(ctx.tab().tabId))?.url ?? '';
-  const site = siteOf(tabUrl);
   // A host write policy decides classified writes; otherwise the session's fixed confirmation policy does, as in the
   // test panel.
   let canRemember = category === 'submit';
-  if (session.decideWrite && (category === 'submit' || category === 'delete' || category === 'upload')) {
+  if (session.decideWrite && category && category !== 'script') {
     const decision = await session.decideWrite({ category, site, tabId: ctx.tab().tabId });
     if (decision.decision === 'run') {
-      return { category, confirmedByUser: false, prompted: false, reason, basis, allowedBy: decision.by ?? 'auto' };
+      return {
+        category,
+        confirmedByUser: false,
+        prompted: false,
+        reason,
+        basis,
+        protectedStep,
+        textInput: input.textInput,
+        allowedBy: decision.by ?? 'auto',
+      };
     }
     canRemember = decision.canRemember;
   } else {
     const needed = policy === 'always' || (policy === 'sensitive' && category !== undefined);
-    if (!needed) return { category, confirmedByUser: false, prompted: false, reason, basis };
+    if (!needed)
+      return {
+        category,
+        confirmedByUser: false,
+        prompted: false,
+        reason,
+        basis,
+        protectedStep,
+        textInput: input.textInput,
+      };
   }
 
   let origin = tabUrl;
@@ -332,7 +394,18 @@ export async function confirmGate(ctx: ToolContext, input: GateInput): Promise<G
   if (!session.decideWrite && answer === 'approve-remember' && category === 'submit') {
     session.rememberedSubmitOrigins.add(origin);
   }
-  return { category, confirmedByUser: true, prompted: true, reason, basis, allowedBy: 'user' };
+  const gate: GateResult = {
+    category,
+    confirmedByUser: true,
+    prompted: true,
+    reason,
+    basis,
+    protectedStep,
+    textInput: input.textInput,
+    allowedBy: 'user',
+  };
+  await assertGatePermission(ctx, gate);
+  return gate;
 }
 
 /**

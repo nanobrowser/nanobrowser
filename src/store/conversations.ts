@@ -34,6 +34,7 @@ function current(record: Conversation): Conversation {
 
 export async function createConversation(init: {
   mode: PermissionMode;
+  allowSensitiveActions?: boolean;
   title?: string;
   tabs?: number[];
 }): Promise<Conversation> {
@@ -45,6 +46,7 @@ export async function createConversation(init: {
     updatedAt: at,
     leafId: null,
     mode: init.mode,
+    allowSensitiveActions: init.allowSensitiveActions === true,
     tabs: init.tabs ?? [],
     status: 'idle',
   };

@@ -308,6 +308,75 @@ describe('the loop', () => {
 });
 
 describe('a page prompt dialog left open by a call', () => {
+  it('does not answer a prompt when opt-in changes while its tab is read', async () => {
+    let allowed = false;
+    const layer = new FakeLayer();
+    layer.pending.set(1, [{ kind: 'dialog', detail: 'prompt «Name?»' }]);
+    layer.tabs = async () => {
+      allowed = true;
+      return layer.tabsData;
+    };
+    const host = new FakeHost();
+    const { loop } = await setup([], layer, { host, allowSensitiveActions: () => allowed });
+    await loop.afterToolCall({
+      call: { toolName: 'click', toolCallId: 'k', input: { tabId: 1 } },
+      kind: 'mutate',
+      text: 'click',
+      isError: false,
+      result: ok('click', { receipt: receipt() }),
+    });
+    expect(layer.calls.filter(c => c.tool === 'handle_dialog')).toHaveLength(0);
+    expect(host.handovers).toHaveLength(0);
+  });
+
+  it('leaves an enabled prompt for an explicit model call with its intended answer', async () => {
+    const layer: FakeLayer = new FakeLayer({
+      click: () => {
+        layer.pending.set(1, [{ kind: 'dialog', detail: 'prompt «Name?»' }]);
+        return ok('click\npending dialog: prompt «Name?»', { receipt: receipt() });
+      },
+      handle_dialog: () => {
+        layer.pending.set(1, []);
+        return ok('handle_dialog · accepted');
+      },
+    });
+    const host = new FakeHost();
+    const { loop } = await setup(
+      [
+        { toolCalls: [call('click', { target: { ref: 'a1' } }, 'k')] },
+        { toolCalls: [call('handle_dialog', { accept: true, promptText: 'Alex' }, 'a')] },
+        done(),
+      ],
+      layer,
+      { host, allowSensitiveActions: () => true },
+    );
+    await loop.run();
+    expect(host.handovers).toHaveLength(0);
+    expect(layer.calls.filter(c => c.tool === 'handle_dialog')).toEqual([
+      expect.objectContaining({ args: expect.objectContaining({ accept: true, promptText: 'Alex' }) }),
+    ]);
+  });
+
+  it('hands off a protected call refused after the toggle was disabled', async () => {
+    let allowed = true;
+    const layer = new FakeLayer({
+      click: () => {
+        allowed = false;
+        return failed('USER_STEP', 'Payment requires the user', {
+          details: { reason: 'pay', target: 'Pay', site: 'shop.example' },
+        });
+      },
+    });
+    const host = new FakeHost();
+    const { loop } = await setup([{ toolCalls: [call('click', { target: { ref: 'a1' } }, 'k')] }, done()], layer, {
+      host,
+      allowSensitiveActions: () => allowed,
+    });
+    await loop.run();
+    expect(host.handovers).toHaveLength(1);
+    expect(layer.calls.filter(c => c.tool === 'click')).toHaveLength(1);
+  });
+
   it('dismisses the dialog when the user cancels the hand-over', async () => {
     const layer: FakeLayer = new FakeLayer({
       click: () => {
@@ -342,7 +411,7 @@ describe('a page prompt dialog left open by a call', () => {
       { host },
     );
     await loop.run();
-    expect(layer.calls.filter(x => x.tool === 'handle_dialog').map(x => x.args.accept)).toEqual([true, false]);
+    expect(layer.calls.filter(x => x.tool === 'handle_dialog').map(x => x.args.accept)).toEqual([false]);
     expect((await results(c.id)).k).toContain("the user cancelled the step and the page's dialog was dismissed");
   });
 
@@ -372,6 +441,7 @@ describe('a page prompt dialog left open by a call', () => {
         return ok('outline after the user answered');
       },
     });
+    layer.tabsData.tabs[0].url = 'http://localhost:8787/';
     const host = new FakeHost();
     const { c, loop } = await setup(
       [
@@ -397,10 +467,8 @@ describe('a page prompt dialog left open by a call', () => {
     // The dialog line from before the user answered is gone.
     expect(r.k).not.toContain('pending dialog:');
     expect(r.k).toContain('outline after the user answered');
-    // The extension's own probe was refused by the layer; no answer reached the page.
-    expect(layer.calls.filter(x => x.tool === 'handle_dialog')).toEqual([
-      expect.objectContaining({ args: { tabId: 1, accept: true } }),
-    ]);
+    // Observing a prompt never sends an answer to the page.
+    expect(layer.calls.filter(x => x.tool === 'handle_dialog')).toEqual([]);
     expect(end.status).toBe('done');
   });
 

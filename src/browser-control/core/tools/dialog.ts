@@ -7,6 +7,10 @@ import type { ToolContext, ToolOutcome } from '../controller';
 import { withPageState } from './navigate';
 import { dialogDetail } from '../text';
 import { siteOf } from '../site';
+import { confirmGate, assertGatePermission } from '../interaction/gate';
+import type { GateResult } from '../interaction/gate';
+import { rememberSecret } from '../redact';
+import { checkCancelled } from '../controller';
 import type { UserStepDetails } from '../../protocol/results';
 
 export async function handleDialog(ctx: ToolContext, args: HandleDialogArgs): Promise<ToolOutcome> {
@@ -27,7 +31,9 @@ export async function handleDialog(ctx: ToolContext, args: HandleDialogArgs): Pr
   if (!dialog) throw new LayerError('INVALID_ARGUMENT', 'No JavaScript dialog is open on this tab');
   // The user answers every page prompt: its message is free text, and what the agent would type goes straight to the
   // page. Dismissing it, and alerts and confirms, stay with the agent.
-  if (ctx.session.handover && args.accept && dialog.type === 'prompt') {
+  let gate: GateResult | undefined;
+  const protectedPrompt = ctx.session.handover && args.accept && dialog.type === 'prompt';
+  if (protectedPrompt && !ctx.session.allowSensitiveActions()) {
     const tabUrl = (await ctx.controller.host.tabs.get(tab.tabId))?.url ?? '';
     throw new LayerError(
       'USER_STEP',
@@ -42,7 +48,27 @@ export async function handleDialog(ctx: ToolContext, args: HandleDialogArgs): Pr
       },
     );
   }
+  if (protectedPrompt) {
+    if (args.promptText) rememberSecret(tab.secrets, args.promptText);
+    const frame = (await (await ctx.attach()).topology.frames()).find(f => f.sessionId === dialog.sessionId);
+    if (!frame) throw new LayerError('FRAME_DETACHED', 'The frame holding the prompt is gone.');
+    gate = await confirmGate(ctx, {
+      action: 'answer prompt',
+      mode: 'none',
+      frame,
+      objectId: '',
+      name: '',
+      role: 'dialog',
+      description: dialogDetail(dialog),
+      category: 'prompt',
+      reason: 'answering a page prompt',
+    });
+  }
   const attachment = await ctx.attach();
+  if (gate) await assertGatePermission(ctx, gate);
+  checkCancelled(ctx);
+  if (tab.dialog !== dialog)
+    throw new LayerError('TARGET_CHANGED', 'The page dialog changed while the user decided. Nothing was sent.');
   const closed = new Promise<void>(resolve => {
     const off = attachment.cdp.on('Page.javascriptDialogClosed', () => {
       off();

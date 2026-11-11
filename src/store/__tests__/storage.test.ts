@@ -37,6 +37,8 @@ describe('createStorage', () => {
     expect(mergeSettings(undefined)).toEqual(DEFAULT_SETTINGS);
     expect(mergeSettings({ turnCap: 7 }).turnCap).toBe(7);
     expect(mergeSettings({ turnCap: 7 }).defaultMode).toBe('ask');
+    expect(mergeSettings({}).defaultAllowSensitiveActions).toBe(false);
+    expect(mergeSettings({ defaultAllowSensitiveActions: true }).defaultAllowSensitiveActions).toBe(true);
   });
 });
 

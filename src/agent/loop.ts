@@ -61,7 +61,7 @@ export interface LoopOptions {
   /** When the run began, stored with each reply for the activity block's elapsed time. */
   startedAt?: string;
   model: ResolvedModel;
-  system: string;
+  system: string | (() => string);
   tools: AgentTool[];
   layer: LayerPort;
   host: HostPort;
@@ -70,6 +70,8 @@ export interface LoopOptions {
   turnCap: number;
   /** The conversation's mode, for the page header; only the user changes it. */
   mode?: () => PermissionMode;
+  /** Read live, so a setting change also applies to an open page prompt. */
+  allowSensitiveActions?: () => boolean;
   now?: () => Date;
   timeZone?: string;
   /** A run continued after Continue or Resume keeps the debt and guard state it had. */
@@ -261,9 +263,14 @@ export class AgentLoop {
     return this.#window ?? this.options.model.profile.contextWindow;
   }
 
+  #system(): string {
+    const { system } = this.options;
+    return typeof system === 'function' ? system() : system;
+  }
+
   #fixedChars(): number {
-    const { system, tools } = this.options;
-    return system.length + JSON.stringify(tools.map(t => [t.name, t.description, t.parameters])).length;
+    const { tools } = this.options;
+    return this.#system().length + JSON.stringify(tools.map(t => [t.name, t.description, t.parameters])).length;
   }
 
   /** Step 3: shorten the recent part. True when it changed something. */
@@ -315,12 +322,12 @@ export class AgentLoop {
 
   /** Step 2: compaction. True when it ran; starts the cooldown and tells the panel. */
   async compact(): Promise<boolean> {
-    const { model, system, tools } = this.options;
+    const { model } = this.options;
     const result = await runCompaction({
       conversationId: this.options.conversationId,
       model,
       window: this.window,
-      fixedChars: system.length + JSON.stringify(tools.map(t => [t.name, t.description, t.parameters])).length,
+      fixedChars: this.#fixedChars(),
       unverified: this.#unverified(),
       signal: this.options.signal,
       messages: branch => toModelMessages(branch, { vision: model.profile.vision, unverified: this.#unverified() }),
@@ -354,7 +361,7 @@ export class AgentLoop {
     );
     const tools = this.options.tools;
     const chars =
-      contextChars(messages, this.options.system) +
+      contextChars(messages, this.#system()) +
       JSON.stringify(tools.map(t => [t.name, t.description, t.parameters])).length;
     return { messages, tools, chars };
   }
@@ -542,38 +549,30 @@ export class AgentLoop {
     return { ...outcome, ...(image ? { image } : {}), text: [text, ...notes].join('\n') };
   }
 
-  /**
-   * A hand-over: the layer refused the step with USER_STEP. The call's partial result is stored with the hand-over
-   * before the card opens; the call is answered by the hand-over and never sent again.
-   */
-  /**
-   * A page's `prompt` dialog is the user's to answer. When a call leaves one open, the hand-over opens at once, whether
-   * or not the agent would try to answer it: the agent cannot ask the user anything while the dialog blocks the tab.
-   * The dialog's facts come from the layer's own refusal: accepting a prompt in an agent session is refused with
-   * USER_STEP, and nothing is sent to the page.
-   */
+  /** A prompt is handed over without sending a probe answer that a concurrent opt-in could permit. */
   async #promptDialog(outcome: CallOutcome): Promise<CallOutcome> {
+    if (this.options.allowSensitiveActions?.() === true) return outcome;
     const args = (outcome.call.input ?? {}) as Record<string, unknown>;
     const tabId = (args.tabId as number | undefined) ?? outcome.result?.page?.tabId ?? this.#activeTab;
     if (tabId === null || tabId === undefined) return outcome;
-    const pending = this.options.layer.tabInfo(tabId)?.pending ?? [];
-    if (!pending.some(m => m.kind === 'dialog' && m.detail.startsWith('prompt '))) {
-      // The dialog was open when the call's result was written, and is closed now: the page is frozen while a
-      // dialog is up, so a call can return only after the user answered it in the tab. The hand-over still opens,
-      // so the run waits for Done in both orders; its facts come from the result, as the dialog is gone.
-      const detail = /^pending dialog: (prompt .*)$/m.exec(outcome.text)?.[1];
-      if (!detail) return outcome;
-      const tabs = await this.options.layer.tabs().catch(() => null);
-      const url = tabs?.tabs.find(t => t.tabId === tabId)?.url ?? '';
-      return this.#handOver(
-        outcome,
-        { reason: 'prompt', target: detail, site: siteOf(url), hasBrowserHandler: true },
-        tabId,
-      );
-    }
-    const refusal = await this.options.layer.call('handle_dialog', { tabId, accept: true }, this.options.signal);
-    if (refusal.error?.code !== 'USER_STEP' || !refusal.error.details) return outcome;
-    return this.#handOver(outcome, refusal.error.details as UserStepDetails, tabId);
+    const info = this.options.layer.tabInfo(tabId);
+    const pending = info?.pending.find(m => m.kind === 'dialog' && m.detail.startsWith('prompt '));
+    // A user may have answered before the call returned, while the result still names the dialog.
+    const detail = pending?.detail ?? /^pending dialog: (prompt .*)$/m.exec(outcome.text)?.[1];
+    if (!detail) return outcome;
+    const tabs = await this.options.layer.tabs().catch(() => null);
+    if (this.options.allowSensitiveActions?.() === true) return outcome;
+    const url = tabs?.tabs.find(t => t.tabId === tabId)?.url ?? '';
+    return this.#handOver(
+      outcome,
+      {
+        reason: 'prompt',
+        target: detail,
+        site: siteOf(url),
+        hasBrowserHandler: pending ? info?.promptHasBrowserHandler : true,
+      },
+      tabId,
+    );
   }
 
   async #handOver(outcome: CallOutcome, given?: UserStepDetails, givenTab?: number): Promise<CallOutcome> {
@@ -871,7 +870,7 @@ export class AgentLoop {
     const { reasoning, noneRetry } = turnEffort(model);
     const reply = await streamTurn({
       chat: model.chat,
-      system: this.options.system,
+      system: this.#system(),
       messages,
       tools: Object.fromEntries(tools.map(t => [t.name, { description: t.description, parameters: t.parameters }])),
       maxOutputTokens: requestOutputLimit(model.profile),

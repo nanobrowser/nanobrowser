@@ -91,6 +91,7 @@ export class RunManager {
   #sessions = new Map<string, Session>();
   /** The mode of a conversation with a run, read by the page header each turn (the user may change it). */
   #modes = new Map<string, Conversation['mode']>();
+  #sensitiveActions = new Map<string, boolean>();
   #records = new Map<string, RunRecord>();
   readonly scope: TabScope;
   /** The glow on the pages a working run acts on. */
@@ -272,7 +273,13 @@ export class RunManager {
   async #openSession(conversationId: string): Promise<Session> {
     const controller = await controllerReady;
     await this.permissions.ready();
+    if (!this.#sensitiveActions.has(conversationId)) {
+      const conversation = await getConversation(conversationId);
+      if (!this.#sensitiveActions.has(conversationId))
+        this.#sensitiveActions.set(conversationId, conversation?.allowSensitiveActions === true);
+    }
     const session = createAgentSession(controller, {
+      allowSensitiveActions: () => this.#sensitiveActions.get(conversationId) === true,
       decideWrite: question => this.permissions.decide(this.#modes.get(conversationId) ?? 'ask', question),
       urlPolicy: { allow: [], deny: [], blocked: this.permissions.blockedSites() },
       // The watching rule: a tab becomes visible only while the user is on the conversation's tabs.
@@ -557,6 +564,9 @@ export class RunManager {
         await this.#setMode(command.conversationId, command.mode);
         await settingsStorage.set(s => ({ ...s, defaultMode: command.mode }));
         return;
+      case 'set-sensitive-actions':
+        await this.#setSensitiveActions(command.conversationId, command.allow);
+        return;
       case 'set-model':
         await this.#setModel(command.conversationId, { model: command.model, reasoning: command.reasoning });
         return;
@@ -763,6 +773,8 @@ export class RunManager {
     const showing = [...this.connections].filter(c => c.conversationId === conversationId);
     await this.scope.release(conversationId, closeAgentTabs);
     await deleteConversation(conversationId);
+    this.#sensitiveActions.delete(conversationId);
+    this.#modes.delete(conversationId);
     await removeLive(conversationId);
     for (const connection of showing) {
       if (connection.tabId !== null) await this.#subscribe(connection, connection.tabId, null);
@@ -816,7 +828,12 @@ export class RunManager {
       if (conversation && !(await this.#takeUp(connection, conversation.id))) return;
     }
     if (!conversation) {
-      conversation = await createConversation({ mode: command.mode, tabs: [command.tabId] });
+      const settings = await settingsStorage.get();
+      conversation = await createConversation({
+        mode: command.mode,
+        allowSensitiveActions: command.allowSensitiveActions ?? settings.defaultAllowSensitiveActions === true,
+        tabs: [command.tabId],
+      });
       // The live pair is written before the conversation's state is published.
       if (command.model) await setLive(conversation.id, { model: command.model, reasoning: command.reasoning });
       await this.#subscribe(connection, command.tabId, conversation.id);
@@ -1135,6 +1152,8 @@ export class RunManager {
         responseLanguage: settings.responseLanguage,
         tools: tools.map(t => t.name),
         customInstructions: settings.customInstructions,
+        allowSensitiveActions:
+          this.#sensitiveActions.get(conversationId) ?? conversation.allowSensitiveActions === true,
       });
       const unverified = new Set(((await getRun(conversationId))?.debt ?? []).map(d => d.toolCallId));
       const result = await runCompaction({
@@ -1165,9 +1184,17 @@ export class RunManager {
   async #setMode(conversationId: string, mode: Conversation['mode']): Promise<void> {
     const conversation = await getConversation(conversationId);
     if (!conversation || conversation.mode === mode) return;
+    this.#modes.set(conversationId, mode);
     const updated = await updateConversation(conversationId, { mode });
-    if (this.#modes.has(conversationId)) this.#modes.set(conversationId, mode);
     await appendEntry(conversationId, { type: 'mode_change', mode });
+    if (updated) this.emit(conversationId, { type: 'conversation', conversation: updated });
+  }
+
+  async #setSensitiveActions(conversationId: string, allow: boolean): Promise<void> {
+    if (!(await getConversation(conversationId))) return;
+    // Revoke live permission before the storage write can yield to a waiting action.
+    this.#sensitiveActions.set(conversationId, allow === true);
+    const updated = await updateConversation(conversationId, { allowSensitiveActions: allow === true });
     if (updated) this.emit(conversationId, { type: 'conversation', conversation: updated });
   }
 
@@ -1296,7 +1323,7 @@ export class RunManager {
           await putRun(record);
           void runStarted(record.model, model.reasoning, conversation.mode, model.profile.vision, this.#runs.size > 1);
         }
-        this.#modes.set(conversationId, conversation.mode);
+        if (!this.#modes.has(conversationId)) this.#modes.set(conversationId, conversation.mode);
         const session = await this.#openSession(conversationId);
         record.tabs = session.tabIds();
         const tools = toolsForRun({ vision: model.profile.vision });
@@ -1305,13 +1332,16 @@ export class RunManager {
           runId,
           startedAt: record.startedAt,
           model,
-          system: agentSystemPrompt({
-            responseLanguage: settings.responseLanguage,
-            tools: tools.map(t => t.name),
-            customInstructions: settings.customInstructions,
-          }),
+          system: () =>
+            agentSystemPrompt({
+              responseLanguage: settings.responseLanguage,
+              tools: tools.map(t => t.name),
+              customInstructions: settings.customInstructions,
+              allowSensitiveActions: this.#sensitiveActions.get(conversationId) === true,
+            }),
           tools,
           mode: () => this.#modes.get(conversationId) ?? conversation.mode,
+          allowSensitiveActions: () => this.#sensitiveActions.get(conversationId) === true,
           layer: layerPort(session, this.border),
           host: this.#host(conversationId, session),
           signal: controller.signal,

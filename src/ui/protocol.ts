@@ -35,6 +35,8 @@ export type PanelCommand =
       attachments: AttachmentRef[];
       context: ContextRef[];
       mode: PermissionMode;
+      /** Initial choice for a new conversation, ignored for an existing one. */
+      allowSensitiveActions?: boolean;
       /** The conversation's model and effort: the worker writes them as its live pair. */
       model: ModelRef | null;
       reasoning: ReasoningEffort;
@@ -59,6 +61,7 @@ export type PanelCommand =
   | { type: 'edit' | 'restart'; conversationId: string; entryId: string; text?: string }
   | { type: 'retry'; conversationId: string }
   | { type: 'set-mode'; conversationId: string; mode: PermissionMode }
+  | { type: 'set-sensitive-actions'; conversationId: string; allow: boolean }
   /** Writes the conversation's live pair, and the settings: the latest choice is the default. */
   | { type: 'set-model'; conversationId: string; model: ModelRef; reasoning: ReasoningEffort }
   | { type: 'history'; query?: string }

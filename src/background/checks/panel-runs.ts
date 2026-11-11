@@ -1,5 +1,6 @@
 // The panel for runs: the activity block in plain language with its tags, the line under an answer (Copy and its time),
 // Edit and Restart from here as new branches, Retry after an error, and the Settings pages for Agent and Permissions.
+import { getConversation } from '@src/store/conversations';
 import { DEFAULT_SETTINGS, settingsStorage, siteRulesStorage } from '@src/store/settings';
 import { FIXTURE_ORIGIN } from '../fixtures-config';
 import { defineCheck } from './registry';
@@ -24,6 +25,8 @@ defineCheck({
   description: 'Activity rows, the answer line, Edit, Restart from here, Retry, Settings → General and Permissions.',
   async run() {
     await seedFixtureModel();
+    const initialSettings = await settingsStorage.get();
+    await settingsStorage.set(s => ({ ...s, defaultAllowSensitiveActions: true }));
     const page = await chrome.tabs.create({ url: `${FIXTURE_ORIGIN}/g-writes.html`, active: false });
     await waitForLoad(page.id!);
     const view = await chrome.tabs.create({
@@ -77,11 +80,39 @@ defineCheck({
       if (!report.answerLine || /tokens ·/.test(answered.transcript))
         throw new Error(`answer line:\n${answered.transcript}`);
 
+      // The default initializes this conversation only. The panel toggle persists through reload and restart.
+      const scope = (await chrome.storage.session.get('nb.scope'))['nb.scope'] as {
+        tabs: Record<string, { conversationId: string }>;
+      };
+      const conversationId = scope.tabs[id].conversationId;
+      report.sensitiveDefault = (await getConversation(conversationId))?.allowSensitiveActions === true;
+      await settingsStorage.set(s => ({ ...s, defaultAllowSensitiveActions: false }));
+      report.sensitiveDefaultIndependent = (await getConversation(conversationId))?.allowSensitiveActions === true;
+      await panel(id, 'click', { label: 'Allow sensitive actions' });
+      await until(
+        () => getConversation(conversationId),
+        c => c?.allowSensitiveActions === false,
+        'sensitive actions off',
+      );
+      await chrome.tabs.reload(view.id!);
+      await waitForLoad(view.id!);
+      await sleep(500);
+      report.sensitiveReload = (await read()).body.includes('Sensitive: off');
+
       // 2. Restart from here: the same question answered again, as a new branch.
       await scriptReplies([{ text: 'A restarted answer.' }]);
       await panel(id, 'click', { label: 'Restart from here' });
       const restarted = await waitForText(id, 'A restarted answer.');
       report.restarted = !restarted.transcript.includes('Sent it and opened');
+      report.sensitiveRestart = (await getConversation(conversationId))?.allowSensitiveActions === false;
+      const restartRequests = await (await fetch(`${FIXTURE_ORIGIN}/__llm/requests`)).json();
+      report.sensitivePromptOff = JSON.stringify(restartRequests.at(-1)).includes("are the user's steps");
+      await panel(id, 'click', { label: 'Allow sensitive actions' });
+      await until(
+        () => getConversation(conversationId),
+        c => c?.allowSensitiveActions === true,
+        'sensitive actions on',
+      );
       await until(
         async () => (await read()).status,
         s => s === 'Done',
@@ -97,6 +128,7 @@ defineCheck({
       report.edited = edited.transcript.includes('An edited question') && !edited.transcript.includes('Send the reply');
       const requests = (await (await fetch('http://localhost:8787/__llm/requests')).json()) as unknown[];
       report.editedSent = JSON.stringify(requests.at(-1)).includes('An edited question');
+      report.sensitivePromptOn = JSON.stringify(requests.at(-1)).includes('The user enabled sensitive actions');
       await until(
         async () => (await read()).status,
         s => s === 'Done',
@@ -114,6 +146,7 @@ defineCheck({
       await panel(id, 'click', { label: 'Retry' });
       await waitForText(id, 'Worked on retry.');
       report.retried = true;
+      report.sensitiveRetry = (await getConversation(conversationId))?.allowSensitiveActions === true;
       report.panelImage = await chrome.tabs.captureVisibleTab(view.windowId, { format: 'png' });
 
       // 5. Settings → General: the keyboard shortcut and the turn cap. Settings → Permissions: a site added by hand.
@@ -131,6 +164,13 @@ defineCheck({
       report.generalImage = await chrome.tabs.captureVisibleTab(opts.windowId, { format: 'png' });
       await options('click', { label: 'Permissions' });
       await sleep(300);
+      await options('click', { label: 'Enable for new conversations' });
+      await until(
+        () => settingsStorage.get(),
+        s => s.defaultAllowSensitiveActions === true,
+        'sensitive default switch',
+      );
+      report.sensitiveSettingsSwitch = true;
       await options('fill', { label: 'Add a site', text: 'https://www.Example.com/path', submit: true });
       await sleep(300);
       const rules = await siteRulesStorage.get();
@@ -145,6 +185,7 @@ defineCheck({
       if (failed.length) throw new Error(`failed: ${JSON.stringify(report)}`);
       return report;
     } finally {
+      await settingsStorage.set(initialSettings);
       await siteRulesStorage.set({});
       await chrome.tabs.remove(view.id!).catch(() => undefined);
       await chrome.tabs.remove(page.id!).catch(() => undefined);
