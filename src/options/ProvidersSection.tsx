@@ -3,14 +3,13 @@
 // src/llm from this page; settings are written through chrome.storage, with no worker command.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import { listModels } from '@src/llm';
+import { isCloudEndpoint, listModels } from '@src/llm';
 import type { ConnectionResult, ModelList, ProviderKind } from '@src/llm';
 import type { ReasoningEffort } from '@src/llm/catalogue';
 import {
   capabilityOf,
   DEFAULT_SETTINGS,
   keysStorage,
-  LOCAL_KINDS,
   providersStorage,
   settingsStorage,
   withBaseUrl,
@@ -67,9 +66,9 @@ function kindInfo(kind: ProviderKind) {
   return KINDS.find(k => k.kind === kind)!;
 }
 
-/** Whether a provider needs a key: its kind does, or it is a preset, a cloud service that always does. */
+/** Whether a provider needs a key: its kind does, or it is a cloud endpoint (preset or custom). */
 function needsKey(provider: ProviderConfig): boolean {
-  return kindInfo(provider.kind).needsKey || PRESETS.some(p => p.baseUrl === provider.baseUrl);
+  return kindInfo(provider.kind).needsKey || isCloudEndpoint(provider.kind, provider.baseUrl);
 }
 
 function updateProvider(id: string, patch: Partial<ProviderConfig>): Promise<void> {
@@ -306,7 +305,7 @@ function Line({ label, children }: { label: string; children: ReactNode }) {
 function ProviderItem({ provider }: { provider: ProviderConfig }) {
   const keys = useStorage(keysStorage, EMPTY_KEYS);
   const info = kindInfo(provider.kind);
-  const local = LOCAL_KINDS.has(provider.kind) || provider.kind === 'openai-compatible';
+  const local = !isCloudEndpoint(provider.kind, provider.baseUrl);
   const [newModel, setNewModel] = useState('');
   const [listed, setListed] = useState<ModelList>({ models: [], hidden: [] });
   const [showAll, setShowAll] = useState(false);
@@ -463,7 +462,7 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
             ) : null}
           </Line>
         ) : null}
-        {local || provider.kind === 'bedrock' ? (
+        {local || provider.kind === 'openai-compatible' || provider.kind === 'bedrock' ? (
           <Line label={provider.kind === 'bedrock' ? t('models.region') : t('models.baseUrl')}>
             <Input
               aria-label={provider.kind === 'bedrock' ? t('models.region') : t('models.baseUrl')}

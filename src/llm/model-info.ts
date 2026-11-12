@@ -1,7 +1,7 @@
 // What a vendor's model API says about a model: read when the model is tested, before any probe, at no cost in tokens.
 // One parser reads the fields any of the APIs return; a field the API does not state is left out, for the next source
 // to say.
-import { openAICompatibleBaseUrl } from './providers';
+import { openAICompatibleBaseUrl, openAICompatibleProblem } from './providers';
 import type { ModelSpec } from './providers';
 import type { LearntFacts } from './profiles';
 
@@ -133,10 +133,9 @@ export async function readModelInfo(
     }
     default: {
       const base = openAICompatibleBaseUrl(kind, spec.baseUrl);
-      if (!base) return null;
-      record = fromList(
-        await get(`${base}/models`, spec.apiKey ? { headers: { authorization: `Bearer ${spec.apiKey}` } } : undefined),
-      );
+      if (!base || openAICompatibleProblem(kind, base, spec.apiKey)) return null;
+      const key = spec.apiKey?.trim();
+      record = fromList(await get(`${base}/models`, key ? { headers: { authorization: `Bearer ${key}` } } : undefined));
     }
   }
   return record ? factsFrom(record) : null;

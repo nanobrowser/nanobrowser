@@ -277,8 +277,10 @@ describe('helpers', () => {
       kind: 'openai-compatible',
       modelName: 'm',
       baseUrl: 'http://localhost:8000/v1',
+      apiKey: '   ',
     });
     expect(localReq.url).toBe('http://localhost:8000/v1/chat/completions');
+    expect(localReq.headers.get('authorization')).toBe('Bearer openai-compatible');
 
     const cloudReq = await capture({
       kind: 'openai-compatible',

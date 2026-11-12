@@ -401,4 +401,44 @@ describe('NOT_CHAT', () => {
     ])
       expect(NOT_CHAT.test(name), name).toBe(false);
   });
+
+  it('surfaces missing API key instead of originRefused on cloud openai-compatible testConnection', async () => {
+    const fetch = vi.fn() as unknown as typeof globalThis.fetch;
+    const r = await testConnection(
+      { kind: 'openai-compatible', modelName: 'm', baseUrl: 'https://api.example.com/v1' },
+      { fetch },
+    );
+    expect(r).toMatchObject({ ok: false, originRefused: false });
+    expect(r.error).toContain('needs an API key');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects listModels when openai-compatible has no baseUrl or an invalid URL instead of fetching undefined/models', async () => {
+    const fetch = vi.fn() as unknown as typeof globalThis.fetch;
+    for (const baseUrl of ['', 'not-a-url', 'ftp://example.com/v1']) {
+      await expect(listModels({ kind: 'openai-compatible', baseUrl, apiKey: 'k' }, fetch)).rejects.toThrow(
+        'needs a valid base URL',
+      );
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects listModels on a cloud openai-compatible endpoint without an API key', async () => {
+    const fetch = vi.fn() as unknown as typeof globalThis.fetch;
+    for (const apiKey of [undefined, '   ']) {
+      await expect(
+        listModels({ kind: 'openai-compatible', baseUrl: 'https://api.example.com/v1', apiKey }, fetch),
+      ).rejects.toThrow('needs an API key');
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not mark 403 from a cloud openai-compatible endpoint as originRefused', async () => {
+    const fetch = vi.fn(async () => new Response('', { status: 403 })) as unknown as typeof globalThis.fetch;
+    const r = await testConnection(
+      { kind: 'openai-compatible', modelName: 'm', baseUrl: 'https://api.example.com/v1', apiKey: 'k' },
+      { fetch },
+    );
+    expect(r).toMatchObject({ ok: false, originRefused: false });
+  });
 });
