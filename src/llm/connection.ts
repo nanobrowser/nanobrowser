@@ -8,7 +8,9 @@ import {
   bedrockRegion,
   createModel,
   DEFAULT_BASE_URLS,
+  isValidHttpUrl,
   openAICompatibleBaseUrl,
+  openAICompatibleProblem,
   parseBedrockKey,
 } from './providers';
 import type { CreateModelOptions, ModelSpec } from './providers';
@@ -16,7 +18,7 @@ import { isOriginRefused } from './errors';
 import { refusesImages, refusesReasoning, streamTurn } from './stream';
 import type { TurnRequest, TurnResult } from './stream';
 import type { LearntFacts } from './profiles';
-import { NOT_CHAT } from './catalogue';
+import { isCloudEndpoint, NOT_CHAT } from './catalogue';
 import type { WireEffort } from './catalogue';
 
 export interface ConnectionResult {
@@ -83,12 +85,13 @@ export async function testConnection(
   };
   const result = await streamTurn(probe);
   if (result.error) {
-    const local = spec.kind === 'ollama' || spec.kind === 'lmstudio' || spec.kind === 'openai-compatible';
+    const local = !isCloudEndpoint(spec.kind, spec.baseUrl);
     return {
       ok: false,
       toolCalling: false,
       error: result.error.message,
-      originRefused: local && (result.error.status === 403 || result.error.status === undefined),
+      originRefused:
+        local && (result.error.status === 403 || (result.error.status === undefined && !!result.error.network)),
       ms: result.durationMs,
     };
   }
@@ -224,6 +227,8 @@ export async function listModels(
     }
     case 'ollama': {
       const server = (spec.baseUrl?.trim() || DEFAULT_BASE_URLS.ollama!).replace(/\/+$/, '').replace(/\/v1$/, '');
+      if (!isValidHttpUrl(server))
+        throw new Error('This provider needs a valid base URL. Set one in Settings → Providers.');
       const body = await get(`${server}/api/tags`);
       entries = ((body.models as ListEntry[]) ?? []).map(m => [String(m.name), m]);
       break;
@@ -300,7 +305,12 @@ export async function listModels(
         spec.kind === 'openai'
           ? spec.baseUrl || 'https://api.openai.com/v1'
           : openAICompatibleBaseUrl(spec.kind, spec.baseUrl);
-      const body = await get(`${base}/models`, spec.apiKey ? { authorization: `Bearer ${spec.apiKey}` } : {});
+      if (spec.kind !== 'openai') {
+        const problem = openAICompatibleProblem(spec.kind, base, spec.apiKey);
+        if (problem) throw new Error(problem);
+      }
+      const key = spec.apiKey?.trim();
+      const body = await get(`${base}/models`, key ? { authorization: `Bearer ${key}` } : {});
       entries = ((body.data as ListEntry[]) ?? [])
         .map((m): [string, ListEntry] => [String(m.id), m])
         .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));

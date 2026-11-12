@@ -6,6 +6,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
+import { isCloudEndpoint } from './catalogue';
 
 export type ProviderKind =
   'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter' | 'bedrock';
@@ -122,6 +123,30 @@ export function openAICompatibleBaseUrl(kind: ProviderKind, baseUrl?: string): s
   return url;
 }
 
+export function isValidHttpUrl(url?: string): boolean {
+  if (!url) return false;
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Why an OpenAI-compatible or OpenRouter card cannot be called as it stands, or undefined when it can. Local servers
+ * (Ollama, LM Studio, or an OpenAI-compatible card at localhost/private address) need no API key.
+ */
+export function openAICompatibleProblem(kind: ProviderKind, baseURL?: string, apiKey?: string): string | undefined {
+  if (kind === 'openai-compatible' && !isValidHttpUrl(baseURL)) {
+    return 'This provider needs a valid base URL. Set one in Settings → Providers.';
+  }
+  if (isCloudEndpoint(kind, baseURL) && !apiKey?.trim()) {
+    return 'This provider needs an API key. Save one in Settings → Providers.';
+  }
+  return undefined;
+}
+
 export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): ChatModel {
   const { kind, modelName, apiKey } = spec;
   const fetch = options.fetch;
@@ -184,10 +209,22 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
     }
     default: {
       // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.
+      const baseURL = openAICompatibleBaseUrl(kind, spec.baseUrl);
+      const refusal = openAICompatibleProblem(kind, baseURL, apiKey);
+      if (refusal) {
+        // Refused at the first request rather than here, so the user sees it as a failed test or turn without
+        // falling back to OpenAI's default URL or sending a placeholder token like "Bearer openai-compatible".
+        const refused = createOpenAI({
+          apiKey: 'none',
+          baseURL: isValidHttpUrl(baseURL) ? baseURL : 'https://invalid.invalid/v1',
+          fetch: () => Promise.reject(new Error(refusal)),
+        });
+        return { spec, model: refused.chat(modelName) };
+      }
       const accounting = kind === 'openrouter' ? usageAccounting(fetch ?? globalThis.fetch) : null;
       const openai = createOpenAI({
-        apiKey: apiKey || kind,
-        baseURL: openAICompatibleBaseUrl(kind, spec.baseUrl),
+        apiKey: apiKey?.trim() || kind,
+        baseURL,
         ...(kind === 'openrouter'
           ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'Nanobrowser' } }
           : {}),
