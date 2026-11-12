@@ -230,4 +230,37 @@ describe('helpers', () => {
   it("keeps OpenRouter's fixed address, whatever an older card stored", () => {
     expect(openAICompatibleBaseUrl('openrouter', 'https://example.com/v1')).toBe('https://openrouter.ai/api/v1');
   });
+
+  it('refuses a cloud OpenAI-compatible endpoint without an API key instead of sending a placeholder token', async () => {
+    const { fetch, requests } = captureFetch();
+    const result = await streamTurn({
+      chat: createModel(
+        { kind: 'openai-compatible', modelName: 'deepseek/deepseek-v4.1-flash', baseUrl: 'https://api.example.com/v1' },
+        { fetch },
+      ),
+      system: 'You are a test.',
+      messages: [{ role: 'user', content: 'hi' }],
+      tools,
+    });
+    expect(result.finish).toBe('error');
+    expect(result.error?.message).toContain('needs an API key');
+    expect(requests).toHaveLength(0);
+  });
+
+  it('allows a local OpenAI-compatible endpoint without an API key and sends the saved key on cloud endpoints', async () => {
+    const localReq = await capture({
+      kind: 'openai-compatible',
+      modelName: 'm',
+      baseUrl: 'http://localhost:8000/v1',
+    });
+    expect(localReq.url).toBe('http://localhost:8000/v1/chat/completions');
+
+    const cloudReq = await capture({
+      kind: 'openai-compatible',
+      modelName: 'm',
+      baseUrl: 'https://api.example.com/v1',
+      apiKey: 'secret-key',
+    });
+    expect(cloudReq.headers.get('authorization')).toBe('Bearer secret-key');
+  });
 });

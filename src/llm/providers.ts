@@ -6,6 +6,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
+import { isCloudEndpoint } from './catalogue';
 
 export type ProviderKind =
   'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter' | 'bedrock';
@@ -184,10 +185,21 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
     }
     default: {
       // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.
+      const baseURL = openAICompatibleBaseUrl(kind, spec.baseUrl);
+      if (isCloudEndpoint(kind, baseURL) && !apiKey?.trim()) {
+        // Refused at the first request rather than here, so the user sees it as a failed test or turn without
+        // sending a placeholder token like "Bearer openai-compatible" to a cloud server.
+        const refused = createOpenAI({
+          apiKey: 'none',
+          baseURL,
+          fetch: () => Promise.reject(new Error('This provider needs an API key. Save one in Settings → Providers.')),
+        });
+        return { spec, model: refused.chat(modelName) };
+      }
       const accounting = kind === 'openrouter' ? usageAccounting(fetch ?? globalThis.fetch) : null;
       const openai = createOpenAI({
         apiKey: apiKey || kind,
-        baseURL: openAICompatibleBaseUrl(kind, spec.baseUrl),
+        baseURL,
         ...(kind === 'openrouter'
           ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'Nanobrowser' } }
           : {}),
