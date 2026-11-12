@@ -232,19 +232,44 @@ describe('helpers', () => {
   });
 
   it('refuses a cloud OpenAI-compatible endpoint without an API key instead of sending a placeholder token', async () => {
-    const { fetch, requests } = captureFetch();
-    const result = await streamTurn({
-      chat: createModel(
-        { kind: 'openai-compatible', modelName: 'deepseek/deepseek-v4.1-flash', baseUrl: 'https://api.example.com/v1' },
-        { fetch },
-      ),
-      system: 'You are a test.',
-      messages: [{ role: 'user', content: 'hi' }],
-      tools,
-    });
-    expect(result.finish).toBe('error');
-    expect(result.error?.message).toContain('needs an API key');
-    expect(requests).toHaveLength(0);
+    for (const spec of [
+      { kind: 'openai-compatible', modelName: 'deepseek/deepseek-v4.1-flash', baseUrl: 'https://api.example.com/v1' },
+      {
+        kind: 'openai-compatible',
+        modelName: 'deepseek/deepseek-v4.1-flash',
+        baseUrl: 'https://api.example.com/v1',
+        apiKey: '   ',
+      },
+      { kind: 'openrouter', modelName: 'anthropic/claude-sonnet-4' },
+    ] as const satisfies ModelSpec[]) {
+      const { fetch, requests } = captureFetch();
+      const result = await streamTurn({
+        chat: createModel(spec, { fetch }),
+        system: 'You are a test.',
+        messages: [{ role: 'user', content: 'hi' }],
+        tools,
+      });
+      expect(result.finish).toBe('error');
+      expect(result.attempts).toBe(1);
+      expect(result.error?.message).toContain('needs an API key');
+      expect(requests).toHaveLength(0);
+    }
+  });
+
+  it('refuses an OpenAI-compatible endpoint with a missing or invalid base URL', async () => {
+    for (const baseUrl of [undefined, '', 'not-a-url']) {
+      const { fetch, requests } = captureFetch();
+      const result = await streamTurn({
+        chat: createModel({ kind: 'openai-compatible', modelName: 'm', baseUrl, apiKey: 'k' }, { fetch }),
+        system: 'You are a test.',
+        messages: [{ role: 'user', content: 'hi' }],
+        tools,
+      });
+      expect(result.finish).toBe('error');
+      expect(result.attempts).toBe(1);
+      expect(result.error?.message).toContain('needs a valid base URL');
+      expect(requests).toHaveLength(0);
+    }
   });
 
   it('allows a local OpenAI-compatible endpoint without an API key and sends the saved key on cloud endpoints', async () => {

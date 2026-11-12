@@ -186,13 +186,28 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
     default: {
       // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.
       const baseURL = openAICompatibleBaseUrl(kind, spec.baseUrl);
-      if (isCloudEndpoint(kind, baseURL) && !apiKey?.trim()) {
+      const validBaseUrl = (() => {
+        if (!baseURL) return false;
+        try {
+          const { protocol } = new URL(baseURL);
+          return protocol === 'http:' || protocol === 'https:';
+        } catch {
+          return false;
+        }
+      })();
+      let refusal: string | undefined;
+      if (kind === 'openai-compatible' && !validBaseUrl) {
+        refusal = 'This provider needs a valid base URL. Set one in Settings → Providers.';
+      } else if (isCloudEndpoint(kind, baseURL) && !apiKey?.trim()) {
+        refusal = 'This provider needs an API key. Save one in Settings → Providers.';
+      }
+      if (refusal) {
         // Refused at the first request rather than here, so the user sees it as a failed test or turn without
-        // sending a placeholder token like "Bearer openai-compatible" to a cloud server.
+        // falling back to OpenAI's default URL or sending a placeholder token like "Bearer openai-compatible".
         const refused = createOpenAI({
           apiKey: 'none',
-          baseURL,
-          fetch: () => Promise.reject(new Error('This provider needs an API key. Save one in Settings → Providers.')),
+          baseURL: validBaseUrl ? baseURL : 'https://invalid.invalid/v1',
+          fetch: () => Promise.reject(new Error(refusal)),
         });
         return { spec, model: refused.chat(modelName) };
       }
