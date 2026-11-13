@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>嵌套独立操作测试</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .message-card {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin: 10px 0;
+      cursor: pointer;
+      background: #f5f5f5;
+    }
+    .mt10 {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      min-height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>嵌套独立操作测试</h1>
+
+  <h2>场景 1: 卡片内有独立功能的 span（用户的实际场景）</h2>
+  <div class="message-card" id="card1">
+    查看完整消息内容...
+    <span class="mt10">转文字</span>
+  </div>
+  <p>期望：卡片和"转文字"按钮都应该可点击，触发不同操作</p>
+
+  <h2>场景 2: 卡片内的装饰性 span（应该被过滤）</h2>
+  <div class="message-card" id="card2">
+    查看详情
+    <span style="color: #999; margin-left: 5px;">›</span>
+  </div>
+  <p>期望：只有卡片可点击，箭头不应该有独立 ref</p>
+
+  <h2>场景 3: 两个独立的按钮（不应该被过滤）</h2>
+  <div style="border: 1px solid #ddd; padding: 15px;">
+    <button id="btn1">操作 1</button>
+    <button id="btn2">操作 2</button>
+  </div>
+  <p>期望：两个按钮都应该可点击</p>
+
+  <h2>场景 4: 嵌套的相同功能（应该被过滤）</h2>
+  <div class="message-card" id="card3">
+    <span style="display: block; padding: 10px;">整个区域都可点击</span>
+  </div>
+  <p>期望：只有外层可点击</p>
+
+  <div id="result">
+    <strong>操作结果：</strong><span id="output">等待操作...</span>
+  </div>
+
+  <script>
+    const result = document.getElementById('output');
+
+    // 场景 1: 卡片和转文字按钮有不同的功能
+    document.getElementById('card1').addEventListener('click', function(e) {
+      // 如果点击的是转文字按钮，不处理（让按钮自己处理）
+      if (e.target.classList.contains('mt10')) {
+        return;
+      }
+      result.textContent = '✅ 卡片被点击 - 打开完整消息';
+      result.style.color = 'blue';
+    });
+
+    document.querySelector('#card1 .mt10').addEventListener('click', function(e) {
+      e.stopPropagation();
+      result.textContent = '✅ 转文字按钮被点击 - 触发语音转文字';
+      result.style.color = 'green';
+
+      // 模拟语音转文字功能
+      setTimeout(() => {
+        result.textContent += ' → 转换完成！';
+      }, 500);
+    });
+
+    // 场景 2: 只有卡片有功能
+    document.getElementById('card2').addEventListener('click', function() {
+      result.textContent = '✅ 卡片2被点击 - 查看详情';
+      result.style.color = 'blue';
+    });
+
+    // 场景 3: 两个独立按钮
+    document.getElementById('btn1').addEventListener('click', function() {
+      result.textContent = '✅ 按钮1被点击';
+      result.style.color = 'purple';
+    });
+
+    document.getElementById('btn2').addEventListener('click', function() {
+      result.textContent = '✅ 按钮2被点击';
+      result.style.color = 'orange';
+    });
+
+    // 场景 4: 嵌套相同功能
+    document.getElementById('card3').addEventListener('click', function() {
+      result.textContent = '✅ 卡片3被点击';
+      result.style.color = 'blue';
+    });
+
+    document.querySelector('#card3 span').addEventListener('click', function() {
+      result.textContent = '✅ 内部 span 被点击（但功能相同）';
+      result.style.color = 'blue';
+    });
+
+    // 添加调试信息
+    console.log('=== 元素监听器检查 ===');
+    console.log('card1 listeners:', getEventListeners(document.getElementById('card1')));
+    console.log('转文字 listeners:', getEventListeners(document.querySelector('#card1 .mt10')));
+    console.log('card2 listeners:', getEventListeners(document.getElementById('card2')));
+  </script>
+</body>
+</html>
