@@ -49,7 +49,10 @@ describe('testConnection', () => {
     const fetch = vi.fn(async () =>
       sse([chunk({ role: 'assistant', content: '' }), chunk({}, 'length')]),
     ) as unknown as typeof globalThis.fetch;
-    const r = await testConnection({ kind: 'openai-compatible', modelName: 'm', baseUrl: 'http://x/v1' }, { fetch });
+    const r = await testConnection(
+      { kind: 'openai-compatible', modelName: 'm', baseUrl: 'http://x/v1', apiKey: 'k' },
+      { fetch },
+    );
     expect(r).toMatchObject({ ok: false, toolCalling: false, error: CUT_SHORT });
   });
 
@@ -63,7 +66,7 @@ describe('testConnection', () => {
 describe('the probes', () => {
   const refuse = (what: string) => new Response(JSON.stringify({ error: { message: what } }), { status: 400 });
   const plain = () => sse([chunk({ role: 'assistant', content: 'ok' }), chunk({}, 'stop')]);
-  const spec = { kind: 'openai-compatible' as const, modelName: 'm', baseUrl: 'http://x/v1' };
+  const spec = { kind: 'openai-compatible' as const, modelName: 'm', baseUrl: 'http://x/v1', apiKey: 'k' };
 
   /** Answers the tool probe with a tool call and every later probe with `answer`. */
   function probe(answer: (body: Record<string, unknown>) => Response) {

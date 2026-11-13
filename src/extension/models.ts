@@ -75,15 +75,21 @@ export async function resolveModel(pair: LivePair | null): Promise<ResolvedModel
     detectedContext,
     ...learnt(found.model),
   });
-  const chat = createModel({
-    kind: found.provider.kind,
-    modelName: found.model.name,
-    apiKey: keys[found.provider.id],
-    baseUrl: found.provider.baseUrl,
-    maxOutputTokens: profile.maxOutput,
-    // Ollama and LM Studio take one request at a time by default; more wait in the extension, not on the server.
-    ...(LOCAL_KINDS.has(found.provider.kind) ? { maxConcurrent: 1 } : {}),
-  });
+  let chat;
+  try {
+    chat = createModel({
+      kind: found.provider.kind,
+      modelName: found.model.name,
+      apiKey: keys[found.provider.id],
+      baseUrl: found.provider.baseUrl,
+      maxOutputTokens: profile.maxOutput,
+      // Ollama and LM Studio take one request at a time by default; more wait in the extension, not on the server.
+      ...(LOCAL_KINDS.has(found.provider.kind) ? { maxConcurrent: 1 } : {}),
+    });
+  } catch (error) {
+    // A configuration the provider factory refuses is the user's to fix, like a missing model: show it as such.
+    throw new ModelUnavailable(error instanceof Error ? error.message : String(error));
+  }
   const learn = (facts: Parameters<NonNullable<ResolvedModel['learn']>>[0]) =>
     void learnFacts(found.provider.id, found.provider.baseUrl, found.model.name, facts);
   return { ref, chat, profile, reasoning: pair.reasoning, learn };
