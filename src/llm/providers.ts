@@ -122,6 +122,27 @@ export function openAICompatibleBaseUrl(kind: ProviderKind, baseUrl?: string): s
   return url;
 }
 
+/**
+ * Whether an endpoint runs on this machine. Local servers take any key, so the provider's kind stands in for one;
+ * a remote server needs the key the user saved.
+ */
+export function isLocalEndpoint(url: string | undefined): boolean {
+  if (!url) return true;
+  try {
+    const { hostname } = new URL(url);
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      hostname === '[::1]' ||
+      hostname.endsWith('.localhost')
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): ChatModel {
   const { kind, modelName, apiKey } = spec;
   const fetch = options.fetch;
@@ -185,9 +206,15 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
     default: {
       // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.
       const accounting = kind === 'openrouter' ? usageAccounting(fetch ?? globalThis.fetch) : null;
+      const baseURL = openAICompatibleBaseUrl(kind, spec.baseUrl);
+      // Only a server on this machine may run without a key. Sending the provider's kind to a remote endpoint turns
+      // a missing key into a 401 with "Bearer openai-compatible", which hides the real problem.
+      if (!apiKey && !isLocalEndpoint(baseURL)) {
+        throw new Error(`No API key is saved for ${baseURL}. Add one in Settings → Providers.`);
+      }
       const openai = createOpenAI({
         apiKey: apiKey || kind,
-        baseURL: openAICompatibleBaseUrl(kind, spec.baseUrl),
+        baseURL,
         ...(kind === 'openrouter'
           ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'Nanobrowser' } }
           : {}),

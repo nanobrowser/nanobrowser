@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { bedrockProblem, bedrockRegion, createModel, openAICompatibleBaseUrl, parseBedrockKey } from '../providers';
+import {
+  bedrockProblem,
+  bedrockRegion,
+  createModel,
+  isLocalEndpoint,
+  openAICompatibleBaseUrl,
+  parseBedrockKey,
+} from '../providers';
 import type { ModelSpec } from '../providers';
 import { streamTurn } from '../stream';
 
@@ -120,6 +127,33 @@ describe('providers', () => {
     expect(r.url).toBe('http://10.0.0.2:8000/v1/chat/completions');
   });
 
+  it('a remote OpenAI-compatible endpoint without a key fails before any request', () => {
+    const { fetch, requests } = captureFetch();
+    expect(() =>
+      createModel(
+        { kind: 'openai-compatible', modelName: 'm', baseUrl: 'https://api.commandcode.ai/provider/v1' },
+        { fetch },
+      ),
+    ).toThrow(/No API key is saved for https:\/\/api\.commandcode\.ai\/provider\/v1/);
+    expect(requests).toHaveLength(0);
+  });
+
+  it('a local OpenAI-compatible endpoint still runs without a key', async () => {
+    const r = await capture({
+      kind: 'openai-compatible',
+      modelName: 'm',
+      baseUrl: 'http://localhost:8000/v1',
+    });
+    expect(r.headers.get('authorization')).toBe('Bearer openai-compatible');
+  });
+
+  it('OpenRouter without a key fails before any request', () => {
+    const { fetch } = captureFetch();
+    expect(() => createModel({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5' }, { fetch })).toThrow(
+      /No API key is saved/,
+    );
+  });
+
   it('Bedrock API key: bearer auth on the regional runtime', async () => {
     const r = await capture({
       kind: 'bedrock',
@@ -185,6 +219,24 @@ describe('providers', () => {
     const r = await capture({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5', apiKey: 'or' });
     expect(r.url).toBe('https://openrouter.ai/api/v1/chat/completions');
     expect(r.headers.get('x-title')).toBe('Nanobrowser');
+  });
+});
+
+describe('isLocalEndpoint', () => {
+  it('accepts this machine and rejects remote hosts', () => {
+    for (const url of [
+      'http://localhost:8000/v1',
+      'http://127.0.0.1:1234/v1',
+      'http://[::1]:8000/v1',
+      'http://0.0.0.0:8000/v1',
+      'http://app.localhost/v1',
+    ]) {
+      expect(isLocalEndpoint(url)).toBe(true);
+    }
+    for (const url of ['https://api.example.com/v1', 'http://10.0.0.2:8000/v1']) {
+      expect(isLocalEndpoint(url)).toBe(false);
+    }
+    expect(isLocalEndpoint(undefined)).toBe(true);
   });
 });
 
