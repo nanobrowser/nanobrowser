@@ -42,13 +42,14 @@ const EMPTY_PROVIDERS: ProviderConfig[] = [];
 const EMPTY_KEYS: Record<string, string> = {};
 
 /**
- * Presets: cloud endpoints that speak chat completions, added as OpenAI-compatible providers but listed and named as
+ * Presets: endpoints that speak chat completions, added as OpenAI-compatible providers but listed and named as
  * providers of their own.
  */
-const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [
+const PRESETS: Array<{ id: string; label: string; baseUrl: string; needsKey?: boolean }> = [
   { id: 'xai', label: 'xAI Grok', baseUrl: 'https://api.x.ai/v1' },
   { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
   { id: 'mistral', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1' },
+  { id: 'rapid-mlx', label: 'Rapid-MLX', baseUrl: 'http://localhost:8000/v1', needsKey: false },
 ];
 
 /**
@@ -67,9 +68,9 @@ function kindInfo(kind: ProviderKind) {
   return KINDS.find(k => k.kind === kind)!;
 }
 
-/** Whether a provider needs a key: its kind does, or it is a preset, a cloud service that always does. */
+/** Whether a provider needs a key: its kind does, or its preset does (cloud presets default to requiring one). */
 function needsKey(provider: ProviderConfig): boolean {
-  return kindInfo(provider.kind).needsKey || PRESETS.some(p => p.baseUrl === provider.baseUrl);
+  return kindInfo(provider.kind).needsKey || PRESETS.some(p => p.baseUrl === provider.baseUrl && p.needsKey !== false);
 }
 
 function updateProvider(id: string, patch: Partial<ProviderConfig>): Promise<void> {
