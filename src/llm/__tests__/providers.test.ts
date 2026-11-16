@@ -108,6 +108,8 @@ describe('providers', () => {
     const r = await capture({ kind: 'ollama', modelName: 'qwen3:8b', baseUrl: 'http://localhost:11434' });
     expect(r.url).toBe('http://localhost:11434/v1/chat/completions');
     expect(r.body.model).toBe('qwen3:8b');
+    // A server that needs no key gets no bearer token: none is invented in its name.
+    expect(r.headers.get('authorization')).toBeNull();
   });
 
   it('a custom OpenAI-compatible endpoint uses its base URL as is', async () => {
@@ -118,6 +120,12 @@ describe('providers', () => {
       apiKey: 'x',
     });
     expect(r.url).toBe('http://10.0.0.2:8000/v1/chat/completions');
+  });
+
+  it('a custom OpenAI-compatible endpoint without a key sends no Authorization header', async () => {
+    const r = await capture({ kind: 'openai-compatible', modelName: 'm', baseUrl: 'http://10.0.0.2:8000/v1' });
+    expect(r.url).toBe('http://10.0.0.2:8000/v1/chat/completions');
+    expect(r.headers.get('authorization')).toBeNull();
   });
 
   it('Bedrock API key: bearer auth on the regional runtime', async () => {
@@ -185,6 +193,19 @@ describe('providers', () => {
     const r = await capture({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5', apiKey: 'or' });
     expect(r.url).toBe('https://openrouter.ai/api/v1/chat/completions');
     expect(r.headers.get('x-title')).toBe('Nanobrowser');
+  });
+
+  it('OpenRouter without a key fails before any request', async () => {
+    const { fetch, requests } = captureFetch();
+    const result = await streamTurn({
+      chat: createModel({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5' }, { fetch }),
+      system: 'You are a test.',
+      messages: [{ role: 'user', content: 'hi' }],
+      tools,
+      retry: { attempts: 1, baseMs: 0, maxMs: 0 },
+    });
+    expect(requests).toEqual([]);
+    expect(result.error?.message).toMatch(/^OpenRouter needs an API key/);
   });
 });
 
