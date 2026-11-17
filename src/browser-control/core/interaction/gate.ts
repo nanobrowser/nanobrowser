@@ -233,7 +233,8 @@ export async function confirmGate(ctx: ToolContext, input: GateInput): Promise<G
       `${input.description} is a ${category ?? 'confirmed'} action and needs the user's approval, but no one can be asked here.`,
     );
   }
-  // The card names the frame's host and the destination's host when they differ from the site (section 8).
+  // The card names the frame's host and the destination's host when they differ from the site, so the user sees an
+  // action in an embedded frame, or one that sends data to another site, for what it is.
   const frameHost = input.frame.url ? siteOf(input.frame.url) : '';
   const destination =
     input.mode !== 'none'

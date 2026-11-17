@@ -7,7 +7,8 @@ import type { JSONSchema7, ModelMessage, ToolSet } from 'ai';
 import type { ChatModel } from './providers';
 import type { WireEffort } from './catalogue';
 import { errorText, getApiCallStatusCode, isRetryable, retryAfterMs, unwrapError } from './errors';
-import { isContextOverflow } from './overflow';
+import { MIN_OUTPUT_LIMIT, OUTPUT_LIMIT_NAMES } from './catalogue';
+import { isContextOverflow, statedContextLimit } from './overflow';
 import { withSlot } from './limiter';
 
 export interface TokenUsage {
@@ -45,7 +46,14 @@ export interface TurnResult {
   finish: TurnFinish;
   /** Null when the server reported no usage. */
   usage: TokenUsage | null;
-  error?: { message: string; status?: number; overflow: boolean; network?: boolean };
+  error?: {
+    message: string;
+    status?: number;
+    overflow: boolean;
+    /** The context limit a refusal for size stated, when it stated one. */
+    limit?: number;
+    network?: boolean;
+  };
   durationMs: number;
   attempts: number;
   /**
@@ -59,6 +67,8 @@ export interface TurnResult {
   imagesDropped?: boolean;
   /** The SDK dropped the reasoning option itself, with a warning and no error. */
   reasoningIgnored?: boolean;
+  /** The server refused the output limit, and took this one, halved from it, instead. */
+  outputLimit?: number;
 }
 
 export interface RetryPolicy {
@@ -145,6 +155,15 @@ export function refusesReasoning(status: number | undefined, message: string): b
   return status === 400 && /reasoning|thinking|effort/i.test(message);
 }
 
+/**
+ * A 400 or 422 that names the output limit: the server takes fewer output tokens than were asked, unless the message is
+ * a refusal for size, which the caller checks first. No number is read from it, since a stated maximum can include a
+ * thinking budget the SDK adds.
+ */
+export function refusesOutputLimit(status: number | undefined, message: string): boolean {
+  return (status === 400 || status === 422) && OUTPUT_LIMIT_NAMES.test(message);
+}
+
 /** A 400 that names an image: the model does not take images. */
 export function refusesImages(status: number | undefined, message: string): boolean {
   return status === 400 && /image|vision|multimodal/i.test(message);
@@ -197,6 +216,8 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
   let messages = request.messages;
   let imagesDropped = false;
   let reasoningIgnored = false;
+  let maxOutputTokens = request.maxOutputTokens ?? request.chat.spec.maxOutputTokens;
+  let outputLimit: number | undefined;
   for (;;) {
     attempt++;
     let text = '';
@@ -212,7 +233,7 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
         messages,
         tools,
         toolChoice: tools ? (request.toolChoice ?? 'auto') : undefined,
-        maxOutputTokens: request.maxOutputTokens ?? request.chat.spec.maxOutputTokens,
+        maxOutputTokens,
         ...(reasoning ? { reasoning } : {}),
         maxRetries: 0,
         abortSignal: request.signal,
@@ -281,6 +302,7 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
         ...(noneRefused && !reasoningDropped ? { noneRefused } : {}),
         ...(imagesDropped ? { imagesDropped } : {}),
         ...(reasoningIgnored ? { reasoningIgnored } : {}),
+        ...(outputLimit ? { outputLimit } : {}),
       };
     }
     // The same request once more, not counted as an attempt: at Low's value when None's was refused, without the option
@@ -299,6 +321,19 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
       attempt--;
       continue;
     }
+    // A refused output limit: the same request with half the limit, while it is refused, down to the floor.
+    if (
+      fallback &&
+      maxOutputTokens !== undefined &&
+      maxOutputTokens > MIN_OUTPUT_LIMIT &&
+      refusesOutputLimit(status, errorText(failure)) &&
+      !isContextOverflow(failure)
+    ) {
+      maxOutputTokens = Math.max(MIN_OUTPUT_LIMIT, Math.floor(maxOutputTokens / 2));
+      outputLimit = maxOutputTokens;
+      attempt--;
+      continue;
+    }
     const stripped = fallback && refusesImages(status, errorText(failure)) ? withoutImages(messages) : null;
     if (stripped) {
       messages = stripped;
@@ -313,6 +348,9 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
       }
       continue;
     }
+    const overflow = isContextOverflow(failure);
+    // A 413 is the server's own request size, not the model's window.
+    const limit = overflow && status !== 413 ? statedContextLimit(errorText(failure)) : undefined;
     return {
       text,
       // A reply that failed part way runs none of its calls.
@@ -322,7 +360,8 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
       error: {
         message: errorText(failure),
         status: getApiCallStatusCode(failure),
-        overflow: isContextOverflow(failure),
+        overflow,
+        ...(limit ? { limit } : {}),
         // fetch rejects with a TypeError when the network fails.
         network: unwrapError(failure) instanceof TypeError,
       },
@@ -330,6 +369,8 @@ async function streamTurnNow(request: TurnRequest): Promise<TurnResult> {
       attempts: attempt,
       ...(reasoningDropped ? { reasoningDropped } : {}),
       ...(imagesDropped ? { imagesDropped } : {}),
+      // A limit the server took before the request failed for another reason is still the server's limit.
+      ...(outputLimit && !refusesOutputLimit(status, errorText(failure)) ? { outputLimit } : {}),
     };
   }
 }

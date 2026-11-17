@@ -4,6 +4,7 @@ import { CUT_SHORT, listModels, testConnection } from '../connection';
 import { NOT_CHAT } from '../catalogue';
 
 const recorded = JSON.parse(readFileSync(`${__dirname}/payloads/model-lists-2026-10-11.json`, 'utf8'));
+const bedrock = JSON.parse(readFileSync(`${__dirname}/payloads/bedrock-ap-southeast-1-2026-11-10.json`, 'utf8'));
 
 function sse(chunks: unknown[]): Response {
   const body = chunks.map(c => `data: ${JSON.stringify(c)}\n\n`).join('') + 'data: [DONE]\n\n';
@@ -57,6 +58,111 @@ describe('testConnection', () => {
     const fetch = vi.fn(async () => new Response('', { status: 403 })) as unknown as typeof globalThis.fetch;
     const r = await testConnection({ kind: 'ollama', modelName: 'qwen3:8b' }, { fetch });
     expect(r).toMatchObject({ ok: false, originRefused: true });
+  });
+});
+
+/** CRC-32 (IEEE), as AWS's event stream frames carry it. */
+function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let k = 0; k < 8; k++) crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+/** One frame of AWS's event stream: an event of a type, with a JSON payload. */
+function frame(eventType: string, payload: unknown): Uint8Array {
+  const text = new TextEncoder();
+  const headers: number[] = [];
+  for (const [name, value] of [
+    [':event-type', eventType],
+    [':content-type', 'application/json'],
+    [':message-type', 'event'],
+  ]) {
+    const n = text.encode(name);
+    const v = text.encode(value);
+    headers.push(n.length, ...n, 7, v.length >> 8, v.length & 0xff, ...v);
+  }
+  const body = text.encode(JSON.stringify(payload));
+  const total = 12 + headers.length + body.length + 4;
+  const out = new Uint8Array(total);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, total);
+  view.setUint32(4, headers.length);
+  view.setUint32(8, crc32(out.subarray(0, 8)));
+  out.set(headers, 12);
+  out.set(body, 12 + headers.length);
+  view.setUint32(total - 4, crc32(out.subarray(0, total - 4)));
+  return out;
+}
+
+/** A streamed Converse reply: a call to the test tool, or a short text. */
+function converse(reply: 'tool' | 'text'): Response {
+  const block =
+    reply === 'tool'
+      ? [
+          frame('contentBlockStart', {
+            contentBlockIndex: 0,
+            start: { toolUse: { toolUseId: 'c1', name: 'report_status' } },
+          }),
+          frame('contentBlockDelta', { contentBlockIndex: 0, delta: { toolUse: { input: '{"status":"ok"}' } } }),
+        ]
+      : [frame('contentBlockDelta', { contentBlockIndex: 0, delta: { text: 'ok' } })];
+  const frames = [
+    frame('messageStart', { role: 'assistant' }),
+    ...block,
+    frame('contentBlockStop', { contentBlockIndex: 0 }),
+    frame('messageStop', { stopReason: reply === 'tool' ? 'tool_use' : 'end_turn' }),
+    frame('metadata', { usage: { inputTokens: 10, outputTokens: 3, totalTokens: 13 }, metrics: { latencyMs: 1 } }),
+  ];
+  const bytes = new Uint8Array(frames.reduce((n, f) => n + f.length, 0));
+  let at = 0;
+  for (const f of frames) {
+    bytes.set(f, at);
+    at += f.length;
+  }
+  return new Response(bytes, { status: 200, headers: { 'content-type': 'application/vnd.amazon.eventstream' } });
+}
+
+describe('the effort probe on Bedrock', () => {
+  function bedrockProbe() {
+    const bodies: Array<Record<string, unknown>> = [];
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>);
+      return converse(bodies.length === 1 ? 'tool' : 'text');
+    }) as unknown as typeof globalThis.fetch;
+    return { fetch, bodies };
+  }
+  const bedrockSpec = (modelName: string) => ({
+    kind: 'bedrock' as const,
+    modelName,
+    apiKey: 'k',
+    baseUrl: 'us-east-1',
+  });
+
+  it('records "reasons: no" after one request when the SDK drops the option for the model', async () => {
+    const { fetch, bodies } = bedrockProbe();
+    const r = await testConnection(bedrockSpec('global.moonshotai.kimi-k3'), { fetch }, { none: true, reasons: true });
+    expect(r).toMatchObject({ ok: true, toolCalling: true, tested: { reasons: false } });
+    // The tool probe and one effort probe; no None probe for a model that does not take the option.
+    expect(bodies).toHaveLength(2);
+    expect(JSON.stringify(bodies[1])).not.toContain('reasoningConfig');
+  });
+
+  it('leaves "reasons" unknown when the option reaches the model, since Bedrock reports no reasoning tokens', async () => {
+    // Nova 2 Lite takes Bedrock's reasoning config; Claude takes Anthropic's thinking, a different branch of the SDK.
+    for (const [id, sent] of [
+      ['global.amazon.nova-2-lite-v1:0', 'reasoningConfig'],
+      ['global.anthropic.claude-sonnet-4-6', 'thinking'],
+    ]) {
+      const { fetch, bodies } = bedrockProbe();
+      const r = await testConnection(bedrockSpec(id), { fetch });
+      expect(r).toMatchObject({ ok: true, toolCalling: true });
+      expect(r.tested).toBeUndefined();
+      expect(bodies).toHaveLength(2);
+      expect(JSON.stringify(bodies[1])).toContain(sent);
+    }
   });
 });
 
@@ -140,8 +246,45 @@ describe('the probes', () => {
   });
 
   it('runs no effort probe on a first-party kind', async () => {
-    const fetch = vi.fn(async () => new Response('', { status: 401 })) as unknown as typeof globalThis.fetch;
+    // Anthropic's stream with a call to the test tool, so the probes after it would run if they were asked.
+    const events = [
+      [
+        'message_start',
+        {
+          type: 'message_start',
+          message: {
+            id: 'm',
+            type: 'message',
+            role: 'assistant',
+            model: 'x',
+            content: [],
+            stop_reason: null,
+            usage: { input_tokens: 10, output_tokens: 1 },
+          },
+        },
+      ],
+      [
+        'content_block_start',
+        {
+          type: 'content_block_start',
+          index: 0,
+          content_block: { type: 'tool_use', id: 't1', name: 'report_status', input: {} },
+        },
+      ],
+      [
+        'content_block_delta',
+        { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '{"status":"ok"}' } },
+      ],
+      ['content_block_stop', { type: 'content_block_stop', index: 0 }],
+      ['message_delta', { type: 'message_delta', delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 5 } }],
+      ['message_stop', { type: 'message_stop' }],
+    ];
+    const body = events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join('');
+    const fetch = vi.fn(
+      async () => new Response(body, { status: 200, headers: { 'content-type': 'text/event-stream' } }),
+    ) as unknown as typeof globalThis.fetch;
     const r = await testConnection({ kind: 'anthropic', modelName: 'claude-sonnet-5-5', apiKey: 'k' }, { fetch });
+    expect(r).toMatchObject({ ok: true, toolCalling: true });
     expect(r.tested).toBeUndefined();
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -149,9 +292,11 @@ describe('the probes', () => {
 
 describe('listModels', () => {
   it('lists Bedrock text models with a bearer key', async () => {
+    const urls: string[] = [];
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://bedrock.eu-west-1.amazonaws.com/foundation-models');
+      urls.push(url);
       expect((init.headers as Record<string, string>).authorization).toBe('Bearer bedrock-key');
+      if (url.includes('/inference-profiles')) return Response.json({ inferenceProfileSummaries: [] });
       return Response.json({
         modelSummaries: [
           { modelId: 'amazon.nova-lite-v1:0', inputModalities: ['TEXT'], outputModalities: ['TEXT'] },
@@ -163,6 +308,10 @@ describe('listModels', () => {
       models: ['amazon.nova-lite-v1:0'],
       hidden: [],
     });
+    expect(urls).toEqual([
+      'https://bedrock.eu-west-1.amazonaws.com/foundation-models',
+      'https://bedrock.eu-west-1.amazonaws.com/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000',
+    ]);
   });
 
   it('hides Bedrock models that do not run on demand by their own id, and legacy ones', async () => {
@@ -209,6 +358,112 @@ describe('listModels', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('lists the inference profiles that run Bedrock models, from a recorded region', async () => {
+    const urls: string[] = [];
+    const fetch = vi.fn(async (url: string) => {
+      urls.push(url);
+      return Response.json(url.includes('/inference-profiles') ? bedrock.inferenceProfiles : bedrock.foundationModels);
+    }) as unknown as typeof globalThis.fetch;
+    const list = await listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'ap-southeast-1' }, fetch);
+    // Counted from the recording separately: 33 profiles of active models, and the one model Bedrock runs on demand
+    // by its own id.
+    expect(list.models).toHaveLength(34);
+    expect(list.hidden).toHaveLength(44);
+    expect(list.models).toEqual(
+      expect.arrayContaining([
+        'apac.amazon.nova-micro-v1:0',
+        'global.amazon.nova-2-lite-v1:0',
+        'global.anthropic.claude-sonnet-4-6',
+        'global.openai.gpt-5.4',
+        'global.moonshotai.kimi-k3',
+        'anthropic.claude-sonnet-5',
+        'global.anthropic.claude-sonnet-5',
+      ]),
+    );
+    // Models that run only through a profile, by their own id, and a profile of a legacy model.
+    expect(list.hidden).toEqual(
+      expect.arrayContaining([
+        'amazon.nova-micro-v1:0',
+        'openai.gpt-5.4',
+        'apac.anthropic.claude-3-haiku-20240307-v1:0',
+      ]),
+    );
+    // Embedding models are in neither list, nor are their profiles.
+    const all = [...list.models, ...list.hidden];
+    for (const id of ['cohere.embed-v4:0', 'global.cohere.embed-v4:0']) {
+      expect(all).not.toContain(id);
+    }
+    // A profile comes right before the model it runs.
+    expect(list.models.indexOf('global.anthropic.claude-sonnet-5') + 1).toBe(
+      list.models.indexOf('anthropic.claude-sonnet-5'),
+    );
+    expect(urls).toHaveLength(2);
+  });
+
+  it('lists the Bedrock models alone when the key may not list the profiles', async () => {
+    const fetch = vi.fn(async (url: string) =>
+      url.includes('/inference-profiles')
+        ? Response.json({ Message: 'not authorized to perform: bedrock:ListInferenceProfiles' }, { status: 403 })
+        : Response.json(bedrock.foundationModels),
+    ) as unknown as typeof globalThis.fetch;
+    const list = await listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'ap-southeast-1' }, fetch);
+    expect(list.models).toEqual(['anthropic.claude-sonnet-5']);
+    expect(list.hidden).toContain('openai.gpt-5.4');
+  });
+
+  it('follows the pages of Bedrock inference profiles', async () => {
+    const text = {
+      inputModalities: ['TEXT'],
+      outputModalities: ['TEXT'],
+      inferenceTypesSupported: ['INFERENCE_PROFILE'],
+    };
+    const profile = (id: string, model: string) => ({
+      inferenceProfileId: id,
+      status: 'ACTIVE',
+      models: [{ modelArn: `arn:aws:bedrock:eu-west-1::foundation-model/${model}` }],
+    });
+    const urls: string[] = [];
+    const fetch = vi.fn(async (url: string) => {
+      urls.push(url);
+      if (!url.includes('/inference-profiles'))
+        return Response.json({
+          modelSummaries: [
+            { modelId: 'a.one', ...text },
+            { modelId: 'a.two', ...text },
+          ],
+        });
+      return Response.json(
+        url.includes('nextToken=')
+          ? { inferenceProfileSummaries: [profile('eu.a.two', 'a.two')] }
+          : { inferenceProfileSummaries: [profile('eu.a.one', 'a.one')], nextToken: 'page 2' },
+      );
+    }) as unknown as typeof globalThis.fetch;
+    const list = await listModels({ kind: 'bedrock', apiKey: 'bedrock-key', baseUrl: 'eu-west-1' }, fetch);
+    expect(list).toEqual({ models: ['eu.a.one', 'eu.a.two'], hidden: ['a.one', 'a.two'] });
+    expect(urls[2]).toBe(
+      'https://bedrock.eu-west-1.amazonaws.com/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000&nextToken=page%202',
+    );
+  });
+
+  it('signs both Bedrock list requests with SigV4 for an access key', async () => {
+    const auth: string[] = [];
+    const tokens: Array<string | null> = [];
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const request = input as Request;
+      auth.push(request.headers.get('authorization') ?? '');
+      tokens.push(request.headers.get('x-amz-security-token'));
+      return Response.json(
+        request.url.includes('/inference-profiles') ? { inferenceProfileSummaries: [] } : { modelSummaries: [] },
+      );
+    }) as unknown as typeof globalThis.fetch;
+    await listModels({ kind: 'bedrock', apiKey: 'ASIAEXAMPLE:secret:session', baseUrl: 'ap-southeast-1' }, fetch);
+    expect(auth).toHaveLength(2);
+    for (const header of auth) {
+      expect(header).toMatch(/^AWS4-HMAC-SHA256 Credential=ASIAEXAMPLE\/\d{8}\/ap-southeast-1\/bedrock\/aws4_request/);
+    }
+    expect(tokens).toEqual(['session', 'session']);
+  });
+
   it("reports a Bedrock 403 with AWS's message, as the key or permission, not the origin", async () => {
     const fetch = vi.fn(async () =>
       Response.json({ Message: 'not authorized to perform: bedrock:ListFoundationModels' }, { status: 403 }),
@@ -220,6 +475,18 @@ describe('listModels', () => {
       status: 403,
       originRefused: false,
     });
+  });
+
+  it('hides each part of the key in the error AWS sends for the model list', async () => {
+    const token = 'IQoJb3JpZ2luX2VjEXAMPLE/session+token==';
+    for (const apiKey of [`ASIAEXAMPLE1234:wJalrXUtnFEMIEXAMPLE:${token}`, 'ABSKbearerkey123']) {
+      const quoted = apiKey.split(':').pop()!;
+      const fetch = vi.fn(async () =>
+        Response.json({ message: `Signature mismatch. x-amz-security-token:${quoted}` }, { status: 403 }),
+      ) as unknown as typeof globalThis.fetch;
+      const error = (await listModels({ kind: 'bedrock', apiKey, baseUrl: 'eu-west-1' }, fetch).catch(e => e)) as Error;
+      expect(error.message).toBe('403 Signature mismatch. x-amz-security-token:[redacted]');
+    }
   });
 
   it('reads the error text AWS sends as message too', async () => {

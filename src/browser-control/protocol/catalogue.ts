@@ -1,5 +1,5 @@
 // The tool catalogue as data: name, description, argument schema, read-only flag, capability.
-// A tool is listed only once it is built and its checks exist (plan step 1.6); `available` records that.
+// A tool is listed only once it is built and its checks exist; `available` records that.
 import { z } from 'zod';
 import {
   AskUserArgsSchema,

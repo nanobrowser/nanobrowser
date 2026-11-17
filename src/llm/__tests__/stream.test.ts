@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { APICallError } from 'ai';
 import { ScriptedModel } from '../scripted';
-import { backoffMs, DEFAULT_RETRY, streamTurn } from '../stream';
+import { backoffMs, DEFAULT_RETRY, refusesOutputLimit, streamTurn } from '../stream';
+import { isContextOverflow } from '../overflow';
+import { requestOutputLimit } from '../profiles';
+import { OUTPUT_LIMIT } from '../catalogue';
+import type { ModelProfile } from '../profiles';
 
 const tools = {
   click: { description: 'Click', parameters: { type: 'object', properties: { ref: { type: 'string' } } } },
@@ -125,6 +129,138 @@ describe('streamTurn', () => {
       signal: controller.signal,
     });
     expect(result.finish).toBe('aborted');
+  });
+});
+
+describe('a refused output limit', () => {
+  const refusal = (max: number) =>
+    apiError(
+      400,
+      JSON.stringify({
+        error: { message: `max_tokens is too large: ${max}. This model supports at most 4000 completion tokens` },
+      }),
+    );
+  /** A model that takes at most `most` output tokens and refuses more, naming max_tokens. */
+  const takesAtMost = (most: number) =>
+    new ScriptedModel(call =>
+      (call.maxOutputTokens ?? 0) > most ? { error: refusal(call.maxOutputTokens!) } : { text: 'ok' },
+    );
+
+  it('sends the same request again with half the limit while it is refused, and reports the limit taken', async () => {
+    const scripted = takesAtMost(4000);
+    const result = await streamTurn({
+      chat: scripted.chat(),
+      system: 'sys',
+      messages: [{ role: 'user', content: 'x' }],
+      maxOutputTokens: OUTPUT_LIMIT,
+      sleep: noSleep,
+    });
+    expect(result.text).toBe('ok');
+    expect(scripted.calls.map(c => c.maxOutputTokens)).toEqual([16_384, 8192, 4096, 2048]);
+    expect(result.outputLimit).toBe(2048);
+    // Halving is not an attempt.
+    expect(result.attempts).toBe(1);
+    expect(scripted.calls.every(c => JSON.stringify(c.prompt) === JSON.stringify(scripted.calls[0].prompt))).toBe(true);
+  });
+
+  it('stops at 1,024: a refusal there ends the turn with the error', async () => {
+    const scripted = takesAtMost(500);
+    const result = await streamTurn({
+      chat: scripted.chat(),
+      system: '',
+      messages: [{ role: 'user', content: 'x' }],
+      maxOutputTokens: OUTPUT_LIMIT,
+      sleep: noSleep,
+    });
+    expect(scripted.calls.map(c => c.maxOutputTokens)).toEqual([16_384, 8192, 4096, 2048, 1024]);
+    expect(result.finish).toBe('error');
+    expect(result.outputLimit).toBeUndefined();
+    expect(result.error?.overflow).toBe(false);
+  });
+
+  it('keeps the limit taken when the request then fails for another reason', async () => {
+    const scripted = new ScriptedModel(call =>
+      (call.maxOutputTokens ?? 0) > 4096 ? { error: refusal(call.maxOutputTokens!) } : { error: apiError(500) },
+    );
+    const result = await streamTurn({
+      chat: scripted.chat(),
+      system: '',
+      messages: [{ role: 'user', content: 'x' }],
+      maxOutputTokens: OUTPUT_LIMIT,
+      sleep: noSleep,
+    });
+    expect(result.finish).toBe('error');
+    expect(result.outputLimit).toBe(4096);
+  });
+
+  it('treats a message that names the context beside the limit as a refusal for size', async () => {
+    const body = JSON.stringify({ error: { message: 'max_tokens plus the input exceed context limit (8192)' } });
+    const scripted = new ScriptedModel([{ error: apiError(400, body) }]);
+    const result = await streamTurn({
+      chat: scripted.chat(),
+      system: '',
+      messages: [{ role: 'user', content: 'x' }],
+      maxOutputTokens: OUTPUT_LIMIT,
+      sleep: noSleep,
+    });
+    expect(scripted.calls).toHaveLength(1);
+    expect(result.error?.overflow).toBe(true);
+  });
+
+  it('reads the wordings of the providers, and not a refusal for size or a rate limit', () => {
+    for (const [status, message] of [
+      [
+        400,
+        'max_tokens is too large: 20000. This model supports at most 16384 completion tokens, whereas you provided 20000.',
+      ],
+      [
+        400,
+        'max_tokens: 20000 > 8192, which is the maximum allowed number of output tokens for claude-3-haiku-20240307',
+      ],
+      [400, 'Invalid max_tokens value, the valid range of max_tokens is [1, 8192]'],
+      [400, 'The requested maxOutputTokens exceeds the maximum allowed for this model'],
+      [400, 'Malformed input request: #/maxTokens: 20000 is not less or equal to 8192'],
+      [422, 'max_new_tokens must be <= 4096'],
+      [400, "Unsupported value: 'max_output_tokens' must be at most 4096"],
+      // Groq names the context window beside the limit; it is still a refused limit, not a refusal for size.
+      [
+        400,
+        '`max_tokens` must be less than or equal to `8192`, the maximum value for `max_tokens` is less than the `context_window` for this model',
+      ],
+    ] as const) {
+      expect(refusesOutputLimit(status, message), message).toBe(true);
+    }
+    for (const [status, message] of [
+      [400, "This model's maximum context length is 8192 tokens. However, you requested 20000 tokens"],
+      [429, 'Rate limit reached: max tokens per minute 30000'],
+      [500, 'max_tokens is too large'],
+      [400, 'prompt is too long: 210000 tokens > 200000 maximum'],
+    ] as const) {
+      expect(refusesOutputLimit(status, message), message).toBe(false);
+    }
+    expect(isContextOverflow(apiError(400, '{"message":"max_tokens and prompt exceed context limit"}'))).toBe(true);
+    expect(
+      isContextOverflow(
+        apiError(
+          400,
+          '{"error":{"message":"`max_tokens` must be less than or equal to `8192`, the maximum value for `max_tokens` is less than the `context_window` for this model"}}',
+        ),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('requestOutputLimit', () => {
+  const profile = (contextWindow: number, maxOutput = OUTPUT_LIMIT): ModelProfile => ({
+    contextWindow,
+    maxOutput,
+    vision: false,
+  });
+  it('is the fixed limit, a quarter of a small window, or a learnt limit, and never under 1,024', () => {
+    expect(requestOutputLimit(profile(1_000_000))).toBe(16_384);
+    expect(requestOutputLimit(profile(16_384))).toBe(4096);
+    expect(requestOutputLimit(profile(1_000_000, 2048))).toBe(2048);
+    expect(requestOutputLimit(profile(2000, 500))).toBe(1024);
   });
 });
 

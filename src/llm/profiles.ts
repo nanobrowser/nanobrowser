@@ -1,8 +1,9 @@
-// Model profiles. Each fact comes from the first source that states it: the overrides stored on the model entry (no
-// Settings control), what a test or a run learnt (`tested`), what the model's API said (`fromApi`), the catalogue's
-// row (src/llm/catalogue.ts), then the endpoint's defaults.
-// Detection from a local server then lowers the window.
-import { defaults, findRow, isCloudEndpoint, sendRule } from './catalogue';
+// Model profiles. Each fact comes from the first source that states it: the overrides stored on the model entry
+// (the window from Settings, the others from the checks), what a test or a run learnt (`tested`), what the model's
+// API said (`fromApi`), the catalogue's row (src/llm/catalogue.ts), then the endpoint's defaults. The output limit has
+// no row: it is the fixed limit unless a source above states less. A local server's loaded window is then the window;
+// a number it would load only lowers it.
+import { defaults, findRow, isCloudEndpoint, MIN_OUTPUT_LIMIT, OUTPUT_LIMIT, sendRule } from './catalogue';
 import type { ReasoningEffort, ReasoningSupport, WireEffort } from './catalogue';
 import type { ProviderKind } from './providers';
 
@@ -40,8 +41,10 @@ export interface ProfileInput {
   /** The provider's base URL: the OpenAI-compatible card is a cloud endpoint only at a public host. */
   baseUrl?: string;
   overrides?: { contextWindow?: number; maxOutput?: number; vision?: boolean };
-  /** The window a local server reports it loaded. */
+  /** The window a local server reported for the model. */
   detectedContext?: number;
+  /** Whether that is the window the server has loaded, which is the window, or only what it would load. */
+  detectedLoaded?: boolean;
   /** What the model's API said at the last test. */
   fromApi?: LearntFacts;
   /** What a probe or a run's fallback found; taken over `fromApi`. */
@@ -91,15 +94,19 @@ export function resolveProfile(input: ProfileInput): ModelProfile {
   const { tested, fromApi, overrides } = input;
   const profile: ModelProfile = {
     contextWindow: overrides?.contextWindow || tested?.contextWindow || fromApi?.contextWindow || base.contextWindow,
-    maxOutput: overrides?.maxOutput || tested?.maxOutput || fromApi?.maxOutput || base.maxOutput,
+    maxOutput: overrides?.maxOutput || tested?.maxOutput || fromApi?.maxOutput || OUTPUT_LIMIT,
     vision: overrides?.vision ?? tested?.vision ?? fromApi?.vision ?? base.vision,
   };
   const reasoning = capabilityFrom(reasons, acceptsNone);
   if (reasoning) profile.reasoning = reasoning;
   if (row?.wire) profile.wire = row.wire;
-  // Detection only ever lowers the window.
+  // A window the server has loaded is the window, the user's number capped by it; any other detected number only
+  // lowers the window.
   if (input.detectedContext && input.detectedContext > 0) {
-    profile.contextWindow = Math.min(profile.contextWindow, input.detectedContext);
+    profile.contextWindow =
+      input.detectedLoaded && !overrides?.contextWindow
+        ? input.detectedContext
+        : Math.min(profile.contextWindow, input.detectedContext);
   }
   profile.maxOutput = Math.min(profile.maxOutput, profile.contextWindow);
   const factor = defaults.countFactor[input.kind];
@@ -126,9 +133,12 @@ export function probeAsk(input: ProfileInput): {
   };
 }
 
-/** The output limit sent with each request: the profile's, capped so a reply cannot take most of a small window. */
+/**
+ * The output limit sent with each request: the fixed limit, or less where the model is known to take less, capped so a
+ * reply cannot take most of a small window.
+ */
 export function requestOutputLimit(profile: ModelProfile): number {
-  return Math.max(1024, Math.min(profile.maxOutput, 16_384, Math.floor(profile.contextWindow / 4)));
+  return Math.max(MIN_OUTPUT_LIMIT, Math.min(profile.maxOutput, OUTPUT_LIMIT, Math.floor(profile.contextWindow / 4)));
 }
 
 /** What the SDK's `reasoning` option gets for an effort on this model, or undefined for nothing. */

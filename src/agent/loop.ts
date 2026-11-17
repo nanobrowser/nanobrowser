@@ -189,6 +189,8 @@ export class AgentLoop {
   #window: number | null = null;
   /** How far recovery from a refused request has gone: 0 none, 1 after step 2, 2 after step 3. */
   #overflowStage = 0;
+  /** A request was refused for its size in this run: only the first refusal's stated limit is taken. */
+  #refusedForSize = false;
   /** The notice for a refused reasoning option was written: once per run. */
   #droppedNoted = false;
 
@@ -286,11 +288,22 @@ export class AgentLoop {
   }
 
   /**
-   * A request the provider refused for its size: the window becomes the refused estimate less 10% for the rest of the
-   * run; then step 2 and a retry, then step 3 and a retry, then step 4. A step that would change nothing is skipped.
-   * True when the request may be tried again.
+   * A request the provider refused for its size. When the run's first such refusal states a limit below the model's
+   * window: the run's profile takes it as the window, so the output limit and the reserve follow, it is kept on the
+   * model's entry, and the request is prepared again, compacting only if it does not fit. Otherwise the window becomes
+   * the refused estimate less 10% for the rest of the run; then step 2 and a retry, then step 3 and a retry, then step
+   * 4. A step that would change nothing is skipped. True when the request may be tried again.
    */
-  async recoverFromOverflow(refused: Request): Promise<boolean> {
+  async recoverFromOverflow(refused: Request, stated?: number): Promise<boolean> {
+    const { model } = this.options;
+    const first = !this.#refusedForSize;
+    this.#refusedForSize = true;
+    if (stated && first && stated < model.profile.contextWindow) {
+      model.profile = { ...model.profile, contextWindow: stated };
+      if (this.#window !== null) this.#window = Math.min(this.#window, stated);
+      model.learn?.({ contextWindow: stated });
+      return true;
+    }
     this.#window = Math.min(this.window, Math.floor(this.estimate(refused) * 0.9));
     if (this.#overflowStage === 0) {
       this.#overflowStage = 1;
@@ -805,7 +818,7 @@ export class AgentLoop {
               skipped: true,
             });
           }
-          if (await this.recoverFromOverflow(sent)) continue;
+          if (await this.recoverFromOverflow(sent, reply.error?.limit)) continue;
           // The provider's overflow error, when there was one, is kept for the counts.
           const providerError = reply.error && {
             status: reply.error.status,

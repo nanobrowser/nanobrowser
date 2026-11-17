@@ -10,8 +10,9 @@ import {
   DEFAULT_BASE_URLS,
   openAICompatibleBaseUrl,
   parseBedrockKey,
+  redactingFetch,
 } from './providers';
-import type { CreateModelOptions, ModelSpec } from './providers';
+import type { CreateModelOptions, ModelSpec, ProviderKind } from './providers';
 import { isOriginRefused } from './errors';
 import { refusesImages, refusesReasoning, streamTurn } from './stream';
 import type { TurnRequest, TurnResult } from './stream';
@@ -64,9 +65,16 @@ const PROBE_TOOL = {
 };
 
 /**
+ * The kinds the effort probe runs on: the chat-completions kinds, whose servers may take or refuse the field, and
+ * Bedrock, where the vendor's row describes the model at its vendor while Bedrock and the SDK decide what reaches it.
+ * On the Anthropic, OpenAI and Gemini cards the model's API or the SDK answers instead.
+ */
+const EFFORT_PROBE_KINDS: readonly ProviderKind[] = [...CHAT_COMPLETIONS_KINDS, 'bedrock'];
+
+/**
  * Sends one request with one tool and checks that the reply is a call to it; then the probes, each one short request
- * without the run's fallback: the effort probe on the chat-completions kinds, the None probe and the image probe when
- * `ask` says the fact is unknown.
+ * without the run's fallback: the effort probe on the kinds above, the None probe and the image probe when `ask` says
+ * the fact is unknown.
  */
 export async function testConnection(
   spec: ModelSpec,
@@ -102,15 +110,17 @@ export async function testConnection(
   const once = (request: Partial<TurnRequest>) => streamTurn({ ...probe, ...request, fallback: false });
   const refused = (r: TurnResult) => !!r.error && refusesReasoning(r.error.status, r.error.message);
 
-  // The effort probe: Low, then Medium, then High, to the first accepted. "Reasons: no" only when all are refused,
-  // since a model can refuse one level and take another; reasoning tokens in an accepted reply mean it reasons.
-  if (CHAT_COMPLETIONS_KINDS.includes(spec.kind)) {
+  // The effort probe: Low, then Medium, then High, to the first accepted. "Reasons: no" when all are refused, since a
+  // model can refuse one level and take another, or when the SDK drops the option itself, which it decides by model and
+  // not by level; reasoning tokens in an accepted reply mean it reasons.
+  if (EFFORT_PROBE_KINDS.includes(spec.kind)) {
     let allRefused = true;
     for (const level of ['low', 'medium', 'high'] as const) {
       const r = await once({ reasoning: level });
       if (refused(r)) continue;
       allRefused = false;
-      if (!r.error && (r.usage?.reasoning ?? 0) > 0) tested.reasons = true;
+      if (!r.error && r.reasoningIgnored) tested.reasons = false;
+      else if (!r.error && (r.usage?.reasoning ?? 0) > 0) tested.reasons = true;
       break;
     }
     if (allRefused) tested.reasons = false;
@@ -171,6 +181,129 @@ function hiddenEntry(name: string, m: ListEntry): boolean {
   return deprecated || unusable || NOT_CHAT.test(name);
 }
 
+interface BedrockModel {
+  modelId?: string;
+  inputModalities?: string[];
+  outputModalities?: string[];
+  inferenceTypesSupported?: string[];
+  modelLifecycle?: { status?: string };
+  inferenceAPIsSupported?: { converse?: { sync?: boolean } };
+}
+
+interface BedrockProfile {
+  inferenceProfileId?: string;
+  status?: string;
+  models?: Array<{ modelArn?: string }>;
+}
+
+/**
+ * A signed GET to the Bedrock control plane of the card's region, with the card's key; throws with AWS's message, the
+ * key hidden, when the request fails.
+ */
+export function bedrockRequest(
+  spec: Pick<ModelSpec, 'apiKey' | 'baseUrl'>,
+  fetchFn: typeof fetch,
+): (path: string) => Promise<Record<string, unknown>> {
+  const problem = bedrockProblem(spec.baseUrl, spec.apiKey);
+  if (problem) throw new Error(problem);
+  const region = bedrockRegion(spec.baseUrl)!;
+  const creds = parseBedrockKey(spec.apiKey);
+  const send = redactingFetch(spec.apiKey, fetchFn);
+  const aws = creds.apiKey
+    ? null
+    : new AwsClient({
+        accessKeyId: creds.accessKeyId!,
+        secretAccessKey: creds.secretAccessKey!,
+        ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
+        service: 'bedrock',
+        region,
+      });
+  return async (path: string) => {
+    const url = `${bedrockEndpoint('bedrock', region)}${path}`;
+    let response: Response;
+    try {
+      response = aws
+        ? await send(await aws.sign(url))
+        : await send(url, { headers: { authorization: `Bearer ${creds.apiKey}` } });
+    } catch (error) {
+      throw Object.assign(new Error(`Could not reach bedrock.${region}.amazonaws.com`), {
+        originRefused: isOriginRefused(error),
+      });
+    }
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { message?: unknown; Message?: unknown } | null;
+      const text = body?.message ?? body?.Message;
+      const reason = typeof text === 'string' ? text : response.statusText;
+      throw Object.assign(new Error(`${response.status} ${reason}`.trim()), {
+        status: response.status,
+        // An AWS 403 is a refused key or a missing permission, never the browser's origin.
+        originRefused: false,
+      });
+    }
+    return (await response.json()) as Record<string, unknown>;
+  };
+}
+
+/**
+ * Bedrock's text models, from ListFoundationModels, and the inference profiles that run them, from
+ * ListInferenceProfiles. Most newer models run only through a profile (`global.` or a geography such as `apac.`), so
+ * each profile is listed before its model, and a model Bedrock does not run on demand by its own id is hidden. A key
+ * that may not list the profiles still gets the models.
+ */
+async function bedrockEntries(
+  spec: Pick<ModelSpec, 'apiKey' | 'baseUrl'>,
+  fetchFn: typeof fetch,
+): Promise<Array<[string, ListEntry]>> {
+  const get = bedrockRequest(spec, fetchFn);
+
+  const models = ((await get('/foundation-models')).modelSummaries as BedrockModel[] | undefined) ?? [];
+  const text = models.filter(model => {
+    if (!model.modelId) return false;
+    if (model.inferenceAPIsSupported?.converse?.sync === false) return false;
+    const input = model.inputModalities;
+    const output = model.outputModalities;
+    return !(input && !input.includes('TEXT')) && !(output && !output.includes('TEXT'));
+  });
+  const lifecycle = (model: BedrockModel) => {
+    const status = model.modelLifecycle?.status;
+    // ACTIVE or LEGACY.
+    return typeof status === 'string' ? { lifecycle: status.toLowerCase() } : {};
+  };
+
+  const profiles: BedrockProfile[] = [];
+  try {
+    let token: string | undefined;
+    // A few pages at most: a region has tens of system-defined profiles.
+    for (let page = 0; page < 10; page++) {
+      const query = `?typeEquals=SYSTEM_DEFINED&maxResults=1000${token ? `&nextToken=${encodeURIComponent(token)}` : ''}`;
+      const body = await get(`/inference-profiles${query}`);
+      profiles.push(...((body.inferenceProfileSummaries as BedrockProfile[] | undefined) ?? []));
+      token = typeof body.nextToken === 'string' && body.nextToken ? body.nextToken : undefined;
+      if (!token) break;
+    }
+  } catch {
+    // The key may list models but not profiles (bedrock:ListInferenceProfiles); the models alone are listed.
+  }
+
+  const entries: Array<[string, ListEntry]> = [];
+  for (const model of text) {
+    for (const profile of profiles) {
+      const id = profile.inferenceProfileId;
+      const runs = profile.models?.[0]?.modelArn?.split('/').pop();
+      if (!id || runs !== model.modelId || (profile.status && profile.status !== 'ACTIVE')) continue;
+      entries.push([id, lifecycle(model)]);
+    }
+    entries.push([
+      model.modelId!,
+      {
+        ...(model.inferenceTypesSupported ? { inferenceTypesSupported: model.inferenceTypesSupported } : {}),
+        ...lifecycle(model),
+      },
+    ]);
+  }
+  return entries;
+}
+
 /** The models a provider lists, split into the likely and the hidden. Throws with the server's message when the request fails. */
 export async function listModels(
   spec: Pick<ModelSpec, 'kind' | 'apiKey' | 'baseUrl'>,
@@ -229,70 +362,7 @@ export async function listModels(
       break;
     }
     case 'bedrock': {
-      const problem = bedrockProblem(spec.baseUrl, spec.apiKey);
-      if (problem) throw new Error(problem);
-      const region = bedrockRegion(spec.baseUrl)!;
-      const url = `${bedrockEndpoint('bedrock', region)}/foundation-models`;
-      const creds = parseBedrockKey(spec.apiKey);
-      let response: Response;
-      try {
-        if (creds.apiKey) {
-          response = await fetchFn(url, { headers: { authorization: `Bearer ${creds.apiKey}` } });
-        } else {
-          const aws = new AwsClient({
-            accessKeyId: creds.accessKeyId!,
-            secretAccessKey: creds.secretAccessKey!,
-            ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-            service: 'bedrock',
-            region,
-          });
-          response = await fetchFn(await aws.sign(url));
-        }
-      } catch (error) {
-        throw Object.assign(new Error(`Could not reach bedrock.${region}.amazonaws.com`), {
-          originRefused: isOriginRefused(error),
-        });
-      }
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: unknown; Message?: unknown } | null;
-        const text = body?.message ?? body?.Message;
-        const reason = typeof text === 'string' ? text : response.statusText;
-        throw Object.assign(new Error(`${response.status} ${reason}`.trim()), {
-          status: response.status,
-          // An AWS 403 is a refused key or a missing permission, never the browser's origin.
-          originRefused: false,
-        });
-      }
-      const body = (await response.json()) as {
-        modelSummaries?: Array<{
-          modelId?: string;
-          inputModalities?: string[];
-          outputModalities?: string[];
-          inferenceTypesSupported?: string[];
-          modelLifecycle?: { status?: string };
-        }>;
-      };
-      entries = (body.modelSummaries ?? [])
-        .filter(model => {
-          const id = model.modelId ?? '';
-          if (!id) return false;
-          const input = model.inputModalities;
-          const output = model.outputModalities;
-          if (input && !input.includes('TEXT')) return false;
-          if (output && !output.includes('TEXT')) return false;
-          return true;
-        })
-        .map((model): [string, ListEntry] => {
-          const status = model.modelLifecycle?.status;
-          return [
-            String(model.modelId),
-            {
-              ...(model.inferenceTypesSupported ? { inferenceTypesSupported: model.inferenceTypesSupported } : {}),
-              // ACTIVE or LEGACY.
-              ...(typeof status === 'string' ? { lifecycle: status.toLowerCase() } : {}),
-            },
-          ];
-        });
+      entries = await bedrockEntries(spec, fetchFn);
       break;
     }
     default: {
@@ -321,15 +391,22 @@ export async function listModels(
   return list;
 }
 
+/** What a local server says of a model's window: the number, and whether it is the window the server has loaded. */
+export interface DetectedContext {
+  window?: number;
+  loaded: boolean;
+}
+
 /**
- * The context window a local server loaded for a model (WebBrain's table): Ollama from `/api/ps`, then `/api/show`; LM
- * Studio from `/api/v0/models` (`loaded_context_length`). Undefined when the server does not say. The profile only ever
- * lowers the user's value with it.
+ * The context window a local server reports for a model (WebBrain's table): the window it loaded, from Ollama's
+ * `/api/ps` or LM Studio's `/api/v0/models` (`loaded_context_length`); else, for Ollama, what it would load, from
+ * `/api/show`. Undefined when the server does not answer, so what was stored before is kept. A loaded window is the
+ * model's window; any other number only lowers it.
  */
 export async function detectContext(
   spec: Pick<ModelSpec, 'kind' | 'baseUrl' | 'modelName'>,
   fetchFn: typeof fetch = fetch,
-): Promise<number | undefined> {
+): Promise<DetectedContext | undefined> {
   const root = (openAICompatibleBaseUrl(spec.kind, spec.baseUrl) ?? '').replace(/\/v1$/, '');
   const json = async (url: string, init?: RequestInit) => {
     try {
@@ -342,25 +419,29 @@ export async function detectContext(
   const positive = (n: unknown) => (typeof n === 'number' && n > 0 ? n : undefined);
   if (spec.kind === 'ollama') {
     const ps = await json(`${root}/api/ps`);
-    const loaded = (ps?.models as Array<{ name?: string; model?: string; context_length?: number }> | undefined)?.find(
+    if (!ps) return undefined;
+    const loaded = (ps.models as Array<{ name?: string; model?: string; context_length?: number }> | undefined)?.find(
       m => m.name === spec.modelName || m.model === spec.modelName,
     );
-    if (positive(loaded?.context_length)) return loaded!.context_length;
+    if (positive(loaded?.context_length)) return { window: loaded!.context_length, loaded: true };
     const show = await json(`${root}/api/show`, { method: 'POST', body: JSON.stringify({ model: spec.modelName }) });
-    if (!show) return undefined;
+    if (!show) return { loaded: false };
     // A num_ctx in the model's parameters is what the server loads; otherwise the model's own maximum.
     const numCtx = /(?:^|\n)\s*num_ctx\s+(\d+)/.exec(String(show.parameters ?? ''))?.[1];
-    if (numCtx) return Number(numCtx);
+    if (numCtx) return { window: Number(numCtx), loaded: false };
     const info = (show.model_info ?? {}) as Record<string, unknown>;
     const key = Object.keys(info).find(k => k.endsWith('.context_length'));
-    return key ? positive(info[key]) : undefined;
+    const window = key ? positive(info[key]) : undefined;
+    return window ? { window, loaded: false } : { loaded: false };
   }
   if (spec.kind === 'lmstudio') {
     const models = await json(`${root}/api/v0/models`);
-    const model = (models?.data as Array<{ id?: string; loaded_context_length?: number }> | undefined)?.find(
+    if (!models) return undefined;
+    const model = (models.data as Array<{ id?: string; loaded_context_length?: number }> | undefined)?.find(
       m => m.id === spec.modelName,
     );
-    return positive(model?.loaded_context_length);
+    const window = positive(model?.loaded_context_length);
+    return window ? { window, loaded: true } : { loaded: false };
   }
   return undefined;
 }

@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { bedrockProblem, bedrockRegion, createModel, openAICompatibleBaseUrl, parseBedrockKey } from '../providers';
+import {
+  bedrockProblem,
+  bedrockRegion,
+  createModel,
+  openAICompatibleBaseUrl,
+  parseBedrockKey,
+  redactingFetch,
+} from '../providers';
 import type { ModelSpec } from '../providers';
 import { streamTurn } from '../stream';
 
@@ -181,10 +188,72 @@ describe('providers', () => {
     }
   });
 
+  it('Bedrock: no part of the key comes back in a refused turn', async () => {
+    const token = 'IQoJb3JpZ2luX2VjEXAMPLE/session+token==';
+    const secret = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
+    // The token also as JSON may write it, with `/` escaped: parsed, it is the token again.
+    const escaped = token.replaceAll('/', '\\/');
+    const body = `{"message":"The request signature we calculated does not match. x-amz-security-token:${token} ${encodeURIComponent(token)} ${secret} ${escaped}"}`;
+    const fetch = vi.fn(
+      async () => new Response(body, { status: 403, headers: { 'content-type': 'application/json' } }),
+    ) as unknown as typeof globalThis.fetch;
+    const result = await streamTurn({
+      chat: createModel(
+        {
+          kind: 'bedrock',
+          modelName: 'amazon.nova-lite-v1:0',
+          apiKey: `ASIAEXAMPLE1234:${secret}:${token}`,
+          baseUrl: 'eu-west-1',
+        },
+        { fetch },
+      ),
+      system: 'You are a test.',
+      messages: [{ role: 'user', content: 'hi' }],
+      tools,
+      retry: { attempts: 1, baseMs: 0, maxMs: 0 },
+    });
+    const text = result.error?.message ?? '';
+    expect(text).toContain('The request signature we calculated does not match');
+    expect(text).toContain('[redacted]');
+    for (const part of [token, encodeURIComponent(token), secret]) expect(text).not.toContain(part);
+  });
+
   it('OpenRouter sends its headers', async () => {
     const r = await capture({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5', apiKey: 'or' });
     expect(r.url).toBe('https://openrouter.ai/api/v1/chat/completions');
     expect(r.headers.get('x-title')).toBe('Nanobrowser');
+  });
+});
+
+describe('redactingFetch', () => {
+  it('replaces each part of the key in a refused body, and keeps the status, the headers and the rest', async () => {
+    const base = vi.fn(
+      async () =>
+        new Response('{"message":"bad key ABSKbearerkey123 near AKIAEXAMPLE1 and short"}', {
+          status: 403,
+          statusText: 'Forbidden',
+          headers: { 'x-amzn-requestid': 'r1', 'content-length': '999' },
+        }),
+    ) as unknown as typeof globalThis.fetch;
+    for (const key of ['ABSKbearerkey123', 'AKIAEXAMPLE1:short']) {
+      const response = await redactingFetch(key, base)('https://bedrock.eu-west-1.amazonaws.com/x');
+      expect(response.status).toBe(403);
+      expect(response.statusText).toBe('Forbidden');
+      expect(response.headers.get('x-amzn-requestid')).toBe('r1');
+      const text = await response.text();
+      expect(text).not.toContain(key.split(':')[0]);
+      // A part under 8 characters is not replaced.
+      expect(text).toContain('and short');
+      expect(JSON.parse(text).message).toMatch(/^bad key /);
+    }
+  });
+
+  it('passes a successful response through unread', async () => {
+    const ok = new Response('ABSKbearerkey123', { status: 200 });
+    const base = vi.fn(async () => ok) as unknown as typeof globalThis.fetch;
+    const response = await redactingFetch('ABSKbearerkey123', base)('https://example.test');
+    expect(response).toBe(ok);
+    expect(response.bodyUsed).toBe(false);
   });
 });
 

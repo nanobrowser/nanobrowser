@@ -2,7 +2,19 @@
 // the four efforts become on the wire, with the future names of each family. Regression coverage for the order of the
 // rows.
 import { describe, expect, it } from 'vitest';
-import { atLeast, cleanName, findRow, isCloudEndpoint, REASONING_EFFORTS, rows, sendRule } from '../catalogue';
+import { readFileSync } from 'node:fs';
+import {
+  atLeast,
+  bedrockName,
+  cleanName,
+  defaults,
+  findRow,
+  isCloudEndpoint,
+  OUTPUT_LIMIT,
+  REASONING_EFFORTS,
+  rows,
+  sendRule,
+} from '../catalogue';
 import type { CatalogueRow, ReasoningSupport, WireEffort } from '../catalogue';
 import type { ProviderKind } from '../providers';
 import { makePair, resolveProfile, wireEffort } from '../profiles';
@@ -247,40 +259,45 @@ describe('the catalogue', () => {
 
 // Recorded documentation facts, separate from lookup and wire coverage. Endpoint limits can change independently of
 // vendor limits; these are snapshots of the sources on the rows, not live API tests.
-describe('documented model limits and vision (2026-10-10)', () => {
-  const facts: Array<[ProviderKind, string, number, number, boolean]> = [
-    ['openai', 'gpt-6.1-sol', 1_050_000, 128_000, true],
-    ['openai', 'gpt-6-sol', 1_050_000, 128_000, true],
-    ['openai', 'gpt-5.5-pro', 1_050_000, 128_000, true],
-    ['openai', 'gpt-5.2-pro', 400_000, 128_000, true],
-    ['openai', 'o1-mini', 128_000, 65_536, false],
-    ['openai', 'o1-preview', 128_000, 32_768, false],
-    ['openai', 'o3-mini', 200_000, 100_000, false],
-    ['anthropic', 'claude-opus-5-5', 1_000_000, 128_000, true],
-    ['anthropic', 'claude-sonnet-5-5', 1_000_000, 128_000, true],
-    ['anthropic', 'claude-haiku-5-5', 1_000_000, 128_000, true],
-    ['anthropic', 'claude-fable-5-1', 1_000_000, 128_000, true],
-    ['anthropic', 'claude-opus-4-1', 200_000, 32_000, true],
-    ['anthropic', 'claude-opus-4-5', 200_000, 64_000, true],
-    ['gemini', 'gemini-3.8-flash', 1_048_576, 65_536, true],
-    ['gemini', 'gemini-3.1-pro-preview', 1_048_576, 65_536, true],
-    ['gemini', 'gemini-3.5-flash-lite', 1_048_576, 65_536, true],
-    ['openai-compatible', 'grok-4.7', 500_000, 500_000, true],
-    ['openrouter', 'x-ai/grok-4.7', 500_000, 450_000, true],
-    ['openai-compatible', 'deepseek-v4.1-flash', 1_000_000, 384_000, true],
-    ['openai-compatible', 'deepseek-v4-pro-0813', 1_000_000, 384_000, false],
-    ['openrouter', 'deepseek/deepseek-v4.1-flash', 1_048_576, 943_718, true],
-    ['openrouter', 'moonshotai/kimi-k3', 1_048_576, 943_718, true],
-    ['openai-compatible', 'glm-5.3', 1_000_000, 128_000, false],
-    ['openai-compatible', 'glm-5.3-flash', 1_000_000, 128_000, true],
-    ['openai-compatible', 'qwen3.8-max', 1_000_000, 131_072, true],
-    ['openrouter', 'qwen/qwen3.8-2.4t-a95b', 1_048_576, 131_072, false],
-    ['ollama', 'qwen3-vl:8b', 262_144, 4096, true],
-    ['ollama', 'gpt-oss:20b', 131_072, 4096, false],
+describe('documented model windows and vision (2026-10-10)', () => {
+  const facts: Array<[ProviderKind, string, number, boolean]> = [
+    ['openai', 'gpt-6.1-sol', 1_050_000, true],
+    ['openai', 'gpt-6-sol', 1_050_000, true],
+    ['openai', 'gpt-5.5-pro', 1_050_000, true],
+    ['openai', 'gpt-5.2-pro', 400_000, true],
+    ['openai', 'o1-mini', 128_000, false],
+    ['openai', 'o1-preview', 128_000, false],
+    ['openai', 'o3-mini', 200_000, false],
+    ['anthropic', 'claude-opus-5-5', 1_000_000, true],
+    ['anthropic', 'claude-sonnet-5-5', 1_000_000, true],
+    ['anthropic', 'claude-haiku-5-5', 1_000_000, true],
+    ['anthropic', 'claude-fable-5-1', 1_000_000, true],
+    ['anthropic', 'claude-opus-4-1', 200_000, true],
+    ['anthropic', 'claude-opus-4-5', 200_000, true],
+    ['gemini', 'gemini-3.8-flash', 1_048_576, true],
+    ['gemini', 'gemini-3.1-pro-preview', 1_048_576, true],
+    ['gemini', 'gemini-3.5-flash-lite', 1_048_576, true],
+    ['openai-compatible', 'grok-4.7', 500_000, true],
+    ['openrouter', 'x-ai/grok-4.7', 500_000, true],
+    ['openai-compatible', 'deepseek-v4.1-flash', 1_000_000, true],
+    ['openai-compatible', 'deepseek-v4-pro-0813', 1_000_000, false],
+    ['openrouter', 'deepseek/deepseek-v4.1-flash', 1_048_576, true],
+    ['openrouter', 'moonshotai/kimi-k3', 1_048_576, true],
+    ['openai-compatible', 'glm-5.3', 1_000_000, false],
+    ['openai-compatible', 'glm-5.3-flash', 1_000_000, true],
+    ['openai-compatible', 'qwen3.8-max', 1_000_000, true],
+    ['openrouter', 'qwen/qwen3.8-2.4t-a95b', 1_048_576, false],
+    ['ollama', 'qwen3-vl:8b', 262_144, true],
+    ['ollama', 'gpt-oss:20b', 131_072, false],
   ];
-  it.each(facts)('%s %s', (kind, modelName, contextWindow, maxOutput, vision) => {
+  it.each(facts)('%s %s', (kind, modelName, contextWindow, vision) => {
     const baseUrl = kind === 'openai-compatible' ? CLOUD_URL : undefined;
-    expect(resolveProfile({ kind, modelName, baseUrl })).toMatchObject({ contextWindow, maxOutput, vision });
+    // No row states an output limit: every model gets the fixed one.
+    expect(resolveProfile({ kind, modelName, baseUrl })).toMatchObject({
+      contextWindow,
+      maxOutput: OUTPUT_LIMIT,
+      vision,
+    });
   });
 
   it('gives a family row vision, as the newest models of the family have', () => {
@@ -291,11 +308,6 @@ describe('documented model limits and vision (2026-10-10)', () => {
     ] as const) {
       expect(resolveProfile({ kind, modelName: name, baseUrl: CLOUD_URL }).vision).toBe(true);
     }
-  });
-
-  it('identifies an unpublished output maximum as a fallback', () => {
-    expect(findRow('openai-compatible', 'kimi-k3')?.source).toContain('output maximum unpublished');
-    expect(findRow('openai-compatible', 'qwen3.8-omni-flash')?.source).toContain('output maximum unpublished');
   });
 });
 
@@ -312,7 +324,6 @@ describe('the send rule', () => {
       id: 'synthetic',
       match: /^synthetic$/,
       contextWindow: 1,
-      maxOutput: 1,
       vision: false,
       reasoning: 'always',
       wire: { low: 'minimal' },
@@ -397,5 +408,139 @@ describe('profiles and pairs', () => {
     expect(makePair('m', 'high', 'always')).toEqual({ model: 'm', reasoning: 'high' });
     expect(makePair('m', 'low', 'none')).toEqual({ model: 'm', reasoning: 'none' });
     expect(makePair('m', 'low', undefined)).toEqual({ model: 'm', reasoning: 'none' });
+  });
+});
+
+describe('Bedrock ids', () => {
+  // Every text model and inference profile id recorded from ap-southeast-1 on 2026-11-10, with the row it must find, or
+  // null for the defaults (Amazon Nova, TwelveLabs, and an embedding profile no row is for).
+  const expected: Array<[string, string | null]> = [
+    ['anthropic.claude-opus-5', 'claude-5'],
+    ['openai.gpt-6-astra', 'gpt-6'],
+    ['openai.gpt-5.6-terra', 'gpt-5-4-plus'],
+    ['anthropic.claude-opus-4-8', 'claude-4-6-plus'],
+    ['anthropic.claude-opus-4-7', 'claude-4-6-plus'],
+    ['anthropic.claude-haiku-4-5-20251001-v1:0', 'claude-4'],
+    ['anthropic.claude-opus-5-5', 'claude-opus-5-5'],
+    ['openai.gpt-6-sol', 'gpt-6-sol-luna'],
+    ['moonshotai.kimi-k3.1', 'kimi-k3'],
+    ['anthropic.claude-sonnet-4-5-20250929-v1:0', 'claude-4'],
+    ['openai.gpt-6-luna', 'gpt-6-sol-luna'],
+    ['zai.glm-5.3', 'glm-5-3'],
+    ['moonshotai.kimi-k3', 'kimi-k3'],
+    ['anthropic.claude-fable-5', 'claude-fable'],
+    ['anthropic.claude-fable-5-1', 'claude-fable'],
+    ['anthropic.claude-haiku-5-5', 'claude-5'],
+    ['twelvelabs.pegasus-1-5-v1:0', null],
+    ['openai.gpt-5.6-luna', 'gpt-5-4-plus'],
+    ['anthropic.claude-sonnet-5-5', 'claude-sonnet-5-5'],
+    ['anthropic.claude-sonnet-5', 'claude-5'],
+    ['anthropic.claude-sonnet-4-6', 'claude-4-6-plus'],
+    ['xai.grok-4.7', 'grok-4-7'],
+    ['xai.grok-4.6', 'grok-4-5-to-7'],
+    ['amazon.nova-2-lite-v1:0', null],
+    ['anthropic.claude-fable-5-2', 'claude-fable'],
+    ['twelvelabs.pegasus-1-2-v1:0', null],
+    ['openai.gpt-5.6-sol', 'gpt-5-4-plus'],
+    ['openai.gpt-5.4', 'gpt-5-4-plus'],
+    ['anthropic.claude-opus-4-5-20251101-v1:0', 'claude-4'],
+    ['openai.gpt-5.5', 'gpt-5-4-plus'],
+    ['openai.gpt-6.1-terra', 'gpt-6'],
+    ['openai.gpt-6.1-sol', 'gpt-6'],
+    ['anthropic.claude-opus-4-6-v1', 'claude-4-6-plus'],
+    ['amazon.nova-pro-v1:0', null],
+    ['amazon.nova-lite-v1:0', null],
+    ['amazon.nova-micro-v1:0', null],
+    ['anthropic.claude-3-haiku-20240307-v1:0', 'claude-3'],
+    ['anthropic.claude-3-5-sonnet-20240620-v1:0', 'claude-3'],
+    ['anthropic.claude-3-sonnet-20240229-v1:0:28k', 'claude-3'],
+    ['anthropic.claude-3-sonnet-20240229-v1:0:200k', 'claude-3'],
+    ['anthropic.claude-3-sonnet-20240229-v1:0', 'claude-3'],
+    ['anthropic.claude-3-5-sonnet-20241022-v2:0', 'claude-3'],
+    ['apac.anthropic.claude-3-5-sonnet-20240620-v1:0', 'claude-3'],
+    ['apac.anthropic.claude-3-sonnet-20240229-v1:0', 'claude-3'],
+    ['apac.anthropic.claude-3-haiku-20240307-v1:0', 'claude-3'],
+    ['apac.anthropic.claude-3-5-sonnet-20241022-v2:0', 'claude-3'],
+    ['apac.amazon.nova-micro-v1:0', null],
+    ['apac.amazon.nova-lite-v1:0', null],
+    ['apac.amazon.nova-pro-v1:0', null],
+    ['global.cohere.embed-v4:0', null],
+    ['global.twelvelabs.pegasus-1-2-v1:0', null],
+    ['global.amazon.nova-2-lite-v1:0', null],
+    ['global.anthropic.claude-sonnet-4-5-20250929-v1:0', 'claude-4'],
+    ['global.anthropic.claude-fable-5', 'claude-fable'],
+    ['global.openai.gpt-5.6-sol', 'gpt-5-4-plus'],
+    ['global.xai.grok-4.6', 'grok-4-5-to-7'],
+    ['global.anthropic.claude-haiku-4-5-20251001-v1:0', 'claude-4'],
+    ['global.anthropic.claude-fable-5-1', 'claude-fable'],
+    ['global.twelvelabs.pegasus-1-5-v1:0', null],
+    ['global.openai.gpt-6-sol', 'gpt-6-sol-luna'],
+    ['global.openai.gpt-5.4', 'gpt-5-4-plus'],
+    ['global.openai.gpt-5.5', 'gpt-5-4-plus'],
+    ['global.anthropic.claude-opus-4-5-20251101-v1:0', 'claude-4'],
+    ['global.anthropic.claude-opus-5', 'claude-5'],
+    ['global.anthropic.claude-opus-4-8', 'claude-4-6-plus'],
+    ['global.anthropic.claude-sonnet-5', 'claude-5'],
+    ['global.anthropic.claude-opus-4-7', 'claude-4-6-plus'],
+    ['global.xai.grok-4.7', 'grok-4-7'],
+    ['global.openai.gpt-6-astra', 'gpt-6'],
+    ['global.openai.gpt-6.1-sol', 'gpt-6'],
+    ['global.zai.glm-5.3', 'glm-5-3'],
+    ['global.anthropic.claude-sonnet-4-6', 'claude-4-6-plus'],
+    ['global.moonshotai.kimi-k3', 'kimi-k3'],
+    ['global.anthropic.claude-haiku-5-5', 'claude-5'],
+    ['global.anthropic.claude-sonnet-5-5', 'claude-sonnet-5-5'],
+    ['global.openai.gpt-5.6-luna', 'gpt-5-4-plus'],
+    ['global.openai.gpt-6-luna', 'gpt-6-sol-luna'],
+    ['global.openai.gpt-6.1-terra', 'gpt-6'],
+    ['global.anthropic.claude-opus-5-5', 'claude-opus-5-5'],
+    ['global.openai.gpt-5.6-terra', 'gpt-5-4-plus'],
+    ['global.moonshotai.kimi-k3.1', 'kimi-k3'],
+    ['global.anthropic.claude-fable-5-2', 'claude-fable'],
+    ['global.anthropic.claude-opus-4-6-v1', 'claude-4-6-plus'],
+  ];
+
+  it('covers every id of the recording', () => {
+    const recorded = JSON.parse(readFileSync(`${__dirname}/payloads/bedrock-ap-southeast-1-2026-11-10.json`, 'utf8'));
+    const ids = new Set<string>();
+    for (const m of recorded.foundationModels.modelSummaries) {
+      if (m.inputModalities.includes('TEXT') && m.outputModalities.includes('TEXT')) ids.add(m.modelId);
+    }
+    for (const p of recorded.inferenceProfiles.inferenceProfileSummaries) ids.add(p.inferenceProfileId);
+    expect(new Set(expected.map(([id]) => id))).toEqual(ids);
+  });
+
+  it.each(expected)('%s finds %s', (id, row) => {
+    expect(findRow('bedrock', id)?.id ?? null).toBe(row);
+  });
+
+  it('reads an id as its vendor names the model', () => {
+    expect(bedrockName('global.anthropic.claude-sonnet-4-6')).toBe('claude-sonnet-4-6');
+    expect(bedrockName('apac.amazon.nova-micro-v1:0')).toBe('nova-micro');
+    expect(bedrockName('anthropic.claude-3-sonnet-20240229-v1:0:200k')).toBe('claude-3-sonnet-20240229');
+    expect(bedrockName('anthropic.claude-opus-4-6-v1')).toBe('claude-opus-4-6');
+    // A leading part with a digit is the model's: its dot stays.
+    expect(bedrockName('openai.gpt-5.4')).toBe('gpt-5.4');
+    expect(bedrockName('global.openai.gpt-5.4')).toBe('gpt-5.4');
+  });
+
+  it('takes no family row: an open model reaches the defaults, not its vendor family', () => {
+    for (const id of ['openai.gpt-oss-120b-1:0', 'qwen.qwen3-coder-480b-a35b-v1:0', 'deepseek.r2-v1:0']) {
+      expect(findRow('bedrock', id)).toBeUndefined();
+      expect(resolveProfile({ kind: 'bedrock', modelName: id })).toMatchObject({
+        contextWindow: defaults.cloud.contextWindow,
+        vision: true,
+      });
+    }
+    // On another kind the same names keep their rows, and an id with Bedrock's shape is not read as one.
+    expect(findRow('openrouter', 'qwen/qwen3-coder')?.id).toBe('qwen-family');
+    expect(findRow('anthropic', 'anthropic.claude-sonnet-4-6')).toBeUndefined();
+  });
+
+  it('gives a Claude profile on Bedrock its window, as on the Anthropic card', () => {
+    expect(resolveProfile({ kind: 'bedrock', modelName: 'global.anthropic.claude-sonnet-4-6' }).contextWindow).toBe(
+      resolveProfile({ kind: 'anthropic', modelName: 'claude-sonnet-4-6' }).contextWindow,
+    );
+    expect(resolveProfile({ kind: 'bedrock', modelName: 'global.moonshotai.kimi-k3' }).contextWindow).toBe(1_000_000);
   });
 });

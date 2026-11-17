@@ -257,7 +257,7 @@ function ModelSetup({ local }: { local: boolean }) {
     const entry: ModelEntry = {
       name: model,
       noToolCalling: !tested.toolCalling,
-      ...(detected ? { detectedContext: detected } : {}),
+      ...(detected ? { detectedContext: detected, detectedLoaded: !!test.patch.detectedLoaded } : {}),
       ...(test.patch.fromApi ? { fromApi: test.patch.fromApi } : {}),
       ...(test.patch.tested ? { tested: { ...test.patch.tested, at } } : {}),
     };

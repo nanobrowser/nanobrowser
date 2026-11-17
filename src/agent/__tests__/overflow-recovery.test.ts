@@ -1,7 +1,8 @@
 // Steps 3 and 4 of context management and a request refused for its size, with the context-set cases that need them.
 import 'fake-indexeddb/auto';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
+import { APICallError } from 'ai';
 import { ScriptedModel, resolveProfile } from '@src/llm';
 import type { ScriptedCall, ScriptedReply } from '@src/llm';
 import { activeBranch, appendEntry, createConversation } from '@src/store/conversations';
@@ -9,6 +10,7 @@ import { closeDb } from '@src/store/db';
 import type { EntryOf } from '@src/store/types';
 import { hardLimit } from '../elision';
 import { AgentLoop, CONTEXT_LIMIT } from '../loop';
+import type { ResolvedModel } from '../run';
 import { agentSystemPrompt } from '../prompt';
 import { toolsForRun } from '../tools';
 import { FakeHost, FakeLayer, ok, receipt } from '../testing/fake-layer';
@@ -22,15 +24,26 @@ afterEach(async () => {
 type Prompt = Array<{ role: string; content: unknown }>;
 const size = (prompt: Prompt) => JSON.stringify(prompt).length / 4;
 
-/** A provider that refuses a request over `limit` tokens, as a server whose real window is smaller. */
-function provider(limit: number, script: (call: ScriptedCall, turn: number) => ScriptedReply, summary?: string) {
+/**
+ * A provider that refuses a request over `limit` tokens, as a server whose real window is smaller, stating the limit
+ * as chat completions does, or, with `silent`, stating none.
+ */
+function provider(
+  limit: number,
+  script: (call: ScriptedCall, turn: number) => ScriptedReply,
+  summary?: string,
+  silent?: true,
+) {
   const refused: number[] = [];
   const inner = withSummaries(script, summary);
   const fn = (call: ScriptedCall): ScriptedReply => {
     if (size(call.prompt as Prompt) > limit) {
       refused.push(size(call.prompt as Prompt));
       return {
-        error: Object.assign(new Error(`This model's maximum context length is ${limit} tokens.`), { statusCode: 400 }),
+        error: Object.assign(
+          new Error(silent ? 'prompt is too long' : `This model's maximum context length is ${limit} tokens.`),
+          { statusCode: 400 },
+        ),
       };
     }
     return { ...inner(call), usage: { input: Math.round(size(call.prompt as Prompt)), output: 10 } };
@@ -48,10 +61,17 @@ function loopFor(
   const scripted = new ScriptedModel(script);
   const profile = resolveProfile({ kind: 'ollama', modelName: 'm', overrides: { contextWindow: window } });
   const tools = toolsForRun({ disabled, vision: false });
+  const model: ResolvedModel = {
+    ref: { providerId: 'p', model: 'm' },
+    chat: scripted.chat(),
+    profile,
+    reasoning: 'none',
+    learn: vi.fn(),
+  };
   const loop = new AgentLoop({
     conversationId,
     runId: 'r',
-    model: { ref: { providerId: 'p', model: 'm' }, chat: scripted.chat(), profile, reasoning: 'none' },
+    model,
     system: agentSystemPrompt({ tools: tools.map(t => t.name) }),
     tools,
     layer,
@@ -61,7 +81,7 @@ function loopFor(
     turnCap: 100,
     mode: () => 'auto',
   });
-  return { loop, scripted, profile };
+  return { loop, scripted, profile, model };
 }
 
 function flatsLayer(extra: ConstructorParameters<typeof FakeLayer>[0] = {}) {
@@ -145,12 +165,104 @@ describe('a request the provider refuses for its size', () => {
       'tabs',
       'upload',
     ];
-    const { loop } = loopFor(c.id, fn, flatsLayer(), 65_536, short);
+    const { loop, model } = loopFor(c.id, fn, flatsLayer(), 65_536, short);
     const end = await loop.run();
     expect(end).toMatchObject({ status: 'done' });
     expect(refused.length).toBeGreaterThan(0);
     expect(refused.length).toBeLessThan(4);
+    // The refusal states 14,000: the run's window, kept on the model's entry.
+    expect(loop.window).toBeLessThanOrEqual(14_000);
+    expect(model.profile.contextWindow).toBe(14_000);
+    expect(model.learn).toHaveBeenCalledWith({ contextWindow: 14_000 });
+  });
+
+  it('lowers the window from the estimate when the refusal states no limit, and stores nothing', async () => {
+    const c = await createConversation({ mode: 'auto' });
+    await appendEntry(c.id, {
+      type: 'message',
+      message: { role: 'user', parts: [{ type: 'text', text: 'Read the listings.' }] },
+    });
+    const { fn, refused } = provider(
+      14_000,
+      (_call, i) => ({
+        text: `Reading ${i}. `.repeat(40),
+        toolCalls:
+          i < 24
+            ? [{ name: 'read', input: {}, id: `r${i}` }]
+            : [{ name: 'done', input: { outcome: 'success', summary: 'Read.' }, id: 'd' }],
+      }),
+      undefined,
+      true,
+    );
+    const short = ['find', 'screenshot', 'wait', 'set', 'type', 'press', 'navigate', 'handle_dialog', 'fill_form'];
+    const { loop, model } = loopFor(c.id, fn, flatsLayer(), 65_536, [...short, 'hover', 'scroll', 'tabs', 'upload']);
+    const end = await loop.run();
+    expect(end).toMatchObject({ status: 'done' });
+    expect(refused.length).toBeGreaterThan(0);
     expect(loop.window).toBeLessThan(14_000);
+    expect(model.profile.contextWindow).toBe(65_536);
+    expect(model.learn).not.toHaveBeenCalled();
+  });
+
+  it('takes no stated limit after a first refusal that stated none, nor from a 413', async () => {
+    for (const errors of [
+      ['prompt is too long', "This model's maximum context length is 20000 tokens."],
+      ["413: This model's maximum context length is 20000 tokens."],
+    ]) {
+      const c = await createConversation({ mode: 'auto' });
+      await appendEntry(c.id, { type: 'message', message: { role: 'user', parts: [{ type: 'text', text: 'Hi.' }] } });
+      let calls = 0;
+      const fn = (): ScriptedReply => {
+        const message = errors[calls++];
+        if (message === undefined) {
+          return { toolCalls: [{ name: 'done', input: { outcome: 'success', summary: 'Hi.' }, id: 'd' }] };
+        }
+        if (message.startsWith('413')) {
+          return {
+            error: new APICallError({ message, url: 'u', requestBodyValues: {}, statusCode: 413, isRetryable: false }),
+          };
+        }
+        return { error: Object.assign(new Error(message), { statusCode: 400 }) };
+      };
+      const { loop, model } = loopFor(c.id, fn, new FakeLayer(), 65_536);
+      await loop.run();
+      expect(model.learn).not.toHaveBeenCalled();
+      expect(model.profile.contextWindow).toBe(65_536);
+    }
+  });
+
+  it('takes a stated limit once, with its output limit; a second refusal goes the estimate way', async () => {
+    const c = await createConversation({ mode: 'auto' });
+    await appendEntry(c.id, { type: 'message', message: { role: 'user', parts: [{ type: 'text', text: 'Hi.' }] } });
+    // States 20,000, then refuses again: a server whose real limit is lower than it says.
+    const fn = (): ScriptedReply => ({
+      error: Object.assign(new Error("This model's maximum context length is 20000 tokens."), { statusCode: 400 }),
+    });
+    const { loop, model, scripted } = loopFor(c.id, fn, new FakeLayer(), 65_536);
+    // Nothing in this short conversation can be compacted, so the second refusal ends the run.
+    expect((await loop.run()).reason).toBe(CONTEXT_LIMIT);
+    expect(model.profile.contextWindow).toBe(20_000);
+    expect(model.learn).toHaveBeenCalledTimes(1);
+    // The output limit follows the stated window: a quarter of 20,000.
+    expect(scripted.calls[1].maxOutputTokens).toBe(5000);
+    // The second refusal lowered the window from the request's estimate.
+    expect(loop.window).toBeLessThan(20_000);
+  });
+
+  it('stores nothing for a refusal that states no limit, or one at or above the window', async () => {
+    for (const message of ['prompt is too long', "This model's maximum context length is 70000 tokens."]) {
+      const c = await createConversation({ mode: 'auto' });
+      await appendEntry(c.id, { type: 'message', message: { role: 'user', parts: [{ type: 'text', text: 'Hi.' }] } });
+      let calls = 0;
+      const fn = (): ScriptedReply =>
+        ++calls === 1
+          ? { error: Object.assign(new Error(message), { statusCode: 400 }) }
+          : { toolCalls: [{ name: 'done', input: { outcome: 'success', summary: 'Hi.' }, id: 'd' }] };
+      const { loop, model } = loopFor(c.id, fn, new FakeLayer(), 65_536);
+      await loop.run();
+      expect(model.learn).not.toHaveBeenCalled();
+      expect(model.profile.contextWindow).toBe(65_536);
+    }
   });
 
   it('stops with the context-limit result when nothing more can be removed, and never drops a user message', async () => {
@@ -158,10 +270,11 @@ describe('a request the provider refuses for its size', () => {
     const long = 'Please keep in mind every detail of this instruction. '.repeat(700);
     await appendEntry(c.id, { type: 'message', message: { role: 'user', parts: [{ type: 'text', text: long }] } });
     const { fn, refused } = provider(6_000, () => ({ text: 'ok' }));
-    const { loop, scripted } = loopFor(c.id, fn, new FakeLayer(), 65_536);
+    const { loop, scripted, model } = loopFor(c.id, fn, new FakeLayer(), 65_536);
     const end = await loop.run();
     expect(end.reason).toBe(CONTEXT_LIMIT);
-    expect(end.providerError?.overflow).toBe(true);
+    // The stated 6,000 is the window: the request is seen not to fit and is not sent again.
+    expect(model.profile.contextWindow).toBe(6_000);
     expect(refused.length).toBe(1);
     for (const call of scripted.calls) expect(JSON.stringify(call.prompt)).toContain(long.slice(0, 200));
   });

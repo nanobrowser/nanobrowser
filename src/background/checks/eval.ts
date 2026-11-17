@@ -101,7 +101,7 @@ async function runOne(
     type: 'message',
     message: { role: 'user', parts: [{ type: 'text', text: task.task }] },
   });
-  let detected: number | undefined;
+  let detected: Awaited<ReturnType<typeof detectContext>>;
   if (args.kind === 'ollama' || args.kind === 'lmstudio') {
     detected = await detectContext({ kind: args.kind, modelName: args.model, baseUrl: args.baseUrl });
   }
@@ -110,7 +110,8 @@ async function runOne(
     modelName: args.model,
     baseUrl: args.baseUrl,
     overrides: args.contextWindow ? { contextWindow: args.contextWindow } : undefined,
-    detectedContext: detected,
+    detectedContext: detected?.window,
+    detectedLoaded: detected?.loaded,
   });
   const chat = createModel({
     kind: args.kind,

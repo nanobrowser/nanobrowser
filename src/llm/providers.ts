@@ -98,6 +98,36 @@ export function parseBedrockKey(apiKey?: string): {
 }
 
 /**
+ * A fetch that hides the entered key in a refused response. AWS's error text can quote the request it expected, with the
+ * session token in it, and that text is shown to the user and kept in the conversation. Each part of the key, as it is
+ * and URL-encoded, becomes `[redacted]`; a part shorter than 8 characters is left, so ordinary words are not replaced.
+ * A response that is OK is passed through unread.
+ */
+export function redactingFetch(apiKey: string | undefined, base?: typeof fetch): typeof fetch {
+  const creds = parseBedrockKey(apiKey);
+  const parts = [creds.apiKey, creds.accessKeyId, creds.secretAccessKey, creds.sessionToken]
+    .filter((part): part is string => !!part && part.length >= 8)
+    // As entered, URL-encoded, and escaped inside a JSON string (`/` may be written `\/`).
+    .flatMap(part => [part, encodeURIComponent(part), JSON.stringify(part).slice(1, -1).replaceAll('/', '\\/')]);
+  // The longest first, so a part inside another is not replaced in it first.
+  const unique = [...new Set(parts)].sort((a, b) => b.length - a.length);
+  // The global fetch is looked up at each call, as the SDK does when it is given none.
+  const send: typeof fetch = base ?? ((input, init) => globalThis.fetch(input, init));
+  if (unique.length === 0) return send;
+  return async (input, init) => {
+    const response = await send(input, init);
+    if (response.ok) return response;
+    let body = await response.text();
+    for (const part of unique) body = body.split(part).join('[redacted]');
+    // The body is now plain text of another length.
+    const headers = new Headers(response.headers);
+    headers.delete('content-length');
+    headers.delete('content-encoding');
+    return new Response(body, { status: response.status, statusText: response.statusText, headers });
+  };
+}
+
+/**
  * Why a Bedrock card cannot be used as it stands, or undefined when it can. A key with a part missing is refused: the
  * AWS SDK would fill the gap from the environment's AWS credentials.
  */
@@ -178,7 +208,7 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
         baseURL: bedrockEndpoint('bedrock-runtime', region),
         ...creds,
         apiKey: creds.apiKey ?? '',
-        fetch,
+        fetch: redactingFetch(apiKey, fetch),
       });
       return { spec, model: bedrock(modelName) };
     }

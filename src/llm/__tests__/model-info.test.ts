@@ -2,6 +2,7 @@
 // DeepSeek, Kimi, Mistral, Ollama and LM Studio in their documented shapes; and the reader's requests with a mocked
 // fetch.
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { factsFrom, readModelInfo } from '../model-info';
 
 const ANTHROPIC_OPUS_5_5 = {
@@ -52,6 +53,19 @@ describe('factsFrom', () => {
 
   it('reads the limits and a bare "reasons" from Gemini, and nothing about vision or None', () => {
     expect(factsFrom(GEMINI_3_8_FLASH)).toEqual({ contextWindow: 1_048_576, maxOutput: 65_536, reasons: true });
+  });
+
+  it("reads Groq's output limit at the top of a model's record", () => {
+    // Groq's documented /models shape.
+    const groq = {
+      id: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      object: 'model',
+      owned_by: 'Meta',
+      active: true,
+      context_window: 131_072,
+      max_completion_tokens: 8192,
+    };
+    expect(factsFrom(groq)).toMatchObject({ contextWindow: 131_072, maxOutput: 8192 });
   });
 
   it("reads OpenRouter's explicit efforts and mandatory flag, and not a bare parameter", () => {
@@ -111,6 +125,38 @@ describe('factsFrom', () => {
 });
 
 describe('readModelInfo', () => {
+  it("reads a Bedrock model's images from AWS's list of foundation models, for a model id and a profile id", async () => {
+    const recorded = JSON.parse(readFileSync(`${__dirname}/payloads/bedrock-ap-southeast-1-2026-11-10.json`, 'utf8'));
+    const urls: string[] = [];
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+      urls.push(String(input instanceof Request ? input.url : input));
+      return Response.json(recorded.foundationModels);
+    }) as unknown as typeof globalThis.fetch;
+    const read = (modelName: string, apiKey = 'k') =>
+      readModelInfo({ kind: 'bedrock', modelName, apiKey, baseUrl: 'ap-southeast-1' }, fetch);
+    expect(await read('apac.amazon.nova-micro-v1:0')).toEqual({ vision: false });
+    expect(await read('amazon.nova-micro-v1:0')).toEqual({ vision: false });
+    expect(await read('global.moonshotai.kimi-k3')).toEqual({ vision: true });
+    // Signed with an access key, too.
+    expect(await read('global.anthropic.claude-sonnet-4-6', 'AKIAEXAMPLE:secret')).toEqual({ vision: true });
+    // An id the list does not hold leaves vision to the image probe.
+    expect(await read('global.example.unknown-v1:0')).toBeNull();
+    expect(urls.every(u => u === 'https://bedrock.ap-southeast-1.amazonaws.com/foundation-models')).toBe(true);
+  });
+
+  it('reads nothing from Bedrock when the list is refused or the card cannot be used', async () => {
+    const refused = vi.fn(async () =>
+      Response.json({ message: 'not authorized' }, { status: 403 }),
+    ) as unknown as typeof globalThis.fetch;
+    expect(
+      await readModelInfo({ kind: 'bedrock', modelName: 'm', apiKey: 'k', baseUrl: 'us-east-1' }, refused),
+    ).toBeNull();
+    expect(
+      await readModelInfo({ kind: 'bedrock', modelName: 'm', apiKey: '', baseUrl: 'us-east-1' }, refused),
+    ).toBeNull();
+    expect(refused).toHaveBeenCalledTimes(1);
+  });
+
   const answer = (body: unknown, ok = true) =>
     vi.fn(async () => new Response(JSON.stringify(body), { status: ok ? 200 : 404 })) as unknown as typeof fetch;
 

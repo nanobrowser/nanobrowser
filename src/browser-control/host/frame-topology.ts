@@ -133,7 +133,7 @@ export class PuppeteerFrameTopology implements TopologyPort {
   }
 }
 
-/** Step 0.2 spike helpers, kept for the Session tab. */
+/** Helpers from the first connection tests, kept for the test panel's Session tab and the timing checks. */
 export interface FrameInfo {
   frameId: string;
   parentFrameId: string | undefined;

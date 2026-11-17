@@ -5,7 +5,15 @@ export * from './errors';
 export * from './overflow';
 export * from './stream';
 export * from './profiles';
-export { findRow, isCloudEndpoint, NOT_CHAT, REASONING_EFFORTS, sendRule } from './catalogue';
+export {
+  findRow,
+  isCloudEndpoint,
+  MAX_CONTEXT_WINDOW,
+  MIN_CONTEXT_WINDOW,
+  NOT_CHAT,
+  REASONING_EFFORTS,
+  sendRule,
+} from './catalogue';
 export type { CatalogueRow, ReasoningEffort, ReasoningSupport, WireEffort } from './catalogue';
 export * from './connection';
 export * from './model-info';

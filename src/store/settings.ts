@@ -3,6 +3,7 @@
 import type { ProviderKind } from '../llm/providers';
 import { resolveProfile } from '../llm/profiles';
 import type { LearntFacts } from '../llm/profiles';
+import { MAX_CONTEXT_WINDOW, MIN_CONTEXT_WINDOW } from '../llm/catalogue';
 import type { ReasoningEffort, ReasoningSupport } from '../llm/catalogue';
 import { createStorage } from './storage';
 import type { LivePair, ModelRef, PermissionMode } from './types';
@@ -70,7 +71,7 @@ export const settingsStorage = createStorage<Settings>('nb.settings', DEFAULT_SE
 
 export type { ProviderKind };
 
-/** Overrides of a model's profile; Settings has no control for them, the checks set them. */
+/** Overrides of a model's profile; Settings sets the window of the default model, and the checks set the others. */
 export interface ProfileOverrides {
   contextWindow?: number;
   maxOutput?: number;
@@ -80,8 +81,10 @@ export interface ProfileOverrides {
 export interface ModelEntry {
   name: string;
   overrides?: ProfileOverrides;
-  /** Detected from a local server; only ever lowers the window. */
+  /** Detected from a local server: the window when it is the one the server loaded, else only a lower bound. */
   detectedContext?: number;
+  /** Whether `detectedContext` is the window the server has loaded. */
+  detectedLoaded?: boolean;
   /** Test models found no tool calling; the model cannot be chosen for the agent. */
   noToolCalling?: boolean;
   /** What the model's API said at the last test; replaced whole at each test. */
@@ -135,7 +138,8 @@ export function withBaseUrl(provider: ProviderConfig, baseUrl: string): Provider
 
 /**
  * Keeps facts a run learnt about a model in its `tested` record, unless the provider's base URL changed since, since
- * they describe the server the run talked to.
+ * they describe the server the run talked to. A window the provider stated below the number the user set replaces that
+ * number, in the same write: the provider's own word wins.
  */
 export async function learnFacts(
   providerId: string,
@@ -149,9 +153,17 @@ export async function learnFacts(
         ? p
         : {
             ...p,
-            models: p.models.map(m =>
-              m.name === modelName ? { ...m, tested: { ...m.tested, ...facts, at: new Date().toISOString() } } : m,
-            ),
+            models: p.models.map(m => {
+              if (m.name !== modelName) return m;
+              const learnt = { ...m, tested: { ...m.tested, ...facts, at: new Date().toISOString() } };
+              const set = m.overrides?.contextWindow;
+              if (!facts.contextWindow || !set || facts.contextWindow >= set) return learnt;
+              const overrides: ProfileOverrides = { ...m.overrides };
+              delete overrides.contextWindow;
+              if (Object.keys(overrides).length) return { ...learnt, overrides };
+              delete (learnt as ModelEntry).overrides;
+              return learnt;
+            }),
           },
     ),
   );
@@ -219,6 +231,61 @@ export function capabilityOf(
     baseUrl: found.provider.baseUrl,
     ...learnt(found.model),
   }).reasoning;
+}
+
+/**
+ * The window a configured model runs at when the user sets none, which Settings shows as "Auto (N)": the profile
+ * resolved without the user's window, from what was learnt, the model's API, the catalogue and the local server.
+ */
+export function autoWindow(providers: ProviderConfig[], ref: ModelRef | null | undefined): number | undefined {
+  const found = findModel(providers, ref);
+  if (!found) return undefined;
+  const overrides: ProfileOverrides = { ...found.model.overrides };
+  delete overrides.contextWindow;
+  return resolveProfile({
+    kind: found.provider.kind,
+    modelName: found.model.name,
+    baseUrl: found.provider.baseUrl,
+    overrides,
+    detectedContext: found.model.detectedContext,
+    detectedLoaded: found.model.detectedLoaded,
+    ...learnt(found.model),
+  }).contextWindow;
+}
+
+/**
+ * A window typed in Settings: null for an empty field (Auto), the number for a whole number of tokens in range, plain
+ * or with a separator between groups of three digits (`200,000`, `200.000`, `200 000`), undefined for anything else,
+ * which is not stored: a decimal such as `128000.5` is not read as digits.
+ */
+export function windowFromText(text: string): number | null | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  if (!/^(\d+|\d{1,3}([,.\s'_\u00a0\u202f]\d{3})+)$/.test(trimmed)) return undefined;
+  const n = Number(trimmed.replace(/\D/g, ''));
+  return n >= MIN_CONTEXT_WINDOW && n <= MAX_CONTEXT_WINDOW ? n : undefined;
+}
+
+/** Stores the user's window on a model's entry, or removes it (null) so the model runs at Auto. */
+export async function setContextWindow(ref: ModelRef, contextWindow: number | null): Promise<void> {
+  await providersStorage.set(list =>
+    list.map(p =>
+      p.id !== ref.providerId
+        ? p
+        : {
+            ...p,
+            models: p.models.map(m => {
+              if (m.name !== ref.model) return m;
+              const overrides: ProfileOverrides = { ...m.overrides };
+              if (contextWindow === null) delete overrides.contextWindow;
+              else overrides.contextWindow = contextWindow;
+              const next: ModelEntry = { ...m, overrides };
+              if (!Object.keys(overrides).length) delete next.overrides;
+              return next;
+            }),
+          },
+    ),
+  );
 }
 
 /** A site's rule: one map, keyed with `siteOf`, one rule per site. */

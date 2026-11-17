@@ -1,6 +1,6 @@
 // Perception tier 2: DOMSnapshot.captureSnapshot decoded and joined with the accessibility tree.
 // It finds what the accessibility tree leaves out (a clickable div is a nameless generic node there) and gives
-// geometry to the window and the budget (step 3.2). Live input values in the snapshot are never printed.
+// geometry to the window and the budget. Live input values in the snapshot are never printed.
 
 /** The computed styles requested, in this order (about ten). */
 export const LAYOUT_STYLES = [

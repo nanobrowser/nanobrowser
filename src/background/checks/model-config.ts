@@ -2,7 +2,9 @@
 // recorded requests show what reached the wire. A two-step task at Low sends `reasoning_effort: 'low'` on every turn,
 // each request begins with the one before and ends with a header; an unknown model at None sends nothing; a server that
 // refuses the field gets the same request without it, one notice, nothing stored, and the option again on the next run;
-// a reply that is all reasoning ends the turn with its message; the model picker writes the live pair and the settings.
+// a reply that is all reasoning ends the turn with its message; the model picker writes the live pair and the settings;
+// a server that refuses the output limit gets it halved until taken, and the next run sends what was taken; a server
+// that refuses a request for its size and states its limit teaches the window, which the next run starts from.
 import { FIXTURE_ORIGIN } from '../fixtures-config';
 import { defineCheck } from './registry';
 import { sleep, waitForLoad } from './helpers';
@@ -12,7 +14,32 @@ const LLM = 'http://localhost:8787/__llm';
 
 interface Recorded {
   reasoning_effort?: string;
+  max_tokens?: number;
+  tools?: unknown[];
   messages: Array<{ role: string; content: unknown }>;
+}
+
+interface StoredModel {
+  name: string;
+  overrides?: { contextWindow?: number };
+  tested?: { contextWindow?: number; maxOutput?: number };
+}
+
+async function storedModels(): Promise<StoredModel[]> {
+  const providers = (await chrome.storage.local.get('nb.providers'))['nb.providers'] as Array<{
+    models: StoredModel[];
+  }>;
+  return providers[0].models;
+}
+
+/** Sets the user's window on the fixture model's entry. */
+async function setFixtureWindow(contextWindow: number): Promise<void> {
+  const providers = (await chrome.storage.local.get('nb.providers'))['nb.providers'] as Array<{
+    models: StoredModel[];
+  }>;
+  providers[0].models[0] = { ...providers[0].models[0], overrides: { contextWindow } };
+  await chrome.storage.local.set({ 'nb.providers': providers });
+  await sleep(300);
 }
 
 async function requests(): Promise<Recorded[]> {
@@ -183,6 +210,76 @@ defineCheck({
         await waitForText(p.id, 'Second run.');
         await p.status();
         report.sentAgainNextRun = (await requests())[0]?.reasoning_effort === 'low';
+      } finally {
+        await p.close();
+      }
+    }
+
+    // 3b. A server that takes fewer output tokens than are asked: 8,192 (a quarter of the fixture's 32,768-token window)
+    // and 4,096 refused, 2,048 taken and kept, with no notice; the next run sends 2,048 at once.
+    {
+      const p = await openPanel();
+      try {
+        const script = (text: string) =>
+          fetch(`${LLM}/script`, { method: 'POST', body: JSON.stringify({ replies: [{ text }], maxTokens: 2048 }) });
+        await script('Took less.');
+        await panel(p.id, 'type-send', { text: 'First run' });
+        await waitForText(p.id, 'Took less.');
+        await p.status();
+        report.outputHalved = JSON.stringify((await requests()).map(r => r.max_tokens)) === '[8192,4096,2048]';
+        report.outputNoNotice = !(await panel(p.id, 'read')).transcript.includes('did not take');
+        const providers = (await chrome.storage.local.get('nb.providers'))['nb.providers'] as Array<{
+          models: Array<{ name: string; tested?: { maxOutput?: number } }>;
+        }>;
+        report.outputKept = providers[0].models[0].tested?.maxOutput === 2048;
+        await reset();
+        await script('Second run.');
+        await panel(p.id, 'type-send', { text: 'Second run' });
+        await waitForText(p.id, 'Second run.');
+        await p.status();
+        report.outputNextRun = JSON.stringify((await requests()).map(r => r.max_tokens)) === '[2048]';
+      } finally {
+        await p.close();
+      }
+    }
+
+    // 3c. A server that refuses a request for its size and states its limit, counting the tools and the output limit as
+    // vLLM does. The user's window of 65,536 sends 16,384 output tokens; the limit is set from a first request so that the
+    // conversation fits it with a quarter of it for output. The refusal's limit replaces the user's number and is the
+    // window from then on: the request is sent again at once, and the next run is not refused.
+    {
+      const p = await openPanel();
+      try {
+        await setFixtureWindow(65_536);
+        await scriptReplies([{ text: 'Measured.' }]);
+        await panel(p.id, 'type-send', { text: 'First run' });
+        await waitForText(p.id, 'Measured.');
+        await p.status();
+        const [first] = await requests();
+        const input = (JSON.stringify(first.messages).length + JSON.stringify(first.tools ?? []).length) / 4;
+        const limit = Math.ceil((input + 600) / 0.6);
+        report.sizePrecondition = input + 16_384 > limit;
+        await reset();
+        const script = (text: string) =>
+          fetch(`${LLM}/script`, {
+            method: 'POST',
+            body: JSON.stringify({ replies: [{ text }], contextLimit: limit }),
+          });
+        await script('Fitted the window.');
+        await panel(p.id, 'type-send', { text: 'Second run' });
+        await waitForText(p.id, 'Fitted the window.');
+        await p.status();
+        const sent = (await requests()).map(r => r.max_tokens);
+        report.sizeRefusedThenTaken =
+          JSON.stringify(sent) === JSON.stringify([16_384, Math.min(16_384, Math.floor(limit / 4))]);
+        const model = (await storedModels())[0];
+        report.sizeKept = model.tested?.contextWindow === limit && model.overrides?.contextWindow === undefined;
+        await reset();
+        await script('Not refused.');
+        await panel(p.id, 'type-send', { text: 'Third run' });
+        await waitForText(p.id, 'Not refused.');
+        await p.status();
+        report.sizeNextRun = (await requests()).length === 1;
       } finally {
         await p.close();
       }

@@ -1,0 +1,1474 @@
+{
+  "_note": "AWS Bedrock in ap-southeast-1, recorded on 2026-11-10 with a short-term API key: ListFoundationModels and ListInferenceProfiles (system-defined), trimmed to the fields the model list reads. No account id or ARN of the account is kept.",
+  "foundationModels": {
+    "modelSummaries": [
+      {
+        "modelId": "anthropic.claude-opus-5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-07-23T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-6-astra",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-08T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-5.6-terra",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-08-13T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-opus-4-8",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-05-28T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-opus-4-7",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-04-16T14:30:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-haiku-4-5-20251001-v1:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-10-15T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-opus-5-5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-22T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-6-sol",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-22T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "moonshotai.kimi-k3.1",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-11-06T23:59:59Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": "2027-04-08T08:00:00Z",
+          "legacyTime": "2026-10-08T08:00:00Z",
+          "publicExtendedAccessTime": "2027-01-08T08:00:00Z",
+          "startOfLifeTime": "2025-09-29T00:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-6-luna",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-22T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "zai.glm-5.3",
+        "inputModalities": ["TEXT"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-29T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "moonshotai.kimi-k3",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-08-27T16:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-fable-5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-06-09T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-fable-5-1",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-08-31T16:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-haiku-5-5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-10-07T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "twelvelabs.pegasus-1-5-v1:0",
+        "inputModalities": ["TEXT", "VIDEO"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-18T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": false
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-5.6-luna",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-08-13T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-sonnet-5-5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-28T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-sonnet-5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["ON_DEMAND", "INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-06-30T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-sonnet-4-6",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-02-17T18:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "xai.grok-4.7",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-09-28T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "xai.grok-4.6",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-08-19T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "amazon.nova-2-lite-v1:0",
+        "inputModalities": ["TEXT", "IMAGE", "VIDEO"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-12-02T08:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-fable-5-2",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-10-14T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "twelvelabs.pegasus-1-2-v1:0",
+        "inputModalities": ["TEXT", "VIDEO"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": "2027-03-22T08:00:00Z",
+          "legacyTime": "2026-09-22T08:00:00Z",
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-10-31T00:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": false
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-5.6-sol",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-08-13T17:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "cohere.embed-v4:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["EMBEDDING"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-10-02T00:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": false,
+            "sync": false
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-5.4",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-04-30T00:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-opus-4-5-20251101-v1:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-11-24T00:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-5.5",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-05-21T00:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-6.1-terra",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-10-23T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "openai.gpt-6.1-sol",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-10-15T10:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-opus-4-6-v1",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2026-02-05T18:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "amazon.nova-pro-v1:0",
+        "inputModalities": ["TEXT", "IMAGE", "VIDEO"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2024-12-03T08:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "amazon.nova-lite-v1:0",
+        "inputModalities": ["TEXT", "IMAGE", "VIDEO"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2024-12-03T08:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "amazon.nova-micro-v1:0",
+        "inputModalities": ["TEXT"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2024-12-03T08:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-3-haiku-20240307-v1:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["ON_DEMAND"],
+        "modelLifecycle": {
+          "endOfLifeTime": "2026-11-13T08:00:00Z",
+          "legacyTime": "2026-10-10T08:00:00Z",
+          "publicExtendedAccessTime": "2026-10-10T08:00:00Z",
+          "startOfLifeTime": "2024-03-13T08:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["ON_DEMAND"],
+        "modelLifecycle": {
+          "endOfLifeTime": "2026-11-13T08:00:00Z",
+          "legacyTime": "2026-10-10T08:00:00Z",
+          "publicExtendedAccessTime": "2026-10-10T08:00:00Z",
+          "startOfLifeTime": "2024-06-20T08:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-3-sonnet-20240229-v1:0:28k",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": [],
+        "modelLifecycle": {
+          "endOfLifeTime": "2026-11-13T08:00:00Z",
+          "legacyTime": "2026-10-10T08:00:00Z",
+          "publicExtendedAccessTime": "2026-10-10T08:00:00Z",
+          "startOfLifeTime": "2024-03-04T08:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-3-sonnet-20240229-v1:0:200k",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": [],
+        "modelLifecycle": {
+          "endOfLifeTime": "2026-11-13T08:00:00Z",
+          "legacyTime": "2026-10-10T08:00:00Z",
+          "publicExtendedAccessTime": "2026-10-10T08:00:00Z",
+          "startOfLifeTime": "2024-03-04T08:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-3-sonnet-20240229-v1:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": "2026-11-13T08:00:00Z",
+          "legacyTime": "2026-10-10T08:00:00Z",
+          "publicExtendedAccessTime": "2026-10-10T08:00:00Z",
+          "startOfLifeTime": "2024-03-04T08:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        "inputModalities": ["TEXT", "IMAGE"],
+        "outputModalities": ["TEXT"],
+        "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+        "modelLifecycle": {
+          "endOfLifeTime": "2026-11-13T08:00:00Z",
+          "legacyTime": "2026-10-10T08:00:00Z",
+          "publicExtendedAccessTime": "2026-10-10T08:00:00Z",
+          "startOfLifeTime": "2024-10-22T08:00:00Z",
+          "status": "LEGACY"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": true,
+            "sync": true
+          }
+        }
+      },
+      {
+        "modelId": "cohere.embed-english-v3",
+        "inputModalities": ["TEXT"],
+        "outputModalities": ["EMBEDDING"],
+        "inferenceTypesSupported": ["ON_DEMAND"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-01-24T08:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": false,
+            "sync": false
+          }
+        }
+      },
+      {
+        "modelId": "cohere.embed-multilingual-v3",
+        "inputModalities": ["TEXT"],
+        "outputModalities": ["EMBEDDING"],
+        "inferenceTypesSupported": ["ON_DEMAND"],
+        "modelLifecycle": {
+          "endOfLifeTime": null,
+          "legacyTime": null,
+          "publicExtendedAccessTime": null,
+          "startOfLifeTime": "2025-01-24T08:00:00Z",
+          "status": "ACTIVE"
+        },
+        "inferenceAPIsSupported": {
+          "converse": {
+            "streaming": false,
+            "sync": false
+          }
+        }
+      }
+    ]
+  },
+  "inferenceProfiles": {
+    "inferenceProfileSummaries": [
+      {
+        "inferenceProfileId": "apac.anthropic.claude-3-5-sonnet-20240620-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "apac.anthropic.claude-3-sonnet-20240229-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "apac.anthropic.claude-3-haiku-20240307-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "apac.anthropic.claude-3-5-sonnet-20241022-v2:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-3::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "apac.amazon.nova-micro-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/amazon.nova-micro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-micro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/amazon.nova-micro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/amazon.nova-micro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/amazon.nova-micro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-3::foundation-model/amazon.nova-micro-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "apac.amazon.nova-lite-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/amazon.nova-lite-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/amazon.nova-lite-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/amazon.nova-lite-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/amazon.nova-lite-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-3::foundation-model/amazon.nova-lite-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "apac.amazon.nova-pro-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-2::foundation-model/amazon.nova-pro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-pro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-south-1::foundation-model/amazon.nova-pro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-2::foundation-model/amazon.nova-pro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/amazon.nova-pro-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-northeast-3::foundation-model/amazon.nova-pro-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.cohere.embed-v4:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/cohere.embed-v4:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/cohere.embed-v4:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.twelvelabs.pegasus-1-2-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/twelvelabs.pegasus-1-2-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/twelvelabs.pegasus-1-2-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.amazon.nova-2-lite-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/amazon.nova-2-lite-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/amazon.nova-2-lite-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-fable-5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-fable-5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-fable-5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-5.6-sol",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-5.6-sol"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-5.6-sol"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.xai.grok-4.6",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/xai.grok-4.6"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/xai.grok-4.6"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-fable-5-1",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-fable-5-1"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-fable-5-1"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.twelvelabs.pegasus-1-5-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/twelvelabs.pegasus-1-5-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/twelvelabs.pegasus-1-5-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-6-sol",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-6-sol"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-6-sol"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-5.4",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-5.4"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-5.4"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-5.5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-5.5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-5.5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-opus-4-5-20251101-v1:0",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-opus-4-5-20251101-v1:0"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-opus-4-5-20251101-v1:0"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-opus-5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-opus-5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-opus-5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-opus-4-8",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-opus-4-8"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-opus-4-8"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-sonnet-5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-sonnet-5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-sonnet-5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-opus-4-7",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-opus-4-7"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-opus-4-7"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.xai.grok-4.7",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/xai.grok-4.7"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/xai.grok-4.7"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-6-astra",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-6-astra"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-6-astra"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-6.1-sol",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-6.1-sol"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-6.1-sol"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.zai.glm-5.3",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/zai.glm-5.3"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/zai.glm-5.3"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-sonnet-4-6",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-sonnet-4-6"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-sonnet-4-6"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.moonshotai.kimi-k3",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/moonshotai.kimi-k3"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/moonshotai.kimi-k3"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-haiku-5-5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-haiku-5-5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-haiku-5-5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-sonnet-5-5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-sonnet-5-5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-sonnet-5-5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-5.6-luna",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-5.6-luna"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-5.6-luna"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-6-luna",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-6-luna"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-6-luna"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-6.1-terra",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-6.1-terra"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-6.1-terra"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-opus-5-5",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-opus-5-5"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-opus-5-5"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.openai.gpt-5.6-terra",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/openai.gpt-5.6-terra"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/openai.gpt-5.6-terra"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.moonshotai.kimi-k3.1",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/moonshotai.kimi-k3.1"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/moonshotai.kimi-k3.1"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-fable-5-2",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-fable-5-2"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-fable-5-2"
+          }
+        ]
+      },
+      {
+        "inferenceProfileId": "global.anthropic.claude-opus-4-6-v1",
+        "status": "ACTIVE",
+        "type": "SYSTEM_DEFINED",
+        "models": [
+          {
+            "modelArn": "arn:aws:bedrock:::foundation-model/anthropic.claude-opus-4-6-v1"
+          },
+          {
+            "modelArn": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-opus-4-6-v1"
+          }
+        ]
+      }
+    ]
+  }
+}
