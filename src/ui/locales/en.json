@@ -40,7 +40,7 @@
   "models.saveName": "Save name",
   "models.baseUrl": "Server address",
   "models.region": "Region",
-  "models.bedrockKey": "An access key ID and secret, separated by a colon, with a third part for a session token if the credentials are temporary. A Bedrock API key can be pasted on its own. Testing or using a model not made by Amazon, such as Anthropic's, can subscribe your AWS account to it in AWS Marketplace, even if the call fails.",
+  "models.bedrockKey": "An access key ID and secret, separated by a colon, with a third part for a session token if the credentials are temporary. A Bedrock API key can be pasted on its own. Testing or using a model that AWS sells through AWS Marketplace, such as TwelveLabs', can subscribe your AWS account to it, even if the call fails. Amazon's own models and many others, such as DeepSeek's, Meta's and Mistral's, are not sold there.",
   "models.addModel": "Add a model",
   "models.addHint": "Click Add to save this model.",
   "models.modelNamePlaceholder": "Model name",

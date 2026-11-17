@@ -40,7 +40,7 @@
   "models.saveName": "儲存名稱",
   "models.baseUrl": "伺服器位址",
   "models.region": "區域",
-  "models.bedrockKey": "存取金鑰 ID 和私密金鑰，用冒號隔開；臨時憑證再加一個冒號和工作階段權杖。Bedrock API 金鑰可以單獨貼上。測試或使用非 Amazon 自家的模型（例如 Anthropic 的模型），可能會讓你的 AWS 帳戶在 AWS Marketplace 中訂閱該模型，即使呼叫失敗也是如此。",
+  "models.bedrockKey": "存取金鑰 ID 和私密金鑰，用冒號隔開；臨時憑證再加一個冒號和工作階段權杖。Bedrock API 金鑰可以單獨貼上。測試或使用 AWS 透過 AWS Marketplace 銷售的模型（例如 TwelveLabs 的模型），可能會讓你的 AWS 帳戶訂閱該模型，即使呼叫失敗也是如此。Amazon 自家的模型以及 DeepSeek、Meta、Mistral 等許多廠商的模型不在那裡銷售。",
   "models.addModel": "新增模型",
   "models.addHint": "點擊「新增」儲存這個模型。",
   "models.modelNamePlaceholder": "模型名稱",
