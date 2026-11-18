@@ -93,8 +93,28 @@ defineCheck({
         failures.push(`the menu does not fit the window: ${JSON.stringify(read.menu)}`);
       const menuImage = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
 
+      // A local preset keeps the shared OpenAI-compatible client and allows an empty key.
+      if (!(await options('select', { label: 'Add a provider', value: 'rapid-mlx' })).ok)
+        failures.push('no Rapid-MLX preset');
+      await sleep(200);
+      await options('click', { label: 'Add a provider' });
+      await sleep(200);
+      const providers = (await chrome.storage.local.get('nb.providers'))['nb.providers'] as Array<{
+        kind: string;
+        name: string;
+        baseUrl?: string;
+      }>;
+      const rapid = providers.find(p => p.name === 'Rapid-MLX');
+      if (rapid?.kind !== 'openai-compatible' || rapid.baseUrl !== 'http://localhost:8000/v1')
+        failures.push('Rapid-MLX has the wrong kind or address');
+      if (!(await options('field', { label: 'API key (if the server needs one)' })).ok)
+        failures.push('Rapid-MLX requires a key');
+
       if (failures.length) throw new Error(failures.join('; '));
-      return { image, menuImage };
+      await chrome.storage.local.set({ 'nb.providers': providers.filter(p => p.name === 'Rapid-MLX') });
+      await sleep(200);
+      const rapidImage = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+      return { image, menuImage, rapidImage };
     } finally {
       await chrome.tabs.remove(tab.id!);
       await chrome.storage.local.remove(['nb.providers', 'nb.keys']);

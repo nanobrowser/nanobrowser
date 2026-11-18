@@ -75,12 +75,13 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 | Kind | Providers |
 | --- | --- |
 | Cloud | Anthropic, OpenAI, Google Gemini, AWS Bedrock, OpenRouter, xAI Grok, DeepSeek, Mistral, and any OpenAI-compatible endpoint |
-| Local | Ollama and LM Studio, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
+| Local | Ollama, LM Studio and Rapid-MLX, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
 
 - **A model must support tool calling.** Test models in Settings checks each model and marks the ones that cannot be used.
 - **Choose the model and the reasoning effort** in the panel, per conversation. Settings holds the defaults.
 - **Vision models** can also take screenshots of the page and read the images you attach.
 - **Local models** work best for simple, clear tasks. We currently recommend **Qwen3.8 27B**. Give them a context window of 16k tokens or more. Ollama needs `OLLAMA_ORIGINS` to allow the extension, and LM Studio needs CORS on; the provider card shows how when a request is refused.
+- **Rapid-MLX** is an open-source local LLM inference server for Apple Silicon, built on MLX. In Settings → Providers, choose **Rapid-MLX**, keep `http://localhost:8000/v1` (or enter your server address), leave the API key empty unless you enabled authentication, then use **List models** and add a served model. See the [Rapid-MLX docs](https://rapidmlx.com/docs/) for setup.
 - **Voice input** uses OpenAI's or Gemini's voice model with your key from that provider.
 
 ## 💡 Try these
