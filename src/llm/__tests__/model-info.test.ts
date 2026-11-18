@@ -181,6 +181,16 @@ describe('readModelInfo', () => {
     expect((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe('https://api.moonshot.ai/v1/models');
   });
 
+  it('reads LM Studio’s model, keeping the maximum window it reports', async () => {
+    const fetch = answer({
+      data: [{ id: 'flint', type: 'llm', max_context_length: 262_144, loaded_context_length: 262_144 }],
+    });
+    const facts = await readModelInfo({ kind: 'lmstudio', modelName: 'flint' }, fetch);
+    // The maximum is the model's capability; detection reads the window actually loaded, and lowers this one to it.
+    expect(facts).toEqual({ contextWindow: 262_144, vision: false });
+    expect((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe('http://localhost:1234/api/v0/models');
+  });
+
   it('reads nothing for OpenAI, a failed request or a missing model', async () => {
     const fetch = answer({});
     expect(await readModelInfo({ kind: 'openai', modelName: 'gpt-5.5', apiKey: 'k' }, fetch)).toBeNull();
