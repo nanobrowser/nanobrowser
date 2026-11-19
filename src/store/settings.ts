@@ -13,6 +13,8 @@ export type Theme = 'system' | 'light' | 'dark';
 
 export interface Settings {
   defaultMode: PermissionMode;
+  /** Initial choice for new conversations only. */
+  defaultAllowSensitiveActions: boolean;
   defaultModel: ModelRef | null;
   /** The effort for new conversations on a model that reasons; the latest choice in a picker. */
   reasoning: ReasoningEffort;
@@ -42,6 +44,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   defaultMode: 'ask',
+  defaultAllowSensitiveActions: false,
   defaultModel: null,
   reasoning: 'medium',
   turnCap: 100,

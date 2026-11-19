@@ -66,6 +66,39 @@ async function setup(
 const lastText = (prompt: Array<{ role: string; content: unknown }>) => JSON.stringify(prompt.at(-1));
 
 describe('the system prompt', () => {
+  it('permits protected tools only when the user enabled sensitive actions', () => {
+    const off = agentSystemPrompt();
+    const on = agentSystemPrompt({ allowSensitiveActions: true });
+    expect(off).toContain("are the user's steps");
+    expect(on).not.toContain("are the user's steps");
+    expect(on).toContain('The user enabled sensitive actions');
+    expect(on).toContain('Ask/Auto mode and site rules');
+    expect(on).toContain('Never ask the user for a password, a card number or a code.');
+  });
+
+  it('uses the current system prompt for request size and subsequent model calls', async () => {
+    let allowed = false;
+    const system = () => agentSystemPrompt({ allowSensitiveActions: allowed });
+    const layer = new FakeLayer({
+      read: () => {
+        allowed = true;
+        return ok('read');
+      },
+    });
+    const { loop, scripted } = await setup([{ toolCalls: [{ name: 'read', input: {}, id: 'r' }] }, done], layer, {
+      system,
+      allowSensitiveActions: () => allowed,
+    });
+    const off = await loop.prepareRequest();
+    allowed = true;
+    const on = await loop.prepareRequest();
+    expect(on.chars - off.chars).toBe(system().length - agentSystemPrompt().length);
+    allowed = false;
+    await loop.run();
+    expect(JSON.stringify(scripted.calls[0].prompt)).toContain("are the user's steps");
+    expect(JSON.stringify(scripted.calls[1].prompt)).toContain('The user enabled sensitive actions');
+  });
+
   it('holds the contract word for word, and the user’s instructions in a marked section', () => {
     const p = agentSystemPrompt({ tools: ['snapshot', 'done'], customInstructions: 'Answer briefly.' });
     expect(p).toContain(CONTRACT);

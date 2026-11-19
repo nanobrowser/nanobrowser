@@ -1,14 +1,12 @@
 // Settings → Permissions: the microphone, the browser features (Chrome permissions the user allows here), then the
-// one site list: what Allow, Ask and Block do, then each site set to
-// one of them, with the date it was set and a remove icon, and adding a site by hand. Nothing here allows payments,
-// access grants or secrets. The default mode is in Settings → General.
+// sensitive-action default and site rules. The default mode is in Settings → General.
 import { Fragment, useState } from 'react';
-import { siteRulesStorage } from '@src/store/settings';
+import { DEFAULT_SETTINGS, settingsStorage, siteRulesStorage } from '@src/store/settings';
 import type { SiteRule, SiteRuleEntry } from '@src/store/settings';
-import { Button, Input, Notice, Select } from '@src/ui/components';
+import { Button, Input, Notice, Select, Switch } from '@src/ui/components';
 import { BrowserFeaturesCard } from './BrowserFeaturesCard';
 import { MicrophoneCard } from './MicrophoneCard';
-import { SettingsCard } from './SettingsCard';
+import { SettingsCard, SettingsRow } from './SettingsCard';
 import { useStorage } from '@src/ui/hooks';
 import { t } from '@src/ui/i18n';
 import { TrashIcon } from '@src/ui/icons';
@@ -45,6 +43,7 @@ function date(iso?: string): string {
 
 export function PermissionsSection() {
   const rules = useStorage(siteRulesStorage, EMPTY);
+  const settings = useStorage(settingsStorage, DEFAULT_SETTINGS);
   const [site, setSite] = useState('');
   const [rule, setRule] = useState<SiteRule>('allow');
   const [error, setError] = useState(false);
@@ -56,6 +55,15 @@ export function PermissionsSection() {
       <h2 className="sr-only">{t('settings.nav.permissions')}</h2>
       <MicrophoneCard />
       <BrowserFeaturesCard />
+      <SettingsCard title={t('perm.sensitiveActions')} description={t('perm.sensitiveActionsHint')}>
+        <SettingsRow label={t('perm.sensitiveDefault')} description={t('perm.sensitiveDefaultHint')}>
+          <Switch
+            aria-label={t('perm.sensitiveDefault')}
+            checked={settings.defaultAllowSensitiveActions === true}
+            onChange={allow => void settingsStorage.set(s => ({ ...s, defaultAllowSensitiveActions: allow }))}
+          />
+        </SettingsRow>
+      </SettingsCard>
       <SettingsCard title={t('perm.sites')} description={t('perm.sitesHint')} className="flex flex-col gap-8">
         <div className="flex flex-col gap-4">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">

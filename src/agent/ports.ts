@@ -8,7 +8,7 @@ export interface LayerPort {
   call(tool: string, args: Record<string, unknown>, signal?: AbortSignal): Promise<Result>;
   tabs(): Promise<TabsData>;
   /** The revision the layer last observed on a tab, and what is pending there, for the page header. */
-  tabInfo(tabId: number): { rev: number; pending: PendingModal[] } | null;
+  tabInfo(tabId: number): { rev: number; pending: PendingModal[]; promptHasBrowserHandler?: boolean } | null;
   /** Wraps untrusted content with the session's nonce (attachments, selections). */
   wrap(text: string, source: ContentSource): string;
 }
