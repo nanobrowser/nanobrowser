@@ -214,15 +214,29 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
     }
     default: {
       // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.
-      const accounting = kind === 'openrouter' ? usageAccounting(fetch ?? globalThis.fetch) : null;
+      const base = fetch ?? globalThis.fetch;
+      const accounting = kind === 'openrouter' ? usageAccounting(base) : null;
+      // A local server may take no key, and the SDK sends whatever placeholder it is given as a bearer token: a request
+      // must not carry an invented one, so the header is dropped instead. OpenRouter always needs a key, and says so
+      // before the first request rather than answering for it with a made-up token.
+      const request: typeof fetch = !apiKey
+        ? kind === 'openrouter'
+          ? () => Promise.reject(new Error('OpenRouter needs an API key. Add one in Settings → Providers.'))
+          : (input, init) => {
+              const headers = new Headers(init?.headers);
+              headers.delete('authorization');
+              return base(input, { ...init, headers });
+            }
+        : (accounting?.fetch ?? base);
       const openai = createOpenAI({
-        apiKey: apiKey || kind,
+        // The SDK refuses an empty key; the placeholder never leaves the machine (see `request`).
+        apiKey: apiKey || 'none',
         baseURL: openAICompatibleBaseUrl(kind, spec.baseUrl),
         ...(kind === 'openrouter'
           ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'Nanobrowser' } }
           : {}),
         // OpenRouter reports a request's cost in its usage when asked.
-        fetch: accounting?.fetch ?? fetch,
+        fetch: request,
       });
       return {
         spec,
