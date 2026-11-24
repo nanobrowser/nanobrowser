@@ -54,6 +54,18 @@ describe('testConnection', () => {
     expect(r).toMatchObject({ ok: false, toolCalling: false, error: CUT_SHORT });
   });
 
+  it("reports a cloud OpenAI-compatible provider's 403 with its own message, not as a refused origin", async () => {
+    const fetch = vi.fn(async () =>
+      Response.json({ error: { message: 'Insufficient balance', type: 'invalid_request_error' } }, { status: 403 }),
+    ) as unknown as typeof globalThis.fetch;
+    const r = await testConnection(
+      { kind: 'openai-compatible', modelName: 'm', apiKey: 'k', baseUrl: 'https://api.example.com/v1' },
+      { fetch },
+    );
+    expect(r).toMatchObject({ ok: false, originRefused: false });
+    expect(r.error).toContain('Insufficient balance');
+  });
+
   it('reports a refused origin from a local server', async () => {
     const fetch = vi.fn(async () => new Response('', { status: 403 })) as unknown as typeof globalThis.fetch;
     const r = await testConnection({ kind: 'ollama', modelName: 'qwen3:8b' }, { fetch });

@@ -17,7 +17,7 @@ import { isOriginRefused } from './errors';
 import { refusesImages, refusesReasoning, streamTurn } from './stream';
 import type { TurnRequest, TurnResult } from './stream';
 import type { LearntFacts } from './profiles';
-import { NOT_CHAT } from './catalogue';
+import { NOT_CHAT, isCloudEndpoint } from './catalogue';
 import type { WireEffort } from './catalogue';
 
 export interface ConnectionResult {
@@ -91,7 +91,8 @@ export async function testConnection(
   };
   const result = await streamTurn(probe);
   if (result.error) {
-    const local = spec.kind === 'ollama' || spec.kind === 'lmstudio' || spec.kind === 'openai-compatible';
+    // A cloud provider's 403 is its own refusal (key, access, balance), never the browser's origin.
+    const local = !isCloudEndpoint(spec.kind, spec.baseUrl);
     return {
       ok: false,
       toolCalling: false,
