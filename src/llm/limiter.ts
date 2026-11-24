@@ -9,7 +9,10 @@ export async function withSlot<T>(key: string, max: number, fn: () => Promise<T>
   const s = slot;
   if (s.active >= max) {
     await new Promise<void>((resolve, reject) => {
-      const go = () => resolve();
+      const go = () => {
+        s.active++;
+        resolve();
+      };
       s.queue.push(go);
       signal?.addEventListener('abort', () => {
         const i = s.queue.indexOf(go);
@@ -17,8 +20,7 @@ export async function withSlot<T>(key: string, max: number, fn: () => Promise<T>
         reject(Object.assign(new Error('aborted while waiting for the server'), { name: 'AbortError' }));
       });
     });
-  }
-  s.active++;
+  } else s.active++;
   try {
     return await fn();
   } finally {
