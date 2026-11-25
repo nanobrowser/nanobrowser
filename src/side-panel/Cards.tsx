@@ -76,6 +76,10 @@ const WRITE_TITLES: Record<string, MessageKey> = {
   submit: 'card.write.title.submit',
   delete: 'card.write.title.delete',
   upload: 'card.write.title.upload',
+  pay: 'card.write.title.pay',
+  grant: 'card.write.title.grant',
+  secret: 'card.write.title.secret',
+  prompt: 'card.write.title.prompt',
 };
 
 function WriteCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unknown) => void }) {

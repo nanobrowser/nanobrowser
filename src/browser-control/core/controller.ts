@@ -59,6 +59,8 @@ export interface SessionConfig {
    * are refused. The extension's agent sessions set it; the test panel does not.
    */
   handover?: boolean;
+  /** Live host opt-in for protected actions. It never grants eval or devtools. */
+  allowSensitiveActions?: () => boolean;
   /**
    * The host's policy for writes: for a classified submit or delete, the gate asks it in place of the fixed `sensitive`
    * rule. Set by the extension from the conversation's mode and the site rules.
@@ -464,11 +466,20 @@ export class Session {
   readonly config: Required<
     Omit<
       SessionConfig,
-      'capabilities' | 'urlPolicy' | 'confirm' | 'boundary' | 'handover' | 'decideWrite' | 'reveal' | 'onTabJoined'
+      | 'capabilities'
+      | 'urlPolicy'
+      | 'confirm'
+      | 'boundary'
+      | 'handover'
+      | 'allowSensitiveActions'
+      | 'decideWrite'
+      | 'reveal'
+      | 'onTabJoined'
     >
   >;
   readonly hooks: Pick<SessionConfig, 'reveal' | 'onTabJoined'>;
   readonly decideWrite: SessionConfig['decideWrite'];
+  readonly allowSensitiveActions: () => boolean;
   /** Fixed when the session is made: a session never gains or loses its hand-over policy. */
   readonly handover: boolean;
   #boundary: DefuseOptions;
@@ -485,6 +496,7 @@ export class Session {
     config: SessionConfig,
   ) {
     this.handover = config.handover ?? false;
+    this.allowSensitiveActions = config.allowSensitiveActions ?? (() => false);
     this.decideWrite = config.decideWrite;
     this.hooks = { reveal: config.reveal, onTabJoined: config.onTabJoined };
     this.capabilities = new Set(this.#allowed(config.capabilities ?? []));
