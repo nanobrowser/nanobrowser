@@ -45,23 +45,27 @@ export async function resolveModel(pair: LivePair | null): Promise<ResolvedModel
     throw new ModelUnavailable(`${ref.model} did not pass the tool-calling test and cannot run the agent.`);
   }
   const keys = await keysStorage.get();
-  // Ollama and LM Studio are asked again at the start of each run: the window a server loads can change. A slow or
-  // silent server keeps the value found before.
-  let detectedContext = found.model.detectedContext;
+  // Ollama and LM Studio are asked again at the start of each run: the window a server loads can change. A server that
+  // answers and has not loaded the model clears the loaded mark, so an old loaded number never raises the window; a slow
+  // or silent server keeps what was found before.
+  let { detectedContext, detectedLoaded } = found.model;
   if (found.provider.kind === 'ollama' || found.provider.kind === 'lmstudio') {
     const spec = { kind: found.provider.kind, modelName: found.model.name, baseUrl: found.provider.baseUrl };
     const fresh = await Promise.race([
       detectContext(spec),
       new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 2_000)),
     ]);
-    if (fresh && fresh !== detectedContext) {
-      detectedContext = fresh;
+    const window = fresh?.window ?? detectedContext;
+    if (fresh && (window !== detectedContext || fresh.loaded !== !!detectedLoaded)) {
+      detectedContext = window;
+      detectedLoaded = fresh.loaded;
+      const detected = { detectedContext: window, detectedLoaded: fresh.loaded };
       // Stored only while the provider still has the address that was asked: a change of address clears what was learnt
       // about the old server.
       await providersStorage.set(list =>
         list.map(p =>
           p.id === found.provider.id && (p.baseUrl ?? '') === (found.provider.baseUrl ?? '')
-            ? { ...p, models: p.models.map(m => (m.name === found.model.name ? { ...m, detectedContext: fresh } : m)) }
+            ? { ...p, models: p.models.map(m => (m.name === found.model.name ? { ...m, ...detected } : m)) }
             : p,
         ),
       );
@@ -73,6 +77,7 @@ export async function resolveModel(pair: LivePair | null): Promise<ResolvedModel
     baseUrl: found.provider.baseUrl,
     overrides: found.model.overrides,
     detectedContext,
+    detectedLoaded,
     ...learnt(found.model),
   });
   let chat;

@@ -151,7 +151,7 @@ export class Evidence {
         if (tab.openerTabId === tabId && !this.#newTab) this.#newTab = { tabId: tab.tabId, url: tab.url };
       }),
       // A page in a background tab opens a tab: Chrome gives it the window's active tab as its opener, so the
-      // navigation target event, which names the real source, is what attributes it (agent plan step 6.6).
+      // navigation target event, which names the real source, is what attributes it.
       this.ctx.controller.host.tabs.onNavigationTarget(event => {
         if (event.sourceTabId === tabId && !this.#newTab) this.#newTab = { tabId: event.tabId, url: event.url };
       }),

@@ -415,7 +415,8 @@ export async function summarise(
     chat: model.chat,
     system: SUMMARY_SYSTEM,
     messages,
-    maxOutputTokens: Math.min(2_000, Math.floor(model.profile.contextWindow / 8)),
+    // Within a limit the model was found to take.
+    maxOutputTokens: Math.min(2_000, Math.floor(model.profile.contextWindow / 8), model.profile.maxOutput),
     ...turnEffort(model, 'none'),
     signal,
   });

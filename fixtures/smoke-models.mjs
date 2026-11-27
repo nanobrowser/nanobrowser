@@ -6,8 +6,9 @@
 // The matrix is a JSON array of { kind, modelName, baseUrl?, keyEnv? }. A key is read from the environment variable
 // that `keyEnv` names and from nowhere else; a local kind needs none, and an entry whose variable is unset is reported
 // as "not checked". For each entry and each of the four efforts it runs two requests, as the loop does: one tool-call
-// turn, then the reply's tool call sent back with its result and no reasoning parts. The report goes to
-// fixtures/.results/smoke-models-<date>.json.
+// turn, then the reply's tool call sent back with its result and no reasoning parts. Each request carries the agent's
+// output limit, and a refusal that names the limit is sent again with half, as the agent does; the limit taken is in
+// the report, and a model refused down to the floor fails. The report goes to fixtures/.results/smoke-models-<date>.json.
 //
 // It imports the catalogue directly, which Node runs without a build (the file has type-only imports), and drives the
 // SDK itself.
@@ -19,7 +20,16 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { jsonSchema, streamText, tool } from 'ai';
-import { findRow, isCloudEndpoint, REASONING_EFFORTS, sendRule } from '../src/llm/catalogue.ts';
+import {
+  defaults,
+  findRow,
+  isCloudEndpoint,
+  MIN_OUTPUT_LIMIT,
+  OUTPUT_LIMIT,
+  OUTPUT_LIMIT_NAMES,
+  REASONING_EFFORTS,
+  sendRule,
+} from '../src/llm/catalogue.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -73,8 +83,24 @@ function model(entry, apiKey) {
   return { model: openai.chat(modelName), providerOptions: { openai: { strictJsonSchema: false } } };
 }
 
+/**
+ * One request at the entry's output limit, sent again with half while a 400 or 422 names the limit, down to the floor,
+ * as `streamTurn` does (which first checks for a refusal for size and for the reasoning option; the requests here are
+ * too small to be refused for size). The limit taken stays on `limit` for the entry's later requests.
+ */
+async function request(made, messages, reasoning, limit) {
+  for (;;) {
+    const r = await requestOnce(made, messages, reasoning, limit.now);
+    const said = `${r.error ?? ''} ${r.responseBody ?? ''}`;
+    const refused = !r.ok && (r.status === 400 || r.status === 422) && OUTPUT_LIMIT_NAMES.test(said);
+    if (!refused || limit.now <= MIN_OUTPUT_LIMIT) return r;
+    limit.refusals.push(said.trim().slice(0, 300));
+    limit.now = Math.max(MIN_OUTPUT_LIMIT, Math.floor(limit.now / 2));
+  }
+}
+
 /** One request; the body as sent is captured through fetch. */
-async function request(made, messages, reasoning) {
+async function requestOnce(made, messages, reasoning, maxOutputTokens) {
   lastBody = undefined;
   const started = Date.now();
   try {
@@ -83,7 +109,7 @@ async function request(made, messages, reasoning) {
       system: SYSTEM,
       messages,
       tools: TOOLS,
-      maxOutputTokens: 2048,
+      maxOutputTokens,
       maxRetries: 0,
       ...(reasoning ? { reasoning } : {}),
       onError: () => undefined,
@@ -144,11 +170,16 @@ async function check(entry) {
   if (entry.keyEnv && !apiKey) return { ...base, status: 'not checked', why: `${entry.keyEnv} is not set` };
   if (!entry.keyEnv && !LOCAL.has(entry.kind)) return { ...base, status: 'not checked', why: 'no keyEnv' };
   const made = model(entry, apiKey);
+  // The agent's limit for a model it knows nothing more about: the fixed limit, or a quarter of a small window.
+  const cloud = isCloudEndpoint(entry.kind, entry.baseUrl);
+  const window = row?.contextWindow ?? (cloud ? defaults.cloud : defaults.local).contextWindow;
+  const sent = Math.max(MIN_OUTPUT_LIMIT, Math.min(OUTPUT_LIMIT, Math.floor(window / 4)));
+  const limit = { now: sent, refusals: [] };
   const efforts = [];
   for (const effort of REASONING_EFFORTS) {
     const wire = sendRule(row?.reasoning, effort, row?.wire);
     const messages = [{ role: 'user', content: 'Call report_status now.' }];
-    const first = await request(made, messages, wire);
+    const first = await request(made, messages, wire, limit);
     const out = { effort, wire: wire ?? null, first };
     const callMade = first.ok && first.toolCalls?.[0];
     if (first.ok && !callMade) out.result = 'no tool call';
@@ -179,14 +210,14 @@ async function check(entry) {
           ],
         },
       );
-      const second = await request(made, messages, wire);
+      const second = await request(made, messages, wire, limit);
       out.second = second;
       out.result = second.ok ? 'passed' : 'second request failed';
     } else if (!first.ok) out.result = 'first request failed';
     efforts.push(out);
   }
   const status = efforts.every(e => e.result === 'passed') ? 'passed' : 'failed';
-  return { ...base, status, efforts };
+  return { ...base, status, outputLimit: { sent, taken: limit.now, refusals: limit.refusals }, efforts };
 }
 
 const [matrixPath] = process.argv.slice(2);
@@ -201,7 +232,9 @@ const versions = Object.fromEntries(
 const results = [];
 for (const entry of matrix) {
   const r = await check(entry);
-  console.log(`${r.status.padEnd(12)} ${entry.kind} ${entry.modelName} (row ${r.row ?? 'none'})`);
+  const halved =
+    r.outputLimit && r.outputLimit.taken < r.outputLimit.sent ? `, output limit ${r.outputLimit.taken}` : '';
+  console.log(`${r.status.padEnd(12)} ${entry.kind} ${entry.modelName} (row ${r.row ?? 'none'}${halved})`);
   for (const e of r.efforts ?? []) console.log(`    ${e.effort.padEnd(7)} → ${String(e.wire).padEnd(8)} ${e.result}`);
   results.push(r);
 }

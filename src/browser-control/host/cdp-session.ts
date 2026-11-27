@@ -10,7 +10,7 @@ export function normalizeSessionId(sessionId: string | undefined): string | unde
   return sessionId === PAGE_SESSION_ALIAS ? undefined : sessionId;
 }
 
-/** @deprecated name kept for the step 0.2 spike; use normalizeSessionId. */
+/** @deprecated the earlier name, from the first connection tests; use normalizeSessionId. */
 export const toDebuggerSessionId = normalizeSessionId;
 
 export class CdpCommandError extends Error {

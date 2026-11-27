@@ -22,12 +22,37 @@ export function isMissingApiKeyError(error: unknown): boolean {
   return LoadAPIKeyError.isInstance(unwrapError(error));
 }
 
-/** The error's message with its response body, for overflow matching and for the user. */
+/**
+ * The error's message with its response body, for overflow matching and for the user. A JSON body whose only news is
+ * the message the SDK already took from it (AWS's `message` or `Message`, or `error.message`) is left out, so the text
+ * does not show twice.
+ */
 export function errorText(error: unknown): string {
   const unwrapped = unwrapError(error);
   const message = unwrapped instanceof Error ? unwrapped.message : String(unwrapped);
   const body = getApiCallResponseBody(unwrapped);
-  return body && !message.includes(body) ? `${message} ${body}` : message;
+  if (!body || message.includes(body) || onlyRepeats(body, message)) return message;
+  return `${message} ${body}`;
+}
+
+/** Whether a JSON body says nothing but the message: that one field, alone, or with nothing else in an `error` object. */
+function onlyRepeats(body: string, message: string): boolean {
+  let json: unknown;
+  try {
+    json = JSON.parse(body);
+  } catch {
+    return false;
+  }
+  if (!json || typeof json !== 'object' || Array.isArray(json)) return false;
+  const fields = Object.entries(json as Record<string, unknown>);
+  if (fields.length !== 1) return false;
+  const [key, value] = fields[0]!;
+  if (key === 'message' || key === 'Message') return value === message;
+  if (key === 'error' && value && typeof value === 'object' && !Array.isArray(value)) {
+    const inner = Object.entries(value as Record<string, unknown>);
+    return inner.length === 1 && inner[0]![0] === 'message' && inner[0]![1] === message;
+  }
+  return false;
 }
 
 /** Rate limits, server errors and network failures are retried; other client errors are not. */

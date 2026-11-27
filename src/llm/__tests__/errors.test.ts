@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { APICallError, RetryError } from 'ai';
-import { isRetryable, retryAfterMs, unwrapError } from '../errors';
-import { isContextOverflow, isSilentOverflow } from '../overflow';
+import { errorText, isRetryable, retryAfterMs, unwrapError } from '../errors';
+import { isContextOverflow, isSilentOverflow, statedContextLimit } from '../overflow';
 
 const err = (status: number, body = '') =>
   new APICallError({ message: 'm', url: 'u', requestBodyValues: {}, statusCode: status, responseBody: body });
@@ -10,6 +10,23 @@ describe('errors', () => {
   it('unwraps a RetryError', () => {
     const last = err(500);
     expect(unwrapError(new RetryError({ message: 'r', reason: 'maxRetriesExceeded', errors: [last] }))).toBe(last);
+  });
+
+  it('adds the response body to the message only when it says more', () => {
+    const call = (message: string, body: string) =>
+      new APICallError({ message, url: 'u', requestBodyValues: {}, statusCode: 400, responseBody: body });
+    const aws = 'The provided model identifier is invalid.';
+    // Bedrock: the SDK's message is the body's only field.
+    expect(errorText(call(aws, JSON.stringify({ message: aws })))).toBe(aws);
+    expect(errorText(call(aws, JSON.stringify({ Message: aws })))).toBe(aws);
+    expect(errorText(call(aws, JSON.stringify({ error: { message: aws } })))).toBe(aws);
+    // A body with more than the message is still added.
+    const more = JSON.stringify({ error: { message: aws, code: 'context_length_exceeded' } });
+    expect(errorText(call(aws, more))).toBe(`${aws} ${more}`);
+    const other = JSON.stringify({ message: 'Something else' });
+    expect(errorText(call(aws, other))).toBe(`${aws} ${other}`);
+    // A body that is not JSON is added as before.
+    expect(errorText(call('Bad Gateway', '<html>upstream</html>'))).toBe('Bad Gateway <html>upstream</html>');
   });
 
   it('retries rate limits, server errors and network failures only', () => {
@@ -59,5 +76,27 @@ describe('overflow detection', () => {
     expect(isSilentOverflow(40_000, 32_768)).toBe(true);
     expect(isSilentOverflow(30_000, 32_768)).toBe(false);
     expect(isSilentOverflow(undefined, 32_768)).toBe(false);
+  });
+});
+
+describe('statedContextLimit', () => {
+  it('reads the limit from the recorded wordings that state one', () => {
+    expect(
+      statedContextLimit(
+        "This model's maximum context length is 131072 tokens. However, you requested 140000 tokens (139000 in the messages, 1000 in the completion).",
+      ),
+    ).toBe(131_072);
+    expect(
+      statedContextLimit("This model's maximum prompt length is 256000 but the request contains 300000 tokens."),
+    ).toBe(256_000);
+  });
+
+  it('reads nothing from another wording, a rate limit, or a number out of range', () => {
+    // The Responses API states no limit.
+    expect(statedContextLimit('Your input exceeds the context window of this model.')).toBeUndefined();
+    expect(statedContextLimit('prompt is too long: 210000 tokens > 200000 maximum')).toBeUndefined();
+    expect(statedContextLimit('Rate limit reached: limit 30000 tokens per minute')).toBeUndefined();
+    expect(statedContextLimit('maximum context length is 512 tokens')).toBeUndefined();
+    expect(statedContextLimit('maximum context length is 3000000 tokens')).toBeUndefined();
   });
 });

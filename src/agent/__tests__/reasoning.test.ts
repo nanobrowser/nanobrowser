@@ -206,6 +206,37 @@ describe('a model that refuses images', () => {
   });
 });
 
+describe('a model that refuses the output limit', () => {
+  const tooMany = new APICallError({
+    message: 'max_tokens is too large: 16384. This model supports at most 4096 completion tokens',
+    url: 'http://x/v1/chat/completions',
+    requestBodyValues: {},
+    statusCode: 400,
+    isRetryable: false,
+  });
+
+  it('halves it until taken, goes on with it, keeps it, with no notice and no extra turn', async () => {
+    const script = (x: ScriptedCall, i: number): ScriptedReply => {
+      if ((x.maxOutputTokens ?? 0) > 4096) return { error: tooMany };
+      return i <= 2 ? { toolCalls: [call('read', {}, 'r')] } : done;
+    };
+    // A cloud model with no row: the fixed limit, 16,384.
+    const { c, loop, scripted, model } = await setup(script, { kind: 'openrouter' });
+    const end = await loop.run();
+    expect(end.status).toBe('done');
+    expect(end.turns).toBe(2);
+    // 16,384 and 8,192 refused; 4,096 taken, and the second turn sends it at once.
+    expect(scripted.calls.map(x => x.maxOutputTokens)).toEqual([16_384, 8192, 4096, 4096]);
+    expect(model.profile.maxOutput).toBe(4096);
+    expect(model.learn).toHaveBeenCalledWith({ maxOutput: 4096 });
+    expect(await notices(c.id)).toHaveLength(0);
+    // The next run of the model starts from what was kept.
+    expect(resolveProfile({ kind: 'openrouter', modelName: 'm', tested: { maxOutput: 4096, at: '' } }).maxOutput).toBe(
+      4096,
+    );
+  });
+});
+
 describe('the summary call', () => {
   it('runs at None (Low for a model that always reasons)', async () => {
     const optional = await setup([{ text: 'summary' }], { reasoning: 'high', support: 'optional' });

@@ -10,7 +10,9 @@ import { t } from '@src/ui/i18n';
 export interface ModelTest {
   /** Absent when only the API was read. */
   result?: ConnectionResult;
-  patch: Pick<ModelEntry, 'fromApi' | 'detectedContext' | 'noToolCalling'> & { tested?: Omit<LearntFacts, 'at'> };
+  patch: Pick<ModelEntry, 'fromApi' | 'detectedContext' | 'detectedLoaded' | 'noToolCalling'> & {
+    tested?: Omit<LearntFacts, 'at'>;
+  };
 }
 
 /**
@@ -35,7 +37,13 @@ export async function testModel(
   const at = new Date().toISOString();
   const api = await readModelInfo(spec);
   const patch: ModelTest['patch'] = { fromApi: api ? { ...api, at } : undefined };
-  if (provider.kind === 'ollama' || provider.kind === 'lmstudio') patch.detectedContext = await detectContext(spec);
+  if (provider.kind === 'ollama' || provider.kind === 'lmstudio') {
+    // A server that does not answer keeps what was stored.
+    const stored = provider.models.find(m => m.name === modelName);
+    const detected = await detectContext(spec);
+    patch.detectedContext = detected ? (detected.window ?? stored?.detectedContext) : stored?.detectedContext;
+    patch.detectedLoaded = detected ? detected.loaded : stored?.detectedLoaded;
+  }
   if (!whole) return { patch };
   // The probes ask only what no source said: the stored overrides and answers, and what the API said just now.
   const stored = provider.models.find(m => m.name === modelName);
@@ -50,10 +58,12 @@ export async function testModel(
 
 /**
  * Stores a test's patch on the model's entry, reading the list fresh. `tested` keeps its other answers: a field changes
- * only with a new answer to the same question. The old `reasoningSupport` field goes.
+ * only with a new answer to the same question, except the window and the output limit a run learnt, which a whole test
+ * forgets. The
+ * old `reasoningSupport` field goes.
  */
 export async function saveTest(providerId: string, baseUrl: string | undefined, modelName: string, test: ModelTest) {
-  const { tested, ...rest } = test.patch;
+  const { tested, ...patch } = test.patch;
   await providersStorage.set(list =>
     list.map(p =>
       p.id !== providerId || (p.baseUrl ?? '') !== (baseUrl ?? '')
@@ -65,11 +75,15 @@ export async function saveTest(providerId: string, baseUrl: string | undefined, 
               // A whole test supersedes the old `reasoningSupport` probe value; reading the API alone does not.
               const { reasoningSupport, ...model } = m;
               const kept = test.result || !reasoningSupport ? model : { ...model, reasoningSupport };
+              // A whole test forgets the window and the output limit runs learnt, so the next run finds them again.
+              const before = test.result && m.tested ? { ...m.tested } : m.tested;
+              if (before !== m.tested) {
+                delete before?.contextWindow;
+                delete before?.maxOutput;
+              }
               const merged =
-                tested && Object.keys(tested).length
-                  ? { ...m.tested, ...tested, at: new Date().toISOString() }
-                  : m.tested;
-              return { ...kept, ...rest, ...(merged ? { tested: merged } : {}) };
+                tested && Object.keys(tested).length ? { ...before, ...tested, at: new Date().toISOString() } : before;
+              return { ...kept, ...patch, ...(merged ? { tested: merged } : {}) };
             }),
           },
     ),

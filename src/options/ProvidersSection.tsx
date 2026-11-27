@@ -1,21 +1,26 @@
-// Settings → Providers: the default model and its reasoning effort, then voice input, whose voice model comes from an
-// OpenAI or Gemini provider, then the list of providers with their keys, base URLs and models. Test models calls
+// Settings → Providers: the default model with its reasoning effort and context window, then voice input, whose voice
+// model comes from an OpenAI or Gemini provider, then the list of providers with their keys, base URLs and models. Test models calls
 // src/llm from this page; settings are written through chrome.storage, with no worker command.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import { listModels } from '@src/llm';
+import { listModels, MAX_CONTEXT_WINDOW, MIN_CONTEXT_WINDOW } from '@src/llm';
 import type { ConnectionResult, ModelList, ProviderKind } from '@src/llm';
 import type { ReasoningEffort } from '@src/llm/catalogue';
 import {
+  autoWindow,
   capabilityOf,
   DEFAULT_SETTINGS,
+  findModel,
   keysStorage,
   LOCAL_KINDS,
   providersStorage,
+  setContextWindow,
   settingsStorage,
+  windowFromText,
   withBaseUrl,
 } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
+import type { ModelRef } from '@src/store/types';
 import { newId } from '@src/store/conversations';
 import { Button, Input, Notice, Select } from '@src/ui/components';
 import { SettingsCard } from './SettingsCard';
@@ -149,6 +154,9 @@ export function ProvidersSection() {
             </Select>
           </label>
         ) : null}
+        {current && settings.defaultModel ? (
+          <WindowField key={current} model={settings.defaultModel} providers={providers} />
+        ) : null}
       </SettingsCard>
       <VoiceCard />
       <SettingsCard title={t('settings.nav.providers')} className="flex flex-col gap-4">
@@ -163,6 +171,65 @@ export function ProvidersSection() {
         <AddProvider onAdd={choice => void add(choice)} />
       </SettingsCard>
     </section>
+  );
+}
+
+/**
+ * The default model's context window: "Auto (N)" with the window it runs at when nothing is set, or the number the user
+ * typed, stored on the model's entry so it holds wherever the model runs. Enter or leaving the field stores it; an
+ * emptied field returns to Auto; a number out of range is not stored, and the field says so.
+ */
+/** A number of tokens with ASCII digits and comma groups, which the field reads back whatever the browser's locale. */
+const tokens = (n: number) => n.toLocaleString('en-US');
+
+function WindowField({ model, providers }: { model: ModelRef; providers: ProviderConfig[] }) {
+  const set = findModel(providers, model)?.model.overrides?.contextWindow;
+  const auto = autoWindow(providers, model);
+  const [draft, setDraft] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+  // Read from the field itself, so a submit right after typing sees what was typed.
+  const save = (text: string) => {
+    const value = windowFromText(text);
+    if (value === undefined) return setInvalid(true);
+    setInvalid(false);
+    setDraft(null);
+    if (value !== (set ?? null)) void setContextWindow(model, value);
+  };
+  return (
+    <form
+      className="flex flex-wrap items-center gap-x-3 gap-y-1"
+      onSubmit={e => {
+        e.preventDefault();
+        const field = e.currentTarget.querySelector('input');
+        if (field) save(field.value);
+      }}>
+      <label className="flex items-center gap-3">
+        <span className="text-nb-muted">{t('models.contextWindow')}</span>
+        <Input
+          aria-label={t('models.contextWindow')}
+          aria-invalid={invalid}
+          aria-describedby={invalid ? 'context-window-range' : undefined}
+          inputMode="numeric"
+          className="w-40"
+          value={draft ?? (set ? tokens(set) : '')}
+          placeholder={auto ? t('models.contextWindowAuto', { tokens: tokens(auto) }) : ''}
+          onChange={e => {
+            setDraft(e.target.value);
+            setInvalid(false);
+          }}
+          // Leaving the field stores only an edit.
+          onBlur={e => draft !== null && save(e.target.value)}
+        />
+      </label>
+      {invalid ? (
+        <span id="context-window-range" role="alert" className="text-sm text-nb-muted">
+          {t('models.contextWindowRange', {
+            min: tokens(MIN_CONTEXT_WINDOW),
+            max: tokens(MAX_CONTEXT_WINDOW),
+          })}
+        </span>
+      ) : null}
+    </form>
   );
 }
 

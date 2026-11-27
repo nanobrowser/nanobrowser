@@ -1,6 +1,7 @@
 // What a vendor's model API says about a model: read when the model is tested, before any probe, at no cost in tokens.
 // One parser reads the fields any of the APIs return; a field the API does not state is left out, for the next source
 // to say.
+import { bedrockRequest } from './connection';
 import { openAICompatibleBaseUrl } from './providers';
 import type { ModelSpec } from './providers';
 import type { LearntFacts } from './profiles';
@@ -43,6 +44,8 @@ export function factsFrom(record: Json): ApiFacts {
     record.max_tokens,
     record.outputTokenLimit,
     record.max_output_tokens,
+    // Groq's list states it at the top of each model's record; OpenRouter's under its top provider.
+    record.max_completion_tokens,
     obj(record.top_provider)?.max_completion_tokens,
   );
   if (maxOutput) facts.maxOutput = maxOutput;
@@ -102,8 +105,20 @@ export async function readModelInfo(
   let record: Json | null = null;
   switch (kind) {
     case 'openai':
-    case 'bedrock':
       return null;
+    case 'bedrock': {
+      // The list of foundation models, which listing models already reads, says what each model takes in. A profile
+      // is looked up by its id without the region group (`global.`, `apac.`), which is how AWS names them.
+      let models: Json[] = [];
+      try {
+        models = ((await bedrockRequest(spec, fetchFn)('/foundation-models')).modelSummaries as Json[]) ?? [];
+      } catch {
+        return null;
+      }
+      const model = models.find(m => m.modelId === modelName || m.modelId === modelName.replace(/^[a-z-]+\./, ''));
+      const input = list(model?.inputModalities);
+      return input ? { vision: input.includes('IMAGE') } : null;
+    }
     case 'anthropic':
       record = await get(`${spec.baseUrl || 'https://api.anthropic.com/v1'}/models/${id}`, {
         headers: {

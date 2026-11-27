@@ -23,7 +23,8 @@ export interface ResolvedModel {
   reasoningDropped?: boolean;
   /**
    * Keeps what a run learnt about the model on its entry: None refused,
-   * images refused. Set by the worker; absent in tests.
+   * images refused, the output limit taken after a refused one, and a window
+   * a refusal for size stated. Set by the worker; absent in tests.
    */
   learn?: (facts: Omit<LearntFacts, 'at'>) => void;
 }
@@ -56,6 +57,11 @@ export function learnFrom(model: ResolvedModel, reply: TurnResult): void {
   if (reply.imagesDropped && model.profile.vision) {
     model.profile = { ...model.profile, vision: false };
     model.learn?.({ vision: false });
+  }
+  // The output limit the server took after refusing a larger one: the run's later requests and its reserve use it.
+  if (reply.outputLimit && reply.outputLimit < model.profile.maxOutput) {
+    model.profile = { ...model.profile, maxOutput: reply.outputLimit };
+    model.learn?.({ maxOutput: reply.outputLimit });
   }
 }
 
@@ -96,6 +102,7 @@ export async function runChat(options: RunOptions): Promise<RunEnd> {
       emit({ type: 'message_update', id, text });
     },
   });
+  learnFrom(model, result);
   const usage: Usage = result.usage ? { ...ZERO_USAGE, ...result.usage } : ZERO_USAGE;
   let end: RunEnd;
   if (result.finish === 'aborted') end = { status: 'stopped', usage, turns: 1 };

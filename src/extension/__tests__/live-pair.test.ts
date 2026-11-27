@@ -6,8 +6,13 @@ import { IDBFactory } from 'fake-indexeddb';
 import { getConversation, updateConversation } from '@src/store/conversations';
 import { closeDb, db } from '@src/store/db';
 import {
+  autoWindow,
   capabilityOf,
   getLive,
+  setContextWindow,
+  windowFromText,
+  learnFacts,
+  providersStorage,
   mergeSettings,
   removeLive,
   setLive,
@@ -17,6 +22,7 @@ import {
   type Settings,
 } from '@src/store/settings';
 import { livePair } from '../models';
+import { resolveProfile } from '@src/llm';
 
 /** A chrome.storage with a local and a session area, as plain maps. */
 function fakeChrome(local: Record<string, unknown> = {}) {
@@ -82,6 +88,85 @@ describe('settings', () => {
     };
     expect(withBaseUrl(provider, 'http://a/v1')).toBe(provider);
     expect(withBaseUrl(provider, 'http://b/v1').models).toEqual([{ name: 'm', overrides: { vision: true } }]);
+  });
+
+  it("keeps a run's window, and a stated window below the user's number replaces that number", async () => {
+    const entry = (overrides: object) => ({ name: 'm', overrides, tested: { vision: false, at: '' } });
+    const { local } = fakeChrome({
+      'nb.providers': [
+        {
+          id: 'p',
+          kind: 'openrouter',
+          name: 'P',
+          models: [entry({ contextWindow: 200_000, vision: true }), { ...entry({ contextWindow: 10_000 }), name: 'n' }],
+        },
+      ],
+    });
+    await providersStorage.get();
+    await learnFacts('p', undefined, 'm', { contextWindow: 131_072 });
+    await learnFacts('p', undefined, 'n', { contextWindow: 131_072 });
+    const [m, n] = (local['nb.providers'] as ProviderConfig[])[0].models;
+    expect(m.tested).toMatchObject({ contextWindow: 131_072, vision: false });
+    expect(m.overrides).toEqual({ vision: true });
+    // A stated window at or above the user's number leaves it.
+    expect(n.overrides).toEqual({ contextWindow: 10_000 });
+    await learnFacts('p', undefined, 'm', { contextWindow: 100_000 });
+    expect((local['nb.providers'] as ProviderConfig[])[0].models[0].overrides).toEqual({ vision: true });
+  });
+
+  it('reads the context window field: empty is Auto, a whole number from 16,384 to 2,000,000 is taken', () => {
+    expect(windowFromText('')).toBeNull();
+    expect(windowFromText('  ')).toBeNull();
+    expect(windowFromText('16384')).toBe(16_384);
+    expect(windowFromText('16,383')).toBeUndefined();
+    expect(windowFromText('200,000')).toBe(200_000);
+    expect(windowFromText('1 048 576')).toBe(1_048_576);
+    expect(windowFromText('2000000')).toBe(2_000_000);
+    expect(windowFromText('2000001')).toBeUndefined();
+    expect(windowFromText('128k')).toBeUndefined();
+    expect(windowFromText('-20000')).toBeUndefined();
+    // A separator only between groups of three digits: a decimal is not read as digits.
+    expect(windowFromText('200.000')).toBe(200_000);
+    expect(windowFromText('128000.5')).toBeUndefined();
+    expect(windowFromText('100000.0')).toBeUndefined();
+    expect(windowFromText('16.5')).toBeUndefined();
+  });
+
+  it("shows Auto as the window the model runs at without the user's number", () => {
+    const providers: ProviderConfig[] = [
+      {
+        id: 'a',
+        kind: 'anthropic',
+        name: 'A',
+        models: [
+          { name: 'claude-sonnet-5-5', overrides: { contextWindow: 50_000 } },
+          { name: 'claude-x', tested: { contextWindow: 90_000, at: '' } },
+        ],
+      },
+      { id: 'l', kind: 'ollama', name: 'L', models: [{ name: 'm', detectedContext: 65_536, detectedLoaded: true }] },
+    ];
+    // The row, not the user's number; what a run learnt; the window a local server loaded.
+    expect(autoWindow(providers, { providerId: 'a', model: 'claude-sonnet-5-5' })).toBe(1_000_000);
+    expect(autoWindow(providers, { providerId: 'a', model: 'claude-x' })).toBe(90_000);
+    expect(autoWindow(providers, { providerId: 'l', model: 'm' })).toBe(65_536);
+    expect(autoWindow(providers, { providerId: 'gone', model: 'm' })).toBeUndefined();
+  });
+
+  it("stores the user's window on the model's entry, over every other source, and removes it for Auto", async () => {
+    const { local } = fakeChrome({
+      'nb.providers': [
+        { id: 'p', kind: 'openrouter', name: 'P', models: [{ name: 'm', tested: { contextWindow: 90_000, at: '' } }] },
+      ],
+    });
+    await providersStorage.get();
+    const ref = { providerId: 'p', model: 'm' };
+    await setContextWindow(ref, 300_000);
+    const entry = () => (local['nb.providers'] as ProviderConfig[])[0].models[0];
+    expect(entry().overrides).toEqual({ contextWindow: 300_000 });
+    expect(resolveProfile({ kind: 'openrouter', modelName: 'm', ...entry() }).contextWindow).toBe(300_000);
+    await setContextWindow(ref, null);
+    expect(entry()).not.toHaveProperty('overrides');
+    expect(entry().tested).toMatchObject({ contextWindow: 90_000 });
   });
 
   it('reads the capability from the probe, then the catalogue', () => {

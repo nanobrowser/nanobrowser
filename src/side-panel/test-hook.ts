@@ -42,11 +42,13 @@ export function installTestHook(tabId: number, target: 'panel' | 'options' = 'pa
         return sendResponse({ ok: true });
       }
       case 'field': {
-        // A field's type, read-only state and value, by its label.
+        // A field's type, read-only state, value and placeholder, by its label.
         const field = document.querySelector<HTMLInputElement>(`input[aria-label="${message.label}"]`);
         return sendResponse({
           ok: !!field,
-          ...(field ? { type: field.type, readOnly: field.readOnly, value: field.value } : {}),
+          ...(field
+            ? { type: field.type, readOnly: field.readOnly, value: field.value, placeholder: field.placeholder }
+            : {}),
         });
       }
       case 'drop-files': {
