@@ -133,7 +133,11 @@ describe('a refused field', () => {
             chunk({}, 'stop', { prompt_tokens: 5, completion_tokens: 1 }),
           ]),
     );
-    const result = await send({ kind: 'openai-compatible', modelName: 'm', baseUrl: 'http://x/v1' }, 'low', fetch);
+    const result = await send(
+      { kind: 'openai-compatible', modelName: 'm', baseUrl: 'http://x/v1', apiKey: 'k' },
+      'low',
+      fetch,
+    );
     expect(bodies).toHaveLength(2);
     expect(bodies[1]).not.toHaveProperty('reasoning_effort');
     expect({ ...bodies[1], reasoning_effort: 'low' }).toEqual(bodies[0]);
